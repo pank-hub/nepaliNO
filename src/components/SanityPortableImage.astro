@@ -1,0 +1,45 @@
+---
+import {urlFor} from '../lib/sanity/image'
+
+interface PortableImageNode {
+  asset?: unknown
+  alt?: string
+  caption?: string
+  credit?: string
+}
+
+interface Props {
+  node: PortableImageNode
+}
+
+const {node} = Astro.props
+const imageUrl = node.asset
+  ? urlFor(node)
+      .width(1200)
+      .fit('max')
+      .auto('format')
+      .url()
+  : undefined
+---
+
+{
+  imageUrl && (
+    <figure>
+      <img
+        src={imageUrl}
+        alt={node.alt ?? ''}
+        width="1200"
+        loading="lazy"
+        decoding="async"
+      />
+
+      {(node.caption || node.credit) && (
+        <figcaption>
+          {node.caption && <span>{node.caption}</span>}
+          {node.caption && node.credit && <span> · </span>}
+          {node.credit && <span>{node.credit}</span>}
+        </figcaption>
+      )}
+    </figure>
+  )
+}

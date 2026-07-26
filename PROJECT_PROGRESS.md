@@ -149,3 +149,30 @@ Completed and validated:
 - Use PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY.
 - Display the full guide, optional translation link, official sources, important Norwegian terms, review metadata, funding acknowledgement, and visible non-government disclaimer.
 - Deliver substantial Astro and HTML code as a downloadable .txt file.
+
+## Dynamic Public Information Guide and Provenance Checkpoint
+
+Completed and validated:
+- Installed astro-portabletext for rendering Sanity Portable Text in Astro.
+- Installed @sanity/image-url for optimized Sanity CDN image URLs.
+- Added src/lib/sanity/image.ts.
+- Added src/components/SanityPortableImage.astro.
+- Added the dynamic multilingual guide route at src/pages/[lang]/info/[slug].astro.
+- The dynamic route generates static pages for active Nepali and Norwegian guides.
+- Added full guide rendering with Portable Text and accessible embedded images.
+- Added optional translation links.
+- Added responsible agency, primary and additional official sources, important Norwegian terms, intended audience, review metadata, editorial reviewer, funding acknowledgement, and the non-government disclaimer.
+- Added PROJECT_PROVENANCE.md to document the custom development history, project ownership, open-source foundations, AI-assisted development, public-information safeguards, and funding transparency.
+- Astro check passed with 0 errors and 0 warnings.
+- Astro production build passed. No individual guide pages were generated because no active Public Information Guide documents have been published yet.
+
+## Provenance Maintenance Note
+
+PROJECT_PROVENANCE.md is a living document. Before donor presentations or production launch, replace future-oriented wording such as planned hosting or planned deployment with verified production facts, URLs, launch dates, partners, funding information, and governance details.
+
+## Next Work
+
+- Review, stage, commit, and push the dynamic guide and provenance milestone.
+- Publish a controlled test Public Information Guide in Sanity when Studio access is available.
+- Verify that the test guide generates an individual multilingual route.
+- Continue the visual design system and reusable layouts after content routing is verified.

@@ -1,0 +1,299 @@
+---
+import '../../../styles/global.css'
+
+import {PortableText} from 'astro-portabletext'
+import {sanityClient} from 'sanity:client'
+import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import {getTranslations} from '../../../i18n'
+import type {SupportedLanguage} from '../../../i18n/config'
+import {PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
+
+interface TranslationSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+}
+
+interface OfficialLink {
+  label: string
+  url: string
+}
+
+interface ImportantTerm {
+  term: string
+  explanation: string
+}
+
+interface GuideDocument {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  translation?: TranslationSummary
+  summary: string
+  topic: string
+  intendedAudience?: string[]
+  body?: any[]
+  responsibleAgency: string
+  officialSourceUrl: string
+  additionalOfficialLinks?: OfficialLink[]
+  importantTerms?: ImportantTerm[]
+  editorialReviewer: string
+  publishedAt: string
+  lastReviewedAt: string
+  nextReviewAt: string
+  isFeatured?: boolean
+  isUrgent?: boolean
+  fundingAcknowledgement?: string
+}
+
+interface GuidePath {
+  slug: string
+  language: SupportedLanguage
+}
+
+export async function getStaticPaths() {
+  const paths = await sanityClient.fetch<GuidePath[]>(`
+    *[
+      _type == "publicInformationGuide" &&
+      defined(slug.current) &&
+      language in ["ne", "nb"] &&
+      status == "active"
+    ] {
+      "slug": slug.current,
+      language
+    }
+  `)
+
+  return paths.map(({slug, language}) => ({
+    params: {
+      lang: language,
+      slug,
+    },
+  }))
+}
+
+const {lang, slug} = Astro.params
+
+if ((lang !== 'ne' && lang !== 'nb') || !slug) {
+  return Astro.redirect('/ne/info/')
+}
+
+const language: SupportedLanguage = lang
+const labels = getTranslations(language)
+const guide = await sanityClient.fetch<GuideDocument | null>(
+  PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY,
+  {language, slug},
+)
+
+if (!guide) {
+  return Astro.redirect(`/${language}/info/`)
+}
+
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const alternateLabels = getTranslations(alternateLanguage)
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+
+const formatDate = (date: string) =>
+  new Date(`${date}T00:00:00`).toLocaleDateString(dateLocale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+const portableTextComponents = {
+  type: {
+    image: SanityPortableImage,
+  },
+}
+---
+
+<html lang={language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={guide.summary} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{guide.title} | nepali.no</title>
+  </head>
+
+  <body>
+    <header>
+      <a href={`/${language}/`}>nepali.no</a>
+
+      <nav aria-label={labels.common.mainNavigation}>
+        <a href={`/${language}/news/`}>{labels.navigation.news}</a>
+        <a href={`/${language}/info/`}>{labels.navigation.information}</a>
+      </nav>
+
+      {
+        guide.translation ? (
+          <nav aria-label={labels.common.languageSelector}>
+            <a
+              href={`/${guide.translation.language}/info/${guide.translation.slug}/`}
+              hreflang={guide.translation.language}
+            >
+              {getTranslations(guide.translation.language).languageName}
+            </a>
+          </nav>
+        ) : (
+          <nav aria-label={labels.common.languageSelector}>
+            <a href={`/${alternateLanguage}/info/`} hreflang={alternateLanguage}>
+              {alternateLabels.languageName}
+            </a>
+          </nav>
+        )
+      }
+    </header>
+
+    <main>
+      <article>
+        <header>
+          {guide.isUrgent && <p>{labels.information.urgentLabel}</p>}
+          {guide.isFeatured && <p>{labels.information.featuredLabel}</p>}
+
+          <h1>{guide.title}</h1>
+          <p>{guide.summary}</p>
+
+          <dl>
+            <div>
+              <dt>{labels.information.responsibleAgency}</dt>
+              <dd>{guide.responsibleAgency}</dd>
+            </div>
+
+            <div>
+              <dt>{labels.common.publishedOn}</dt>
+              <dd>
+                <time datetime={guide.publishedAt}>
+                  {new Date(guide.publishedAt).toLocaleDateString(dateLocale, {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+              </dd>
+            </div>
+
+            <div>
+              <dt>{labels.information.lastReviewed}</dt>
+              <dd>
+                <time datetime={guide.lastReviewedAt}>
+                  {formatDate(guide.lastReviewedAt)}
+                </time>
+              </dd>
+            </div>
+
+            <div>
+              <dt>{labels.information.nextReview}</dt>
+              <dd>
+                <time datetime={guide.nextReviewAt}>
+                  {formatDate(guide.nextReviewAt)}
+                </time>
+              </dd>
+            </div>
+
+            <div>
+              <dt>{labels.information.editorialReviewer}</dt>
+              <dd>{guide.editorialReviewer}</dd>
+            </div>
+          </dl>
+        </header>
+
+        <aside aria-labelledby="information-disclaimer-title">
+          <h2 id="information-disclaimer-title">
+            {labels.information.disclaimerTitle}
+          </h2>
+          <p>{labels.information.disclaimer}</p>
+        </aside>
+
+        {guide.body && guide.body.length > 0 && (
+          <section aria-label={guide.title}>
+            <PortableText
+              value={guide.body}
+              components={portableTextComponents}
+            />
+          </section>
+        )}
+
+        <section aria-labelledby="official-source-heading">
+          <h2 id="official-source-heading">
+            {labels.information.officialSource}
+          </h2>
+
+          <p>
+            <a
+              href={guide.officialSourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {guide.responsibleAgency}
+            </a>
+          </p>
+        </section>
+
+        {guide.additionalOfficialLinks &&
+          guide.additionalOfficialLinks.length > 0 && (
+            <section aria-labelledby="additional-links-heading">
+              <h2 id="additional-links-heading">
+                {labels.information.additionalOfficialLinks}
+              </h2>
+
+              <ul>
+                {guide.additionalOfficialLinks.map((link) => (
+                  <li>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+        {guide.importantTerms && guide.importantTerms.length > 0 && (
+          <section aria-labelledby="important-terms-heading">
+            <h2 id="important-terms-heading">
+              {labels.information.importantTerms}
+            </h2>
+
+            <dl>
+              {guide.importantTerms.map((item) => (
+                <div>
+                  <dt lang="nb">{item.term}</dt>
+                  <dd>{item.explanation}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
+
+        {guide.intendedAudience && guide.intendedAudience.length > 0 && (
+          <section aria-labelledby="intended-audience-heading">
+            <h2 id="intended-audience-heading">
+              {labels.information.intendedAudience}
+            </h2>
+            <ul>
+              {guide.intendedAudience.map((audience) => (
+                <li>{audience}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {guide.fundingAcknowledgement && (
+          <section aria-labelledby="funding-heading">
+            <h2 id="funding-heading">
+              {labels.information.fundingAcknowledgement}
+            </h2>
+            <p>{guide.fundingAcknowledgement}</p>
+          </section>
+        )}
+      </article>
+    </main>
+  </body>
+</html>
