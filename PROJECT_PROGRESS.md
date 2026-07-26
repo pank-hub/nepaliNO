@@ -128,3 +128,24 @@ Completed and validated:
 - Decide the public URL terminology for Nepali and Norwegian routes.
 - Create the guide archive and individual guide pages using downloadable .txt files for substantial Astro or HTML code.
 - Keep official-source links, review dates, and the non-government disclaimer visible on guide pages.
+
+## Multilingual Public Information Archive Checkpoint
+
+Completed and validated:
+- Added Public Information interface labels to src/i18n/ne.ts.
+- Added matching Norwegian Bokmal labels to src/i18n/nb.ts.
+- Added visible non-government disclaimers in both languages.
+- Added labels for official sources, responsible agencies, important Norwegian terms, intended audiences, review dates, urgent information, featured information, and funding acknowledgements.
+- Added the shared multilingual archive route at src/pages/[lang]/info/index.astro.
+- The shared route generates /ne/info/ and /nb/info/.
+- The archive fetches active guides using ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY and the route language.
+- The archive displays responsible agencies, official-source links, last-reviewed dates, next-review dates, urgent and featured labels, and localized empty states.
+- Astro check passed with 0 errors and 0 warnings.
+- Astro production build passed and generated five pages: /, /ne/news/, /nb/news/, /ne/info/, and /nb/info/.
+
+## Next Work
+
+- Create the dynamic multilingual guide route at src/pages/[lang]/info/[slug].astro.
+- Use PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY.
+- Display the full guide, optional translation link, official sources, important Norwegian terms, review metadata, funding acknowledgement, and visible non-government disclaimer.
+- Deliver substantial Astro and HTML code as a downloadable .txt file.

@@ -1,0 +1,179 @@
+---
+import "../../../styles/global.css";
+
+import { sanityClient } from "sanity:client";
+import { getTranslations } from "../../../i18n";
+import {
+  supportedLanguages,
+  type SupportedLanguage,
+} from "../../../i18n/config";
+import { ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY } from "../../../lib/sanity/queries";
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({
+    params: { lang: language },
+    props: { language },
+  }));
+}
+
+interface Props {
+  language: SupportedLanguage;
+}
+
+interface GuideSummary {
+  _id: string;
+  title: string;
+  slug: string;
+  language: SupportedLanguage;
+  summary: string;
+  topic: string;
+  intendedAudience?: string[];
+  responsibleAgency: string;
+  officialSourceUrl: string;
+  publishedAt: string;
+  lastReviewedAt: string;
+  nextReviewAt: string;
+  isFeatured?: boolean;
+  isUrgent?: boolean;
+}
+
+const { language } = Astro.props;
+const labels = getTranslations(language);
+
+const guides = await sanityClient.fetch<GuideSummary[]>(
+  ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY,
+  { language },
+);
+
+const alternateLanguage: SupportedLanguage =
+  language === "ne" ? "nb" : "ne";
+const alternateLabels = getTranslations(alternateLanguage);
+
+const dateLocale = language === "ne" ? "ne-NP" : "nb-NO";
+const formatDate = (date: string) =>
+  new Date(`${date}T00:00:00`).toLocaleDateString(dateLocale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+---
+
+<html lang={language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={labels.information.pageDescription} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{labels.information.pageTitle} | nepali.no</title>
+  </head>
+
+  <body>
+    <header>
+      <a href={`/${language}/`}>nepali.no</a>
+
+      <nav aria-label={labels.common.mainNavigation}>
+        <a href={`/${language}/news/`}>{labels.navigation.news}</a>
+        <a href={`/${language}/info/`} aria-current="page">
+          {labels.navigation.information}
+        </a>
+      </nav>
+
+      <nav aria-label={labels.common.languageSelector}>
+        <a href={`/${alternateLanguage}/info/`} hreflang={alternateLanguage}>
+          {alternateLabels.languageName}
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <header>
+        <h1>{labels.information.pageTitle}</h1>
+        <p>{labels.information.pageDescription}</p>
+      </header>
+
+      <aside aria-labelledby="information-disclaimer-title">
+        <h2 id="information-disclaimer-title">
+          {labels.information.disclaimerTitle}
+        </h2>
+        <p>{labels.information.disclaimer}</p>
+      </aside>
+
+      {
+        guides.length === 0 ? (
+          <section aria-labelledby="empty-guides-heading">
+            <h2 id="empty-guides-heading">
+              {labels.information.emptyHeading}
+            </h2>
+            <p>{labels.information.emptyMessage}</p>
+          </section>
+        ) : (
+          <section aria-labelledby="guides-heading">
+            <h2 id="guides-heading">{labels.information.latestHeading}</h2>
+
+            <ul>
+              {guides.map((guide) => (
+                <li>
+                  <article>
+                    <p>{guide.responsibleAgency}</p>
+
+                    {guide.isUrgent && (
+                      <p>{labels.information.urgentLabel}</p>
+                    )}
+
+                    {guide.isFeatured && (
+                      <p>{labels.information.featuredLabel}</p>
+                    )}
+
+                    <h3>
+                      <a href={`/${language}/info/${guide.slug}/`}>
+                        {guide.title}
+                      </a>
+                    </h3>
+
+                    <p>{guide.summary}</p>
+
+                    <dl>
+                      <div>
+                        <dt>{labels.information.lastReviewed}</dt>
+                        <dd>
+                          <time datetime={guide.lastReviewedAt}>
+                            {formatDate(guide.lastReviewedAt)}
+                          </time>
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>{labels.information.nextReview}</dt>
+                        <dd>
+                          <time datetime={guide.nextReviewAt}>
+                            {formatDate(guide.nextReviewAt)}
+                          </time>
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <p>
+                      <a href={`/${language}/info/${guide.slug}/`}>
+                        {labels.information.readGuide}
+                      </a>
+                    </p>
+
+                    <p>
+                      <a
+                        href={guide.officialSourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {labels.information.officialSource}: {guide.responsibleAgency}
+                      </a>
+                    </p>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </main>
+  </body>
+</html>
