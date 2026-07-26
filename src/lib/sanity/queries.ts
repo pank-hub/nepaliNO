@@ -342,3 +342,144 @@ export const BUSINESS_LISTING_BY_SLUG_QUERY = `
     publishedAt
   }
 `
+export const ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    defined(slug.current) &&
+    language == $language &&
+    status == "active"
+  ] | order(isUrgent desc, isFeatured desc, publishedAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
+    summary,
+    topic,
+    intendedAudience,
+    responsibleAgency,
+    officialSourceUrl,
+    publishedAt,
+    lastReviewedAt,
+    nextReviewAt,
+    isFeatured,
+    isUrgent
+  }
+`
+
+export const FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    defined(slug.current) &&
+    language == $language &&
+    status == "active" &&
+    isFeatured == true
+  ] | order(isUrgent desc, publishedAt desc) [0...6] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    topic,
+    responsibleAgency,
+    lastReviewedAt,
+    isUrgent
+  }
+`
+
+export const URGENT_PUBLIC_INFORMATION_GUIDES_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    defined(slug.current) &&
+    language == $language &&
+    status == "active" &&
+    isUrgent == true
+  ] | order(publishedAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    topic,
+    responsibleAgency,
+    officialSourceUrl,
+    lastReviewedAt,
+    nextReviewAt
+  }
+`
+
+export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    slug.current == $slug &&
+    language == $language &&
+    status == "active"
+  ][0] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
+    summary,
+    topic,
+    intendedAudience,
+    body[] {
+      ...,
+      _type == "image" => {
+        asset,
+        alt,
+        caption,
+        credit,
+        hotspot,
+        crop
+      }
+    },
+    responsibleAgency,
+    officialSourceUrl,
+    additionalOfficialLinks[] {
+      label,
+      url
+    },
+    importantTerms[] {
+      term,
+      explanation
+    },
+    editorialReviewer,
+    publishedAt,
+    lastReviewedAt,
+    nextReviewAt,
+    isFeatured,
+    isUrgent,
+    fundingAcknowledgement
+  }
+`
+
+export const OVERDUE_PUBLIC_INFORMATION_GUIDES_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    status in ["active", "needs-review"] &&
+    defined(nextReviewAt) &&
+    nextReviewAt < string::split(now(), "T")[0]
+  ] | order(nextReviewAt asc) {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    topic,
+    responsibleAgency,
+    editorialReviewer,
+    lastReviewedAt,
+    nextReviewAt,
+    status
+  }
+`

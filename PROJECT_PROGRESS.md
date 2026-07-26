@@ -102,3 +102,29 @@ For Astro, HTML, and other substantial code, provide downloadable .txt files ins
 - Design a Public Information Guide content model with official-source and review-date controls.
 - Decide how language and optional translations should apply to Public Information Guides, Community Events, and Business Listings.
 - Continue one verified step at a time.
+
+## Public Information Guide Foundation Checkpoint
+
+Completed and validated:
+- Added sanity/schemaTypes/publicInformationGuide.ts.
+- Registered Public Information Guide in sanity/schemaTypes/index.ts.
+- Added Nepali and Norwegian Bokmal language support with an optional linked translation.
+- Added topic and intended-audience fields.
+- Added rich guide content with accessible images.
+- Added responsible public agency and required primary official HTTPS source.
+- Added additional official links and explanations of important Norwegian terms.
+- Added editorial reviewer, publication date, last-reviewed date, and next-review date.
+- Added draft, active, needs-review, and archived workflow statuses.
+- Added featured, urgent, and optional funding or partner acknowledgement fields.
+- Added five GROQ queries for active, featured, urgent, individual, and overdue-review guides.
+- Validated active-guide and overdue-review GROQ expressions directly against the Sanity production dataset.
+- Sanity Studio build passed for all four registered document types.
+- Astro check passed with 0 errors and 0 warnings.
+- Astro production build passed and generated /, /ne/news/, and /nb/news/.
+
+## Next Work
+
+- Create multilingual interface labels and routes for the public-information section.
+- Decide the public URL terminology for Nepali and Norwegian routes.
+- Create the guide archive and individual guide pages using downloadable .txt files for substantial Astro or HTML code.
+- Keep official-source links, review dates, and the non-government disclaimer visible on guide pages.
