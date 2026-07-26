@@ -41,3 +41,23 @@ Create and register TypeScript schemas for News Article, Community Event, and Bu
 - Create Git checkpoints after stable milestones.
 - Do not commit .env, tokens, node_modules, or build output.
 - Use semantic HTML suitable for Nepali localization.
+
+## Content Model and Queries Checkpoint
+
+Completed and build-validated:
+- News Article schema
+- Community Event schema
+- Business Listing schema
+- All three schemas registered in sanity/schemaTypes/index.ts
+- Nine GROQ queries created in src/lib/sanity/queries.ts
+- News archive, featured news, and news detail queries
+- Upcoming events, featured events, and event detail queries
+- Active businesses, featured businesses, and business detail queries
+- @types/node installed for Node.js TypeScript support
+- TypeScript check passed with npx tsc --noEmit
+- Astro production build passed
+
+## Next Work
+ - Create Astro routes for the homepage, news archive, and dynamic news article pages
+- Fetch Sanity content using the sanity:client virtual module
+- Begin the nepali.no design system
