@@ -6,6 +6,45 @@ export const NEWS_ARTICLES_QUERY = `
     _id,
     title,
     "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
+    summary,
+    newsRegion,
+    category,
+    featuredImage {
+      asset,
+      alt,
+      caption,
+      credit,
+      hotspot,
+      crop
+    },
+    authorName,
+    publishedAt,
+    isFeatured
+  }
+`
+export const NEWS_ARTICLES_BY_LANGUAGE_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    defined(slug.current) &&
+    language == $language
+  ] | order(publishedAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
     summary,
     newsRegion,
     category,
@@ -32,6 +71,13 @@ export const FEATURED_NEWS_ARTICLES_QUERY = `
     _id,
     title,
     "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
     summary,
     newsRegion,
     category,
@@ -56,6 +102,13 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
     _id,
     title,
     "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
     summary,
     newsRegion,
     category,

@@ -61,3 +61,44 @@ Completed and build-validated:
  - Create Astro routes for the homepage, news archive, and dynamic news article pages
 - Fetch Sanity content using the sanity:client virtual module
 - Begin the nepali.no design system
+
+## Multilingual News Routing Checkpoint
+
+Completed and validated:
+- Added Nepali and Norwegian Bokmal as supported website languages.
+- Added centralized language configuration in src/i18n/config.ts.
+- Added Nepali interface labels in src/i18n/ne.ts.
+- Added Norwegian Bokmal interface labels in src/i18n/nb.ts.
+- Added the getTranslations helper in src/i18n/index.ts.
+- Added language and optional linked translation fields to the News Article schema.
+- Updated News GROQ projections with language and translated-article metadata.
+- Added NEWS_ARTICLES_BY_LANGUAGE_QUERY using the $language parameter.
+- Added the shared multilingual News archive route at src/pages/[lang]/news/index.astro.
+- The shared route generates /ne/news/ and /nb/news/.
+- The root homepage still contains the temporary successful Astro-to-Sanity connection test.
+- Installed @astrojs/check and TypeScript as development dependencies.
+- Astro validation passed with 0 errors and 0 warnings.
+- The production build passed and generated 3 pages: /, /ne/news/, and /nb/news/.
+
+## Revised Product Direction
+
+nepali.no is a Nepali-first, but not Nepali-only, nonprofit and public-benefit platform for the Nepali community in Norway.
+
+Important audiences include:
+- Nepali-speaking residents in Norway
+- Young Nepali Norwegians who may prefer Norwegian
+- Students, families, volunteers, and community organizations
+- Norwegian public agencies, NGOs, partners, and potential funders
+
+A major platform pillar will be reliable, understandable guidance based on official information from agencies such as UDI, Skatteetaten, NAV, Helsenorge, municipalities, and other public bodies. nepali.no must explain and contextualize information while linking users to the current official source. The platform must not present itself as a government agency or replace official legal, tax, immigration, health, or welfare guidance.
+
+## Important Development Practice
+
+For Astro, HTML, and other substantial code, provide downloadable .txt files instead of rendered chat code blocks. The chat renderer has previously removed opening HTML tags and corrupted Astro markup.
+
+## Next Work
+
+- Review, stage, commit, and push the multilingual News routing milestone.
+- Design a Public Information Guide content model with official-source and review-date controls.
+- Decide how language and optional translations should apply to Public Information Guides, Community Events, and Business Listings.
+- Continue one verified step at a time.

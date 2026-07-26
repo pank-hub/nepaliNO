@@ -10,7 +10,7 @@ export const newsArticle = defineType({
       name: 'title',
       title: 'Title',
       type: 'string',
-      description: 'The main headline, preferably written in Nepali.',
+      description: 'The main headline written in the selected content language.',
       validation: (rule) =>
         rule.required().min(10).max(150).warning('Use a clear, concise headline.'),
     }),
@@ -25,6 +25,68 @@ export const newsArticle = defineType({
         maxLength: 96,
       },
       validation: (rule) => rule.required(),
+    }),
+
+        defineField({
+      name: 'language',
+      title: 'Content Language',
+      type: 'string',
+      description: 'The primary language used in this article.',
+      options: {
+        list: [
+          {title: 'नेपाली', value: 'ne'},
+          {title: 'Norsk bokmål', value: 'nb'},
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'ne',
+      validation: (rule) => rule.required(),
+    }),
+
+    defineField({
+      name: 'translation',
+      title: 'Translated Version',
+      type: 'reference',
+      description:
+        'Optional reference to the corresponding article in the other language.',
+      to: [{type: 'newsArticle'}],
+      options: {
+        filter: ({document}) => {
+          const language = document?.language
+
+          if (language === 'ne') {
+            return {
+              filter: 'language == $language',
+              params: {language: 'nb'},
+            }
+          }
+
+          if (language === 'nb') {
+            return {
+              filter: 'language == $language',
+              params: {language: 'ne'},
+            }
+          }
+
+          return {}
+        },
+      },
+      validation: (rule) =>
+        rule.custom((translation, context) => {
+          if (!translation?._ref) {
+            return true
+          }
+
+          const currentDocumentId = context.document?._id?.replace(
+            /^drafts\./,
+            '',
+          )
+          const translationId = translation._ref.replace(/^drafts\./, '')
+
+          return currentDocumentId === translationId
+            ? 'An article cannot reference itself as its translation.'
+            : true
+        }),
     }),
 
     defineField({

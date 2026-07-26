@@ -1,0 +1,124 @@
+---
+import "../../../styles/global.css";
+
+import { sanityClient } from "sanity:client";
+import { getTranslations } from "../../../i18n";
+import {
+  supportedLanguages,
+  type SupportedLanguage,
+} from "../../../i18n/config";
+import { NEWS_ARTICLES_BY_LANGUAGE_QUERY } from "../../../lib/sanity/queries";
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({
+    params: { lang: language },
+    props: { language },
+  }));
+}
+
+interface Props {
+  language: SupportedLanguage;
+}
+
+const { language } = Astro.props;
+const labels = getTranslations(language);
+
+const articles = await sanityClient.fetch(
+  NEWS_ARTICLES_BY_LANGUAGE_QUERY,
+  { language },
+);
+
+const alternateLanguage: SupportedLanguage =
+  language === "ne" ? "nb" : "ne";
+
+const alternateLabels = getTranslations(alternateLanguage);
+---
+
+<html lang={language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={labels.news.pageDescription} />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{labels.news.pageTitle} | nepali.no</title>
+  </head>
+
+  <body>
+    <header>
+      <a href={`/${language}/`}>nepali.no</a>
+
+      <nav aria-label={labels.common.mainNavigation}>
+        <a href={`/${language}/news/`}>
+          {labels.navigation.news}
+        </a>
+      </nav>
+
+      <nav aria-label={labels.common.languageSelector}>
+        <a href={`/${alternateLanguage}/news/`}>
+          {alternateLabels.languageName}
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <header>
+        <h1>{labels.news.pageTitle}</h1>
+        <p>{labels.news.pageDescription}</p>
+      </header>
+
+      {
+        articles.length === 0 ? (
+          <section aria-labelledby="empty-news-heading">
+            <h2 id="empty-news-heading">
+              {labels.news.emptyHeading}
+            </h2>
+
+            <p>{labels.news.emptyMessage}</p>
+          </section>
+        ) : (
+          <section aria-labelledby="latest-news-heading">
+            <h2 id="latest-news-heading">
+              {labels.news.latestHeading}
+            </h2>
+
+            <ul>
+              {articles.map((article: any) => (
+                <li>
+                  <article>
+                    <p>{article.newsRegion}</p>
+
+<h3>
+                      <a href={`/${language}/news/${article.slug}/`}>
+      {article.title}
+  </a>
+</h3>
+
+                    <p>{article.summary}</p>
+
+                    <p>
+                      <time datetime={article.publishedAt}>
+                        {new Date(article.publishedAt).toLocaleDateString(
+                          language === "ne" ? "ne-NP" : "nb-NO",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          },
+                        )}
+                      </time>
+                    </p>
+
+                    <a href={`/${language}/news/${article.slug}/`}>
+  {labels.news.readMore}
+</a>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </main>
+  </body>
+</html>
