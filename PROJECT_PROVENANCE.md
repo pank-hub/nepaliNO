@@ -41,8 +41,9 @@ The project owner is responsible for:
 The platform currently uses:
 
 - Astro for the public website, routing, rendering, and SEO
-- Tailwind CSS for the future visual design system
+- Tailwind CSS for the visual design foundation
 - Sanity for structured content, editorial workflows, and hosted content data
+- Sanity Studio as the deployed graphical content-management interface at https://nepali-no-studio.sanity.studio/
 - GROQ for querying Sanity content
 - Vercel as the planned frontend hosting platform
 - NodeBB as the planned community discussion platform on a separate VPS
@@ -52,6 +53,25 @@ The platform currently uses:
 Additional open-source packages are recorded in package.json and the relevant lockfiles.
 
 Use of open-source software does not imply that nepali.no is a generic template. The repository contains project-specific architecture, schemas, queries, validation rules, multilingual behavior, routes, and editorial safeguards.
+
+## Verified CMS and Publishing Workflow
+
+Sanity Studio has been deployed successfully at:
+
+https://nepali-no-studio.sanity.studio/
+
+The deployed Studio provides the graphical editorial interface for:
+
+- News Articles
+- Community Events
+- Business Listings
+- Public Information Guides
+
+A controlled Nepali Public Information Guide was created and published through the deployed Studio. The Astro production build retrieved the published guide from the Sanity production dataset and generated the following static route:
+
+/ne/info/udi-oppholdstillatelse-offisiell-informasjon/
+
+This verifies the complete content workflow from the hosted CMS through Sanity Content Lake, GROQ, Astro static path generation, Portable Text rendering, and production output.
 
 ## AI-Assisted Development
 
@@ -109,6 +129,8 @@ The Git history provides evidence of the project's step-by-step development, inc
 - multilingual Public Information archive routing
 - dynamic Public Information guide rendering
 - Portable Text and Sanity image integration
+- deployment of the hosted Sanity Studio
+- publication and successful static generation of the first controlled Public Information Guide
 
 Git commit hashes and dates are the authoritative technical record of when each milestone was added.
 
@@ -132,6 +154,7 @@ This document should be updated when there are material changes to:
 
 - ownership or project stewardship
 - core architecture
+- production hosting or deployment status
 - licensing
 - development methods
 - funding arrangements

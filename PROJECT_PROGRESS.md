@@ -176,3 +176,24 @@ PROJECT_PROVENANCE.md is a living document. Before donor presentations or produc
 - Publish a controlled test Public Information Guide in Sanity when Studio access is available.
 - Verify that the test guide generates an individual multilingual route.
 - Continue the visual design system and reusable layouts after content routing is verified.
+
+## Hosted Sanity Studio and First Published Guide Checkpoint
+
+Completed and verified:
+- Deployed Sanity Studio to https://nepali-no-studio.sanity.studio/.
+- Verified that the hosted graphical CMS displays News Article, Community Event, Business Listing, and Public Information Guide.
+- Created and published a controlled Nepali Public Information Guide based on official UDI information.
+- Published the guide with active workflow status, official-source links, review dates, editorial reviewer, intended audience, and an important Norwegian term.
+- Verified that the Sanity document had no unpublished edits after publication.
+- Ran the Astro production build successfully.
+- Verified that Astro generated the first real dynamic guide route at /ne/info/udi-oppholdstillatelse-offisiell-informasjon/.
+- Verified the complete publishing chain from hosted Sanity Studio through Content Lake, GROQ, getStaticPaths(), Portable Text, and static production output.
+- Updated PROJECT_PROVENANCE.md with the verified Sanity Studio URL and publishing workflow.
+
+## Next Work
+
+- Review, stage, commit, and push the hosted-CMS and first-published-guide documentation checkpoint.
+- Decide whether to create a linked Norwegian translation of the test guide.
+- Begin reusable layouts, shared navigation, and the visual design foundation.
+- Replace the temporary root homepage connection test when the shared layout is ready.
+- Continue updating PROJECT_PROVENANCE.md whenever planned services become verified production facts.
