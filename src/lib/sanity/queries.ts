@@ -483,3 +483,80 @@ export const OVERDUE_PUBLIC_INFORMATION_GUIDES_QUERY = `
     status
   }
 `
+
+export const IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    defined(slug.current) &&
+    language == $language &&
+    isImportantNow == true &&
+    defined(importantUntil) &&
+    importantUntil > now()
+  ] | order(publishedAt desc) [0] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    newsRegion,
+    category,
+    publishedAt,
+    importantUntil,
+    sourceUrl
+  }
+`
+
+export const HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    defined(slug.current) &&
+    language == $language &&
+    isFeatured == true
+  ] | order(publishedAt desc) [0] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    newsRegion,
+    category,
+    featuredImage {
+      asset,
+      alt,
+      caption,
+      credit,
+      hotspot,
+      crop
+    },
+    authorName,
+    publishedAt
+  }
+`
+
+export const HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    defined(slug.current) &&
+    language == $language &&
+    (!defined($excludeId) || _id != $excludeId)
+  ] | order(publishedAt desc) [0...3] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    newsRegion,
+    category,
+    featuredImage {
+      asset,
+      alt,
+      caption,
+      credit,
+      hotspot,
+      crop
+    },
+    authorName,
+    publishedAt
+  }
+`
+

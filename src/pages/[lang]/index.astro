@@ -8,9 +8,12 @@ import {
   type SupportedLanguage,
 } from '../../i18n/config'
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import {urlFor} from '../../lib/sanity/image'
 import {
-  FEATURED_NEWS_ARTICLES_QUERY,
   FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY,
+  HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY,
+  HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY,
+  IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY,
 } from '../../lib/sanity/queries'
 
 export function getStaticPaths() {
@@ -18,10 +21,6 @@ export function getStaticPaths() {
     params: {lang: language},
     props: {language},
   }))
-}
-
-interface Props {
-  language: SupportedLanguage
 }
 
 interface HomeGuide {
@@ -36,6 +35,15 @@ interface HomeGuide {
   isUrgent?: boolean
 }
 
+interface HomeArticleImage {
+  asset?: unknown
+  alt?: string
+  caption?: string
+  credit?: string
+  hotspot?: unknown
+  crop?: unknown
+}
+
 interface HomeArticle {
   _id: string
   title: string
@@ -45,20 +53,33 @@ interface HomeArticle {
   newsRegion: string
   category: string
   publishedAt: string
+  importantUntil?: string
+  featuredImage?: HomeArticleImage
 }
 
 const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 
-const [featuredGuides, featuredNews] = await Promise.all([
+const [featuredGuides, importantNow, featuredStory] = await Promise.all([
   sanityClient.fetch<HomeGuide[]>(FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY, {
     language,
   }),
-  sanityClient.fetch<HomeArticle[]>(FEATURED_NEWS_ARTICLES_QUERY),
+  sanityClient.fetch<HomeArticle | null>(IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY, {
+    language,
+  }),
+  sanityClient.fetch<HomeArticle | null>(HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY, {
+    language,
+  }),
 ])
 
-const languageNews = featuredNews.filter((article) => article.language === language)
+const latestStories = await sanityClient.fetch<HomeArticle[]>(
+  HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY,
+  {language, excludeId: featuredStory?._id ?? null},
+)
+
+const imageUrl = (image?: HomeArticleImage, width = 1200) =>
+  image?.asset ? urlFor(image as any).width(width).fit('crop').auto('format').url() : null
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString(dateLocale, {
@@ -158,9 +179,31 @@ const formatDate = (date: string) =>
     </div>
   </section>
 
-  <section class="section home-section home-section--muted" aria-labelledby="home-news-heading">
+  <section class="section home-news" aria-labelledby="home-news-heading">
     <div class="container">
-      <div class="section-heading">
+      {
+        importantNow && (
+          <aside class="important-now" aria-labelledby="important-now-heading">
+            <div class="important-now__label">
+              <span aria-hidden="true"></span>
+              <strong id="important-now-heading">{labels.home.importantNow}</strong>
+            </div>
+            <a href={`/${language}/news/${importantNow.slug}/`}>
+              {importantNow.title}
+            </a>
+            {importantNow.importantUntil && (
+              <p>
+                {labels.home.importantUntil}: {' '}
+                <time datetime={importantNow.importantUntil}>
+                  {formatDate(importantNow.importantUntil)}
+                </time>
+              </p>
+            )}
+          </aside>
+        )
+      }
+
+      <div class="section-heading news-heading">
         <div>
           <p class="eyebrow">{labels.home.newsEyebrow}</p>
           <h2 id="home-news-heading">{labels.home.newsHeading}</h2>
@@ -172,25 +215,103 @@ const formatDate = (date: string) =>
       </div>
 
       {
-        languageNews.length > 0 ? (
-          <ul class="content-grid">
-            {languageNews.map((article) => (
-              <li>
-                <article class="content-card card">
-                  <div class="content-card__badges">
-                    <span class="badge">{article.newsRegion}</span>
-                  </div>
+        featuredStory || latestStories.length > 0 ? (
+          <div class="news-layout">
+            {featuredStory && (
+              <article class="lead-story">
+                {imageUrl(featuredStory.featuredImage) ? (
+                  <a
+                    class="lead-story__image"
+                    href={`/${language}/news/${featuredStory.slug}/`}
+                    tabindex="-1"
+                    aria-hidden="true"
+                  >
+                    <img
+                      src={imageUrl(featuredStory.featuredImage) ?? ''}
+                      alt={featuredStory.featuredImage?.alt ?? ''}
+                      width="1200"
+                      height="720"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </a>
+                ) : (
+                  <div class="lead-story__placeholder" aria-hidden="true"></div>
+                )}
+                <div class="lead-story__content">
+                  <p class="story-kicker">
+                    {labels.home.featuredStory} · {featuredStory.newsRegion}
+                  </p>
                   <h3>
-                    <a href={`/${language}/news/${article.slug}/`}>{article.title}</a>
+                    <a href={`/${language}/news/${featuredStory.slug}/`}>
+                      {featuredStory.title}
+                    </a>
                   </h3>
-                  <p>{article.summary}</p>
-                  <time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
-                </article>
-              </li>
-            ))}
-          </ul>
+                  <p>{featuredStory.summary}</p>
+                  <div class="story-footer">
+                    <time datetime={featuredStory.publishedAt}>
+                      {formatDate(featuredStory.publishedAt)}
+                    </time>
+                    <a href={`/${language}/news/${featuredStory.slug}/`}>
+                      {labels.home.readFullStory} <span aria-hidden="true">→</span>
+                    </a>
+                  </div>
+                </div>
+              </article>
+            )}
+
+            {latestStories.length > 0 && (
+              <section
+                class:list={['latest-stories', !featuredStory && 'latest-stories--full']}
+                aria-labelledby="latest-news-heading"
+              >
+                <h3 id="latest-news-heading">{labels.home.latestNews}</h3>
+                <ol>
+                  {latestStories.map((article) => (
+                    <li>
+                      <article class="latest-story">
+                        <div class="latest-story__text">
+                          <p class="story-kicker">
+                            {article.newsRegion} · {article.category}
+                          </p>
+                          <h4>
+                            <a href={`/${language}/news/${article.slug}/`}>
+                              {article.title}
+                            </a>
+                          </h4>
+                          <time datetime={article.publishedAt}>
+                            {formatDate(article.publishedAt)}
+                          </time>
+                        </div>
+                        {imageUrl(article.featuredImage, 360) && (
+                          <a
+                            class="latest-story__image"
+                            href={`/${language}/news/${article.slug}/`}
+                            tabindex="-1"
+                            aria-hidden="true"
+                          >
+                            <img
+                              src={imageUrl(article.featuredImage, 360) ?? ''}
+                              alt=""
+                              width="360"
+                              height="240"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </a>
+                        )}
+                      </article>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+          </div>
         ) : (
-          <div class="empty-state surface"><p>{labels.home.emptyNews}</p></div>
+          <div class="empty-state editorial-empty">
+            <span class="editorial-empty__rule" aria-hidden="true"></span>
+            <p>{labels.home.emptyNews}</p>
+          </div>
         )
       }
     </div>
@@ -402,6 +523,233 @@ const formatDate = (date: string) =>
     text-align: center;
   }
 
+  .home-news {
+    background: #ffffff;
+  }
+
+  .important-now {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    margin-block-end: clamp(2rem, 5vw, 3.5rem);
+    padding: 0.85rem 1rem;
+    border-block: 1px solid #f0b4ae;
+    background: #fff8f7;
+  }
+
+  .important-now__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--brand);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  html[lang="ne"] .important-now__label {
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .important-now__label span {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--brand);
+    box-shadow: 0 0 0 0.25rem rgb(198 42 31 / 0.12);
+  }
+
+  .important-now > a {
+    color: var(--civic-deep);
+    font-weight: 760;
+    text-decoration: none;
+  }
+
+  .important-now > a:hover {
+    color: var(--brand);
+  }
+
+  .important-now > p {
+    color: var(--text-soft);
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .news-heading {
+    padding-block-end: 1.4rem;
+    border-bottom: 2px solid var(--civic-deep);
+  }
+
+  .news-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.75fr);
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .lead-story {
+    min-width: 0;
+  }
+
+  .lead-story__image,
+  .lead-story__placeholder {
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 5 / 3;
+    background:
+      linear-gradient(135deg, rgb(48 70 92 / 0.9), rgb(23 37 52 / 0.98));
+  }
+
+  .lead-story__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 300ms ease;
+  }
+
+  .lead-story__image:hover img {
+    transform: scale(1.015);
+  }
+
+  .lead-story__content {
+    padding-block-start: 1.25rem;
+  }
+
+  .story-kicker {
+    color: var(--brand);
+    font-size: 0.76rem;
+    font-weight: 780;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .story-kicker {
+    font-size: 0.86rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .lead-story h3 {
+    margin-block-start: 0.55rem;
+    font-size: clamp(1.75rem, 4vw, 3rem);
+    line-height: 1.15;
+  }
+
+  .lead-story h3 a,
+  .latest-story h4 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .lead-story h3 a:hover,
+  .latest-story h4 a:hover {
+    color: var(--brand);
+  }
+
+  .lead-story__content > p:not(.story-kicker) {
+    max-width: 52rem;
+    margin-block-start: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .story-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-start: 1.25rem;
+    padding-block-start: 0.9rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.86rem;
+  }
+
+  .story-footer time,
+  .latest-story time {
+    color: var(--text-soft);
+  }
+
+  .story-footer a {
+    font-weight: 750;
+  }
+
+  .latest-stories {
+    border-top: 0.3rem solid var(--brand);
+  }
+
+  .latest-stories--full {
+    grid-column: 1 / -1;
+  }
+
+  .latest-stories > h3 {
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--civic-deep);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .latest-stories > h3 {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .latest-stories ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .latest-stories li {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .latest-story {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    padding-block: 1rem;
+  }
+
+  .latest-story h4 {
+    margin-block: 0.35rem 0.55rem;
+    font-size: 1.08rem;
+    line-height: 1.3;
+  }
+
+  .latest-story__image {
+    display: block;
+    overflow: hidden;
+    width: 6rem;
+    aspect-ratio: 3 / 2;
+    background: var(--surface-muted);
+  }
+
+  .latest-story__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .editorial-empty {
+    position: relative;
+    overflow: hidden;
+    border-block: 1px solid var(--border-strong);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .editorial-empty__rule {
+    display: block;
+    width: 3rem;
+    height: 0.2rem;
+    margin-inline: auto;
+    margin-block-end: 1rem;
+    background: var(--brand);
+  }
+
   .discussions {
     background: var(--civic-deep);
     color: rgb(255 255 255 / 0.78);
@@ -491,7 +839,8 @@ const formatDate = (date: string) =>
 
   @media (max-width: 63rem) {
     .home-hero__grid,
-    .discussions__grid {
+    .discussions__grid,
+    .news-layout {
       grid-template-columns: 1fr;
     }
 
@@ -502,9 +851,43 @@ const formatDate = (date: string) =>
     .content-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .latest-stories {
+      margin-block-start: 0.5rem;
+    }
   }
 
   @media (max-width: 47.999rem) {
+    .important-now {
+      grid-template-columns: 1fr;
+      gap: 0.45rem;
+      padding-inline: 0;
+      background: transparent;
+    }
+
+    .important-now > p {
+      white-space: normal;
+    }
+
+    .news-heading {
+      gap: 1rem;
+    }
+
+    .lead-story__image,
+    .lead-story__placeholder {
+      margin-inline: calc(-1 * var(--page-gutter));
+      aspect-ratio: 4 / 3;
+    }
+
+    .story-footer {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .latest-story__image {
+      width: 5.25rem;
+    }
+
     .home-hero__grid {
       gap: 2.25rem;
       padding-block: 3.5rem;

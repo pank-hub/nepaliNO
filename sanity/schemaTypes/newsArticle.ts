@@ -223,7 +223,41 @@ export const newsArticle = defineType({
       name: 'isFeatured',
       title: 'Feature on Homepage',
       type: 'boolean',
+      description:
+        'Select one strong editorial story for prominent homepage placement.',
       initialValue: false,
+    }),
+
+    defineField({
+      name: 'isImportantNow',
+      title: 'Important Now',
+      type: 'boolean',
+      description:
+        'Use only for significant, time-sensitive information the community should see quickly. Avoid routine updates and sensational wording.',
+      initialValue: false,
+    }),
+
+    defineField({
+      name: 'importantUntil',
+      title: 'Important Until',
+      type: 'datetime',
+      description:
+        'The notice automatically stops appearing in the Important Now area after this time.',
+      hidden: ({document}) => document?.isImportantNow !== true,
+      validation: (rule) =>
+        rule.custom((importantUntil, context) => {
+          if (context.document?.isImportantNow !== true) {
+            return true
+          }
+
+          if (!importantUntil) {
+            return 'Set an expiry time for Important Now notices.'
+          }
+
+          return new Date(importantUntil) > new Date()
+            ? true
+            : 'The Important Until time must be in the future.'
+        }),
     }),
   ],
 
@@ -240,16 +274,36 @@ export const newsArticle = defineType({
       title: 'title',
       region: 'newsRegion',
       publishedAt: 'publishedAt',
+      isFeatured: 'isFeatured',
+      isImportantNow: 'isImportantNow',
+      importantUntil: 'importantUntil',
       media: 'featuredImage',
     },
-    prepare({title, region, publishedAt, media}) {
+    prepare({
+      title,
+      region,
+      publishedAt,
+      isFeatured,
+      isImportantNow,
+      importantUntil,
+      media,
+    }) {
       const date = publishedAt
         ? new Date(publishedAt).toLocaleDateString('en-GB')
         : 'No publication date'
+      const labels = [
+        isImportantNow ? 'IMPORTANT NOW' : null,
+        isFeatured ? 'FEATURED' : null,
+        region ?? 'No region',
+        date,
+        isImportantNow && importantUntil
+          ? `until ${new Date(importantUntil).toLocaleString('en-GB')}`
+          : null,
+      ].filter(Boolean)
 
       return {
         title,
-        subtitle: `${region ?? 'No region'} · ${date}`,
+        subtitle: labels.join(' · '),
         media,
       }
     },

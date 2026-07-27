@@ -45,6 +45,11 @@ export const nb = {
     businessesDescription:
       "Finn nepalskeide bedrifter og tjenester i Norge.",
     comingSoon: "Kommer snart",
+    importantNow: "Viktig nå",
+    importantUntil: "Viktig frem til",
+    featuredStory: "Fremhevet sak",
+    latestNews: "Siste nytt",
+    readFullStory: "Les hele saken",
     emptyInformation: "Nye veiledninger vises her når de blir publisert.",
     emptyNews: "Nye artikler vises her når de blir publisert.",
   },

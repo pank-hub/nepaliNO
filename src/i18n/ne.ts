@@ -45,6 +45,11 @@ export const ne = {
     businessesDescription:
       "नर्वेमा रहेका नेपाली स्वामित्वका व्यवसाय र सेवाहरू पत्ता लगाउनुहोस्।",
     comingSoon: "छिट्टै आउँदैछ",
+    importantNow: "अहिले महत्त्वपूर्ण",
+    importantUntil: "यो समयसम्म महत्त्वपूर्ण",
+    featuredStory: "प्रमुख समाचार",
+    latestNews: "पछिल्ला समाचार",
+    readFullStory: "पूरा समाचार पढ्नुहोस्",
     emptyInformation: "नयाँ मार्गदर्शन प्रकाशित भएपछि यहाँ देखिनेछ।",
     emptyNews: "नयाँ समाचार प्रकाशित भएपछि यहाँ देखिनेछ।",
   },

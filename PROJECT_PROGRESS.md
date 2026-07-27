@@ -228,3 +228,53 @@ The homepage must include a platform-neutral Community Discussions section with 
 - Replace the temporary root homepage connection test.
 - Review every pushed design checkpoint at https://nepali-no.vercel.app.
 - Connect nepali.no only after the first presentable design is deployed and the exact Vercel DNS records have been reviewed.
+
+## Mobile-First Design and Homepage News Foundation
+
+Completed and verified:
+- Added the shared visual foundation with self-hosted Inter Variable and Noto Sans Devanagari Variable fonts.
+- Added global design tokens, accessibility rules, responsive spacing, cards, buttons, badges, prose styling, and mobile-first typography.
+- Added src/layouts/BaseLayout.astro.
+- Added src/components/SiteHeader.astro and src/components/SiteFooter.astro.
+- Centralized interface, accessibility, footer, homepage, and guide-audience labels in src/i18n/ne.ts and src/i18n/nb.ts.
+- Added multilingual homepages at /ne/ and /nb/.
+- Styled the Public Information archive and individual guide pages.
+- Localized Public Information intended-audience values instead of exposing internal Sanity codes.
+- Verified the styled pages on Vercel, with especially strong mobile rendering.
+- Adopted mobile-first design as a formal project principle because most visitors are expected to use mobile devices.
+- Recorded English as a future language option. Nepali and Norwegian will be completed first, while new architecture should avoid permanent two-language assumptions.
+- English should later prioritize interface labels and strategic pages for donors, NGOs, partners, transparency, volunteering, and selected important guides.
+
+## Homepage Editorial News Policy
+
+The homepage should remain selective rather than becoming a full news archive:
+- zero or one Important Now notice
+- one featured story
+- up to three latest stories
+- a clear link to all News
+
+Important Now is reserved for genuinely significant and time-sensitive information, such as a major UDI rule change, a critical deadline, an important public-safety notice, or a significant NAV or Skatteetaten change. Routine updates must not use this status.
+
+Completed in the current, not-yet-committed work:
+- Extended the News Article schema with isImportantNow and importantUntil.
+- Added editor guidance and future-expiry validation for Important Now notices.
+- Enhanced the Sanity preview to identify featured and Important Now stories.
+- Added language-specific GROQ queries for Important Now, one featured homepage story, and up to three latest stories.
+- Added featured-story exclusion support to prevent duplicate display in Latest News.
+- Validated all three GROQ expressions directly against the Sanity production dataset. Empty arrays were expected because no News Articles have been published yet.
+- Sanity Studio build and TypeScript validation passed.
+
+## Current Working Tree
+
+The following intended files are currently modified but not yet committed:
+- sanity/schemaTypes/newsArticle.ts
+- src/lib/sanity/queries.ts
+
+## Next Work
+
+- Add localized Important Now and homepage-news interface labels.
+- Replace the homepage News area with a clean, mobile-first newspaper layout.
+- Preserve an empty state when no News Articles exist and never fabricate news content.
+- Run Astro Check and the production build.
+- Publish one controlled News Article through Sanity to review the real featured/latest presentation.
+- Update this progress document, commit, push, and verify the Vercel deployment.
