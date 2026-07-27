@@ -197,3 +197,34 @@ Completed and verified:
 - Begin reusable layouts, shared navigation, and the visual design foundation.
 - Replace the temporary root homepage connection test when the shared layout is ready.
 - Continue updating PROJECT_PROVENANCE.md whenever planned services become verified production facts.
+
+## Vercel Production Deployment Checkpoint
+
+Completed and verified:
+- Imported the private GitHub repository pank-hub/nepaliNO into Vercel.
+- Created the Vercel project nepali-no using the Astro framework preset.
+- Configured PUBLIC_SANITY_PROJECT_ID and PUBLIC_SANITY_DATASET for Production and Preview deployments.
+- Deployed the Astro website successfully to https://nepali-no.vercel.app.
+- Verified that pushes to the main branch are connected to the Vercel production deployment workflow.
+- Verified the live Nepali News archive at https://nepali-no.vercel.app/ne/news/.
+- Verified the live Nepali Public Information archive at https://nepali-no.vercel.app/ne/info/.
+- Verified the published UDI guide at https://nepali-no.vercel.app/ne/info/udi-oppholdstillatelse-offisiell-informasjon/.
+- Confirmed that the live routes receive published content from the Sanity production dataset.
+- Confirmed that the current pages are intentionally unstyled and ready for the visual design phase.
+- The custom domain nepali.no has not yet been connected, and Domeneshop DNS has not been changed.
+
+## Forum Architecture Update
+
+The forum platform is no longer fixed as NodeBB. Current candidates are Discourse, NodeBB, and Flarum. Self-hosted Discourse is the current leading recommendation, pending structured evaluation of moderation, privacy, email delivery, backups, hosting requirements, API integration, and operating responsibility.
+
+The homepage must include a platform-neutral Community Discussions section with a safe fallback until the forum is deployed.
+
+## Next Work
+
+- Begin the frontend visual-discovery and typography phase.
+- Compare two or three coherent design directions.
+- Define brand personality, colors, Devanagari and Latin typography, spacing, content width, and responsive behavior.
+- Build reusable layouts, navigation, language selection, footer, cards, trust elements, and a platform-neutral Community Discussions section.
+- Replace the temporary root homepage connection test.
+- Review every pushed design checkpoint at https://nepali-no.vercel.app.
+- Connect nepali.no only after the first presentable design is deployed and the exact Vercel DNS records have been reviewed.

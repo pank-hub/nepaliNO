@@ -161,3 +161,34 @@ This document should be updated when there are material changes to:
 - major partners
 - editorial governance
 - public-information safeguards
+
+## Verified Vercel Deployment
+
+The Astro frontend has been deployed successfully to Vercel at:
+
+https://nepali-no.vercel.app
+
+The Vercel project is connected to the private GitHub repository pank-hub/nepaliNO. The main branch is used for production deployments.
+
+The deployment uses the Astro framework preset and the following public Sanity configuration values in Vercel:
+
+- PUBLIC_SANITY_PROJECT_ID=f9johco4
+- PUBLIC_SANITY_DATASET=production
+
+The following production routes have been manually verified:
+
+- /ne/news/
+- /ne/info/
+- /ne/info/udi-oppholdstillatelse-offisiell-informasjon/
+
+This verifies the production delivery chain from GitHub through Vercel and Sanity Content Lake to the public Astro website.
+
+The custom domain nepali.no has not yet been connected. Domeneshop DNS remains unchanged. The domain will be connected only after the first presentable visual design is deployed and the exact DNS values shown by the Vercel project have been reviewed. Existing email-related DNS records must be preserved.
+
+## Forum Platform Evaluation
+
+The community forum implementation is not yet deployed. NodeBB was the original provisional choice, but Discourse, NodeBB, and Flarum are now being evaluated.
+
+Self-hosted Discourse is the current leading recommendation because of its mature moderation, governance, searchable discussions, trust system, public API, and suitability for community support. The final choice must follow a structured evaluation of moderation, privacy, backups, transactional email, hosting region, operating costs, API integration, and long-term maintenance.
+
+The public website will use a platform-neutral Community Discussions component so the homepage does not become tightly coupled to one forum product.
