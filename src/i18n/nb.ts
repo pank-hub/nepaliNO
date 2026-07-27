@@ -82,6 +82,16 @@ export const nb = {
     urgentLabel: "Haster",
     featuredLabel: "Fremhevet informasjon",
     fundingAcknowledgement: "Støtte og samarbeid",
+    audiences: {
+      "newly-arrived": "Nyankomne",
+      "workers-job-seekers": "Arbeidstakere og jobbsøkere",
+      "students-young-adults": "Studenter og unge voksne",
+      "families-parents": "Familier og foreldre",
+      "young-nepali-norwegians": "Unge nepalske nordmenn",
+      "business-self-employed": "Næringsdrivende og selvstendig næringsdrivende",
+      "volunteers-organizations": "Frivillige og organisasjoner",
+      everyone: "For alle",
+    },
     disclaimerTitle: "Viktig informasjon",
     disclaimer:
       "nepali.no er ikke en offentlig myndighet. Informasjonen er utarbeidet for å gi en generell og lettere forståelig forklaring. Sjekk alltid den ansvarlige myndighetens offisielle nettsted for gjeldende regler, individuelle avgjørelser og søknadsprosesser.",

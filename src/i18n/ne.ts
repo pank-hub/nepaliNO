@@ -82,6 +82,16 @@ export const ne = {
     urgentLabel: "अत्यावश्यक जानकारी",
     featuredLabel: "विशेष जानकारी",
     fundingAcknowledgement: "सहयोग तथा साझेदारी",
+    audiences: {
+      "newly-arrived": "नयाँ आएका व्यक्तिहरू",
+      "workers-job-seekers": "कामदार र रोजगारी खोज्नेहरू",
+      "students-young-adults": "विद्यार्थी र युवा",
+      "families-parents": "परिवार र अभिभावक",
+      "young-nepali-norwegians": "युवा नेपाली नर्वेजियनहरू",
+      "business-self-employed": "व्यवसायी र स्वरोजगार व्यक्तिहरू",
+      "volunteers-organizations": "स्वयंसेवक र सामुदायिक संस्थाहरू",
+      everyone: "सबैका लागि",
+    },
     disclaimerTitle: "महत्त्वपूर्ण सूचना",
     disclaimer:
       "nepali.no सरकारी निकाय होइन। यहाँ दिइएको जानकारी सामान्य बुझाइका लागि हो। हालको नियम, व्यक्तिगत निर्णय र आवेदन प्रक्रियाका लागि सम्बन्धित सरकारी निकायको आधिकारिक वेबसाइट हेर्नुहोस्।",

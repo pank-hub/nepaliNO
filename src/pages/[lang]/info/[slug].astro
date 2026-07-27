@@ -118,6 +118,9 @@ const portableTextComponents = {
 const alternatePath = guide.translation
   ? `/${guide.translation.language}/info/${guide.translation.slug}/`
   : `/${alternateLanguage}/info/`
+
+const audienceLabels = labels.information.audiences as Record<string, string>
+const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audience
 ---
 
 <BaseLayout
@@ -236,7 +239,7 @@ const alternatePath = guide.translation
             <h2 id="intended-audience-heading">{labels.information.intendedAudience}</h2>
             <ul class="audience-list">
               {guide.intendedAudience.map((audience) => (
-                <li>{audience}</li>
+                <li>{getAudienceLabel(audience)}</li>
               ))}
             </ul>
           </section>
