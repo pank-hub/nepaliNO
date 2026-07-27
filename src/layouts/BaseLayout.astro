@@ -1,0 +1,58 @@
+---
+import "../styles/global.css";
+
+import { getTranslations } from "../i18n";
+import type { SupportedLanguage } from "../i18n/config";
+
+interface Props {
+  language: SupportedLanguage;
+  title: string;
+  description: string;
+  canonicalUrl?: URL;
+  noIndex?: boolean;
+  bodyClass?: string;
+}
+
+const {
+  language,
+  title,
+  description,
+  canonicalUrl,
+  noIndex = false,
+  bodyClass = "",
+} = Astro.props;
+
+const labels = getTranslations(language);
+---
+
+<!doctype html>
+<html lang={language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#172534" />
+
+    {noIndex && <meta name="robots" content="noindex, nofollow" />}
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+    <title>{title}</title>
+
+    <slot name="head" />
+  </head>
+
+  <body class={bodyClass}>
+    <a class="skip-link" href="#main-content">
+      {labels.common.skipToContent}
+    </a>
+
+    <slot name="header" />
+
+    <main id="main-content" tabindex="-1">
+      <slot />
+    </main>
+
+    <slot name="footer" />
+  </body>
+</html>

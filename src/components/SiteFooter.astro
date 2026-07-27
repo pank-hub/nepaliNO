@@ -1,0 +1,231 @@
+---
+import {getTranslations} from '../i18n'
+import type {SupportedLanguage} from '../i18n/config'
+
+interface Props {
+  language: SupportedLanguage
+}
+
+const {language} = Astro.props
+const labels = getTranslations(language)
+const year = new Date().getFullYear()
+---
+
+<footer class="site-footer">
+  <div class="container site-footer__grid">
+    <section class="site-footer__identity" aria-labelledby="footer-brand">
+      <a class="footer-brand" href={`/${language}/`} id="footer-brand">
+        <span class="footer-brand__symbol" aria-hidden="true">न</span>
+        <span class="footer-brand__name">nepali<span>.no</span></span>
+      </a>
+
+      <p>{labels.footer.mission}</p>
+      <p class="site-footer__built-for">{labels.footer.builtFor}</p>
+    </section>
+
+    <nav aria-labelledby="footer-explore-heading">
+      <h2 id="footer-explore-heading">{labels.footer.exploreHeading}</h2>
+      <ul>
+        <li><a href={`/${language}/news/`}>{labels.navigation.news}</a></li>
+        <li><a href={`/${language}/info/`}>{labels.navigation.information}</a></li>
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="footer-community-heading">
+      <h2 id="footer-community-heading">{labels.footer.communityHeading}</h2>
+      <ul>
+        <li>
+          <span>{labels.footer.forum}</span>
+          <span class="footer-status">{labels.footer.forumComingSoon}</span>
+        </li>
+        <li><span>{labels.navigation.events}</span></li>
+        <li><span>{labels.navigation.businesses}</span></li>
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="footer-trust-heading">
+      <h2 id="footer-trust-heading">{labels.footer.trustHeading}</h2>
+      <ul>
+        <li><span>{labels.footer.about}</span></li>
+        <li><a href="/PROJECT_PROVENANCE.md">{labels.footer.provenance}</a></li>
+        <li><span>{labels.footer.privacy}</span></li>
+        <li><span>{labels.footer.contact}</span></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="container site-footer__notice">
+    <p>{labels.footer.disclaimer}</p>
+  </div>
+
+  <div class="site-footer__bottom">
+    <div class="container">
+      <p>© {year} nepali.no. {labels.footer.rights}</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-block-start: var(--section-space);
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    background: var(--civic-deep);
+    color: rgb(255 255 255 / 0.76);
+  }
+
+  .site-footer__grid {
+    display: grid;
+    grid-template-columns: minmax(14rem, 1.5fr) repeat(3, minmax(9rem, 1fr));
+    gap: clamp(2rem, 5vw, 4.5rem);
+    padding-block: clamp(3.5rem, 7vw, 6rem);
+  }
+
+  .site-footer__identity {
+    max-width: 28rem;
+  }
+
+  .footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  .footer-brand:hover {
+    color: #ffffff;
+  }
+
+  .footer-brand__symbol {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
+    background: var(--brand);
+    color: #ffffff;
+    font-family: "Noto Sans Devanagari Variable", sans-serif;
+    font-size: 1.25rem;
+    font-weight: 720;
+    line-height: 1;
+  }
+
+  .footer-brand__name {
+    font-family: "Inter Variable", sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+
+  .footer-brand__name span {
+    color: #ff8b80;
+  }
+
+  .site-footer__identity > p {
+    margin-block-start: 1.25rem;
+    line-height: 1.75;
+  }
+
+  .site-footer__built-for {
+    color: rgb(255 255 255 / 0.58);
+    font-size: 0.875rem;
+  }
+
+  .site-footer h2 {
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 760;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .site-footer h2 {
+    font-size: 1rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .site-footer ul {
+    display: grid;
+    gap: 0.7rem;
+    margin-block-start: 1.15rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-footer li {
+    color: rgb(255 255 255 / 0.67);
+  }
+
+  .site-footer a {
+    color: rgb(255 255 255 / 0.78);
+    text-decoration-color: rgb(255 255 255 / 0.25);
+  }
+
+  .site-footer a:hover {
+    color: #ffffff;
+    text-decoration-color: #ff8b80;
+  }
+
+  .footer-status {
+    display: inline-flex;
+    margin-inline-start: 0.45rem;
+    padding: 0.12rem 0.42rem;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 999px;
+    color: #ffb7b0;
+    font-size: 0.7rem;
+    font-weight: 750;
+    line-height: 1.35;
+  }
+
+  .site-footer__notice {
+    padding-block: 1.25rem;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    color: rgb(255 255 255 / 0.58);
+    font-size: 0.875rem;
+    line-height: 1.65;
+  }
+
+  .site-footer__bottom {
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+    color: rgb(255 255 255 / 0.48);
+    font-size: 0.825rem;
+  }
+
+  .site-footer__bottom .container {
+    padding-block: 1.1rem;
+  }
+
+  @media (max-width: 64rem) {
+    .site-footer__grid {
+      grid-template-columns: minmax(14rem, 1.5fr) repeat(2, minmax(9rem, 1fr));
+    }
+
+    .site-footer__identity {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 42rem) {
+    .site-footer__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .site-footer__identity,
+    .site-footer nav:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 28rem) {
+    .site-footer__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .site-footer__identity,
+    .site-footer nav:last-child {
+      grid-column: auto;
+    }
+  }
+</style>

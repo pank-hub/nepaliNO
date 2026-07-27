@@ -49,9 +49,28 @@ export const nb = {
       "nepali.no er ikke en offentlig myndighet. Informasjonen er utarbeidet for å gi en generell og lettere forståelig forklaring. Sjekk alltid den ansvarlige myndighetens offisielle nettsted for gjeldende regler, individuelle avgjørelser og søknadsprosesser.",
   },
 
+  footer: {
+    mission:
+      "Et digitalt samlingspunkt for informasjon, nyheter, deltakelse og gjensidig støtte i det nepalske miljøet i Norge.",
+    exploreHeading: "Utforsk",
+    communityHeading: "Fellesskap",
+    trustHeading: "Tillit og åpenhet",
+    forum: "Diskusjonsforum",
+    forumComingSoon: "Kommer snart",
+    about: "Om oss",
+    provenance: "Prosjektutvikling og åpenhet",
+    privacy: "Personvern",
+    contact: "Kontakt",
+    disclaimer:
+      "Kontroller alltid den ansvarlige myndighetens offisielle kilde for informasjon om offentlige tjenester.",
+    rights: "Alle rettigheter forbeholdt.",
+    builtFor: "Utviklet spesielt for det nepalske miljøet i Norge.",
+  },
+
   common: {
     mainNavigation: "Hovednavigasjon",
     languageSelector: "Velg språk",
+    skipToContent: "Gå til hovedinnhold",
     publishedOn: "Publisert",
     updatedOn: "Oppdatert",
     officialSource: "Offisiell kilde",

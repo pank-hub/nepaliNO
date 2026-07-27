@@ -1,0 +1,294 @@
+---
+import {getTranslations} from '../i18n'
+import type {SupportedLanguage} from '../i18n/config'
+
+interface Props {
+  language: SupportedLanguage
+  alternatePath?: string
+}
+
+const {language, alternatePath} = Astro.props
+const labels = getTranslations(language)
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const alternateLabels = getTranslations(alternateLanguage)
+const currentPath = Astro.url.pathname
+const resolvedAlternatePath = alternatePath ?? `/${alternateLanguage}/`
+
+const navigationItems = [
+  {label: labels.navigation.home, href: `/${language}/`},
+  {label: labels.navigation.news, href: `/${language}/news/`},
+  {label: labels.navigation.information, href: `/${language}/info/`},
+]
+
+const isActive = (href: string) => {
+  if (href === `/${language}/`) {
+    return currentPath === href
+  }
+
+  return currentPath.startsWith(href)
+}
+---
+
+<header class="site-header">
+  <div class="site-header__bar">
+    <div class="container site-header__inner">
+      <a class="brand" href={`/${language}/`} aria-label={`${labels.navigation.home} | nepali.no`}>
+        <span class="brand__symbol" aria-hidden="true">न</span>
+        <span class="brand__name">nepali<span>.no</span></span>
+      </a>
+
+      <nav class="desktop-navigation" aria-label={labels.common.mainNavigation}>
+        <ul>
+          {navigationItems.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div class="site-header__actions">
+        <a
+          class="language-link"
+          href={resolvedAlternatePath}
+          hreflang={alternateLanguage}
+          lang={alternateLanguage}
+          aria-label={labels.common.languageSelector}
+        >
+          {alternateLabels.languageName}
+        </a>
+
+        <details class="mobile-navigation">
+          <summary aria-label={labels.common.mainNavigation}>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </summary>
+
+          <nav aria-label={labels.common.mainNavigation}>
+            <ul>
+              {navigationItems.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={isActive(item.href) ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </details>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: relative;
+    z-index: 50;
+    border-bottom: 1px solid var(--border);
+    background: rgb(253 252 249 / 0.94);
+    backdrop-filter: blur(1rem);
+  }
+
+  .site-header__bar {
+    min-height: 4.75rem;
+  }
+
+  .site-header__inner {
+    display: flex;
+    min-height: 4.75rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .brand:hover {
+    color: var(--civic-deep);
+  }
+
+  .brand__symbol {
+    display: grid;
+    width: 2.45rem;
+    height: 2.45rem;
+    place-items: center;
+    border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
+    background: var(--brand);
+    color: #ffffff;
+    font-family: "Noto Sans Devanagari Variable", sans-serif;
+    font-size: 1.25rem;
+    font-weight: 720;
+    line-height: 1;
+    box-shadow: 0 0.35rem 1.2rem rgb(198 42 31 / 0.18);
+  }
+
+  .brand__name {
+    color: var(--civic-deep);
+    font-family: "Inter Variable", sans-serif;
+    font-size: 1.18rem;
+    font-weight: 790;
+    letter-spacing: -0.035em;
+  }
+
+  .brand__name span {
+    color: var(--brand);
+  }
+
+  .desktop-navigation ul,
+  .mobile-navigation ul {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .desktop-navigation ul {
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .desktop-navigation a,
+  .mobile-navigation a {
+    color: var(--text-muted);
+    font-weight: 680;
+    text-decoration: none;
+  }
+
+  .desktop-navigation a {
+    display: inline-flex;
+    min-height: 2.6rem;
+    align-items: center;
+    padding-inline: 0.85rem;
+    border-radius: var(--radius-md);
+  }
+
+  .desktop-navigation a:hover,
+  .desktop-navigation a[aria-current="page"] {
+    background: var(--surface-muted);
+    color: var(--civic-deep);
+  }
+
+  .desktop-navigation a[aria-current="page"] {
+    box-shadow: inset 0 -0.16rem 0 var(--brand);
+  }
+
+  .site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .language-link {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    padding-inline: 0.8rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    color: var(--civic-deep);
+    font-size: 0.875rem;
+    font-weight: 720;
+    text-decoration: none;
+  }
+
+  .language-link:hover {
+    border-color: var(--civic);
+    background: var(--surface);
+    color: var(--civic-deep);
+  }
+
+  .mobile-navigation {
+    display: none;
+    position: relative;
+  }
+
+  .mobile-navigation summary {
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-content: center;
+    gap: 0.28rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .mobile-navigation summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile-navigation summary span {
+    display: block;
+    width: 1.15rem;
+    height: 0.12rem;
+    border-radius: 999px;
+    background: var(--civic-deep);
+  }
+
+  .mobile-navigation nav {
+    position: absolute;
+    inset-block-start: calc(100% + 0.75rem);
+    inset-inline-end: 0;
+    width: min(18rem, calc(100vw - 2rem));
+    padding: 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .mobile-navigation ul {
+    flex-direction: column;
+  }
+
+  .mobile-navigation a {
+    display: block;
+    padding: 0.75rem 0.85rem;
+    border-radius: var(--radius-md);
+  }
+
+  .mobile-navigation a:hover,
+  .mobile-navigation a[aria-current="page"] {
+    background: var(--surface-muted);
+    color: var(--civic-deep);
+  }
+
+  @media (max-width: 52rem) {
+    .desktop-navigation {
+      display: none;
+    }
+
+    .mobile-navigation {
+      display: block;
+    }
+  }
+
+  @media (max-width: 27rem) {
+    .brand__name {
+      font-size: 1rem;
+    }
+
+    .language-link {
+      padding-inline: 0.65rem;
+      font-size: 0.8rem;
+    }
+  }
+</style>

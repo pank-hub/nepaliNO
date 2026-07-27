@@ -1,179 +1,380 @@
 ---
-import "../../../styles/global.css";
-
-import { sanityClient } from "sanity:client";
-import { getTranslations } from "../../../i18n";
+import {sanityClient} from 'sanity:client'
+import SiteFooter from '../../../components/SiteFooter.astro'
+import SiteHeader from '../../../components/SiteHeader.astro'
+import {getTranslations} from '../../../i18n'
 import {
   supportedLanguages,
   type SupportedLanguage,
-} from "../../../i18n/config";
-import { ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY } from "../../../lib/sanity/queries";
+} from '../../../i18n/config'
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY} from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
   return supportedLanguages.map((language) => ({
-    params: { lang: language },
-    props: { language },
-  }));
+    params: {lang: language},
+    props: {language},
+  }))
 }
 
 interface Props {
-  language: SupportedLanguage;
+  language: SupportedLanguage
 }
 
 interface GuideSummary {
-  _id: string;
-  title: string;
-  slug: string;
-  language: SupportedLanguage;
-  summary: string;
-  topic: string;
-  intendedAudience?: string[];
-  responsibleAgency: string;
-  officialSourceUrl: string;
-  publishedAt: string;
-  lastReviewedAt: string;
-  nextReviewAt: string;
-  isFeatured?: boolean;
-  isUrgent?: boolean;
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  topic: string
+  intendedAudience?: string[]
+  responsibleAgency: string
+  officialSourceUrl: string
+  publishedAt: string
+  lastReviewedAt: string
+  nextReviewAt: string
+  isFeatured?: boolean
+  isUrgent?: boolean
 }
 
-const { language } = Astro.props;
-const labels = getTranslations(language);
+const {language} = Astro.props
+const labels = getTranslations(language)
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 
 const guides = await sanityClient.fetch<GuideSummary[]>(
   ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY,
-  { language },
-);
+  {language},
+)
 
-const alternateLanguage: SupportedLanguage =
-  language === "ne" ? "nb" : "ne";
-const alternateLabels = getTranslations(alternateLanguage);
-
-const dateLocale = language === "ne" ? "ne-NP" : "nb-NO";
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const formatDate = (date: string) =>
   new Date(`${date}T00:00:00`).toLocaleDateString(dateLocale, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 ---
 
-<html lang={language}>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="description" content={labels.information.pageDescription} />
-    <meta name="generator" content={Astro.generator} />
-    <title>{labels.information.pageTitle} | nepali.no</title>
-  </head>
+<BaseLayout
+  language={language}
+  title={`${labels.information.pageTitle} | nepali.no`}
+  description={labels.information.pageDescription}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={`/${alternateLanguage}/info/`}
+  />
 
-  <body>
-    <header>
-      <a href={`/${language}/`}>nepali.no</a>
-
-      <nav aria-label={labels.common.mainNavigation}>
-        <a href={`/${language}/news/`}>{labels.navigation.news}</a>
-        <a href={`/${language}/info/`} aria-current="page">
-          {labels.navigation.information}
-        </a>
-      </nav>
-
-      <nav aria-label={labels.common.languageSelector}>
-        <a href={`/${alternateLanguage}/info/`} hreflang={alternateLanguage}>
-          {alternateLabels.languageName}
-        </a>
-      </nav>
-    </header>
-
-    <main>
-      <header>
+  <div class="info-hero">
+    <div class="container info-hero__inner">
+      <div class="reading-width">
+        <p class="eyebrow">{labels.navigation.information}</p>
         <h1>{labels.information.pageTitle}</h1>
-        <p>{labels.information.pageDescription}</p>
-      </header>
+        <p class="lead">{labels.information.pageDescription}</p>
+      </div>
+    </div>
+  </div>
 
-      <aside aria-labelledby="information-disclaimer-title">
-        <h2 id="information-disclaimer-title">
-          {labels.information.disclaimerTitle}
-        </h2>
-        <p>{labels.information.disclaimer}</p>
+  <section class="section-sm">
+    <div class="container">
+      <aside class="trust-notice" aria-labelledby="information-disclaimer-title">
+        <div class="trust-notice__symbol" aria-hidden="true">i</div>
+        <div>
+          <h2 id="information-disclaimer-title">
+            {labels.information.disclaimerTitle}
+          </h2>
+          <p>{labels.information.disclaimer}</p>
+        </div>
       </aside>
+    </div>
+  </section>
+
+  <section class="guides-section section-sm" aria-labelledby="guides-heading">
+    <div class="container">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">{labels.information.officialSource}</p>
+          <h2 id="guides-heading">{labels.information.latestHeading}</h2>
+        </div>
+      </div>
 
       {
         guides.length === 0 ? (
-          <section aria-labelledby="empty-guides-heading">
-            <h2 id="empty-guides-heading">
-              {labels.information.emptyHeading}
-            </h2>
+          <div class="empty-state surface">
+            <h3>{labels.information.emptyHeading}</h3>
             <p>{labels.information.emptyMessage}</p>
-          </section>
+          </div>
         ) : (
-          <section aria-labelledby="guides-heading">
-            <h2 id="guides-heading">{labels.information.latestHeading}</h2>
-
-            <ul>
-              {guides.map((guide) => (
-                <li>
-                  <article>
-                    <p>{guide.responsibleAgency}</p>
+          <ul class="guide-grid">
+            {guides.map((guide) => (
+              <li>
+                <article class="guide-card card">
+                  <div class="guide-card__topline">
+                    <span class="badge badge-success">
+                      {guide.responsibleAgency}
+                    </span>
 
                     {guide.isUrgent && (
-                      <p>{labels.information.urgentLabel}</p>
+                      <span class="badge badge-brand">
+                        {labels.information.urgentLabel}
+                      </span>
                     )}
+                  </div>
 
-                    {guide.isFeatured && (
-                      <p>{labels.information.featuredLabel}</p>
-                    )}
-
+                  <div class="guide-card__content">
                     <h3>
                       <a href={`/${language}/info/${guide.slug}/`}>
                         {guide.title}
                       </a>
                     </h3>
-
                     <p>{guide.summary}</p>
+                  </div>
 
-                    <dl>
-                      <div>
-                        <dt>{labels.information.lastReviewed}</dt>
-                        <dd>
-                          <time datetime={guide.lastReviewedAt}>
-                            {formatDate(guide.lastReviewedAt)}
-                          </time>
-                        </dd>
-                      </div>
+                  <dl class="guide-card__meta">
+                    <div>
+                      <dt>{labels.information.lastReviewed}</dt>
+                      <dd>
+                        <time datetime={guide.lastReviewedAt}>
+                          {formatDate(guide.lastReviewedAt)}
+                        </time>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>{labels.information.nextReview}</dt>
+                      <dd>
+                        <time datetime={guide.nextReviewAt}>
+                          {formatDate(guide.nextReviewAt)}
+                        </time>
+                      </dd>
+                    </div>
+                  </dl>
 
-                      <div>
-                        <dt>{labels.information.nextReview}</dt>
-                        <dd>
-                          <time datetime={guide.nextReviewAt}>
-                            {formatDate(guide.nextReviewAt)}
-                          </time>
-                        </dd>
-                      </div>
-                    </dl>
-
-                    <p>
-                      <a href={`/${language}/info/${guide.slug}/`}>
-                        {labels.information.readGuide}
-                      </a>
-                    </p>
-
-                    <p>
-                      <a
-                        href={guide.officialSourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {labels.information.officialSource}: {guide.responsibleAgency}
-                      </a>
-                    </p>
-                  </article>
-                </li>
-              ))}
-            </ul>
-          </section>
+                  <div class="guide-card__actions">
+                    <a
+                      class="button button-primary"
+                      href={`/${language}/info/${guide.slug}/`}
+                    >
+                      {labels.information.readGuide}
+                    </a>
+                    <a
+                      class="official-link"
+                      href={guide.officialSourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {labels.information.officialSource}
+                      <span aria-hidden="true">↗</span>
+                    </a>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
         )
       }
-    </main>
-  </body>
-</html>
+    </div>
+  </section>
+
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .info-hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 88% 20%, rgb(198 42 31 / 0.1), transparent 18rem),
+      linear-gradient(135deg, #f5f8fb 0%, #fdfcf9 62%, #fff5f4 100%);
+  }
+
+  .info-hero::after {
+    content: '';
+    position: absolute;
+    width: 16rem;
+    height: 16rem;
+    inset-block-end: -10rem;
+    inset-inline-end: 8%;
+    border: 1px solid rgb(198 42 31 / 0.13);
+    border-radius: 50%;
+  }
+
+  .info-hero__inner {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(4rem, 10vw, 8rem);
+  }
+
+  .info-hero h1 {
+    margin-block-start: 0.7rem;
+    max-width: 15ch;
+  }
+
+  .info-hero .lead {
+    max-width: 48rem;
+    margin-block-start: 1.25rem;
+  }
+
+  .trust-notice {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border: 1px solid #a5bdd4;
+    border-radius: var(--radius-lg);
+    background: #f5f8fb;
+  }
+
+  .trust-notice__symbol {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--civic);
+    color: #ffffff;
+    font-family: Georgia, serif;
+    font-weight: 700;
+  }
+
+  .trust-notice h2 {
+    font-size: 1.1rem;
+  }
+
+  .trust-notice p {
+    margin-block-start: 0.45rem;
+    color: var(--text-muted);
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-block-end: 2rem;
+  }
+
+  .section-heading h2 {
+    margin-block-start: 0.55rem;
+  }
+
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .guide-card {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+  }
+
+  .guide-card__topline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .guide-card__content {
+    margin-block-start: 1.25rem;
+  }
+
+  .guide-card__content h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .guide-card__content h3 a:hover {
+    color: var(--brand);
+  }
+
+  .guide-card__content p {
+    margin-block-start: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .guide-card__meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-block: 1.5rem;
+    padding-block: 1rem;
+    border-block: 1px solid var(--border);
+  }
+
+  .guide-card__meta dt {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .guide-card__meta dt {
+    font-size: 0.82rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .guide-card__meta dd {
+    margin: 0.25rem 0 0;
+    color: var(--civic-deep);
+    font-size: 0.9rem;
+    font-weight: 650;
+  }
+
+  .guide-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-start: auto;
+  }
+
+  .official-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--civic);
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .empty-state {
+    padding: clamp(2rem, 5vw, 4rem);
+    text-align: center;
+  }
+
+  .empty-state p {
+    margin-block-start: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 48rem) {
+    .guide-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .guide-card__actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .official-link {
+      min-height: 2.75rem;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .guide-card__meta {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
