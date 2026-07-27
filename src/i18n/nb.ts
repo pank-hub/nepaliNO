@@ -11,6 +11,44 @@ export const nb = {
     about: "Om oss",
   },
 
+  home: {
+    metaTitle: "nepali.no | Et digitalt samlingspunkt for det nepalske miljøet i Norge",
+    metaDescription:
+      "Informasjon, nyheter, diskusjoner, arrangementer og nyttige tjenester for det nepalske miljøet i Norge.",
+    eyebrow: "Det nepalske miljøet i Norge",
+    title: "Finn informasjon, bli kjent og delta",
+    introduction:
+      "Et digitalt samlingspunkt som knytter sammen pålitelig informasjon om livet i Norge, nyheter og gjensidig støtte i fellesskapet.",
+    primaryAction: "Utforsk Livet i Norge",
+    secondaryAction: "Les nyheter",
+    informationEyebrow: "Pålitelig veiledning",
+    informationHeading: "Livet i Norge",
+    informationDescription:
+      "Lett forståelige veiledninger basert på offisielle kilder fra offentlige myndigheter.",
+    viewAllInformation: "Se all informasjon",
+    newsEyebrow: "Hold deg oppdatert",
+    newsHeading: "Siste nytt",
+    newsDescription:
+      "Nyheter og oppdateringer fra Norge, Nepal og det nepalske miljøet i Norge.",
+    viewAllNews: "Se alle nyheter",
+    discussionsEyebrow: "Delta i samtalen",
+    discussionsHeading: "Hva diskuteres i fellesskapet?",
+    discussionsDescription:
+      "Et trygt og oversiktlig diskusjonsforum for personlige erfaringer, spørsmål og gjensidig støtte er under utvikling.",
+    forumComingSoon: "Diskusjonsforum kommer snart",
+    forumNotice:
+      "Diskusjoner i fellesskapet kan være basert på personlige erfaringer og meninger. Kontroller alltid offisielle kilder for gjeldende regler.",
+    eventsHeading: "Kommende arrangementer",
+    eventsDescription:
+      "Kulturprogrammer, møteplasser, seminarer og aktiviteter i fellesskapet.",
+    businessesHeading: "Nepalske bedrifter",
+    businessesDescription:
+      "Finn nepalskeide bedrifter og tjenester i Norge.",
+    comingSoon: "Kommer snart",
+    emptyInformation: "Nye veiledninger vises her når de blir publisert.",
+    emptyNews: "Nye artikler vises her når de blir publisert.",
+  },
+
   news: {
     pageTitle: "Nyheter",
     pageDescription:
