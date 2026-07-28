@@ -439,3 +439,222 @@ Recommended News archive order:
 5. Footer
 
 The Information links should use compact editorial rows rather than oversized cards and should provide a bridge from current News to durable Public Information guidance.
+## Automated Publishing and Knowledge-Centre Strategy
+
+### Automated Sanity-to-Vercel Publishing
+
+Completed and verified:
+
+- Created a Deploy Hook in the public Vercel project `nepali-no`, targeting the `main` branch.
+- Created an outgoing Sanity document webhook for dataset `production`.
+- Configured the webhook to trigger on published create, update, and delete events for:
+  - `newsArticle`
+  - `publicInformationGuide`
+  - `communityEvent`
+  - `businessListing`
+- Kept draft and version events disabled so ordinary editor autosaves do not trigger public deployments.
+- Used a minimal webhook payload because Vercel only needs the private Deploy Hook request to start a new build.
+- Verified the complete automatic workflow with a harmless Norwegian News Article caption correction:
+  - content edited and published in Sanity Studio
+  - Sanity webhook called the private Vercel Deploy Hook
+  - the public `nepali-no` Vercel project started a new production deployment automatically
+  - Astro fetched current Sanity content
+  - 10 static pages were generated
+  - deployment completed successfully
+  - the corrected Norwegian caption appeared on the public article
+- Manual redeployment of the public Vercel project is no longer required for ordinary published changes to the four configured editorial content types.
+- The Vercel Deploy Hook URL is secret operational information and must never be committed, shared in chat, included in screenshots, or stored in public documentation. If exposed, revoke it and create a replacement.
+
+### News Archive Refinement
+
+Completed and verified:
+
+- Reduced the desktop News archive hero height so the lead story appears earlier.
+- Added `NEWS_ARCHIVE_USEFUL_GUIDES_QUERY`.
+- Added a compact language-specific Useful Information area below the News content.
+- The Useful Information query returns a maximum of three active Public Information guides using predictable editorial ordering:
+  1. featured guides first
+  2. most recently reviewed guides next
+  3. publication date as the final fallback
+- The section is hidden when no appropriate guide exists.
+- The section uses compact editorial rows with responsible agency, guide title, summary, review date, and reading link.
+- Mobile presentation stacks the guide information and removes lower-priority review metadata from the compact view.
+- Astro Check and the production build passed.
+- Latest pushed code checkpoint before this documentation update:
+  - `ee7075e useful-guides`
+
+## Public Information as a Large-Scale Knowledge Centre
+
+The Public Information collection is expected to grow far beyond the initial approximately 100 identified topics. The content will revolve around a stable set of broad subject areas and should not be presented as a flat list of unrelated guide pages.
+
+The overall platform architecture remains valid. Do not rebuild or replace Astro, Sanity, Vercel, the multilingual document model, translation references, review controls, or existing routes. Evolve the Public Information experience into a structured knowledge centre.
+
+### Recommended Main Categories
+
+1. Arrival, residence and immigration
+2. Moving from the EU/EEA
+3. Banking, digital identity and communication
+4. Housing and accommodation
+5. Employment and workplace rights
+6. Family, children and education
+7. Healthcare and insurance
+8. Taxes, benefits and business
+9. Language, society and integration
+10. Legal help, emergencies and essential services
+11. Other useful information
+
+The fallback category should be presented naturally as:
+
+- Nepali: `अन्य उपयोगी जानकारी`
+- Norwegian: `Annen nyttig informasjon`
+
+The fallback category is a safety mechanism, not a dumping ground. If several related guides accumulate there, that is evidence that a new proper category or subtopic may be needed.
+
+### Categories, Tags and Reader Journeys
+
+- Each guide should have one broad and stable primary category.
+- Flexible tags or keywords should represent specific subjects such as BankID, deposit account, holiday pay, fastlege, tax card, or family immigration.
+- Reader-stage and audience filters should support journeys such as:
+  - before arriving
+  - newly arrived
+  - student
+  - worker
+  - family
+  - business owner
+  - long-term resident
+  - EU/EEA citizen
+  - everyone
+- Avoid creating a separate main category for every narrow subject.
+- Avoid automatically turning every numbered question into a separate thin page.
+- Group closely related questions into comprehensive guides when that better matches the reader's task and reduces duplicated maintenance.
+
+### Recommended Information Hierarchy
+
+Level 1: Public Information homepage
+
+- `/ne/info/`
+- `/nb/info/`
+- Shows stable topic hubs, important starting points, search entry, and audience journeys.
+
+Level 2: Topic hubs
+
+Examples:
+
+- immigration and first steps
+- banking and digital identity
+- housing
+- employment rights
+- family and education
+- healthcare
+
+A topic hub should contain an introduction, start-here guides, essential guides, recently reviewed material, responsible authorities, related News, and all guides in that topic.
+
+Level 3: Individual guides
+
+Each guide should support a concise answer, intended audience, structured explanation or steps, important Norwegian terms, responsible authority, official links, review dates, related guides, related News, and a translation link.
+
+### Future Schema and Editorial Improvements
+
+Plan, inspect, and implement carefully rather than changing everything at once:
+
+- stable primary topic or topic-hub reference
+- flexible tags and search synonyms
+- guide format, such as quick answer, step-by-step guide, comprehensive guide, checklist, explainer, or emergency information
+- reader journey or stage
+- intentionally related guides
+- optional collections such as First weeks in Norway
+- editorial priority such as Essential, Recommended, or Specialist
+- maintenance sensitivity such as High, Medium, or Low
+- related current News and updates
+- scalable search that recognises Norwegian official terms and natural Nepali search phrases
+
+## Planned Major Phase: Language Learning
+
+After the core information platform has matured, the next major development phase is planned as language learning.
+
+### Programme A: Norwegian for Native Nepali Speakers
+
+Potential areas include:
+
+- pronunciation explained through Nepali
+- everyday Norwegian vocabulary and expressions
+- grammar explained with Nepali comparisons
+- workplace Norwegian
+- Norwegian for healthcare appointments
+- Norwegian for parents communicating with schools
+- Norwegian for NAV, UDI, Skatteetaten and other public services
+- examination preparation
+- listening exercises and interactive practice
+
+### Programme B: Nepali for Children with Nepali Background
+
+Potential areas include:
+
+- Devanagari letters and sounds
+- reading and writing
+- family and everyday vocabulary
+- age-specific bilingual lessons
+- stories and cultural knowledge
+- speaking with relatives across generations
+- games, quizzes and interactive exercises
+- learning paths for children who understand spoken Nepali but cannot read or write it
+
+### Learning-Platform Architecture
+
+Do not mix the learning system into the Public Information content type. The future platform structure should allow a separate learning area:
+
+- `/ne/learn/`
+- `/nb/learn/`
+
+The learning model will likely require:
+
+- programme
+- course
+- module
+- lesson
+- exercise
+- question and feedback
+- audio, image and video resources
+- learner accounts
+- progress tracking
+- privacy and consent controls
+
+Sanity can manage curriculum and lesson content. Learner accounts, answers, progress, certificates, and sensitive user data should use an appropriate application database and authentication layer rather than ordinary Sanity documents.
+
+## Donor and Grant Readiness
+
+The language-learning phase is expected to require support from donors, Norwegian public funding bodies, NGOs, foundations, municipalities, or partner organisations.
+
+Build a donor-ready second phase through:
+
+1. audience and needs research
+2. curriculum and pedagogical design
+3. qualified language and education contributors
+4. a small pilot for each learning programme
+5. audio and interactive learning resources
+6. child safeguarding and privacy planning
+7. measurable learning outcomes
+8. mobile-first accessibility
+9. pilot evaluation and user feedback
+10. transparent governance, budget, staffing and maintenance plans
+
+The funding narrative should connect two complementary public-benefit goals:
+
+- helping adults and newcomers participate confidently in Norwegian society
+- helping children preserve and develop Nepali language, cultural identity and intergenerational connection
+
+The planned language-learning programme must be documented as a future funded phase, not as a delivered feature.
+
+## Strategic Development Order
+
+Recommended order from the current checkpoint:
+
+1. Complete the scalable Public Information taxonomy and topic-hub architecture.
+2. Extend the Sanity schema carefully for categories, tags, guide formats, reader journeys, relationships and priority.
+3. Redesign the Public Information archive around topic hubs.
+4. Add search after enough real guides exist to test relevance properly.
+5. Continue publishing and reviewing high-priority guides.
+6. Establish Events and other core community services.
+7. Collect evidence of usage, public value and community need.
+8. Develop the language-learning curriculum and donor-ready pilot proposal with qualified contributors.
+9. Build the learning platform as a deliberately funded major phase.
