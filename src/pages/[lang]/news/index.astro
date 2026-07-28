@@ -1,124 +1,559 @@
 ---
-import "../../../styles/global.css";
-
-import { sanityClient } from "sanity:client";
-import { getTranslations } from "../../../i18n";
+import {sanityClient} from 'sanity:client'
+import SiteFooter from '../../../components/SiteFooter.astro'
+import SiteHeader from '../../../components/SiteHeader.astro'
+import {getTranslations} from '../../../i18n'
 import {
   supportedLanguages,
   type SupportedLanguage,
-} from "../../../i18n/config";
-import { NEWS_ARTICLES_BY_LANGUAGE_QUERY } from "../../../lib/sanity/queries";
+} from '../../../i18n/config'
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {urlFor} from '../../../lib/sanity/image'
+import {NEWS_ARTICLES_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
   return supportedLanguages.map((language) => ({
-    params: { lang: language },
-    props: { language },
-  }));
+    params: {lang: language},
+    props: {language},
+  }))
 }
 
 interface Props {
-  language: SupportedLanguage;
+  language: SupportedLanguage
 }
 
-const { language } = Astro.props;
-const labels = getTranslations(language);
+interface ArchiveImage {
+  asset?: unknown
+  alt?: string
+  caption?: string
+  credit?: string
+  hotspot?: unknown
+  crop?: unknown
+}
 
-const articles = await sanityClient.fetch(
+interface ArchiveArticle {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  newsRegion: string
+  category: string
+  featuredImage?: ArchiveImage
+  authorName?: string
+  publishedAt: string
+  isFeatured?: boolean
+}
+
+const {language} = Astro.props
+const labels = getTranslations(language)
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+
+const articles = await sanityClient.fetch<ArchiveArticle[]>(
   NEWS_ARTICLES_BY_LANGUAGE_QUERY,
-  { language },
-);
+  {language},
+)
 
-const alternateLanguage: SupportedLanguage =
-  language === "ne" ? "nb" : "ne";
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString(dateLocale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 
-const alternateLabels = getTranslations(alternateLanguage);
+const regionLabels: Record<string, Record<SupportedLanguage, string>> = {
+  norway: {ne: 'नर्वे', nb: 'Norge'},
+  nepal: {ne: 'नेपाल', nb: 'Nepal'},
+  community: {ne: 'समुदाय', nb: 'Fellesskap'},
+  international: {ne: 'अन्तर्राष्ट्रिय', nb: 'Internasjonalt'},
+}
+
+const categoryLabels: Record<string, Record<SupportedLanguage, string>> = {
+  'current-affairs': {ne: 'समसामयिक विषय', nb: 'Aktuelt'},
+  'immigration-integration': {
+    ne: 'आप्रवासन र एकीकरण',
+    nb: 'Innvandring og integrering',
+  },
+  'education-student-life': {
+    ne: 'शिक्षा र विद्यार्थी जीवन',
+    nb: 'Utdanning og studentliv',
+  },
+  'employment-economy': {
+    ne: 'रोजगारी र अर्थतन्त्र',
+    nb: 'Arbeidsliv og økonomi',
+  },
+  'culture-community': {
+    ne: 'संस्कृति र समुदाय',
+    nb: 'Kultur og fellesskap',
+  },
+  'health-welfare': {ne: 'स्वास्थ्य र कल्याण', nb: 'Helse og velferd'},
+  sports: {ne: 'खेलकुद', nb: 'Sport'},
+}
+
+const getRegionLabel = (value: string) =>
+  regionLabels[value]?.[language] ?? value
+const getCategoryLabel = (value: string) =>
+  categoryLabels[value]?.[language] ?? value
+const imageUrl = (image?: ArchiveImage, width = 1200) =>
+  image?.asset
+    ? urlFor(image as any).width(width).fit('crop').auto('format').url()
+    : null
+
+const featuredArticle =
+  articles.find((article) => article.isFeatured) ?? articles[0] ?? null
+const latestArticles = featuredArticle
+  ? articles.filter((article) => article._id !== featuredArticle._id)
+  : []
 ---
 
-<html lang={language}>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="description" content={labels.news.pageDescription} />
-    <meta name="generator" content={Astro.generator} />
+<BaseLayout
+  language={language}
+  title={`${labels.news.pageTitle} | nepali.no`}
+  description={labels.news.pageDescription}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={`/${alternateLanguage}/news/`}
+  />
 
-    <title>{labels.news.pageTitle} | nepali.no</title>
-  </head>
+  <header class="news-hero">
+    <div class="container news-hero__inner">
+      <p class="eyebrow">nepali.no</p>
+      <h1>{labels.news.pageTitle}</h1>
+      <p class="lead">{labels.news.pageDescription}</p>
+    </div>
+  </header>
 
-  <body>
-    <header>
-      <a href={`/${language}/`}>nepali.no</a>
+  <main class="news-archive">
+    <section class="section" aria-labelledby="latest-news-heading">
+      <div class="container">
+        <div class="archive-heading">
+          <h2 id="latest-news-heading">{labels.news.latestHeading}</h2>
+          {articles.length > 0 && (
+            <p>
+              {language === 'ne'
+                ? `${articles.length} समाचार`
+                : `${articles.length} ${articles.length === 1 ? 'sak' : 'saker'}`}
+            </p>
+          )}
+        </div>
 
-      <nav aria-label={labels.common.mainNavigation}>
-        <a href={`/${language}/news/`}>
-          {labels.navigation.news}
-        </a>
-      </nav>
-
-      <nav aria-label={labels.common.languageSelector}>
-        <a href={`/${alternateLanguage}/news/`}>
-          {alternateLabels.languageName}
-        </a>
-      </nav>
-    </header>
-
-    <main>
-      <header>
-        <h1>{labels.news.pageTitle}</h1>
-        <p>{labels.news.pageDescription}</p>
-      </header>
-
-      {
-        articles.length === 0 ? (
-          <section aria-labelledby="empty-news-heading">
-            <h2 id="empty-news-heading">
-              {labels.news.emptyHeading}
-            </h2>
-
+        {articles.length === 0 ? (
+          <div class="empty-state">
+            <span aria-hidden="true"></span>
+            <h3>{labels.news.emptyHeading}</h3>
             <p>{labels.news.emptyMessage}</p>
-          </section>
+          </div>
         ) : (
-          <section aria-labelledby="latest-news-heading">
-            <h2 id="latest-news-heading">
-              {labels.news.latestHeading}
-            </h2>
+          <>
+            {featuredArticle && (
+              <article class="archive-lead">
+                <div class="archive-lead__content">
+                  <p class="story-kicker">
+                    {featuredArticle.isFeatured && (
+                      <>{labels.home.featuredStory} · </>
+                    )}
+                    {getRegionLabel(featuredArticle.newsRegion)} ·{' '}
+                    {getCategoryLabel(featuredArticle.category)}
+                  </p>
 
-            <ul>
-              {articles.map((article: any) => (
-                <li>
-                  <article>
-                    <p>{article.newsRegion}</p>
+                  <h3>
+                    <a href={`/${language}/news/${featuredArticle.slug}/`}>
+                      {featuredArticle.title}
+                    </a>
+                  </h3>
 
-<h3>
-                      <a href={`/${language}/news/${article.slug}/`}>
-      {article.title}
-  </a>
-</h3>
+                  <p class="archive-lead__summary">{featuredArticle.summary}</p>
 
-                    <p>{article.summary}</p>
+                  <div class="story-meta">
+                    <time datetime={featuredArticle.publishedAt}>
+                      {formatDate(featuredArticle.publishedAt)}
+                    </time>
+                    {featuredArticle.authorName && (
+                      <span>{featuredArticle.authorName}</span>
+                    )}
+                  </div>
 
-                    <p>
-                      <time datetime={article.publishedAt}>
-                        {new Date(article.publishedAt).toLocaleDateString(
-                          language === "ne" ? "ne-NP" : "nb-NO",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          },
+                  <a
+                    class="story-link"
+                    href={`/${language}/news/${featuredArticle.slug}/`}
+                  >
+                    {labels.news.readMore}
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+
+                {imageUrl(featuredArticle.featuredImage) ? (
+                  <a
+                    class="archive-lead__image"
+                    href={`/${language}/news/${featuredArticle.slug}/`}
+                    tabindex="-1"
+                    aria-hidden="true"
+                  >
+                    <img
+                      src={imageUrl(featuredArticle.featuredImage) ?? ''}
+                      alt=""
+                      width="1200"
+                      height="800"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </a>
+                ) : (
+                  <div class="archive-lead__placeholder" aria-hidden="true"></div>
+                )}
+              </article>
+            )}
+
+            {latestArticles.length > 0 && (
+              <section class="archive-list" aria-labelledby="more-news-heading">
+                <h3 id="more-news-heading">
+                  {language === 'ne' ? 'थप समाचार' : 'Flere nyheter'}
+                </h3>
+
+                <ol>
+                  {latestArticles.map((article) => (
+                    <li>
+                      <article class="archive-row">
+                        <div class="archive-row__content">
+                          <p class="story-kicker">
+                            {getRegionLabel(article.newsRegion)} ·{' '}
+                            {getCategoryLabel(article.category)}
+                          </p>
+                          <h4>
+                            <a href={`/${language}/news/${article.slug}/`}>
+                              {article.title}
+                            </a>
+                          </h4>
+                          <p>{article.summary}</p>
+                          <div class="story-meta">
+                            <time datetime={article.publishedAt}>
+                              {formatDate(article.publishedAt)}
+                            </time>
+                            {article.authorName && <span>{article.authorName}</span>}
+                          </div>
+                        </div>
+
+                        {imageUrl(article.featuredImage, 520) && (
+                          <a
+                            class="archive-row__image"
+                            href={`/${language}/news/${article.slug}/`}
+                            tabindex="-1"
+                            aria-hidden="true"
+                          >
+                            <img
+                              src={imageUrl(article.featuredImage, 520) ?? ''}
+                              alt=""
+                              width="520"
+                              height="340"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </a>
                         )}
-                      </time>
-                    </p>
+                      </article>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  </main>
 
-                    <a href={`/${language}/news/${article.slug}/`}>
-  {labels.news.readMore}
-</a>
-                  </article>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      }
-    </main>
-  </body>
-</html>
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .news-hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 85% 10%, rgb(198 42 31 / 0.1), transparent 20rem),
+      linear-gradient(135deg, #f5f8fb 0%, #fdfcf9 62%, #fff6f5 100%);
+  }
+
+  .news-hero::after {
+    content: '';
+    position: absolute;
+    width: 18rem;
+    height: 18rem;
+    inset-block-end: -12rem;
+    inset-inline-end: 7%;
+    border: 1px solid rgb(198 42 31 / 0.13);
+    border-radius: 50%;
+  }
+
+  .news-hero__inner {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(3.5rem, 9vw, 7rem);
+  }
+
+  .news-hero h1 {
+    margin-block-start: 0.55rem;
+  }
+
+  .news-hero .lead {
+    max-width: 45rem;
+    margin-block-start: 1rem;
+  }
+
+  .news-archive {
+    background: #ffffff;
+  }
+
+  .archive-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-block-end: 1.5rem;
+    padding-block-end: 1rem;
+    border-bottom: 2px solid var(--civic-deep);
+  }
+
+  .archive-heading p {
+    color: var(--text-soft);
+    font-size: 0.85rem;
+    font-weight: 650;
+  }
+
+  .archive-lead {
+    display: grid;
+    grid-template-columns: minmax(18rem, 0.82fr) minmax(0, 1.3fr);
+    grid-template-areas: 'content image';
+    min-height: 29rem;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .archive-lead__content {
+    grid-area: content;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1.75rem, 4vw, 3.25rem);
+    background: var(--surface-warm);
+  }
+
+  .story-kicker {
+    color: var(--brand);
+    font-size: 0.76rem;
+    font-weight: 780;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .story-kicker {
+    font-size: 0.86rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .archive-lead h3 {
+    margin-block-start: 0.7rem;
+    font-size: clamp(2rem, 4.3vw, 3.75rem);
+    line-height: 1.12;
+  }
+
+  .archive-lead h3 a,
+  .archive-row h4 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .archive-lead h3 a:hover,
+  .archive-row h4 a:hover {
+    color: var(--brand);
+  }
+
+  .archive-lead__summary {
+    margin-block-start: 1rem;
+    color: var(--text-muted);
+  }
+
+  .story-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    margin-block-start: 1rem;
+    color: var(--text-soft);
+    font-size: 0.84rem;
+  }
+
+  .story-meta span::before {
+    content: '•';
+    margin-inline-end: 1rem;
+  }
+
+  .story-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    margin-block-start: 1.4rem;
+    color: var(--civic-deep);
+    font-weight: 760;
+  }
+
+  .archive-lead__image,
+  .archive-lead__placeholder {
+    grid-area: image;
+    display: block;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--civic), var(--civic-deep));
+  }
+
+  .archive-lead__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 300ms ease;
+  }
+
+  .archive-lead__image:hover img {
+    transform: scale(1.015);
+  }
+
+  .archive-list {
+    margin-block-start: clamp(3rem, 7vw, 5rem);
+  }
+
+  .archive-list > h3 {
+    padding-block-end: 0.8rem;
+    border-bottom: 0.25rem solid var(--brand);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .archive-list > h3 {
+    font-size: 1.1rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .archive-list ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .archive-list li {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .archive-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 17rem);
+    gap: clamp(1.25rem, 4vw, 3rem);
+    align-items: center;
+    padding-block: 1.5rem;
+  }
+
+  .archive-row h4 {
+    margin-block-start: 0.45rem;
+    font-size: clamp(1.3rem, 2.8vw, 2rem);
+    line-height: 1.22;
+  }
+
+  .archive-row__content > p:not(.story-kicker) {
+    max-width: 48rem;
+    margin-block-start: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  .archive-row__image {
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 3 / 2;
+    background: var(--surface-muted);
+  }
+
+  .archive-row__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .empty-state {
+    padding: clamp(2.25rem, 7vw, 5rem);
+    border-block: 1px solid var(--border-strong);
+    text-align: center;
+  }
+
+  .empty-state > span {
+    display: block;
+    width: 3rem;
+    height: 0.2rem;
+    margin-inline: auto;
+    margin-block-end: 1rem;
+    background: var(--brand);
+  }
+
+  .empty-state p {
+    margin-block-start: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 52rem) {
+    .archive-lead {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'content'
+        'image';
+      min-height: 0;
+    }
+
+    .archive-lead__content {
+      padding: 1.5rem 0;
+      background: transparent;
+    }
+
+    .archive-lead__image,
+    .archive-lead__placeholder {
+      min-height: 20rem;
+    }
+  }
+
+  @media (max-width: 38rem) {
+    .news-hero__inner {
+      padding-block: 3rem;
+    }
+
+    .archive-heading {
+      align-items: start;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .archive-lead__image,
+    .archive-lead__placeholder {
+      min-height: 0;
+      margin-inline: calc(-1 * var(--page-gutter));
+      aspect-ratio: 4 / 3;
+    }
+
+    .archive-lead h3 {
+      font-size: clamp(2rem, 10vw, 3rem);
+    }
+
+    .archive-row {
+      grid-template-columns: minmax(0, 1fr) 6rem;
+      gap: 1rem;
+    }
+
+    .archive-row__content > p:not(.story-kicker) {
+      display: none;
+    }
+
+    .archive-row h4 {
+      font-size: 1.15rem;
+    }
+  }
+</style>
