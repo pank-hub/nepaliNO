@@ -158,49 +158,6 @@ const formatDate = (date: string) =>
     </div>
   </section>
 
-  <section class="section home-section" aria-labelledby="home-information-heading">
-    <div class="container">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">{labels.home.informationEyebrow}</p>
-          <h2 id="home-information-heading">{labels.home.informationHeading}</h2>
-          <p>{labels.home.informationDescription}</p>
-        </div>
-        <a class="section-link" href={`/${language}/info/`}>
-          {labels.home.viewAllInformation} <span aria-hidden="true">→</span>
-        </a>
-      </div>
-
-      {
-        featuredGuides.length > 0 ? (
-          <ul class="content-grid">
-            {featuredGuides.map((guide) => (
-              <li>
-                <article class="content-card card">
-                  <div class="content-card__badges">
-                    <span class="badge badge-success">{guide.responsibleAgency}</span>
-                    {guide.isUrgent && (
-                      <span class="badge badge-brand">{labels.information.urgentLabel}</span>
-                    )}
-                  </div>
-                  <h3>
-                    <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
-                  </h3>
-                  <p>{guide.summary}</p>
-                  <a class="content-card__link" href={`/${language}/info/${guide.slug}/`}>
-                    {labels.information.readGuide} <span aria-hidden="true">→</span>
-                  </a>
-                </article>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div class="empty-state surface"><p>{labels.home.emptyInformation}</p></div>
-        )
-      }
-    </div>
-  </section>
-
   <section class="section home-news" aria-labelledby="home-news-heading">
     <div class="container">
       {
@@ -334,6 +291,50 @@ const formatDate = (date: string) =>
             <span class="editorial-empty__rule" aria-hidden="true"></span>
             <p>{labels.home.emptyNews}</p>
           </div>
+        )
+      }
+    </div>
+  </section>
+
+
+  <section class="section home-section" aria-labelledby="home-information-heading">
+    <div class="container">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">{labels.home.informationEyebrow}</p>
+          <h2 id="home-information-heading">{labels.home.informationHeading}</h2>
+          <p>{labels.home.informationDescription}</p>
+        </div>
+        <a class="section-link" href={`/${language}/info/`}>
+          {labels.home.viewAllInformation} <span aria-hidden="true">→</span>
+        </a>
+      </div>
+
+      {
+        featuredGuides.length > 0 ? (
+          <ul class="content-grid">
+            {featuredGuides.map((guide) => (
+              <li>
+                <article class="content-card card">
+                  <div class="content-card__badges">
+                    <span class="badge badge-success">{guide.responsibleAgency}</span>
+                    {guide.isUrgent && (
+                      <span class="badge badge-brand">{labels.information.urgentLabel}</span>
+                    )}
+                  </div>
+                  <h3>
+                    <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
+                  </h3>
+                  <p>{guide.summary}</p>
+                  <a class="content-card__link" href={`/${language}/info/${guide.slug}/`}>
+                    {labels.information.readGuide} <span aria-hidden="true">→</span>
+                  </a>
+                </article>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div class="empty-state surface"><p>{labels.home.emptyInformation}</p></div>
         )
       }
     </div>
@@ -608,12 +609,30 @@ const formatDate = (date: string) =>
 
   .news-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.75fr);
-    gap: clamp(2rem, 5vw, 4rem);
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 3.5rem);
   }
 
   .lead-story {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.85fr);
+    grid-template-areas: "image content";
     min-width: 0;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .lead-story__image,
+  .lead-story__placeholder {
+    grid-area: image;
+  }
+
+  .lead-story__content {
+    grid-area: content;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background: var(--surface-warm);
   }
 
   .lead-story__image,
@@ -637,7 +656,7 @@ const formatDate = (date: string) =>
   }
 
   .lead-story__content {
-    padding-block-start: 1.25rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
   }
 
   .story-kicker {
@@ -703,6 +722,26 @@ const formatDate = (date: string) =>
 
   .latest-stories--full {
     grid-column: 1 / -1;
+  }
+
+  .latest-stories ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .latest-stories ol > li {
+    padding-inline: 1.25rem;
+    border-inline-start: 1px solid var(--border);
+  }
+
+  .latest-stories ol > li:first-child {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .latest-stories ol > li:last-child {
+    padding-inline-end: 0;
   }
 
   .latest-stories > h3 {
@@ -895,10 +934,34 @@ const formatDate = (date: string) =>
       gap: 1rem;
     }
 
+    .lead-story {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "content"
+        "image";
+      border-bottom: 0;
+    }
+
+    .lead-story__content {
+      padding: 0 0 1.25rem;
+      background: transparent;
+    }
+
     .lead-story__image,
     .lead-story__placeholder {
       margin-inline: calc(-1 * var(--page-gutter));
       aspect-ratio: 4 / 3;
+    }
+
+    .latest-stories ol {
+      grid-template-columns: 1fr;
+    }
+
+    .latest-stories ol > li,
+    .latest-stories ol > li:first-child,
+    .latest-stories ol > li:last-child {
+      padding-inline: 0;
+      border-inline-start: 0;
     }
 
     .story-footer {
