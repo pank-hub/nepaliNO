@@ -581,3 +581,94 @@ export const NEWS_ARCHIVE_USEFUL_GUIDES_QUERY = `
   }
 `
 
+export const PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY = `
+  *[
+    _type == "publicInformationTopic" &&
+    language == $language &&
+    isActive == true &&
+    defined(slug.current)
+  ] | order(displayOrder asc, title asc) {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    topicKey,
+    summary,
+    displayOrder,
+    iconKey,
+    seoDescription,
+    "guideCount": count(*[
+      _type == "publicInformationGuide" &&
+      language == ^.language &&
+      topic == ^.topicKey &&
+      status == "active" &&
+      defined(slug.current)
+    ])
+  }
+`
+
+export const PUBLIC_INFORMATION_TOPIC_BY_SLUG_QUERY = `
+  *[
+    _type == "publicInformationTopic" &&
+    language == $language &&
+    slug.current == $slug &&
+    isActive == true
+  ][0] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    topicKey,
+    summary,
+    introduction,
+    displayOrder,
+    iconKey,
+    seoDescription,
+    "translation": translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language,
+      isActive
+    },
+    "featuredGuides": featuredGuides[]-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language,
+      summary,
+      topic,
+      responsibleAgency,
+      lastReviewedAt,
+      nextReviewAt,
+      status,
+      isFeatured,
+      isUrgent
+    }
+  }
+`
+
+export const PUBLIC_INFORMATION_GUIDES_BY_TOPIC_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    language == $language &&
+    topic == $topicKey &&
+    status == "active" &&
+    defined(slug.current)
+  ] | order(isFeatured desc, isUrgent desc, lastReviewedAt desc, publishedAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    topic,
+    intendedAudience,
+    responsibleAgency,
+    publishedAt,
+    lastReviewedAt,
+    nextReviewAt,
+    isFeatured,
+    isUrgent
+  }
+`
+
