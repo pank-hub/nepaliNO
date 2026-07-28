@@ -97,7 +97,8 @@ export const FEATURED_NEWS_ARTICLES_QUERY = `
 export const NEWS_ARTICLE_BY_SLUG_QUERY = `
   *[
     _type == "newsArticle" &&
-    slug.current == $slug
+    slug.current == $slug &&
+    language == $language
   ][0] {
     _id,
     title,

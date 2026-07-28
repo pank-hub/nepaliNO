@@ -1,0 +1,539 @@
+---
+import {PortableText} from 'astro-portabletext'
+import {sanityClient} from 'sanity:client'
+import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import SiteFooter from '../../../components/SiteFooter.astro'
+import SiteHeader from '../../../components/SiteHeader.astro'
+import {getTranslations} from '../../../i18n'
+import type {SupportedLanguage} from '../../../i18n/config'
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {urlFor} from '../../../lib/sanity/image'
+import {NEWS_ARTICLE_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
+
+interface TranslationSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+}
+
+interface NewsImage {
+  asset?: unknown
+  alt?: string
+  caption?: string
+  credit?: string
+  hotspot?: unknown
+  crop?: unknown
+}
+
+interface NewsArticle {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  translation?: TranslationSummary
+  summary: string
+  newsRegion: string
+  category: string
+  featuredImage?: NewsImage
+  body?: any[]
+  authorName: string
+  publishedAt: string
+  sourceUrl?: string
+  isFeatured?: boolean
+}
+
+interface NewsPath {
+  slug: string
+  language: SupportedLanguage
+}
+
+export async function getStaticPaths() {
+  const paths = await sanityClient.fetch<NewsPath[]>(`
+    *[
+      _type == "newsArticle" &&
+      defined(slug.current) &&
+      language in ["ne", "nb"]
+    ] {
+      "slug": slug.current,
+      language
+    }
+  `)
+
+  return paths.map(({slug, language}) => ({
+    params: {lang: language, slug},
+  }))
+}
+
+const {lang, slug} = Astro.params
+
+if ((lang !== 'ne' && lang !== 'nb') || !slug) {
+  return Astro.redirect('/ne/news/')
+}
+
+const language: SupportedLanguage = lang
+const labels = getTranslations(language)
+const article = await sanityClient.fetch<NewsArticle | null>(
+  NEWS_ARTICLE_BY_SLUG_QUERY,
+  {language, slug},
+)
+
+if (!article) {
+  return Astro.redirect(`/${language}/news/`)
+}
+
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const alternatePath = article.translation
+  ? `/${article.translation.language}/news/${article.translation.slug}/`
+  : `/${alternateLanguage}/news/`
+
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const publishedDate = new Date(article.publishedAt).toLocaleDateString(dateLocale, {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+})
+
+const featuredImageUrl = article.featuredImage?.asset
+  ? urlFor(article.featuredImage as any)
+      .width(1600)
+      .height(960)
+      .fit('crop')
+      .auto('format')
+      .url()
+  : null
+
+const portableTextComponents = {
+  type: {
+    image: SanityPortableImage,
+  },
+}
+
+const regionLabels: Record<string, Record<SupportedLanguage, string>> = {
+  norway: {ne: 'नर्वे', nb: 'Norge'},
+  nepal: {ne: 'नेपाल', nb: 'Nepal'},
+  community: {ne: 'समुदाय', nb: 'Fellesskap'},
+  international: {ne: 'अन्तर्राष्ट्रिय', nb: 'Internasjonalt'},
+}
+
+const categoryLabels: Record<string, Record<SupportedLanguage, string>> = {
+  community: {ne: 'समुदाय', nb: 'Fellesskap'},
+  politics: {ne: 'राजनीति', nb: 'Politikk'},
+  society: {ne: 'समाज', nb: 'Samfunn'},
+  culture: {ne: 'संस्कृति', nb: 'Kultur'},
+  education: {ne: 'शिक्षा', nb: 'Utdanning'},
+  employment: {ne: 'रोजगारी', nb: 'Arbeidsliv'},
+  immigration: {ne: 'आप्रवासन', nb: 'Innvandring'},
+  business: {ne: 'व्यवसाय', nb: 'Næringsliv'},
+  sports: {ne: 'खेलकुद', nb: 'Sport'},
+}
+
+const regionLabel = regionLabels[article.newsRegion]?.[language] ?? article.newsRegion
+const categoryLabel = categoryLabels[article.category]?.[language] ?? article.category
+const sourceLabel = language === 'ne' ? 'मूल स्रोत' : 'Opprinnelig kilde'
+const authorLabel = language === 'ne' ? 'लेखक' : 'Av'
+const translationLabel = language === 'ne' ? 'अर्को भाषामा पढ्नुहोस्' : 'Les på et annet språk'
+---
+
+<BaseLayout
+  language={language}
+  title={`${article.title} | nepali.no`}
+  description={article.summary}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={alternatePath}
+  />
+
+  <article class="news-article">
+    <header class="article-header">
+      <div class="container article-header__inner">
+        <nav class="breadcrumbs" aria-label={labels.navigation.news}>
+          <a href={`/${language}/`}>{labels.navigation.home}</a>
+          <span aria-hidden="true">/</span>
+          <a href={`/${language}/news/`}>{labels.navigation.news}</a>
+        </nav>
+
+        <div class="article-header__labels">
+          <span>{regionLabel}</span>
+          <span aria-hidden="true">•</span>
+          <span>{categoryLabel}</span>
+          {article.isFeatured && (
+            <>
+              <span aria-hidden="true">•</span>
+              <span>{labels.home.featuredStory}</span>
+            </>
+          )}
+        </div>
+
+        <div class="article-header__content">
+          <h1>{article.title}</h1>
+          <p class="lead">{article.summary}</p>
+        </div>
+
+        <div class="article-byline">
+          <p>
+            <span>{authorLabel}</span>
+            <strong>{article.authorName}</strong>
+          </p>
+          <time datetime={article.publishedAt}>{publishedDate}</time>
+        </div>
+      </div>
+    </header>
+
+    {featuredImageUrl && (
+      <figure class="hero-image container">
+        <img
+          src={featuredImageUrl}
+          alt={article.featuredImage?.alt ?? ''}
+          width="1600"
+          height="960"
+          decoding="async"
+        />
+        {(article.featuredImage?.caption || article.featuredImage?.credit) && (
+          <figcaption>
+            {article.featuredImage?.caption && <span>{article.featuredImage.caption}</span>}
+            {article.featuredImage?.credit && <span>{article.featuredImage.credit}</span>}
+          </figcaption>
+        )}
+      </figure>
+    )}
+
+    <div class="container article-layout">
+      <div class="article-main">
+        {article.body && article.body.length > 0 && (
+          <section class="prose article-body" aria-label={article.title}>
+            <PortableText value={article.body} components={portableTextComponents} />
+          </section>
+        )}
+
+        {article.sourceUrl && (
+          <aside class="source-note">
+            <div>
+              <p class="source-note__label">{sourceLabel}</p>
+              <p>
+                {language === 'ne'
+                  ? 'सम्बन्धित मूल सामग्री वा आधिकारिक जानकारी हेर्नुहोस्।'
+                  : 'Se den opprinnelige saken eller den offisielle informasjonen.'}
+              </p>
+            </div>
+            <a
+              class="button button-secondary"
+              href={article.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {sourceLabel}
+              <span aria-hidden="true">↗</span>
+            </a>
+          </aside>
+        )}
+      </div>
+
+      <aside class="article-sidebar">
+        <section class="article-facts">
+          <h2>{labels.navigation.news}</h2>
+          <dl>
+            <div>
+              <dt>{labels.common.publishedOn}</dt>
+              <dd><time datetime={article.publishedAt}>{publishedDate}</time></dd>
+            </div>
+            <div>
+              <dt>{authorLabel}</dt>
+              <dd>{article.authorName}</dd>
+            </div>
+            <div>
+              <dt>{language === 'ne' ? 'क्षेत्र' : 'Område'}</dt>
+              <dd>{regionLabel}</dd>
+            </div>
+            <div>
+              <dt>{language === 'ne' ? 'विषय' : 'Kategori'}</dt>
+              <dd>{categoryLabel}</dd>
+            </div>
+          </dl>
+        </section>
+
+        {article.translation && (
+          <a
+            class="translation-card"
+            href={alternatePath}
+            hreflang={article.translation.language}
+          >
+            <span>{translationLabel}</span>
+            <strong>{article.translation.title}</strong>
+          </a>
+        )}
+      </aside>
+    </div>
+  </article>
+
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .news-article {
+    min-width: 0;
+    background: #ffffff;
+  }
+
+  .article-header {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 88% 0%, rgb(198 42 31 / 0.08), transparent 20rem),
+      var(--page-bg);
+  }
+
+  .article-header__inner {
+    padding-block: clamp(2.5rem, 7vw, 5.75rem);
+  }
+
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+  }
+
+  .breadcrumbs a {
+    color: var(--civic);
+    font-weight: 650;
+  }
+
+  .article-header__labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-block-start: 1.75rem;
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 780;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .article-header__labels {
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .article-header__content {
+    max-width: 62rem;
+    margin-block-start: 0.75rem;
+  }
+
+  .article-header h1 {
+    max-width: 18ch;
+    font-size: clamp(2.25rem, 6vw, 5rem);
+  }
+
+  .article-header .lead {
+    max-width: 52rem;
+    margin-block-start: 1.25rem;
+  }
+
+  .article-byline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    align-items: center;
+    margin-block-start: 2rem;
+    padding-block-start: 1rem;
+    border-top: 1px solid var(--border-strong);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .article-byline p {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .article-byline strong {
+    color: var(--civic-deep);
+  }
+
+  .hero-image {
+    margin-block-start: clamp(1.25rem, 4vw, 3rem);
+  }
+
+  .hero-image img {
+    width: 100%;
+    max-height: 46rem;
+    object-fit: cover;
+  }
+
+  .hero-image figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.4rem 1rem;
+    padding-block: 0.65rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-soft);
+    font-size: 0.8rem;
+  }
+
+  .article-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 46rem) minmax(16rem, 20rem);
+    justify-content: space-between;
+    gap: clamp(2.5rem, 8vw, 7rem);
+    padding-block: clamp(2.5rem, 8vw, 6.5rem);
+  }
+
+  .article-main {
+    min-width: 0;
+  }
+
+  .article-body {
+    font-size: 1.1rem;
+  }
+
+  html[lang="ne"] .article-body {
+    font-size: 1.16rem;
+  }
+
+  .source-note {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    align-items: center;
+    margin-block-start: clamp(2.5rem, 7vw, 4.5rem);
+    padding: 1.25rem;
+    border-block: 1px solid var(--border-strong);
+  }
+
+  .source-note__label {
+    color: var(--civic-deep);
+    font-weight: 760;
+  }
+
+  .source-note div > p:last-child {
+    margin-block-start: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .article-sidebar {
+    display: grid;
+    gap: 1rem;
+    position: sticky;
+    inset-block-start: 1.5rem;
+  }
+
+  .article-facts,
+  .translation-card {
+    padding: 1.25rem;
+    border-top: 0.25rem solid var(--brand);
+    background: var(--surface-muted);
+  }
+
+  .article-facts h2 {
+    font-size: 1.15rem;
+  }
+
+  .article-facts dl {
+    display: grid;
+    gap: 1rem;
+    margin-block-start: 1rem;
+  }
+
+  .article-facts dl > div {
+    padding-block-start: 0.8rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .article-facts dt {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 760;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .article-facts dt {
+    font-size: 0.82rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .article-facts dd {
+    margin: 0.22rem 0 0;
+    color: var(--civic-deep);
+    font-weight: 650;
+  }
+
+  .translation-card {
+    display: grid;
+    gap: 0.35rem;
+    border-top-color: var(--civic);
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .translation-card span {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .translation-card:hover {
+    background: #e8eef5;
+    color: var(--civic-deep);
+  }
+
+  @media (max-width: 58rem) {
+    .article-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .article-sidebar {
+      position: static;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 38rem) {
+    .article-header__inner {
+      padding-block: 2.25rem 3rem;
+    }
+
+    .article-header h1 {
+      font-size: clamp(2rem, 11vw, 3.3rem);
+    }
+
+    .hero-image {
+      width: 100%;
+      margin-block-start: 0;
+    }
+
+    .hero-image img {
+      aspect-ratio: 4 / 3;
+    }
+
+    .hero-image figcaption {
+      padding-inline: var(--page-gutter);
+    }
+
+    .article-layout {
+      padding-block: 2.25rem 4rem;
+    }
+
+    .source-note {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .source-note .button {
+      width: 100%;
+    }
+
+    .article-sidebar {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
