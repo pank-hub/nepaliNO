@@ -114,11 +114,11 @@ const copy =
   language === 'ne'
     ? {
         section: 'सार्वजनिक जानकारी',
-        featured: 'सुरु गर्न उपयोगी मार्गदर्शन',
-        allGuides: 'यस विषयका सबै मार्गदर्शन',
-        guide: 'मार्गदर्शन',
-        guides: 'मार्गदर्शनहरू',
-        read: 'मार्गदर्शन पढ्नुहोस्',
+        featured: 'सुरु गर्न उपयोगी जानकारी',
+        allGuides: 'यस विषयका सबै जानकारी',
+        guide: 'जानकारीमूलक लेख',
+        guides: 'जानकारीमूलक लेखहरू',
+        read: 'पूरा जानकारी पढ्नुहोस्',
         reviewed: 'पछिल्लो समीक्षा',
         nextReview: 'अर्को समीक्षा',
         agency: 'जिम्मेवार निकाय',
@@ -249,54 +249,56 @@ const guideCountLabel = `${guideCount} ${guideCount === 1 ? copy.guide : copy.gu
       </section>
     )}
 
-    <section class="section guide-directory" aria-labelledby="all-guides-heading">
-      <div class="container">
-        <div class="directory-heading">
-          <div>
-            <p class="eyebrow">{guideCountLabel}</p>
-            <h2 id="all-guides-heading">{copy.allGuides}</h2>
+    {(remainingGuides.length > 0 || featuredGuides.length === 0) && (
+      <section class="section guide-directory" aria-labelledby="all-guides-heading">
+        <div class="container">
+          <div class="directory-heading">
+            <div>
+              <p class="eyebrow">{guideCountLabel}</p>
+              <h2 id="all-guides-heading">{copy.allGuides}</h2>
+            </div>
           </div>
-        </div>
 
-        {remainingGuides.length > 0 ? (
-          <ol class="guide-list">
-            {remainingGuides.map((guide) => (
-              <li>
-                <article class="guide-row">
-                  <div class="guide-row__agency">
-                    <span>{copy.agency}</span>
-                    <strong>{guide.responsibleAgency}</strong>
-                  </div>
-
-                  <div class="guide-row__content">
-                    <div class="guide-meta">
-                      {guide.isUrgent && <strong>{copy.urgent}</strong>}
+          {remainingGuides.length > 0 ? (
+            <ol class="guide-list">
+              {remainingGuides.map((guide) => (
+                <li>
+                  <article class="guide-row">
+                    <div class="guide-row__agency">
+                      <span>{copy.agency}</span>
+                      <strong>{guide.responsibleAgency}</strong>
                     </div>
-                    <h3>
-                      <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
-                    </h3>
-                    <p>{guide.summary}</p>
-                  </div>
 
-                  <div class="guide-row__action">
-                    <span>{formatDate(guide.lastReviewedAt)}</span>
-                    <a href={`/${language}/info/${guide.slug}/`}>
-                      {copy.read} <span aria-hidden="true">→</span>
-                    </a>
-                  </div>
-                </article>
-              </li>
-            ))}
-          </ol>
-        ) : featuredGuides.length === 0 ? (
-          <div class="empty-state">
-            <span aria-hidden="true"></span>
-            <h3>{copy.emptyTitle}</h3>
-            <p>{copy.emptyText}</p>
-          </div>
-        ) : null}
-      </div>
-    </section>
+                    <div class="guide-row__content">
+                      <div class="guide-meta">
+                        {guide.isUrgent && <strong>{copy.urgent}</strong>}
+                      </div>
+                      <h3>
+                        <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
+                      </h3>
+                      <p>{guide.summary}</p>
+                    </div>
+
+                    <div class="guide-row__action">
+                      <span>{formatDate(guide.lastReviewedAt)}</span>
+                      <a href={`/${language}/info/${guide.slug}/`}>
+                        {copy.read} <span aria-hidden="true">→</span>
+                      </a>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div class="empty-state">
+              <span aria-hidden="true"></span>
+              <h3>{copy.emptyTitle}</h3>
+              <p>{copy.emptyText}</p>
+            </div>
+          )}
+        </div>
+      </section>
+    )}
   </main>
 
   <SiteFooter slot="footer" language={language} />
@@ -399,7 +401,7 @@ const guideCountLabel = `${guideCount} ${guideCount === 1 ? copy.guide : copy.gu
 
   .featured-guides__grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
     gap: 1px;
     margin-block-start: 1.5rem;
     background: var(--border-strong);
