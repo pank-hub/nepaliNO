@@ -9,17 +9,16 @@ import {
 } from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
-import {NEWS_ARTICLES_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
+import {
+  NEWS_ARCHIVE_USEFUL_GUIDES_QUERY,
+  NEWS_ARTICLES_BY_LANGUAGE_QUERY,
+} from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
   return supportedLanguages.map((language) => ({
     params: {lang: language},
     props: {language},
   }))
-}
-
-interface Props {
-  language: SupportedLanguage
 }
 
 interface ArchiveImage {
@@ -45,14 +44,31 @@ interface ArchiveArticle {
   isFeatured?: boolean
 }
 
+interface UsefulGuide {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  topic: string
+  responsibleAgency: string
+  lastReviewedAt: string
+  isFeatured?: boolean
+  isUrgent?: boolean
+}
+
 const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 
-const articles = await sanityClient.fetch<ArchiveArticle[]>(
-  NEWS_ARTICLES_BY_LANGUAGE_QUERY,
-  {language},
-)
+const [articles, usefulGuides] = await Promise.all([
+  sanityClient.fetch<ArchiveArticle[]>(NEWS_ARTICLES_BY_LANGUAGE_QUERY, {
+    language,
+  }),
+  sanityClient.fetch<UsefulGuide[]>(NEWS_ARCHIVE_USEFUL_GUIDES_QUERY, {
+    language,
+  }),
+])
 
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const formatDate = (date: string) =>
@@ -105,6 +121,15 @@ const featuredArticle =
 const latestArticles = featuredArticle
   ? articles.filter((article) => article._id !== featuredArticle._id)
   : []
+
+const usefulInformationTitle =
+  language === 'ne' ? 'उपयोगी जानकारी' : 'Nyttig informasjon'
+const usefulInformationDescription =
+  language === 'ne'
+    ? 'समाचारसँगै काम लाग्ने आधिकारिक स्रोतमा आधारित मार्गदर्शनहरू।'
+    : 'Praktiske veiledninger basert på offisielle kilder.'
+const readGuideLabel = language === 'ne' ? 'मार्गदर्शन पढ्नुहोस्' : 'Les veiledningen'
+const reviewedLabel = language === 'ne' ? 'पछिल्लो समीक्षा' : 'Sist gjennomgått'
 ---
 
 <BaseLayout
@@ -263,6 +288,54 @@ const latestArticles = featuredArticle
         )}
       </div>
     </section>
+
+
+    {usefulGuides.length > 0 && (
+      <section class="useful-information" aria-labelledby="useful-information-heading">
+        <div class="container">
+          <div class="useful-information__heading">
+            <div>
+              <p class="eyebrow">{labels.navigation.information}</p>
+              <h2 id="useful-information-heading">{usefulInformationTitle}</h2>
+            </div>
+            <p>{usefulInformationDescription}</p>
+          </div>
+
+          <ol class="guide-links">
+            {usefulGuides.map((guide) => (
+              <li>
+                <article class="guide-link">
+                  <div class="guide-link__agency">
+                    <span>{guide.responsibleAgency}</span>
+                    {guide.isUrgent && <strong>{labels.information.urgentLabel}</strong>}
+                  </div>
+
+                  <div class="guide-link__content">
+                    <h3>
+                      <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
+                    </h3>
+                    <p>{guide.summary}</p>
+                  </div>
+
+                  <div class="guide-link__action">
+                    <p>
+                      {reviewedLabel}<br />
+                      <time datetime={guide.lastReviewedAt}>
+                        {formatDate(guide.lastReviewedAt)}
+                      </time>
+                    </p>
+                    <a href={`/${language}/info/${guide.slug}/`}>
+                      {readGuideLabel} <span aria-hidden="true">→</span>
+                    </a>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+    )}
+
   </main>
 
   <SiteFooter slot="footer" language={language} />
@@ -292,7 +365,7 @@ const latestArticles = featuredArticle
   .news-hero__inner {
     position: relative;
     z-index: 1;
-    padding-block: clamp(3.5rem, 9vw, 7rem);
+    padding-block: clamp(2.25rem, 5vw, 4rem);
   }
 
   .news-hero h1 {
@@ -501,6 +574,110 @@ const latestArticles = featuredArticle
     color: var(--text-muted);
   }
 
+  .useful-information {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem);
+    border-top: 1px solid var(--border);
+    background: var(--surface-muted);
+  }
+
+  .useful-information__heading {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.7fr) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: end;
+    margin-block-end: 1.25rem;
+    padding-block-end: 1rem;
+    border-bottom: 2px solid var(--civic-deep);
+  }
+
+  .useful-information__heading h2 {
+    margin-block-start: 0.45rem;
+  }
+
+  .useful-information__heading > p {
+    max-width: 38rem;
+    color: var(--text-muted);
+  }
+
+  .guide-links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .guide-links > li {
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .guide-link {
+    display: grid;
+    grid-template-columns: minmax(8rem, 0.4fr) minmax(0, 1.5fr) minmax(11rem, 0.6fr);
+    gap: clamp(1rem, 4vw, 3rem);
+    align-items: center;
+    padding-block: 1.25rem;
+  }
+
+  .guide-link__agency {
+    display: grid;
+    gap: 0.4rem;
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 780;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .guide-link__agency {
+    font-size: 0.88rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .guide-link__agency strong {
+    width: fit-content;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: #fff0ee;
+    font-size: 0.68rem;
+  }
+
+  .guide-link__content h3 {
+    font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+    line-height: 1.25;
+  }
+
+  .guide-link__content h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .guide-link__content h3 a:hover {
+    color: var(--brand);
+  }
+
+  .guide-link__content p {
+    margin-block-start: 0.45rem;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+  }
+
+  .guide-link__action {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: end;
+    text-align: end;
+  }
+
+  .guide-link__action p {
+    color: var(--text-soft);
+    font-size: 0.78rem;
+  }
+
+  .guide-link__action a {
+    color: var(--civic-deep);
+    font-weight: 750;
+  }
+
   @media (max-width: 52rem) {
     .archive-lead {
       grid-template-columns: 1fr;
@@ -522,6 +699,25 @@ const latestArticles = featuredArticle
   }
 
   @media (max-width: 38rem) {
+    .useful-information__heading,
+    .guide-link {
+      grid-template-columns: 1fr;
+    }
+
+    .useful-information__heading {
+      align-items: start;
+      gap: 0.75rem;
+    }
+
+    .guide-link__action {
+      justify-items: start;
+      text-align: start;
+    }
+
+    .guide-link__action p {
+      display: none;
+    }
+
     .news-hero__inner {
       padding-block: 3rem;
     }

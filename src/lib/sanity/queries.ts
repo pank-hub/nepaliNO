@@ -561,3 +561,23 @@ export const HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY = `
   }
 `
 
+export const NEWS_ARCHIVE_USEFUL_GUIDES_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    defined(slug.current) &&
+    language == $language &&
+    status == "active"
+  ] | order(isFeatured desc, lastReviewedAt desc, publishedAt desc) [0...3] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    topic,
+    responsibleAgency,
+    lastReviewedAt,
+    isFeatured,
+    isUrgent
+  }
+`
+
