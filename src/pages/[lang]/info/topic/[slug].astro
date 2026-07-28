@@ -1,0 +1,623 @@
+---
+import {PortableText} from 'astro-portabletext'
+import {sanityClient} from 'sanity:client'
+import SiteFooter from '../../../../components/SiteFooter.astro'
+import SiteHeader from '../../../../components/SiteHeader.astro'
+import type {SupportedLanguage} from '../../../../i18n/config'
+import BaseLayout from '../../../../layouts/BaseLayout.astro'
+import {
+  PUBLIC_INFORMATION_GUIDES_BY_TOPIC_QUERY,
+  PUBLIC_INFORMATION_TOPIC_BY_SLUG_QUERY,
+} from '../../../../lib/sanity/queries'
+
+interface TopicTranslation {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  isActive?: boolean
+}
+
+interface TopicGuide {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  topic: string
+  intendedAudience?: string[]
+  responsibleAgency: string
+  publishedAt?: string
+  lastReviewedAt: string
+  nextReviewAt?: string
+  status: string
+  isFeatured?: boolean
+  isUrgent?: boolean
+}
+
+interface TopicHub {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  topicKey: string
+  summary: string
+  introduction?: any[]
+  displayOrder: number
+  iconKey?: string
+  seoDescription?: string
+  translation?: TopicTranslation
+  featuredGuides?: TopicGuide[]
+}
+
+interface TopicPath {
+  slug: string
+  language: SupportedLanguage
+}
+
+export async function getStaticPaths() {
+  const topics = await sanityClient.fetch<TopicPath[]>(`
+    *[
+      _type == "publicInformationTopic" &&
+      isActive == true &&
+      language in ["ne", "nb"] &&
+      defined(slug.current)
+    ] {
+      "slug": slug.current,
+      language
+    }
+  `)
+
+  return topics.map(({slug, language}) => ({
+    params: {lang: language, slug},
+  }))
+}
+
+const {lang, slug} = Astro.params
+
+if ((lang !== 'ne' && lang !== 'nb') || !slug) {
+  return Astro.redirect('/ne/info/')
+}
+
+const language: SupportedLanguage = lang
+const topic = await sanityClient.fetch<TopicHub | null>(
+  PUBLIC_INFORMATION_TOPIC_BY_SLUG_QUERY,
+  {language, slug},
+)
+
+if (!topic) {
+  return Astro.redirect(`/${language}/info/`)
+}
+
+const allGuides = await sanityClient.fetch<TopicGuide[]>(
+  PUBLIC_INFORMATION_GUIDES_BY_TOPIC_QUERY,
+  {language, topicKey: topic.topicKey},
+)
+
+const featuredGuides = (topic.featuredGuides ?? []).filter(
+  (guide) =>
+    guide &&
+    guide.language === language &&
+    guide.topic === topic.topicKey &&
+    guide.status === 'active',
+)
+const featuredIds = new Set(featuredGuides.map((guide) => guide._id))
+const remainingGuides = allGuides.filter((guide) => !featuredIds.has(guide._id))
+
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const alternatePath =
+  topic.translation?.isActive && topic.translation.language === alternateLanguage
+    ? `/${topic.translation.language}/info/topic/${topic.translation.slug}/`
+    : `/${alternateLanguage}/info/`
+
+const copy =
+  language === 'ne'
+    ? {
+        section: 'सार्वजनिक जानकारी',
+        featured: 'सुरु गर्न उपयोगी मार्गदर्शन',
+        allGuides: 'यस विषयका सबै मार्गदर्शन',
+        guide: 'मार्गदर्शन',
+        guides: 'मार्गदर्शनहरू',
+        read: 'मार्गदर्शन पढ्नुहोस्',
+        reviewed: 'पछिल्लो समीक्षा',
+        nextReview: 'अर्को समीक्षा',
+        agency: 'जिम्मेवार निकाय',
+        urgent: 'महत्त्वपूर्ण जानकारी',
+        emptyTitle: 'यस विषयमा मार्गदर्शन तयार हुँदैछन्',
+        emptyText:
+          'प्रमाणित र आधिकारिक स्रोतमा आधारित सामग्री तयार भएपछि यहाँ प्रकाशित गरिनेछ।',
+        translation: 'अर्को भाषामा हेर्नुहोस्',
+      }
+    : {
+        section: 'Offentlig informasjon',
+        featured: 'Nyttige veiledninger å starte med',
+        allGuides: 'Alle veiledninger i dette temaet',
+        guide: 'veiledning',
+        guides: 'veiledninger',
+        read: 'Les veiledningen',
+        reviewed: 'Sist gjennomgått',
+        nextReview: 'Neste gjennomgang',
+        agency: 'Ansvarlig myndighet',
+        urgent: 'Viktig informasjon',
+        emptyTitle: 'Veiledninger for dette temaet er under arbeid',
+        emptyText:
+          'Innhold basert på kontrollerte og offisielle kilder publiseres her når det er klart.',
+        translation: 'Se på et annet språk',
+      }
+
+const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const formatDate = (value?: string) =>
+  value
+    ? new Date(value).toLocaleDateString(locale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : ''
+
+const guideCount = allGuides.length
+const guideCountLabel = `${guideCount} ${guideCount === 1 ? copy.guide : copy.guides}`
+---
+
+<BaseLayout
+  language={language}
+  title={`${topic.title} | nepali.no`}
+  description={topic.seoDescription || topic.summary}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={alternatePath}
+  />
+
+  <main class="topic-page">
+    <header class="topic-hero">
+      <div class="container topic-hero__inner">
+        <nav class="breadcrumbs" aria-label={copy.section}>
+          <a href={`/${language}/`}>nepali.no</a>
+          <span aria-hidden="true">/</span>
+          <a href={`/${language}/info/`}>{copy.section}</a>
+        </nav>
+
+        <div class="topic-hero__grid">
+          <div>
+            <p class="eyebrow">{copy.section}</p>
+            <h1>{topic.title}</h1>
+            <p class="lead">{topic.summary}</p>
+          </div>
+
+          <aside class="topic-summary" aria-label={guideCountLabel}>
+            <strong>{guideCount}</strong>
+            <span>{guideCount === 1 ? copy.guide : copy.guides}</span>
+            {topic.translation?.isActive && (
+              <a href={alternatePath} hreflang={topic.translation.language}>
+                {copy.translation}
+              </a>
+            )}
+          </aside>
+        </div>
+      </div>
+    </header>
+
+    {topic.introduction && topic.introduction.length > 0 && (
+      <section class="topic-introduction section section-compact">
+        <div class="container prose topic-introduction__content">
+          <PortableText value={topic.introduction} />
+        </div>
+      </section>
+    )}
+
+    {featuredGuides.length > 0 && (
+      <section class="section featured-guides" aria-labelledby="featured-guides-heading">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">{copy.section}</p>
+            <h2 id="featured-guides-heading">{copy.featured}</h2>
+          </div>
+
+          <div class="featured-guides__grid">
+            {featuredGuides.map((guide, index) => (
+              <article class:list={['featured-guide', index === 0 && 'featured-guide--primary']}>
+                <div class="guide-meta">
+                  <span>{guide.responsibleAgency}</span>
+                  {guide.isUrgent && <strong>{copy.urgent}</strong>}
+                </div>
+
+                <h3>
+                  <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
+                </h3>
+                <p>{guide.summary}</p>
+
+                <div class="guide-dates">
+                  <span>
+                    {copy.reviewed}: {formatDate(guide.lastReviewedAt)}
+                  </span>
+                  {guide.nextReviewAt && (
+                    <span>
+                      {copy.nextReview}: {formatDate(guide.nextReviewAt)}
+                    </span>
+                  )}
+                </div>
+
+                <a class="guide-link" href={`/${language}/info/${guide.slug}/`}>
+                  {copy.read} <span aria-hidden="true">→</span>
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="section guide-directory" aria-labelledby="all-guides-heading">
+      <div class="container">
+        <div class="directory-heading">
+          <div>
+            <p class="eyebrow">{guideCountLabel}</p>
+            <h2 id="all-guides-heading">{copy.allGuides}</h2>
+          </div>
+        </div>
+
+        {remainingGuides.length > 0 ? (
+          <ol class="guide-list">
+            {remainingGuides.map((guide) => (
+              <li>
+                <article class="guide-row">
+                  <div class="guide-row__agency">
+                    <span>{copy.agency}</span>
+                    <strong>{guide.responsibleAgency}</strong>
+                  </div>
+
+                  <div class="guide-row__content">
+                    <div class="guide-meta">
+                      {guide.isUrgent && <strong>{copy.urgent}</strong>}
+                    </div>
+                    <h3>
+                      <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
+                    </h3>
+                    <p>{guide.summary}</p>
+                  </div>
+
+                  <div class="guide-row__action">
+                    <span>{formatDate(guide.lastReviewedAt)}</span>
+                    <a href={`/${language}/info/${guide.slug}/`}>
+                      {copy.read} <span aria-hidden="true">→</span>
+                    </a>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ol>
+        ) : featuredGuides.length === 0 ? (
+          <div class="empty-state">
+            <span aria-hidden="true"></span>
+            <h3>{copy.emptyTitle}</h3>
+            <p>{copy.emptyText}</p>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  </main>
+
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .topic-page {
+    background: #fff;
+  }
+
+  .topic-hero {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 88% 8%, rgb(198 42 31 / 0.1), transparent 19rem),
+      linear-gradient(135deg, #f5f8fb 0%, #fdfcf9 65%, #fff6f5 100%);
+  }
+
+  .topic-hero__inner {
+    padding-block: clamp(2.75rem, 7vw, 5.5rem);
+  }
+
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+  }
+
+  .breadcrumbs a {
+    color: var(--civic);
+    font-weight: 680;
+  }
+
+  .topic-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(10rem, 14rem);
+    gap: clamp(2rem, 7vw, 6rem);
+    align-items: end;
+    margin-block-start: 2rem;
+  }
+
+  .topic-hero h1 {
+    max-width: 18ch;
+    margin-block-start: 0.55rem;
+    font-size: clamp(2.35rem, 6vw, 5rem);
+  }
+
+  .topic-hero .lead {
+    max-width: 48rem;
+    margin-block-start: 1.1rem;
+  }
+
+  .topic-summary {
+    display: grid;
+    gap: 0.2rem;
+    padding-block-start: 1rem;
+    border-top: 0.25rem solid var(--brand);
+  }
+
+  .topic-summary strong {
+    color: var(--civic-deep);
+    font-size: clamp(2.2rem, 5vw, 3.75rem);
+    line-height: 1;
+  }
+
+  .topic-summary span {
+    color: var(--text-muted);
+  }
+
+  .topic-summary a {
+    margin-block-start: 0.75rem;
+    color: var(--civic-deep);
+    font-weight: 720;
+  }
+
+  .topic-introduction {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topic-introduction__content {
+    max-width: 52rem;
+    margin-inline: auto;
+  }
+
+  .section-heading,
+  .directory-heading {
+    padding-block-end: 1rem;
+    border-bottom: 2px solid var(--civic-deep);
+  }
+
+  .section-heading h2,
+  .directory-heading h2 {
+    margin-block-start: 0.4rem;
+  }
+
+  .featured-guides {
+    background: var(--surface-muted);
+  }
+
+  .featured-guides__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin-block-start: 1.5rem;
+    background: var(--border-strong);
+    border: 1px solid var(--border-strong);
+  }
+
+  .featured-guide {
+    display: flex;
+    flex-direction: column;
+    min-height: 22rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    background: #fff;
+  }
+
+  .featured-guide--primary {
+    background: var(--surface-warm);
+  }
+
+  .guide-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    color: var(--brand);
+    font-size: 0.75rem;
+    font-weight: 780;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .guide-meta {
+    font-size: 0.86rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .guide-meta strong {
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: #fff0ee;
+  }
+
+  .featured-guide h3 {
+    margin-block-start: 0.8rem;
+    font-size: clamp(1.6rem, 3.2vw, 2.5rem);
+    line-height: 1.2;
+  }
+
+  .featured-guide h3 a,
+  .guide-row h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .featured-guide h3 a:hover,
+  .guide-row h3 a:hover {
+    color: var(--brand);
+  }
+
+  .featured-guide > p {
+    margin-block-start: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .guide-dates {
+    display: grid;
+    gap: 0.2rem;
+    margin-block-start: 1rem;
+    color: var(--text-soft);
+    font-size: 0.8rem;
+  }
+
+  .guide-link {
+    display: inline-flex;
+    gap: 0.45rem;
+    width: fit-content;
+    margin-block-start: auto;
+    padding-block-start: 1.5rem;
+    color: var(--civic-deep);
+    font-weight: 760;
+  }
+
+  .guide-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .guide-list > li {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .guide-row {
+    display: grid;
+    grid-template-columns: minmax(9rem, 0.45fr) minmax(0, 1.5fr) minmax(11rem, 0.55fr);
+    gap: clamp(1.25rem, 4vw, 3rem);
+    align-items: center;
+    padding-block: 1.5rem;
+  }
+
+  .guide-row__agency {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .guide-row__agency span {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 730;
+  }
+
+  .guide-row__agency strong {
+    color: var(--brand);
+  }
+
+  .guide-row h3 {
+    margin-block-start: 0.4rem;
+    font-size: clamp(1.2rem, 2.6vw, 1.75rem);
+    line-height: 1.25;
+  }
+
+  .guide-row__content > p {
+    margin-block-start: 0.5rem;
+    color: var(--text-muted);
+  }
+
+  .guide-row__action {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: end;
+    text-align: end;
+  }
+
+  .guide-row__action > span {
+    color: var(--text-soft);
+    font-size: 0.78rem;
+  }
+
+  .guide-row__action a {
+    color: var(--civic-deep);
+    font-weight: 750;
+  }
+
+  .empty-state {
+    margin-block-start: 1.5rem;
+    padding: clamp(2.5rem, 7vw, 5rem);
+    border-block: 1px solid var(--border-strong);
+    text-align: center;
+  }
+
+  .empty-state > span {
+    display: block;
+    width: 3rem;
+    height: 0.2rem;
+    margin-inline: auto;
+    margin-block-end: 1rem;
+    background: var(--brand);
+  }
+
+  .empty-state p {
+    max-width: 38rem;
+    margin: 0.7rem auto 0;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 52rem) {
+    .topic-hero__grid {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+
+    .topic-summary {
+      max-width: 14rem;
+    }
+
+    .guide-row {
+      grid-template-columns: minmax(8rem, 0.4fr) minmax(0, 1.6fr);
+    }
+
+    .guide-row__action {
+      grid-column: 2;
+      justify-items: start;
+      text-align: start;
+    }
+  }
+
+  @media (max-width: 38rem) {
+    .topic-hero__inner {
+      padding-block: 2.5rem 3rem;
+    }
+
+    .topic-hero__grid {
+      margin-block-start: 1.5rem;
+    }
+
+    .topic-hero h1 {
+      font-size: clamp(2.2rem, 11vw, 3.45rem);
+    }
+
+    .featured-guides__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .featured-guide {
+      min-height: 0;
+    }
+
+    .guide-row {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .guide-row__action {
+      grid-column: 1;
+    }
+
+    .guide-row__action > span {
+      display: none;
+    }
+  }
+</style>
