@@ -329,3 +329,113 @@ Publishing a featured article before that route exists would create homepage and
 - Publish only after the individual article route has been validated.
 - Verify the complete News workflow on Vercel: Studio, Content Lake, individual article, homepage featured story, latest-news list, and News archive.
 - Update project documentation and create a stable Git checkpoint.
+
+## Complete Bilingual News Publishing and Archive Milestone
+
+Completed and verified:
+
+- Built the multilingual individual News Article route:
+  - `src/pages/[lang]/news/[slug].astro`
+- Updated `NEWS_ARTICLE_BY_SLUG_QUERY` to filter by both slug and language.
+- Added the shared `BaseLayout`, responsive header, responsive footer, editorial typography, Sanity image rendering, Portable Text body rendering, author and publication metadata, source attribution, localized region and category labels, and translation links to individual News Article pages.
+- Published the first controlled Nepali News Article:
+  - Title: `nepali.no को नयाँ डिजिटल प्लेटफर्म परीक्षण चरणमा`
+  - Slug: `nepali-no-digital-platform-testing`
+  - Featured on the Nepali homepage
+  - Important Now disabled
+- Published a separate Norwegian Bokmal translation and linked the two documents reciprocally through the Sanity `Translated Version` field.
+- Verified that the Nepali and Norwegian versions have independent titles, summaries, bodies, slugs, publication metadata, image text, and featured settings.
+- Verified direct language switching between the linked Nepali and Norwegian News Articles.
+- Verified that each language can have its corresponding article featured on its own homepage without competing across languages.
+- Published image replacements through Sanity and confirmed that a fresh public Vercel deployment updates both the homepage and individual News Article.
+- Localized Sanity News region and category values in the frontend, including:
+  - `culture-community` to `संस्कृति र समुदाय`
+  - `culture-community` to `Kultur og fellesskap`
+- Moved the homepage News section directly below the homepage introduction.
+- Refined the homepage featured-story layout:
+  - image and story text side by side on desktop
+  - headline and summary before the image on mobile
+  - up to three latest stories below the lead story
+- Replaced the original unstyled News archive with a complete mobile-first editorial archive for:
+  - `/ne/news/`
+  - `/nb/news/`
+- Added a multilingual News archive hero, lead-story treatment, featured image, summary, author, publication date, localized metadata, article count, responsive additional-story rows, shared header and footer, and a polished empty state.
+- Verified the complete bilingual publishing path:
+  - Vercel-hosted Sanity Studio
+  - Sanity Content Lake
+  - public Astro production build
+  - language-specific homepages
+  - language-specific News archives
+  - individual News Article routes
+  - reciprocal translation switching
+- Confirmed that the public production build generates 10 pages while both News translations are published.
+- Confirmed that Sanity publishing currently requires a manual redeployment of the public `nepali-no` Vercel project before static pages reflect new or changed content.
+
+## Current Vercel Applications
+
+- Public Astro website: `https://nepali-no.vercel.app`
+- Editorial Sanity Studio: `https://nepali-no-studio.vercel.app`
+
+The public Astro website and editorial Studio are separate Vercel projects built from the same GitHub repository. Both connect to Sanity project `f9johco4` and the `production` dataset.
+
+## Current Git Checkpoint
+
+Latest pushed commit at this milestone:
+
+`41c300e news-archive`
+
+Important preceding checkpoints:
+
+- `c44141c news-` - moved and refined homepage News placement
+- `9b04bbf category-labels` - localized News category and region labels
+- `01dec21 news-route` - added the individual multilingual News Article route
+- `a190185 studio-docs` - documented the successful Vercel-hosted Sanity Studio
+
+The working tree should be verified before further changes.
+
+## Editorial Rules Confirmed
+
+Homepage News selection:
+
+- zero or one active Important Now notice
+- one featured story per language
+- up to three latest stories per language
+- a link to the full News archive
+
+Important Now must remain reserved for genuinely significant, time-sensitive information. Routine announcements and ordinary featured stories must not use Important Now.
+
+Sanity technically permits several articles to be marked `Feature on Homepage`, but the editorial practice should normally be one current featured article per language. When a new featured article is selected, the previous featured article should be switched off.
+
+## Known Content and Workflow Notes
+
+- The first Nepali and Norwegian News Articles are controlled test or launch-announcement content and may be rewritten, unpublished, or removed before the final public launch.
+- The articles remain valuable for validating the bilingual publishing architecture.
+- Nepali interface proofreading is planned with a fluent reviewer. Literal translations should be replaced with natural daily-use Nepali where appropriate.
+- Most interface labels are centralized in `src/i18n/ne.ts` and `src/i18n/nb.ts`, but some newer News labels and metadata mappings remain inside Astro templates and should later be centralized.
+- Interface text changes require a Git commit, push, and Vercel deployment. Multiple proofreading corrections should be grouped into one reviewed batch rather than pushed one phrase at a time.
+- Sanity editorial content changes do not require a Git commit, but the statically generated public website currently requires a fresh public Vercel deployment.
+- A future Sanity webhook should trigger the public Vercel build automatically after publishing or updating content.
+
+## Next Planned Refinement
+
+The live News archive is working, but desktop review identified two layout improvements:
+
+1. Reduce the desktop News archive hero height by approximately 35 to 40 percent so the lead story appears sooner.
+2. Add a compact `Useful information / Nyttig informasjon / उपयोगी जानकारी` section between the News content and footer.
+
+The Information section should not be random. Use a predictable language-specific selection:
+
+- featured Public Information guides first
+- recently reviewed guides next
+- maximum three guides
+- hide the section when no guides exist
+
+Recommended News archive order:
+
+1. Compact News hero
+2. Featured News story
+3. Additional News stories when available
+4. Useful Public Information guides
+5. Footer
+
+The Information links should use compact editorial rows rather than oversized cards and should provide a bridge from current News to durable Public Information guidance.
