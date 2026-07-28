@@ -278,3 +278,54 @@ The following intended files are currently modified but not yet committed:
 - Run Astro Check and the production build.
 - Publish one controlled News Article through Sanity to review the real featured/latest presentation.
 - Update this progress document, commit, push, and verify the Vercel deployment.
+
+## Vercel-Hosted Sanity Studio Checkpoint
+
+Completed and verified:
+
+- Created a second Vercel project named `nepali-no-studio` from the existing `pank-hub/nepaliNO` GitHub repository.
+- Confirmed that the second Vercel project deploys the separate Sanity Studio application, while the existing `nepali-no` project continues to deploy the public Astro website.
+- Resolved the initial isolated-build error involving `astro/tsconfigs/strict` by configuring the Studio project from the repository root.
+- Configured the Studio Vercel project with:
+  - Framework preset: Other
+  - Root directory: `./`
+  - Install command: `npm install && npm --prefix sanity install`
+  - Build command: `npm --prefix sanity run build`
+  - Output directory: `sanity/dist`
+- Successfully built and deployed Sanity Studio on Vercel.
+- Registered `https://nepali-no-studio.vercel.app` as a custom Studio host in the Sanity project.
+- Verified that the Vercel-hosted Studio connects to Sanity project `f9johco4` and the `production` dataset.
+- Verified that the updated News Article schema is active in the Vercel-hosted Studio.
+- Verified the updated `Feature on Homepage` editorial guidance.
+- Verified that the new `Important Now` field is visible.
+- Confirmed that `Important Until` is conditionally hidden until `Important Now` is enabled, as designed.
+- The earlier Codespaces termination during `Verifying local content...` no longer blocks editorial Studio deployment.
+- The original `https://nepali-no-studio.sanity.studio/` deployment remains available as a fallback, but it may contain an older schema until redeployed separately.
+
+## Deployment Architecture
+
+The same GitHub repository now supplies two separate Vercel applications:
+
+- Public Astro website: `https://nepali-no.vercel.app`
+- Editorial Sanity Studio: `https://nepali-no-studio.vercel.app`
+
+Both applications connect to the same Sanity Content Lake project and production dataset. Public visitors use the Astro website. Authorized editors use the Sanity Studio.
+
+## Current Editorial Safety Note
+
+Do not publish the controlled test News Article yet. The individual News Article route does not exist:
+
+`src/pages/[lang]/news/[slug].astro`
+
+Publishing a featured article before that route exists would create homepage and archive links that lead to a 404 page.
+
+## Next Work
+
+- Verify Git status and the latest commit before making further changes.
+- Build the multilingual individual News Article route with the shared header, footer, mobile-first editorial typography, Sanity images, Portable Text, source attribution, author information, and translation support.
+- Run `npx astro check` and `npm run build`.
+- Create one truthful Nepali project-announcement News Article as a draft.
+- Mark the test article as `Feature on Homepage` and keep `Important Now` off.
+- Publish only after the individual article route has been validated.
+- Verify the complete News workflow on Vercel: Studio, Content Lake, individual article, homepage featured story, latest-news list, and News archive.
+- Update project documentation and create a stable Git checkpoint.
