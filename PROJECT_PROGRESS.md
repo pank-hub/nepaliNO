@@ -1074,3 +1074,85 @@ Current repository state:
 - Test Related Guides only when a second genuine Nepali guide exists.
 - Continue creating Topic Hubs gradually with controlled real content.
 - Events and Business Listings remain planned platform areas and can resume after the current Public Information architecture is sufficiently stable.
+### Public Information Maintenance Sensitivity Milestone
+
+Completed and verified on 29 July 2026:
+- Added one optional `maintenanceSensitivity` field to `sanity/schemaTypes/publicInformationGuide.ts`.
+- The field is a single-choice string displayed as radio buttons in Sanity Studio.
+- Added three stable maintenance-sensitivity values:
+  - High: `high`
+  - Medium: `medium`
+  - Low: `low`
+- Maintenance Sensitivity indicates how closely a guide should be monitored for changes.
+- Required review dates remain separate and continue to record the actual editorial review schedule.
+- The field is optional, preserving compatibility with existing and future guide documents.
+- Maintenance Sensitivity is currently editorial metadata only and is not displayed by the public frontend.
+- Existing Search Keywords, Related Guides, Guide Format, Editorial Priority, Topic Hub relationships, translations, routes, and review controls were preserved.
+- No forum-specific field or irreversible Discourse-specific architecture was introduced.
+
+Validation completed:
+- A checksum-protected script modified only `sanity/schemaTypes/publicInformationGuide.ts`.
+- Sanity TypeScript validation passed with `npx tsc --noEmit`.
+- Sanity Studio production build passed.
+- The known local/runtime Sanity version mismatch was handled with Continue anyway; dependencies were not upgraded during this isolated milestone.
+- `git diff --check` passed.
+- The complete schema diff was reviewed.
+- Astro production build passed and generated the expected 11 pages.
+- Build validation introduced no additional tracked changes.
+
+Git checkpoint:
+- `f456496 add maintenance sensitivity metadata`
+- Verified that `HEAD`, local `main`, `origin/main`, and `origin/HEAD` all pointed to `f456496` after push.
+
+Deployment and editorial verification:
+- The existing Vercel-hosted Studio workflow deployed the schema automatically after the Git push.
+- No manual `npx sanity deploy` command was used.
+- The new Maintenance Sensitivity field and all three choices were verified in `https://nepali-no-studio.vercel.app`.
+- The existing Nepali UDI guide was used as the controlled editorial test document.
+- The UDI guide was classified as High (`high`).
+- Publishing triggered the established Sanity-to-Vercel webhook for the public `nepali-no` project.
+- Vercel showed a Ready Production deployment for the content publication and a separate Ready Production deployment for the code push, both using commit `f456496` on `main`.
+- No visible public change is expected because Maintenance Sensitivity is metadata only.
+
+Current controlled UDI guide metadata:
+- Search Keywords: `oppholdstillatelse` and `बसोबास अनुमति`
+- Guide Format: Comprehensive guide (`comprehensive-guide`)
+- Editorial Priority: Essential (`essential`)
+- Maintenance Sensitivity: High (`high`)
+- Related Guides remains empty until a second suitable genuine Nepali guide exists.
+
+### Editorial and Administrator User Manual Requirement
+
+The Sanity Studio and platform publishing workflow are now extensive enough to require a practical user manual for editors and administrators.
+
+Plan a separate documentation milestone for `EDITORIAL_USER_MANUAL.md`. The manual should eventually cover:
+- Studio access and general navigation
+- News Article creation, translation, publication, Important Now, and homepage featuring
+- Public Information Guide creation, translation, official-source requirements, review dates, and workflow status
+- Search Keywords, Related Guides, Guide Format, Editorial Priority, and Maintenance Sensitivity
+- Topic Hub creation, activation, ordering, and featured-guide relationships
+- Image uploads, alternative text, captions, and credits
+- Draft, Publish, Active, Needs Review, and Archived behavior
+- The automatic Sanity-to-Vercel publishing workflow
+- Events and Business Listings when those public experiences are activated
+- Editorial safety, privacy, corrections, source verification, and quality control
+- Common troubleshooting and recovery steps
+
+The manual should be practical for future editors, volunteers, administrators, partner organizations, and project handover. A later polished Word or PDF edition may be produced from the maintained Markdown source.
+
+Current repository state:
+- `git status --short` returned no output after the pushed checkpoint and editorial test.
+- The working tree was clean at the documentation-preparation point.
+- The Maintenance Sensitivity milestone has now been appended to PROJECT_PROGRESS.md and is awaiting a documentation-only commit.
+
+### Next Recommended Work
+- Review, stage, commit, and push this documentation-only checkpoint.
+- Do not manually redeploy Sanity Studio.
+- Keep Maintenance Sensitivity optional and hidden publicly until there is a deliberate query or operational use case.
+- Treat `EDITORIAL_USER_MANUAL.md` as a planned separate documentation milestone.
+- Review the remaining Public Information architecture before adding more metadata fields.
+- Do not add forum-specific fields before the structured Discourse integration review.
+- Do not begin bulk content entry yet.
+- Test Related Guides only when a second genuine Nepali guide exists.
+- Continue creating Topic Hubs gradually with controlled real content.
+- Events and Business Listings remain planned platform areas and can resume after the current Public Information architecture is sufficiently stable.
