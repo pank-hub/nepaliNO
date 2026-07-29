@@ -154,6 +154,30 @@ export const publicInformationGuide = defineType({
       },
     }),
     defineField({
+      name: 'editorialPriority',
+      title: 'Editorial Priority',
+      type: 'string',
+      description:
+        'Optional editorial classification indicating how important this guide is within its topic and audience. This metadata is not currently displayed publicly.',
+      options: {
+        list: [
+          {
+            title: 'Essential',
+            value: 'essential',
+          },
+          {
+            title: 'Recommended',
+            value: 'recommended',
+          },
+          {
+            title: 'Specialist',
+            value: 'specialist',
+          },
+        ],
+        layout: 'radio',
+      },
+    }),
+    defineField({
       name: 'topic',
       title: 'Topic',
       type: 'string',
