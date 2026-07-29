@@ -949,3 +949,62 @@ Important scale and content-entry note:
 - When a second genuine Nepali guide is created, test the Related Guides editorial selector before adding frontend presentation.
 - Continue creating Topic Hubs gradually with controlled real content.
 - Continue one verified step at a time, with Git checkpoints after stable milestones.
+### Public Information Guide Format Milestone
+
+Completed and verified on 29 July 2026:
+- Added one optional `guideFormat` field to `sanity/schemaTypes/publicInformationGuide.ts`.
+- The field is a single-choice string displayed as radio buttons in Sanity Studio.
+- The field is editorial metadata and is not currently displayed by the public frontend.
+- Added six stable format values:
+  - Quick answer: `quick-answer`
+  - Step-by-step guide: `step-by-step`
+  - Comprehensive guide: `comprehensive-guide`
+  - Checklist: `checklist`
+  - Explainer: `explainer`
+  - Emergency information: `emergency-information`
+- Guide Format remains separate from `isUrgent`. Guide Format describes the guide's editorial structure, while `isUrgent` controls temporary prominent placement.
+- The field is optional, preserving compatibility with existing and future guide documents.
+- Existing search keywords, related guides, Topic Hub relationships, translations, routes, and guide metadata were preserved.
+- No forum-specific field or irreversible Discourse-specific architecture was introduced.
+
+Validation completed:
+- Checksum-protected update applied only to `sanity/schemaTypes/publicInformationGuide.ts`.
+- Sanity TypeScript validation passed with `npx tsc --noEmit`.
+- Sanity Studio production build passed.
+- The known local/runtime Sanity version mismatch was handled with Continue anyway; dependencies were not upgraded during this isolated milestone.
+- `git diff --check` passed.
+- The complete schema diff was reviewed.
+- Astro production build passed and generated the expected 11 pages.
+- Build validation introduced no additional tracked changes.
+
+Git checkpoint:
+- `2ebb585 add guide format metadata`
+- Verified that `HEAD`, local `main`, `origin/main`, and `origin/HEAD` all pointed to `2ebb585` after push.
+
+Deployment and editorial verification:
+- The normal Vercel-hosted Studio workflow deployed the new schema automatically after the Git push.
+- No manual `npx sanity deploy` command was used.
+- The new Guide Format field and all six radio choices were verified in `https://nepali-no-studio.vercel.app`.
+- The existing Nepali UDI guide was used as the controlled editorial test document.
+- The UDI guide was classified as Comprehensive guide (`comprehensive-guide`).
+- Sanity confirmed publication with a Last published status and an inactive Publish button.
+- Publishing triggered the established Sanity-to-Vercel webhook for the public `nepali-no` project.
+- The resulting production deployment for commit `2ebb585` reached Ready.
+- No visible public change is expected because Guide Format is not yet queried or displayed by the frontend.
+
+Current repository state:
+- `git status --short` returned no output after the pushed checkpoint and editorial test.
+- The working tree was clean at the break point.
+- The Guide Format milestone has now been appended to PROJECT_PROGRESS.md and is awaiting a documentation-only commit.
+
+### Next Recommended Work
+- The repository state was verified clean at `2ebb585 add guide format metadata` before this documentation append.
+- Review, stage, commit, and push this documentation-only checkpoint.
+- Do not manually redeploy Sanity Studio.
+- Keep Guide Format optional and hidden publicly until there is a deliberate frontend use case.
+- Consider Editorial Priority as the next isolated Public Information schema milestone.
+- Consider Maintenance Sensitivity in a later separate milestone rather than combining several fields at once.
+- Do not add forum-specific fields before the structured Discourse integration review.
+- Do not begin bulk content entry yet.
+- Test Related Guides only when a second genuine Nepali guide exists.
+- Events and Business Listings remain planned platform areas and can be resumed after the current Public Information architecture is sufficiently stable.
