@@ -1156,3 +1156,171 @@ Current repository state:
 - Test Related Guides only when a second genuine Nepali guide exists.
 - Continue creating Topic Hubs gradually with controlled real content.
 - Events and Business Listings remain planned platform areas and can resume after the current Public Information architecture is sufficiently stable.
+### Public Information Architecture Audit, Second Guide and Second Topic Hub Milestone
+
+Completed and verified on 29 July 2026:
+
+#### Architecture audit
+- Audited the complete Public Information Guide schema.
+- Audited the Public Information GROQ queries in `src/lib/sanity/queries.ts`.
+- Audited the Public Information archive route:
+  - `src/pages/[lang]/info/index.astro`
+- Audited the individual guide route:
+  - `src/pages/[lang]/info/[slug].astro`
+- Audited the Topic Hub route:
+  - `src/pages/[lang]/info/topic/[slug].astro`
+- Confirmed that the schema is ready for controlled real-content growth.
+- Confirmed that no additional Public Information metadata field is currently required.
+- Confirmed that new metadata should remain internal until GROQ queries and frontend features deliberately use it.
+- Confirmed that guides without a matching active Topic Hub remain visible through the archive fallback.
+- Confirmed that Topic Hub featured-guide references are filtered by language, topic key, and active status.
+- Confirmed that featured guides are de-duplicated from the ordinary Topic Hub guide directory.
+- Confirmed that inactive Topic Hubs do not generate public routes or appear on the archive.
+
+#### Inactive guide-translation safety correction
+- Identified one genuine route-level safety gap: a guide could display a link to a translated guide that was no longer active.
+- Updated `PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY` to project the translated guide status.
+- Updated `src/pages/[lang]/info/[slug].astro` so only an active translated guide receives a direct public link.
+- When a referenced translation is not active, the header language switch now falls back to the alternate-language Public Information archive.
+- The translation card is hidden when the referenced translation is inactive.
+- Astro Check passed across 47 files with 0 errors and 0 warnings.
+- The production build passed with the expected 11 generated pages before the second guide and Topic Hub were published.
+- `git diff --check` passed.
+- The complete two-file diff was reviewed.
+- Code checkpoint created and pushed:
+  - `ec1d6c2 guard inactive guide translations`
+- Verified that `HEAD`, local `main`, `origin/main`, and `origin/HEAD` were synchronized at `ec1d6c2`.
+
+#### Second genuine Public Information Guide
+- Created and published a genuine Nepali guide based on current official Skatteetaten information.
+- Public title:
+  - `नर्वेमा काम सुरु गर्दा कर कटौती कार्ड कसरी बनाउने?`
+- Slug:
+  - `norway-ma-kaam-suru-garda-kar-katauti-card`
+- Public route:
+  - `/ne/info/norway-ma-kaam-suru-garda-kar-katauti-card/`
+- Responsible authority:
+  - Skatteetaten
+- Primary topic:
+  - `tax-finance`
+- Guide Format:
+  - Step-by-step guide
+- Editorial Priority:
+  - Essential
+- Maintenance Sensitivity:
+  - High
+- Intended audiences:
+  - Newly arrived residents
+  - Workers and job seekers
+- Search keyword added:
+  - `skattekort`
+- Important Norwegian term added:
+  - `skattekort`
+- Editorial reviewer:
+  - `nepali.no editorial team`
+- Last reviewed:
+  - `2026-07-29`
+- Next review due:
+  - `2026-10-29`
+- Guide status:
+  - Active
+- Featured and Urgent controls remained off.
+- The guide explains the tax deduction card, application process, identity verification, PAYE, ordinary taxation, corrections, electronic employer retrieval, and possible 50 percent withholding when no valid card is available.
+- A duplicated PAYE paragraph was identified during live review, removed, and republished.
+- A separate paragraph about choosing ordinary taxation and avoiding personalized tax advice was preserved.
+- The guide was reviewed positively on both desktop and mobile.
+- Nepali language proofreading remains planned with the user's proofreader before the final public launch.
+
+#### Second active Public Information Topic Hub
+- Created and published the second Nepali Public Information Topic Hub.
+- Public title:
+  - `कर र व्यक्तिगत वित्त`
+- Slug:
+  - `kar-ra-byaktigat-bitta`
+- Topic key:
+  - `tax-finance`
+- Public route:
+  - `/ne/info/topic/kar-ra-byaktigat-bitta/`
+- Display order:
+  - `80`
+- Icon key:
+  - `tax`
+- Featured starting guide:
+  - the published Skatteetaten tax-card guide
+- The Topic Hub was first published while inactive.
+- The inactive-state deployment was verified:
+  - no Tax Topic Hub appeared publicly
+  - the Skatteetaten guide remained in the archive fallback section
+- The Topic Hub was then activated and republished.
+- The active-state deployment was verified:
+  - the Tax Topic Hub appeared on `/ne/info/`
+  - the Skatteetaten guide disappeared from the fallback section
+  - the guide appeared automatically inside the Tax Topic Hub through the matching `tax-finance` values
+  - the guide appeared as the featured starting guide
+  - the existing Immigration Topic Hub remained unchanged
+  - no duplicate or empty all-guides section appeared
+- The Nepali archive now presents two active Topic Hubs:
+  1. `आगमन, बसोबास र आप्रवासन`
+  2. `कर र व्यक्तिगत वित्त`
+- The desktop archive automatically uses the intended two-column Topic Hub layout.
+- The mobile archive stacks both Topic Hubs cleanly.
+- The Tax Topic Hub page and featured guide presentation were reviewed positively on desktop and mobile, with no horizontal overflow.
+
+#### Topic Hub and taxonomy strategy clarified
+- Public Information Topic is the enhanced public category-page system.
+- Guide membership is automatic when a guide `topic` matches a Topic Hub `topicKey`.
+- Featured Guides controls prominent start-here placement but is not required for ordinary category membership.
+- The archive fallback is transitional and should not become a permanent mixed collection for established subject areas.
+- A known category may receive an active Topic Hub when its first substantial genuine guide provides real public value.
+- Empty Topic Hubs should not be activated.
+- The existing inventory of approximately 100 planned guides spans eleven broad reader-facing subject areas and is only an initial editorial backlog, not a strict requirement for 100 separate pages.
+- Before bulk content entry, reconcile the planned public hubs with the internal topic keys.
+- A dedicated Transport and Driving topic key may be required because the current schema has no clear equivalent.
+- Some broad reader-facing hubs may eventually need to represent multiple internal topics, which the current single-topic-key hub architecture does not yet support.
+- Do not attempt to resolve the full taxonomy through uncontrolled schema changes. Perform a separate structured taxonomy-reconciliation milestone first.
+
+#### Database and platform understanding
+- Sanity Content Lake is the current content database for News, Public Information, Topic Hubs, Events, and Business Listings.
+- Astro is the public rendering and routing layer.
+- Vercel builds and serves the static public site and hosted Studio.
+- Supabase or another application database is not currently required.
+- Reconsider an application database only for private, transactional, personalized, or user-account data such as learner progress, registrations, saved items, or business-owner self-service.
+
+#### Planned operational readiness
+- Before launch, create a cost-effective operational and troubleshooting package including:
+  - `OPERATIONS_RUNBOOK.md`
+  - safe diagnostic collection and `NEPALI_NO_DIAGNOSTIC_REPORT.txt`
+  - incident templates
+  - rollback routines
+  - monitoring and smoke tests
+  - backup and recovery documentation
+- The package must help the user, AI assistants, or consultants diagnose production failures without exposing secrets.
+- Also create `EDITORIAL_USER_MANUAL.md` for editors and administrators.
+
+#### Sanity and Vercel cost position
+- Sanity Growth trial had 26 days remaining when reviewed.
+- Current usage was far below Free-plan quotas.
+- Do not upgrade Sanity merely because the trial countdown is visible.
+- Reconsider Sanity Growth when multiple editors need restricted roles or Growth-only collaboration features.
+- Vercel and Sanity can both remain free during development if plan eligibility and limits remain appropriate.
+- Before official launch, verify whether the registered nonprofit/public-benefit use is eligible for Vercel Hobby or requires Vercel Pro.
+- Connecting the custom domain does not itself require a Sanity upgrade.
+
+### Current Git and Documentation Status
+- Latest pushed code checkpoint:
+  - `ec1d6c2 guard inactive guide translations`
+- `git status --short` returned no output at the documentation-preparation point.
+- `git log -1 --oneline` confirmed `ec1d6c2` with local and remote main synchronized.
+- The second guide and second Topic Hub are Sanity content changes and therefore required no Git commit.
+- The Public Information audit, second-guide, and second-Topic-Hub milestone has now been appended to PROJECT_PROGRESS.md and is awaiting a documentation-only commit.
+
+### Next Recommended Work
+- Review, stage, commit, and push this documentation-only checkpoint.
+- Keep the updated recovery prompt outside the Git repository.
+- At the next development session, verify Git status and the latest commit before taking action.
+- Perform a structured taxonomy-reconciliation milestone using the full planned guide inventory before bulk content entry or creation of all remaining Topic Hubs.
+- Preserve the working two-hub architecture and existing guide URLs.
+- Do not activate empty Topic Hubs.
+- Do not add forum-specific fields before the structured Discourse review.
+- After the Public Information taxonomy is stabilized, perform a focused News audit.
+- Before connecting `nepali.no`, create the initial editorial manual, operations runbook, diagnostic workflow, rollback documentation, and launch checklist.
