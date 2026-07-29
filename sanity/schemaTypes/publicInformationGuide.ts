@@ -136,6 +136,24 @@ export const publicInformationGuide = defineType({
       validation: (rule) => rule.unique().max(8),
     }),
     defineField({
+      name: 'guideFormat',
+      title: 'Guide Format',
+      type: 'string',
+      description:
+        'Optional editorial classification describing how the guide helps the reader. This metadata is not currently displayed publicly.',
+      options: {
+        list: [
+          {title: 'Quick answer', value: 'quick-answer'},
+          {title: 'Step-by-step guide', value: 'step-by-step'},
+          {title: 'Comprehensive guide', value: 'comprehensive-guide'},
+          {title: 'Checklist', value: 'checklist'},
+          {title: 'Explainer', value: 'explainer'},
+          {title: 'Emergency information', value: 'emergency-information'},
+        ],
+        layout: 'radio',
+      },
+    }),
+    defineField({
       name: 'topic',
       title: 'Topic',
       type: 'string',
