@@ -84,6 +84,58 @@ export const publicInformationGuide = defineType({
     }),
 
     defineField({
+      name: 'searchKeywords',
+      title: 'Search Keywords and Synonyms',
+      type: 'array',
+      description:
+        'Optional search terms in the guide language. Include everyday Nepali phrases, Norwegian official terminology, abbreviations, synonyms, and common alternative spellings where relevant. These terms are editorial metadata and do not need to be displayed publicly.',
+      of: [
+        defineArrayMember({
+          type: 'string',
+          validation: (rule) => rule.required().min(2).max(100),
+        }),
+      ],
+      validation: (rule) => rule.unique().max(30),
+    }),
+    defineField({
+      name: 'relatedGuides',
+      title: 'Related Guides',
+      type: 'array',
+      description:
+        'Optional links to other guides in the same language. Do not use this field for translations.',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{type: 'publicInformationGuide'}],
+          options: {
+            filter: ({document}) => {
+              const currentId = document?._id?.replace(/^drafts\./, '')
+              const draftId = currentId ? `drafts.${currentId}` : ''
+              const language = document?.language
+
+              if (currentId && language) {
+                return {
+                  filter:
+                    'language == $language && _id != $currentId && _id != $draftId',
+                  params: {language, currentId, draftId},
+                }
+              }
+
+              if (currentId) {
+                return {
+                  filter: '_id != $currentId && _id != $draftId',
+                  params: {currentId, draftId},
+                }
+              }
+
+              return {}
+            },
+          },
+        }),
+      ],
+      validation: (rule) => rule.unique().max(8),
+    }),
+    defineField({
       name: 'topic',
       title: 'Topic',
       type: 'string',
