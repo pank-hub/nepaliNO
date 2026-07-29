@@ -1008,3 +1008,69 @@ Current repository state:
 - Do not begin bulk content entry yet.
 - Test Related Guides only when a second genuine Nepali guide exists.
 - Events and Business Listings remain planned platform areas and can be resumed after the current Public Information architecture is sufficiently stable.
+### Public Information Editorial Priority Milestone
+
+Completed and verified on 29 July 2026:
+- Added one optional `editorialPriority` field to `sanity/schemaTypes/publicInformationGuide.ts`.
+- The field is a single-choice string displayed as radio buttons in Sanity Studio.
+- Added three stable editorial-priority values:
+  - Essential: `essential`
+  - Recommended: `recommended`
+  - Specialist: `specialist`
+- Editorial Priority describes a guide's durable importance within its topic and intended audience.
+- Editorial Priority remains distinct from:
+  - `isFeatured`, which supports temporary editorial promotion
+  - `isUrgent`, which supports time-sensitive prominent placement
+  - `guideFormat`, which describes the guide's content structure
+- The field is optional, preserving compatibility with existing and future guide documents.
+- Editorial Priority is currently metadata only and is not yet queried, ordered, filtered, or displayed by the public frontend.
+- No forum-specific field or irreversible Discourse-specific architecture was introduced.
+
+Validation completed:
+- The checksum-protected update modified only `sanity/schemaTypes/publicInformationGuide.ts`.
+- Sanity TypeScript validation passed with `npx tsc --noEmit`.
+- Sanity Studio production build passed.
+- The known local/runtime Sanity version mismatch was handled with Continue anyway; dependencies were not upgraded during this isolated milestone.
+- `git diff --check` passed.
+- The complete schema diff was reviewed.
+- Astro production build passed and generated the expected 11 pages.
+- Build validation introduced no additional tracked changes.
+
+Git checkpoint:
+- `986d4f7 add editorial priority metadata`
+- Verified that `HEAD`, local `main`, `origin/main`, and `origin/HEAD` all pointed to `986d4f7` after push.
+
+Deployment and editorial verification:
+- The existing Vercel-hosted Studio workflow deployed the schema automatically after the Git push.
+- No manual `npx sanity deploy` command was used.
+- The new Editorial Priority field and all three choices were verified in `https://nepali-no-studio.vercel.app`.
+- The existing Nepali UDI guide was used as the controlled editorial test document.
+- The UDI guide was classified as Essential (`essential`).
+- Sanity confirmed publication with a green published notification, Last published status, and an inactive Publish button.
+- Publishing triggered the established Sanity-to-Vercel webhook for the public `nepali-no` project.
+- Vercel showed two Ready Production deployments for commit `986d4f7`: the code deployment after the Git push and the content-triggered deployment after Sanity publication.
+- No visible public change is expected because Editorial Priority is metadata only.
+
+Future intended use:
+- Editorial Priority may later support Topic Hub ordering, Start here sections, recommended-guide sections, specialist-guide groupings, filtering, and other curated reader journeys.
+- Search Keywords remains the metadata primarily intended to improve future search matching.
+- Guide Format supports content-type labels, filtering, and presentation.
+- None of these effects occur automatically. Future GROQ queries, search indexing, and frontend behavior must intentionally use the metadata.
+- Public behavior should be designed only after enough genuine content exists to evaluate the model reliably.
+
+Current repository state:
+- `git status --short` returned no output after the pushed checkpoint and editorial test.
+- The working tree was clean at the documentation-preparation point.
+- The Editorial Priority milestone has now been appended to PROJECT_PROGRESS.md and is awaiting a documentation-only commit.
+
+### Next Recommended Work
+- Review, stage, commit, and push this documentation-only checkpoint.
+- Do not manually redeploy Sanity Studio.
+- Keep Editorial Priority optional and hidden publicly until there is a deliberate query and frontend use case.
+- Consider Maintenance Sensitivity as the next isolated Public Information schema milestone.
+- Do not combine several remaining metadata fields into one uncontrolled change.
+- Do not add forum-specific fields before the structured Discourse integration review.
+- Do not begin bulk content entry yet.
+- Test Related Guides only when a second genuine Nepali guide exists.
+- Continue creating Topic Hubs gradually with controlled real content.
+- Events and Business Listings remain planned platform areas and can resume after the current Public Information architecture is sufficiently stable.
