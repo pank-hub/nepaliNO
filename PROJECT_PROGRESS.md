@@ -658,3 +658,122 @@ Recommended order from the current checkpoint:
 7. Collect evidence of usage, public value and community need.
 8. Develop the language-learning curriculum and donor-ready pilot proposal with qualified contributors.
 9. Build the learning platform as a deliberately funded major phase.
+
+## Public Information Topic Hub Milestone
+
+Completed and verified:
+
+- Extended Public Information from a flat guide archive toward a scalable multilingual knowledge-centre architecture.
+- Added and registered the Sanity document type:
+  - `sanity/schemaTypes/publicInformationTopic.ts`
+- Preserved the existing `Public Information Guide` schema, published UDI guide, stable topic keys, and existing guide URLs.
+- Topic Hub documents support:
+  - language-specific public title and slug
+  - reciprocal translation reference
+  - stable `topicKey` matching the existing guide topic value
+  - summary and optional rich introduction
+  - display order
+  - optional icon key
+  - editorially selected featured guides
+  - optional SEO description
+  - explicit active or inactive public status
+- Added and validated Topic Hub GROQ queries:
+  - `PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY`
+  - `PUBLIC_INFORMATION_TOPIC_BY_SLUG_QUERY`
+  - `PUBLIC_INFORMATION_GUIDES_BY_TOPIC_QUERY`
+- Verified in Sanity Vision that inactive Topic Hubs are excluded from public queries.
+- Verified in Sanity Vision that the first Topic Hub correctly references the existing active Nepali UDI guide.
+
+### First Topic Hub
+
+Created and published the first controlled Nepali Topic Hub:
+
+- Public title: `आगमन, बसोबास र आप्रवासन`
+- Slug: `aagaman-basobas-aaprawasan`
+- Language: Nepali
+- Topic key: `immigration-residence`
+- Display order: `10`
+- Icon key: `immigration`
+- Featured guide: the existing active Nepali UDI residence-permit guide
+- Public status: active after route validation
+
+The Topic Hub was first published while inactive. This allowed its content and references to be tested without creating a public page. It was activated only after the route compiled and the inactive-state build remained unchanged.
+
+### Public Topic Hub Route
+
+Added:
+
+`src/pages/[lang]/info/topic/[slug].astro`
+
+The route provides:
+
+- static generation only for active Topic Hubs
+- language and slug filtering
+- safe redirect for missing or inactive hubs
+- shared `BaseLayout`, header, and footer
+- topic summary and optional Portable Text introduction
+- guide count
+- reciprocal language switching when an active translation exists
+- editorially selected featured guides first
+- automatic de-duplication between featured guides and the remaining guide list
+- all active guides selected by the stable `topicKey`
+- responsible agency, review dates, urgent status, and guide links
+- mobile-first responsive presentation
+- preservation of existing individual Public Information Guide routes
+
+The active Topic Hub increased the public Astro build from 10 to 11 generated pages.
+
+Public route:
+
+`/ne/info/topic/aagaman-basobas-aaprawasan/`
+
+### Topic Hub Layout Refinement
+
+After live review:
+
+- Removed the artificial empty blue-grey half of the single featured-guide card.
+- Changed the featured-guide grid so one guide uses the full available width and multiple guides can form responsive columns.
+- Hid the empty `All guides` directory when every available guide is already displayed as featured.
+- Kept the directory logic ready to reappear automatically as additional guides are published.
+- Improved selected Nepali interface labels from formal `मार्गदर्शन` wording to more natural information-oriented wording:
+  - `सुरु गर्न उपयोगी जानकारी`
+  - `पूरा जानकारी पढ्नुहोस्`
+  - `जानकारीमूलक लेख`
+- Astro Check passed with 0 errors and 0 warnings.
+- Production build passed with 11 generated pages.
+
+The optional Topic Introduction currently remains populated. Live review found that it visually creates a large white band and partly repeats the summary. The content can later be removed directly in Sanity without a code change. The route already hides the introduction section when the field is empty. Do not spend additional development time on this unless future content demonstrates a need for a different layout.
+
+### Webhook Update
+
+The Sanity-to-Vercel webhook filter was extended to include:
+
+- `publicInformationTopic`
+
+Publishing Topic Hub changes can therefore trigger the public `nepali-no` Vercel build automatically, alongside News Articles, Public Information Guides, Community Events, and Business Listings.
+
+## Git Checkpoints
+
+Topic Hub milestone commits:
+
+- `944d61d topic-hub-schema`
+- `28516c9 topic-hub-queries`
+- `021a853 topic-hub-route`
+- `358cbf8 topic-hub-layout`
+
+Before continuing, verify that `358cbf8 topic-hub-layout` is pushed to `origin/main` and that the working tree is clean.
+
+## Next Recommended Milestone
+
+Do not create all Topic Hubs or import the large guide inventory yet.
+
+The next controlled milestone should be:
+
+1. Link active Topic Hubs from `/ne/info/` and `/nb/info/`.
+2. Redesign the Public Information archive around Topic Hubs while preserving a useful fallback list of guides.
+3. Show only active Topic Hubs.
+4. Keep the current UDI guide visible and reachable throughout the transition.
+5. Ensure languages with no active Topic Hubs still have a valid and useful archive.
+6. Centralize newly introduced Topic Hub interface labels in the i18n files during an appropriate cleanup checkpoint.
+7. Add related-guide, keyword, guide-format, editorial-priority, and maintenance-sensitivity fields only in later isolated schema checkpoints.
+8. Create additional Topic Hubs gradually and validate the taxonomy with real content before large-scale import.
