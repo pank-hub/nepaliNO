@@ -777,3 +777,117 @@ The next controlled milestone should be:
 6. Centralize newly introduced Topic Hub interface labels in the i18n files during an appropriate cleanup checkpoint.
 7. Add related-guide, keyword, guide-format, editorial-priority, and maintenance-sensitivity fields only in later isolated schema checkpoints.
 8. Create additional Topic Hubs gradually and validate the taxonomy with real content before large-scale import.
+
+## Public Information Knowledge-Centre Archive Milestone
+
+Completed and verified:
+
+- Redesigned the multilingual Public Information archives:
+  - `/ne/info/`
+  - `/nb/info/`
+- Active Public Information Topic Hubs are now the primary navigation model for languages that have active hubs.
+- The archive fetches Topic Hubs and active Public Information Guides in parallel.
+- Topic Hubs are ordered by their editorial `displayOrder` value.
+- Each Topic Hub card displays:
+  - language-specific public title
+  - public summary
+  - active-guide count
+  - direct link to the Topic Hub route
+- Guides assigned to an active Topic Hub are removed from the archive fallback list to prevent duplicate presentation.
+- Active guides whose topic does not yet have an active Topic Hub remain visible as standalone guide cards.
+- Languages with no active Topic Hubs remain useful by showing the existing guide-card archive rather than an empty Topic Hub section.
+- The existing official-information disclaimer remains prominent.
+- Existing individual guide routes and the published UDI guide remain unchanged and directly accessible.
+- The Nepali archive currently displays the active Topic Hub:
+  - `आगमन, बसोबास र आप्रवासन`
+  - `/ne/info/topic/aagaman-basobas-aaprawasan/`
+- The current Norwegian archive continues to use the safe guide-card fallback until Norwegian Topic Hubs are created and activated.
+- Mobile rendering was reviewed positively.
+- Desktop rendering was refined so a single Topic Hub card spans the full grid width and does not leave an artificial empty blue-grey second column.
+- When a second active Topic Hub is added, the archive automatically returns to the intended two-column desktop grid.
+- Astro Check passed with 0 errors and 0 warnings.
+- The production build passed with 11 generated pages.
+
+## Git Checkpoints
+
+- `f1986b2 info-topic-hubs` - added Topic Hubs as the primary Public Information archive navigation with a guide fallback
+- `8139010 info-single-topic` - made a single Topic Hub card use the full desktop width
+
+Latest expected pushed checkpoint:
+
+`8139010 info-single-topic`
+
+## Content-Entry Decision
+
+Do not begin large-scale entry of News Articles, Public Information Guides, or other editorial content until the core architecture, taxonomy, relationships, archive behavior, and publishing workflows have been completed and validated.
+
+Reason:
+
+- Avoid orphaned or poorly classified content.
+- Avoid later bulk migration caused by premature schema decisions.
+- Ensure each guide has a stable topic, route, review workflow, translation strategy, and relationship model before import.
+- Use only a small number of controlled test documents while architecture is still evolving.
+
+The large content inventory remains planned and valuable, but architecture and validation take priority over volume at this stage.
+
+## Planned Article and Guide Discussion Integration
+
+A future forum integration should let readers continue a News Article or Public Information Guide discussion in the community forum.
+
+Preferred editorial model:
+
+- Do not embed a full comment thread directly inside the article or guide.
+- Keep the authoritative article or guide page focused, readable, and editorially controlled.
+- Optionally link the content item to a corresponding forum topic.
+- Display a clear call to action such as:
+  - `Discuss this article in the forum`
+  - `Share your experience in the forum`
+  - natural Nepali and Norwegian equivalents
+- The forum topic should contain or automatically receive:
+  - content title
+  - short summary or excerpt
+  - canonical link back to the nepali.no article or guide
+  - content language
+  - content type
+  - relevant category or topic
+- The article or guide should store an optional forum-topic URL or forum-topic identifier.
+- The link should be hidden when no forum topic exists.
+- Community experience must be clearly separated from official-source-based guidance.
+- Forum contributions must never be presented as verified legal, immigration, tax, health, or public-service instructions.
+- Moderation, safeguarding, privacy, spam controls, language handling, and community rules must be designed before public launch.
+
+Discourse remains the leading forum candidate, but no irreversible forum-specific frontend architecture should be introduced before a structured platform and integration review.
+
+Future Discourse review should cover:
+
+- self-hosted versus managed hosting
+- single sign-on and user-account strategy
+- API-based topic creation
+- webhooks
+- category and tag mapping
+- multilingual topics
+- moderation roles and escalation
+- spam and abuse prevention
+- child and youth safeguarding
+- privacy and data-processing responsibilities
+- backups, upgrades, email delivery, and operational workload
+- canonical-link and search-engine behavior
+- how forum discussions appear on the nepali.no homepage without exposing unmoderated content directly
+
+Recommended future content relationship:
+
+`News Article or Public Information Guide -> optional related forum topic -> canonical link back to nepali.no`
+
+This requirement should be considered when the Public Information Guide and News Article schemas are next extended. A generic optional discussion reference should be preferred over hardcoding a presentation-only URL in page templates.
+
+## Next Recommended Development Sequence
+
+1. Document and secure this archive milestone.
+2. Review the remaining Public Information architecture and schema requirements before importing content.
+3. Add search keywords and related-guide relationships as isolated, tested schema changes.
+4. Decide whether guide format, editorial priority, and maintenance sensitivity should be introduced in the same or later milestones.
+5. Test all new metadata on the existing UDI guide before bulk use.
+6. Perform a structured Discourse integration review before implementing discussion links.
+7. Add a generic optional forum-discussion relationship to News Articles and Public Information Guides only after the forum architecture is selected.
+8. Continue creating Topic Hubs gradually with real controlled content.
+9. Begin larger content import only when taxonomy, search, relationships, review controls, and forum-link strategy are stable.
