@@ -429,7 +429,8 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
       _id,
       title,
       "slug": slug.current,
-      language
+      language,
+      status
     },
     summary,
     topic,

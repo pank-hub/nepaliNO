@@ -14,6 +14,7 @@ interface TranslationSummary {
   title: string
   slug: string
   language: SupportedLanguage
+  status?: string
 }
 
 interface OfficialLink {
@@ -115,8 +116,10 @@ const portableTextComponents = {
   },
 }
 
-const alternatePath = guide.translation
-  ? `/${guide.translation.language}/info/${guide.translation.slug}/`
+const activeTranslation =
+  guide.translation?.status === 'active' ? guide.translation : undefined
+const alternatePath = activeTranslation
+  ? `/${activeTranslation.language}/info/${activeTranslation.slug}/`
   : `/${alternateLanguage}/info/`
 
 const audienceLabels = labels.information.audiences as Record<string, string>
@@ -284,10 +287,10 @@ const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audie
           </dl>
         </section>
 
-        {guide.translation && (
-          <a class="translation-card" href={alternatePath} hreflang={guide.translation.language}>
-            <span>{getTranslations(guide.translation.language).languageName}</span>
-            <strong>{guide.translation.title}</strong>
+        {activeTranslation && (
+          <a class="translation-card" href={alternatePath} hreflang={activeTranslation.language}>
+            <span>{getTranslations(activeTranslation.language).languageName}</span>
+            <strong>{activeTranslation.title}</strong>
           </a>
         )}
       </aside>
