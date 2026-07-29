@@ -891,3 +891,61 @@ This requirement should be considered when the Public Information Guide and News
 7. Add a generic optional forum-discussion relationship to News Articles and Public Information Guides only after the forum architecture is selected.
 8. Continue creating Topic Hubs gradually with real controlled content.
 9. Begin larger content import only when taxonomy, search, relationships, review controls, and forum-link strategy are stable.
+### Public Information Search Metadata and Related Guides Schema Milestone
+
+Completed and verified on 29 July 2026:
+- Extended `sanity/schemaTypes/publicInformationGuide.ts` with two optional, isolated metadata fields:
+  - `searchKeywords`
+  - `relatedGuides`
+- `searchKeywords` supports up to 30 unique strings. Each entry must contain between 2 and 100 characters.
+- Editorial guidance explicitly supports natural search phrases in the guide language, everyday Nepali wording, Norwegian official terminology, abbreviations, synonyms, and common alternative spellings.
+- Search keywords are editorial metadata and are not displayed publicly by the current frontend.
+- `relatedGuides` supports up to 8 unique references to other Public Information Guide documents.
+- The Related Guides selector prefers guides in the same language when the current document has a language.
+- The selector excludes both the published and draft identifiers of the current guide, preventing self-reference.
+- Related Guides remains separate from the existing Translated Version relationship.
+- No forum-specific field or irreversible Discourse-specific architecture was introduced.
+- Existing fields, Topic Hub behavior, guide routes, and the published UDI guide URL were preserved.
+
+Validation completed:
+- Sanity TypeScript validation passed with `npx tsc --noEmit`.
+- Sanity Studio production build passed.
+- `git diff --check` passed.
+- The complete schema diff was reviewed.
+- Astro production build passed and generated the expected 11 pages.
+- The build introduced no additional tracked changes.
+
+Git checkpoint:
+- `1c966ef add guide search and related fields`
+- Verified that `HEAD`, local `main`, `origin/main`, and `origin/HEAD` all pointed to `1c966ef`.
+- The working tree was clean after the checkpoint was pushed.
+
+Deployment and editorial verification:
+- The normal Studio deployment path remains the existing Vercel project `nepali-no-studio`.
+- Do not use `npx sanity deploy` for the ordinary Vercel-hosted Studio workflow.
+- The Git push triggered the connected Vercel deployments automatically.
+- The new Search Keywords and Synonyms and Related Guides fields were verified in the existing Vercel-hosted Studio at `https://nepali-no-studio.vercel.app`.
+- The existing Nepali UDI guide was used as the controlled metadata test document.
+- Published search keywords:
+  - `oppholdstillatelse`
+  - `बसोबास अनुमति`
+- The guide was published with no outstanding unpublished changes. The disabled Publish button and Last published status confirmed synchronization.
+- Publishing triggered the established Sanity-to-Vercel webhook.
+- The resulting public `nepali-no` Vercel production deployment reached Ready.
+- The public guide should not visibly change because the frontend does not yet query or display searchKeywords.
+- `relatedGuides` remains empty because there is currently no second suitable genuine Nepali guide. Do not create fake content merely to test the relationship.
+- Test same-language filtering, self-reference exclusion, duplicate prevention, and public related-guide presentation when a second genuine Nepali guide exists.
+
+Important scale and content-entry note:
+- The single UDI guide is only a controlled architecture test. The Public Information collection is expected to grow to hundreds or thousands of guides.
+- Do not begin bulk content entry yet. Stabilize taxonomy, search behavior, relationships, review controls, translation strategy, and optional discussion-link architecture first.
+
+### Next Recommended Work
+- Append this milestone to `PROJECT_PROGRESS.md`, then commit and push the documentation checkpoint.
+- Do not manually redeploy Sanity Studio.
+- Do not add a forum-topic field before the structured Discourse integration review.
+- Decide the next isolated Public Information schema milestone, likely guide format, editorial priority, or maintenance sensitivity. Do not add all remaining fields in one uncontrolled change.
+- Keep Related Guides optional and hidden publicly when empty.
+- When a second genuine Nepali guide is created, test the Related Guides editorial selector before adding frontend presentation.
+- Continue creating Topic Hubs gradually with controlled real content.
+- Continue one verified step at a time, with Git checkpoints after stable milestones.
