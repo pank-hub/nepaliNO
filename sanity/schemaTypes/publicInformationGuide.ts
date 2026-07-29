@@ -178,6 +178,30 @@ export const publicInformationGuide = defineType({
       },
     }),
     defineField({
+      name: 'maintenanceSensitivity',
+      title: 'Maintenance Sensitivity',
+      type: 'string',
+      description:
+        'Optional editorial classification indicating how closely this guide should be monitored for changes. Review dates remain required and are managed separately.',
+      options: {
+        list: [
+          {
+            title: 'High',
+            value: 'high',
+          },
+          {
+            title: 'Medium',
+            value: 'medium',
+          },
+          {
+            title: 'Low',
+            value: 'low',
+          },
+        ],
+        layout: 'radio',
+      },
+    }),
+    defineField({
       name: 'topic',
       title: 'Topic',
       type: 'string',
