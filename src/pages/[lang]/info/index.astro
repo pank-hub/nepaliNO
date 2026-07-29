@@ -8,17 +8,16 @@ import {
   type SupportedLanguage,
 } from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
-import {ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY} from '../../../lib/sanity/queries'
+import {
+  ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY,
+  PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY,
+} from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
   return supportedLanguages.map((language) => ({
     params: {lang: language},
     props: {language},
   }))
-}
-
-interface Props {
-  language: SupportedLanguage
 }
 
 interface GuideSummary {
@@ -38,14 +37,35 @@ interface GuideSummary {
   isUrgent?: boolean
 }
 
+interface TopicSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  topicKey: string
+  summary: string
+  displayOrder: number
+  iconKey?: string
+  seoDescription?: string
+  guideCount: number
+}
+
 const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 
-const guides = await sanityClient.fetch<GuideSummary[]>(
-  ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY,
-  {language},
-)
+const [topics, guides] = await Promise.all([
+  sanityClient.fetch<TopicSummary[]>(
+    PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY,
+    {language},
+  ),
+  sanityClient.fetch<GuideSummary[]>(ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY, {
+    language,
+  }),
+])
+
+const activeTopicKeys = new Set(topics.map((topic) => topic.topicKey))
+const fallbackGuides = guides.filter((guide) => !activeTopicKeys.has(guide.topic))
 
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const formatDate = (date: string) =>
@@ -54,6 +74,35 @@ const formatDate = (date: string) =>
     month: 'long',
     day: 'numeric',
   })
+
+const copy =
+  language === 'ne'
+    ? {
+        topicEyebrow: 'विषयअनुसार जानकारी',
+        topicHeading: 'आफूलाई चाहिएको विषय छान्नुहोस्',
+        topicDescription:
+          'सम्बन्धित आधिकारिक स्रोतमा आधारित जानकारी विषयअनुसार व्यवस्थित गरिएको छ।',
+        openTopic: 'विषय खोल्नुहोस्',
+        article: 'जानकारीमूलक लेख',
+        articles: 'जानकारीमूलक लेखहरू',
+        fallbackEyebrow: 'थप उपयोगी जानकारी',
+        fallbackHeading: 'अन्य प्रकाशित जानकारी',
+        fallbackDescription:
+          'विषय पृष्ठमा समावेश हुन बाँकी सक्रिय जानकारी यहाँ उपलब्ध छन्।',
+      }
+    : {
+        topicEyebrow: 'Informasjon etter tema',
+        topicHeading: 'Velg temaet du trenger',
+        topicDescription:
+          'Informasjon basert på relevante offisielle kilder er organisert etter tema.',
+        openTopic: 'Åpne temaet',
+        article: 'veiledning',
+        articles: 'veiledninger',
+        fallbackEyebrow: 'Mer nyttig informasjon',
+        fallbackHeading: 'Andre publiserte veiledninger',
+        fallbackDescription:
+          'Aktive veiledninger som ennå ikke tilhører en offentlig temaside, vises her.',
+      }
 ---
 
 <BaseLayout
@@ -67,120 +116,180 @@ const formatDate = (date: string) =>
     alternatePath={`/${alternateLanguage}/info/`}
   />
 
-  <div class="info-hero">
-    <div class="container info-hero__inner">
-      <div class="reading-width">
-        <p class="eyebrow">{labels.navigation.information}</p>
-        <h1>{labels.information.pageTitle}</h1>
-        <p class="lead">{labels.information.pageDescription}</p>
-      </div>
-    </div>
-  </div>
-
-  <section class="section-sm">
-    <div class="container">
-      <aside class="trust-notice" aria-labelledby="information-disclaimer-title">
-        <div class="trust-notice__symbol" aria-hidden="true">i</div>
-        <div>
-          <h2 id="information-disclaimer-title">
-            {labels.information.disclaimerTitle}
-          </h2>
-          <p>{labels.information.disclaimer}</p>
-        </div>
-      </aside>
-    </div>
-  </section>
-
-  <section class="guides-section section-sm" aria-labelledby="guides-heading">
-    <div class="container">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">{labels.information.officialSource}</p>
-          <h2 id="guides-heading">{labels.information.latestHeading}</h2>
+  <main class="information-page">
+    <header class="info-hero">
+      <div class="container info-hero__inner">
+        <div class="reading-width">
+          <p class="eyebrow">{labels.navigation.information}</p>
+          <h1>{labels.information.pageTitle}</h1>
+          <p class="lead">{labels.information.pageDescription}</p>
         </div>
       </div>
+    </header>
 
-      {
-        guides.length === 0 ? (
-          <div class="empty-state surface">
-            <h3>{labels.information.emptyHeading}</h3>
-            <p>{labels.information.emptyMessage}</p>
+    <section class="section-sm">
+      <div class="container">
+        <aside class="trust-notice" aria-labelledby="information-disclaimer-title">
+          <div class="trust-notice__symbol" aria-hidden="true">i</div>
+          <div>
+            <h2 id="information-disclaimer-title">
+              {labels.information.disclaimerTitle}
+            </h2>
+            <p>{labels.information.disclaimer}</p>
           </div>
-        ) : (
-          <ul class="guide-grid">
-            {guides.map((guide) => (
-              <li>
-                <article class="guide-card card">
-                  <div class="guide-card__topline">
-                    <span class="badge badge-success">
-                      {guide.responsibleAgency}
-                    </span>
+        </aside>
+      </div>
+    </section>
 
-                    {guide.isUrgent && (
-                      <span class="badge badge-brand">
-                        {labels.information.urgentLabel}
-                      </span>
-                    )}
+    {topics.length > 0 && (
+      <section class="topics-section section-sm" aria-labelledby="topics-heading">
+        <div class="container">
+          <div class="section-heading section-heading--split">
+            <div>
+              <p class="eyebrow">{copy.topicEyebrow}</p>
+              <h2 id="topics-heading">{copy.topicHeading}</h2>
+            </div>
+            <p>{copy.topicDescription}</p>
+          </div>
+
+          <ol class="topic-grid">
+            {topics.map((topic, index) => (
+              <li>
+                <article class:list={['topic-card', index === 0 && 'topic-card--primary']}>
+                  <div class="topic-card__number" aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
                   </div>
 
-                  <div class="guide-card__content">
+                  <div class="topic-card__content">
                     <h3>
-                      <a href={`/${language}/info/${guide.slug}/`}>
-                        {guide.title}
+                      <a href={`/${language}/info/topic/${topic.slug}/`}>
+                        {topic.title}
                       </a>
                     </h3>
-                    <p>{guide.summary}</p>
+                    <p>{topic.summary}</p>
                   </div>
 
-                  <dl class="guide-card__meta">
-                    <div>
-                      <dt>{labels.information.lastReviewed}</dt>
-                      <dd>
-                        <time datetime={guide.lastReviewedAt}>
-                          {formatDate(guide.lastReviewedAt)}
-                        </time>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>{labels.information.nextReview}</dt>
-                      <dd>
-                        <time datetime={guide.nextReviewAt}>
-                          {formatDate(guide.nextReviewAt)}
-                        </time>
-                      </dd>
-                    </div>
-                  </dl>
-
-                  <div class="guide-card__actions">
-                    <a
-                      class="button button-primary"
-                      href={`/${language}/info/${guide.slug}/`}
-                    >
-                      {labels.information.readGuide}
-                    </a>
-                    <a
-                      class="official-link"
-                      href={guide.officialSourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {labels.information.officialSource}
-                      <span aria-hidden="true">↗</span>
+                  <div class="topic-card__footer">
+                    <span>
+                      {topic.guideCount}{' '}
+                      {topic.guideCount === 1 ? copy.article : copy.articles}
+                    </span>
+                    <a href={`/${language}/info/topic/${topic.slug}/`}>
+                      {copy.openTopic} <span aria-hidden="true">→</span>
                     </a>
                   </div>
                 </article>
               </li>
             ))}
-          </ul>
-        )
-      }
-    </div>
-  </section>
+          </ol>
+        </div>
+      </section>
+    )}
+
+    {(topics.length === 0 || fallbackGuides.length > 0) && (
+      <section class="guides-section section-sm" aria-labelledby="guides-heading">
+        <div class="container">
+          <div class="section-heading section-heading--split">
+            <div>
+              <p class="eyebrow">
+                {topics.length > 0
+                  ? copy.fallbackEyebrow
+                  : labels.information.officialSource}
+              </p>
+              <h2 id="guides-heading">
+                {topics.length > 0
+                  ? copy.fallbackHeading
+                  : labels.information.latestHeading}
+              </h2>
+            </div>
+            {topics.length > 0 && <p>{copy.fallbackDescription}</p>}
+          </div>
+
+          {guides.length === 0 ? (
+            <div class="empty-state surface">
+              <h3>{labels.information.emptyHeading}</h3>
+              <p>{labels.information.emptyMessage}</p>
+            </div>
+          ) : (
+            <ul class="guide-grid">
+              {(topics.length > 0 ? fallbackGuides : guides).map((guide) => (
+                <li>
+                  <article class="guide-card card">
+                    <div class="guide-card__topline">
+                      <span class="badge badge-success">
+                        {guide.responsibleAgency}
+                      </span>
+
+                      {guide.isUrgent && (
+                        <span class="badge badge-brand">
+                          {labels.information.urgentLabel}
+                        </span>
+                      )}
+                    </div>
+
+                    <div class="guide-card__content">
+                      <h3>
+                        <a href={`/${language}/info/${guide.slug}/`}>
+                          {guide.title}
+                        </a>
+                      </h3>
+                      <p>{guide.summary}</p>
+                    </div>
+
+                    <dl class="guide-card__meta">
+                      <div>
+                        <dt>{labels.information.lastReviewed}</dt>
+                        <dd>
+                          <time datetime={guide.lastReviewedAt}>
+                            {formatDate(guide.lastReviewedAt)}
+                          </time>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{labels.information.nextReview}</dt>
+                        <dd>
+                          <time datetime={guide.nextReviewAt}>
+                            {formatDate(guide.nextReviewAt)}
+                          </time>
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div class="guide-card__actions">
+                      <a
+                        class="button button-primary"
+                        href={`/${language}/info/${guide.slug}/`}
+                      >
+                        {labels.information.readGuide}
+                      </a>
+                      <a
+                        class="official-link"
+                        href={guide.officialSourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {labels.information.officialSource}
+                        <span aria-hidden="true">↗</span>
+                      </a>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+    )}
+  </main>
 
   <SiteFooter slot="footer" language={language} />
 </BaseLayout>
 
 <style>
+  .information-page {
+    background: #fff;
+  }
+
   .info-hero {
     position: relative;
     overflow: hidden;
@@ -204,12 +313,12 @@ const formatDate = (date: string) =>
   .info-hero__inner {
     position: relative;
     z-index: 1;
-    padding-block: clamp(4rem, 10vw, 8rem);
+    padding-block: clamp(3rem, 7vw, 5.5rem);
   }
 
   .info-hero h1 {
-    margin-block-start: 0.7rem;
     max-width: 15ch;
+    margin-block-start: 0.7rem;
   }
 
   .info-hero .lead {
@@ -234,7 +343,7 @@ const formatDate = (date: string) =>
     place-items: center;
     border-radius: 50%;
     background: var(--civic);
-    color: #ffffff;
+    color: #fff;
     font-family: Georgia, serif;
     font-weight: 700;
   }
@@ -249,21 +358,118 @@ const formatDate = (date: string) =>
   }
 
   .section-heading {
-    display: flex;
+    margin-block-end: 1.5rem;
+    padding-block-end: 1rem;
+    border-bottom: 2px solid var(--civic-deep);
+  }
+
+  .section-heading--split {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.8fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 5vw, 4rem);
     align-items: end;
-    justify-content: space-between;
-    gap: 1.5rem;
-    margin-block-end: 2rem;
   }
 
   .section-heading h2 {
-    margin-block-start: 0.55rem;
+    margin-block-start: 0.5rem;
+  }
+
+  .section-heading > p {
+    max-width: 42rem;
+    color: var(--text-muted);
+  }
+
+  .topics-section {
+    background: var(--surface-muted);
+    border-block: 1px solid var(--border);
+  }
+
+  .topic-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    background: var(--border-strong);
+    list-style: none;
+  }
+
+  .topic-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'number content'
+      'footer footer';
+    gap: 1.25rem;
+    min-height: 20rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    background: #fff;
+  }
+
+  .topic-card--primary {
+    background: var(--surface-warm);
+  }
+
+  .topic-card__number {
+    grid-area: number;
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
+  .topic-card__content {
+    grid-area: content;
+  }
+
+  .topic-card h3 {
+    font-size: clamp(1.55rem, 3vw, 2.35rem);
+    line-height: 1.2;
+  }
+
+  .topic-card h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .topic-card h3 a:hover {
+    color: var(--brand);
+  }
+
+  .topic-card__content p {
+    margin-block-start: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .topic-card__footer {
+    grid-area: footer;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    align-items: end;
+    margin-block-start: auto;
+    padding-block-start: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .topic-card__footer > span {
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    font-weight: 680;
+  }
+
+  .topic-card__footer a {
+    color: var(--civic-deep);
+    font-weight: 760;
   }
 
   .guide-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
+    margin: 0;
     padding: 0;
     list-style: none;
   }
@@ -316,7 +522,7 @@ const formatDate = (date: string) =>
     text-transform: uppercase;
   }
 
-  html[lang="ne"] .guide-card__meta dt {
+  html[lang='ne'] .guide-card__meta dt {
     font-size: 0.82rem;
     letter-spacing: 0;
     text-transform: none;
@@ -357,8 +563,19 @@ const formatDate = (date: string) =>
   }
 
   @media (max-width: 48rem) {
+    .section-heading--split,
+    .topic-grid,
     .guide-grid {
       grid-template-columns: 1fr;
+    }
+
+    .section-heading--split {
+      align-items: start;
+      gap: 0.75rem;
+    }
+
+    .topic-card {
+      min-height: 0;
     }
 
     .guide-card__actions {
@@ -373,6 +590,19 @@ const formatDate = (date: string) =>
   }
 
   @media (max-width: 30rem) {
+    .info-hero__inner {
+      padding-block: 2.75rem 3.25rem;
+    }
+
+    .topic-card {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'number'
+        'content'
+        'footer';
+      gap: 0.75rem;
+    }
+
     .guide-card__meta {
       grid-template-columns: 1fr;
     }
