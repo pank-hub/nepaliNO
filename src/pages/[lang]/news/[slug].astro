@@ -15,6 +15,7 @@ interface TranslationSummary {
   title: string
   slug: string
   language: SupportedLanguage
+  publishedAt: string
 }
 
 interface NewsImage {
@@ -53,7 +54,9 @@ export async function getStaticPaths() {
     *[
       _type == "newsArticle" &&
       defined(slug.current) &&
-      language in ["ne", "nb"]
+      language in ["ne", "nb"] &&
+      defined(publishedAt) &&
+      publishedAt <= now()
     ] {
       "slug": slug.current,
       language
@@ -83,8 +86,14 @@ if (!article) {
 }
 
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
-const alternatePath = article.translation
-  ? `/${article.translation.language}/news/${article.translation.slug}/`
+const activeTranslation =
+  article.translation?.slug &&
+  article.translation.language === alternateLanguage &&
+  new Date(article.translation.publishedAt).getTime() <= Date.now()
+    ? article.translation
+    : undefined
+const alternatePath = activeTranslation
+  ? `/${activeTranslation.language}/news/${activeTranslation.slug}/`
   : `/${alternateLanguage}/news/`
 
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
@@ -252,14 +261,14 @@ const translationLabel = language === 'ne' ? 'अर्को भाषामा
           </dl>
         </section>
 
-        {article.translation && (
+        {activeTranslation && (
           <a
             class="translation-card"
             href={alternatePath}
-            hreflang={article.translation.language}
+            hreflang={activeTranslation.language}
           >
             <span>{translationLabel}</span>
-            <strong>{article.translation.title}</strong>
+            <strong>{activeTranslation.title}</strong>
           </a>
         )}
       </aside>

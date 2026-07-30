@@ -1,7 +1,9 @@
 export const NEWS_ARTICLES_QUERY = `
   *[
     _type == "newsArticle" &&
-    defined(slug.current)
+    defined(slug.current) &&
+    defined(publishedAt) &&
+    publishedAt <= now()
   ] | order(publishedAt desc) {
     _id,
     title,
@@ -33,7 +35,9 @@ export const NEWS_ARTICLES_BY_LANGUAGE_QUERY = `
   *[
     _type == "newsArticle" &&
     defined(slug.current) &&
-    language == $language
+    language == $language &&
+    defined(publishedAt) &&
+    publishedAt <= now()
   ] | order(publishedAt desc) {
     _id,
     title,
@@ -66,7 +70,9 @@ export const FEATURED_NEWS_ARTICLES_QUERY = `
   *[
     _type == "newsArticle" &&
     defined(slug.current) &&
-    isFeatured == true
+    isFeatured == true &&
+    defined(publishedAt) &&
+    publishedAt <= now()
   ] | order(publishedAt desc) [0...4] {
     _id,
     title,
@@ -98,7 +104,9 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
   *[
     _type == "newsArticle" &&
     slug.current == $slug &&
-    language == $language
+    language == $language &&
+    defined(publishedAt) &&
+    publishedAt <= now()
   ][0] {
     _id,
     title,
@@ -108,7 +116,8 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
       _id,
       title,
       "slug": slug.current,
-      language
+      language,
+      publishedAt
     },
     summary,
     newsRegion,
@@ -127,6 +136,7 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
         asset,
         alt,
         caption,
+        credit,
         hotspot,
         crop
       }
@@ -492,6 +502,8 @@ export const IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY = `
     defined(slug.current) &&
     language == $language &&
     isImportantNow == true &&
+    defined(publishedAt) &&
+    publishedAt <= now() &&
     defined(importantUntil) &&
     importantUntil > now()
   ] | order(publishedAt desc) [0] {
@@ -513,7 +525,9 @@ export const HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY = `
     _type == "newsArticle" &&
     defined(slug.current) &&
     language == $language &&
-    isFeatured == true
+    isFeatured == true &&
+    defined(publishedAt) &&
+    publishedAt <= now()
   ] | order(publishedAt desc) [0] {
     _id,
     title,
@@ -540,6 +554,8 @@ export const HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY = `
     _type == "newsArticle" &&
     defined(slug.current) &&
     language == $language &&
+    defined(publishedAt) &&
+    publishedAt <= now() &&
     (!defined($excludeId) || _id != $excludeId)
   ] | order(publishedAt desc) [0...3] {
     _id,

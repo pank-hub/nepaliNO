@@ -186,10 +186,15 @@ export const newsArticle = defineType({
               title: 'Caption',
               type: 'string',
             }),
+            defineField({
+              name: 'credit',
+              title: 'Image Credit',
+              type: 'string',
+            }),
           ],
         }),
       ],
-      validation: (rule) => rule.required(),
+      validation: (rule) => rule.required().min(1),
     }),
 
     defineField({
