@@ -1324,3 +1324,87 @@ Completed and verified on 29 July 2026:
 - Do not add forum-specific fields before the structured Discourse review.
 - After the Public Information taxonomy is stabilized, perform a focused News audit.
 - Before connecting `nepali.no`, create the initial editorial manual, operations runbook, diagnostic workflow, rollback documentation, and launch checklist.
+### Transport and Driving Topic Key Milestone
+
+Completed and verified on 30 July 2026:
+- Reviewed the topic options defined in both Public Information schemas.
+- Confirmed that the existing schemas contained 13 topic keys but no dedicated key for the planned Transport and Driving content area.
+- Confirmed that at least five genuine Transport and Driving guides are already planned, so these guides should not be forced into the `other` fallback category.
+- Added the same stable, language-independent topic option to both schemas:
+  - Public title in Studio: `Transport and Driving`
+  - Internal key: `transport-driving`
+- Updated:
+  - `sanity/schemaTypes/publicInformationGuide.ts`
+  - `sanity/schemaTypes/publicInformationTopic.ts`
+- Inserted the new option immediately before the existing Other fallback option in both schemas.
+- No existing topic key was renamed, reordered, or removed.
+- No route, GROQ query, frontend component, existing Sanity document, or public page behavior was changed.
+
+Validation completed:
+- Used a checksum-protected update script that verified both source files before changing either file.
+- Sanity TypeScript validation passed with `npx tsc --noEmit`.
+- Sanity Studio production build passed.
+- The known local/runtime Sanity version warning was handled with Continue anyway; dependencies were not upgraded.
+- `git diff --check` passed for both schema files.
+- The complete two-file diff was reviewed and contained only the two intended option additions.
+- Astro Check passed across 47 files with 0 errors and 0 warnings.
+- Astro production build passed and generated the current expected baseline of 13 pages.
+- The new topic key did not generate a public page by itself, which is correct.
+
+Git checkpoint:
+- `43ce562 add transport and driving topic`
+- Two files changed with two insertions.
+- The checkpoint was pushed successfully.
+- Verified that `HEAD`, local `main`, `origin/main`, and `origin/HEAD` all pointed to `43ce562`.
+- `git status --short` returned no output after push, confirming a clean working tree.
+
+Hosted Studio verification:
+- Verified that `Transport and Driving` appears in Public Information Guide under the Topic selector.
+- Verified that `Transport and Driving` appears in Public Information Topic under the Topic Key selector.
+- Existing Guide and Topic Hub selections were not changed during verification.
+- Both sides now support the matching relationship:
+  - Guide `topic = transport-driving`
+  - Topic Hub `topicKey = transport-driving`
+
+### Reusable Procedure for Future Topic Keys
+
+A Topic Hub for an existing topic key can be created entirely through Sanity Studio and requires no code or Git change.
+
+A genuinely new topic key requires one small controlled schema milestone:
+1. Confirm that no existing key accurately represents the planned content.
+2. Choose a stable, language-independent internal key.
+3. Add the identical option to:
+   - `sanity/schemaTypes/publicInformationGuide.ts`
+   - `sanity/schemaTypes/publicInformationTopic.ts`
+4. Run Sanity TypeScript validation.
+5. Build Sanity Studio.
+6. Run `git diff --check` and review the complete diff.
+7. Run Astro Check and the production build.
+8. Commit and push the schema change.
+9. Verify both selectors in the Vercel-hosted Studio.
+10. Create the language-specific Topic Hub in Sanity only when a genuine anchor guide is ready.
+11. Publish the Topic Hub while inactive, verify the inactive state, then activate and republish.
+12. Update project documentation.
+
+Important safeguards:
+- Never rename an existing internal key casually after documents use it.
+- Never translate the internal key. Translate only public titles and summaries.
+- Guide `topic` and Topic Hub `topicKey` must match exactly.
+- Do not force an established category into `other` merely to avoid a justified schema addition.
+- Do not activate an empty Topic Hub.
+- Adding a Topic Hub for an already defined key is editorial work in Sanity and does not require code changes.
+
+### Future Transport and Driving Work
+- Do not create or activate a Transport Topic Hub until the first genuine Transport and Driving guide is ready.
+- Planned Transport and Driving subjects include public transport, driving licences, recognition or exchange of foreign licences, vehicle purchase and registration, electric vehicles and tolls, and winter driving.
+- When the first guide is ready, create the language-specific Topic Hub through Sanity using `transport-driving`, publish it inactive first, validate, then activate it.
+
+### Current Documentation Status
+- Latest pushed code checkpoint: `43ce562 add transport and driving topic`.
+- The working tree was clean at the documentation-preparation point.
+- The Transport and Driving topic-key milestone has now been appended to PROJECT_PROGRESS.md and is awaiting a documentation-only commit.
+
+### Next Recommended Work
+- Review, stage, commit, and push this documentation-only checkpoint.
+- Keep the current recovery prompt outside the repository and update it after the documentation checkpoint.
+- Then resume the focused News audit or the next agreed project priority.
