@@ -1783,3 +1783,151 @@ Completed and verified on 30 July 2026.
 - Integrate up to three Upcoming or ongoing Events on the homepage.
 - Create one genuine controlled test Event in Sanity and verify desktop and mobile behavior.
 - Build the private organizer-submission and moderation workflow only after the approved public Event routes are stable.
+### Public Events Routes and Visual Validation Milestone
+
+Completed and verified on 30 July 2026.
+
+#### Public route package
+- Created the first complete bilingual public Events route package:
+  - `src/pages/[lang]/events/index.astro`
+  - `src/pages/[lang]/events/past.astro`
+  - `src/pages/[lang]/events/[slug].astro`
+- Public routes now include:
+  - `/ne/events/`
+  - `/nb/events/`
+  - `/ne/events/past/`
+  - `/nb/events/past/`
+  - future generated individual routes at `/ne/events/[slug]/` and `/nb/events/[slug]/`
+- The route creator refused to overwrite existing files.
+- Confirmed that no earlier Event route or placeholder existed under `src/pages/[lang]`.
+
+#### Upcoming and ongoing Events archive
+- Built a mobile-first chronological archive using `UPCOMING_EVENTS_BY_LANGUAGE_QUERY`.
+- Events are presented soonest first rather than through a desktop-oriented month grid.
+- Event cards support:
+  - prominent date block
+  - Event title and summary
+  - Event category
+  - In-person, Online or Hybrid format
+  - venue, city or online platform
+  - organizer
+  - registration status where relevant
+  - Featured image or a safe visual fallback
+  - direct link to the individual Event page
+- Ongoing Events receive an automatic Ongoing label.
+- Postponed, Rescheduled and Cancelled states receive prominent labels.
+- The archive includes a clear link to Past Events.
+- The empty Sanity result displays the proofreader-approved Nepali empty state instead of a Coming Soon placeholder.
+
+#### Past Events archive
+- Built a separate bilingual Past Events archive using `PAST_EVENTS_BY_LANGUAGE_QUERY`.
+- Past Events are ordered most recently completed first.
+- Past Event cards retain:
+  - completed date
+  - title and summary
+  - category
+  - Event status
+  - location
+  - organizer
+  - direct link to the persistent individual Event page
+- The archive includes a clear link back to Upcoming Events.
+- Empty Past Events state uses the proofreader-approved Nepali wording.
+
+#### Individual Event pages
+- Built language-safe static Event pages using `EVENT_BY_SLUG_QUERY`.
+- Static paths are generated for published Nepali and Norwegian Event documents with usable slugs.
+- Individual pages support:
+  - breadcrumbs
+  - title and summary
+  - Event category and format
+  - Scheduled, Postponed, Rescheduled and Cancelled states
+  - automatic Ongoing and Completed states
+  - featured image with caption and credit
+  - Portable Text Event Description
+  - credited inline images through the shared Sanity image component
+  - date, time and all-day presentation
+  - venue, address, city and map link
+  - online platform details
+  - organizer website
+  - approved public organizer email and telephone
+  - actual Event languages, including English
+  - intended audience
+  - price and flexible price description
+  - registration requirement, status and deadline
+  - accessibility information
+  - transport or parking information
+  - original source and last verification date
+- Completed and Cancelled Event pages remain accessible as stable public records.
+
+#### Registration safety
+- Visitors register or buy tickets externally through the organizer or an external service.
+- nepali.no does not collect participant-registration or payment data in Phase 1.
+- External registration actions are shown only when:
+  - the Event has not finished
+  - the Event is not Cancelled
+  - the Event is not Postponed
+  - registration status is Open
+  - a valid external registration or ticket URL exists
+  - registration or tickets are required
+  - the registration deadline has not passed, when a deadline exists
+- Rescheduled Events may still accept registration when the above conditions are satisfied.
+- Completed, Cancelled, Postponed, closed, sold-out or deadline-expired Events show an unavailable or status message instead of an active registration action.
+- The individual Event page displays the centralized external-registration privacy notice.
+
+#### Translation behavior
+- A direct translated-Event link is used only when the referenced Event has:
+  - a usable slug
+  - the expected alternate public language
+- When no eligible translated Event exists, the header language switch falls back to the alternate-language Events archive.
+- Interface wording is taken from the centralized `labels.events` objects in `ne.ts` and `nb.ts`.
+
+#### Validation
+- Astro Check passed across 50 files with:
+  - 0 errors
+  - 0 warnings
+  - 55 informational hints
+- Astro production build passed.
+- Static page baseline increased from 13 to 17 pages.
+- Generated routes included both Upcoming and both Past Events archives.
+- No individual Event route was generated because the production dataset still contained zero Event documents.
+- `git diff --check` passed.
+- The three new route files were reviewed and staged as Added files.
+- Route checkpoint created and pushed:
+  - `cc2467c add public event routes`
+
+#### Visual deployment validation
+- Verified the deployed Nepali Upcoming Events archive on desktop and mobile.
+- Verified the deployed Nepali Past Events archive on desktop and mobile.
+- Confirmed:
+  - responsive header and mobile menu
+  - proofreader-approved Nepali Events wording
+  - clear Upcoming/Past archive navigation
+  - readable headings and empty states
+  - no horizontal overflow in supplied mobile screenshots
+  - complete responsive footer
+  - no empty Coming Soon placeholder on the Event archive pages
+- The large desktop empty-state space is acceptable for the empty dataset and should be reassessed after genuine Event cards are present rather than redesigned prematurely.
+
+### Current Git Status
+- Latest pushed checkpoint: `cc2467c add public event routes`.
+- `git status --short` returned no output after the push.
+- The working tree was clean when this append was prepared.
+- This milestone has now been appended to PROJECT_PROGRESS.md and is awaiting a documentation-only checkpoint.
+
+### Exact Next Work
+1. Create one genuine controlled Nepali Event in Sanity Studio.
+2. Publish it and allow the existing Sanity webhook to rebuild the public site.
+3. Validate:
+   - Upcoming archive card
+   - localized date and time
+   - category and format labels
+   - organizer and location information
+   - actual Event-language labels
+   - external registration safety
+   - image, caption and credit
+   - individual Event page
+   - source and verification metadata
+   - desktop and mobile presentation
+4. Create a Norwegian translated Event only if useful for the first test; a missing translation must safely fall back to the Norwegian Events archive.
+5. Integrate up to three Upcoming or ongoing Events into the homepage using `HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY`.
+6. After the approved public Event workflow is stable, build the separate private `eventSubmission` schema, bilingual organizer submission form and moderated staff workflow.
