@@ -1408,3 +1408,142 @@ Important safeguards:
 - Review, stage, commit, and push this documentation-only checkpoint.
 - Keep the current recovery prompt outside the repository and update it after the documentation checkpoint.
 - Then resume the focused News audit or the next agreed project priority.
+### News Safety, i18n, Proofreading and Homepage Completion Milestone
+
+Completed and verified on 30 July 2026.
+
+#### News publishing safety
+- Audited the News schema, public GROQ queries, News archive, individual News route, homepage News queries and the shared Portable Text image component.
+- Confirmed that future-dated published News could previously appear before its intended publication time.
+- Added `defined(publishedAt)` and `publishedAt <= now()` safeguards to all relevant public News queries:
+  - `NEWS_ARTICLES_QUERY`
+  - `NEWS_ARTICLES_BY_LANGUAGE_QUERY`
+  - `FEATURED_NEWS_ARTICLES_QUERY`
+  - `NEWS_ARTICLE_BY_SLUG_QUERY`
+  - `IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY`
+  - `HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY`
+  - `HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY`
+- Added the same publication-time safeguard to News article static-path generation.
+- Documented that this is a visibility safeguard, not an automatic scheduling system; a build must still occur after the publication time.
+- Strengthened translated-News availability:
+  - projected translated article `publishedAt`
+  - required the expected alternate language, a usable slug and a publication time that has arrived
+  - hid the translation card when no eligible translation exists
+  - made the header language switch fall back to the alternate-language News archive
+- Added optional Image Credit to inline News Article Content images.
+- Projected inline image credit through GROQ and reused the existing shared image component for display.
+- Required at least one item in News Article Content.
+- Sanity TypeScript validation passed.
+- Sanity Studio production build passed.
+- Astro Check passed across 47 files with 0 errors and 0 warnings.
+- Astro production build passed with the expected 13 generated pages.
+- `git diff --check` passed and the complete three-file diff was reviewed.
+- Code checkpoint created and pushed:
+  - `17c9381 strengthen news publishing safety`
+
+#### News interface i18n centralization
+- Audited hard-coded Nepali and Norwegian interface copy in the News archive and individual News route.
+- Centralized News interface labels in:
+  - `src/i18n/ne.ts`
+  - `src/i18n/nb.ts`
+- Updated:
+  - `src/pages/[lang]/news/index.astro`
+  - `src/pages/[lang]/news/[slug].astro`
+- Centralized:
+  - region labels
+  - category labels
+  - article-count wording
+  - More News
+  - Author
+  - Original Source and its explanation
+  - alternate-language link label
+  - Region and Category field labels
+  - Useful Information title and description
+  - Read Guide and Last Reviewed labels
+- Preserved the existing wording during the structural move.
+- Preserved fallback behavior for unknown Sanity region or category values.
+- Left editor-authored content in Sanity and application logic in Astro.
+- Astro Check passed with 0 errors and 0 warnings.
+- Production build passed with 13 pages.
+- `git diff --check` passed and the complete four-file diff was reviewed.
+- Code checkpoint created and pushed:
+  - `ad4401e centralize news interface translations`
+
+#### Proofreader-approved Nepali interface corrections
+- Established and successfully tested the controlled proofreader workflow for `src/i18n/ne.ts`.
+- Applied exactly three approved Nepali wording corrections:
+  1. `सरकारी स्रोतमा आधारित सरल जानकारी।`
+  2. `नयाँ मार्गदर्शन प्रकाशित भएपछि यहाँ उपलब्ध हुनेछ।`
+  3. `समाचारका साथै आधिकारिक स्रोतमा आधारित उपयोगी जानकारी।`
+- Kept the following proofreader-approved wording unchanged:
+  - `मार्गदर्शन पढ्नुहोस्`
+  - `अहिलेसम्म कुनै मार्गदर्शन प्रकाशित भएको छैन।`
+- Astro Check passed with 0 errors and 0 warnings.
+- Production build passed with 13 pages.
+- `git diff --check` passed and the exact three-string diff was reviewed.
+- Code checkpoint created and pushed:
+  - `d98b90a refine Nepali information wording`
+
+#### Homepage Public Information presentation
+- Confirmed that the homepage intentionally displays only Public Information Guides marked `isFeatured == true`.
+- Confirmed that Active controls public availability, Topic controls Topic Hub membership, and Featured Guide controls homepage selection.
+- Marked the genuine UDI and Skatteetaten guides as Featured through Sanity Studio.
+- Verified that both guide cards now appear on the Nepali homepage with direct links, summaries and responsible-agency badges.
+- Verified the updated proofreader-approved Public Information description on the homepage.
+- The Sanity publishing webhook rebuilt the public site automatically; no code commit was required for the Featured changes.
+- The no-featured-guides fallback remains a later minor improvement because it can imply that no guides exist even when active guides are available. The archive link remains visible.
+
+#### Homepage News i18n reuse
+- Found a second duplicated bilingual News region and category dictionary in `src/pages/[lang]/index.astro`.
+- Removed the duplicated homepage dictionaries.
+- Reused:
+  - `labels.news.regions`
+  - `labels.news.categories`
+- Preserved fallback behavior for unknown Sanity values.
+- No wording, visual design, query, route, date or publication behavior changed.
+- Astro Check passed with 0 errors and 0 warnings.
+- Production build passed with 13 pages.
+- `git diff --check` passed and the complete one-file diff was reviewed.
+- Code checkpoint created and pushed:
+  - `aa75a92 reuse news translations on homepage`
+
+#### Planned editorial and integration work
+- Planned a future optional News-to-Public-Information-Guide relationship:
+  - same-language related Guide reference on News
+  - supporting Guide panel on the News article
+  - reverse GROQ lookup on Guide pages for the latest related News
+  - publication-, language-, slug- and status-safe filtering
+  - kept separate from future forum discussion relationships
+- Planned a later Sanity Studio Interface Language editor so approved proofreaders can update Nepali and Norwegian interface wording through web forms without Codespaces or Git.
+- Initial Interface Language editor principle:
+  - developers control keys, structure, fallback behavior and application logic
+  - proofreaders control approved wording
+  - `ne.ts` and `nb.ts` remain safe fallbacks in the first implementation
+  - ordinary wording changes can later publish through Sanity and trigger the existing Vercel webhook
+- A proofreader workflow guide has been prepared outside the repository and should be reviewed before being committed as maintained documentation.
+
+#### Phase 1 launch priorities reaffirmed
+- The homepage must not contain empty Coming Soon sections at official presentation.
+- Priority working services before presentation:
+  - News
+  - Public Information
+  - Events calendar
+  - governed Business Directory
+  - moderated Discussion Board
+  - real About, Transparency, Contact, Privacy, Cookie, Editorial, Community, Business-policy and Accessibility pages
+  - editorial and operational documentation
+  - safe custom-domain launch
+- The virtual language school remains Phase 2 and requires substantial donor support.
+
+### Current Git Status
+- Latest pushed checkpoint: `aa75a92 reuse news translations on homepage`.
+- `git status --short` returned no output.
+- `HEAD`, local `main`, `origin/main` and `origin/HEAD` were synchronized at `aa75a92`.
+- The News completion milestone has now been appended to PROJECT_PROGRESS.md and is awaiting a documentation-only commit.
+
+### Next Recommended Work
+- Review, stage, commit and push this documentation-only checkpoint.
+- Keep the updated master recovery prompt outside the repository.
+- Review whether the proofreader workflow guide should be committed under a project documentation directory.
+- Complete any final small News audit items without unnecessary redesign.
+- Begin the Events milestone, followed by governed Business Listings and the structured Discourse review.
