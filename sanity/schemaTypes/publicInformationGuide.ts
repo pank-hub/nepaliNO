@@ -219,6 +219,7 @@ export const publicInformationGuide = defineType({
           {title: 'Digital Public Services and e-ID', value: 'digital-services-eid'},
           {title: 'Citizenship and Civic Participation', value: 'citizenship-participation'},
           {title: 'Rights, Safety, and Discrimination', value: 'rights-safety-discrimination'},
+          {title: 'Transport and Driving', value: 'transport-driving'},
           {title: 'Other', value: 'other'},
         ],
       },

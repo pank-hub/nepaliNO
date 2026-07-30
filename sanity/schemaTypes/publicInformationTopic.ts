@@ -28,6 +28,7 @@ const topicOptions = [
     title: 'Rights, Safety, and Discrimination',
     value: 'rights-safety-discrimination',
   },
+  {title: 'Transport and Driving', value: 'transport-driving'},
   {title: 'Other Useful Information', value: 'other'},
 ]
 
