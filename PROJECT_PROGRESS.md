@@ -1547,3 +1547,239 @@ Completed and verified on 30 July 2026.
 - Review whether the proofreader workflow guide should be committed under a project documentation directory.
 - Complete any final small News audit items without unnecessary redesign.
 - Begin the Events milestone, followed by governed Business Listings and the structured Discourse review.
+### Events Foundation Milestone
+
+Completed and verified on 30 July 2026.
+
+#### Phase 1 operating model
+- Authorized nepali.no staff create, review and publish approved public Events through Sanity Studio.
+- Organizers will later submit Event proposals through a bilingual public web form.
+- Public organizer submissions will enter a private moderation queue and will never publish automatically.
+- Visitors register or buy tickets directly from the organizer or an external service.
+- nepali.no will not collect participant names, attendance lists, payment details, dietary requirements, cancellation requests or other participant-registration data during Phase 1.
+- Registration, ticketing, payment, refunds and participant communications remain the organizer's responsibility.
+- Essential Event information must be available as structured text on nepali.no and must not exist only inside a Facebook post or promotional poster.
+
+#### Existing Event foundation audit
+- Audited `sanity/schemaTypes/communityEvent.ts` and the original Event query block in `src/lib/sanity/queries.ts`.
+- Confirmed that the prototype schema already supported basic title, summary, category, dates, venue, organizer, external registration link, price, image, description, homepage featuring and cancellation.
+- Confirmed that the prototype did not support multilingual public pages, translated Events, hybrid Events, detailed status, Event languages, flexible pricing, verification metadata or a Past Events lifecycle.
+- Confirmed there were no Event pages, routes or components under `src`.
+- Confirmed the production Sanity dataset contained zero `communityEvent` documents.
+- Because no Event documents existed, the prototype `isOnline` and `isCancelled` fields could be replaced cleanly without data migration.
+
+#### Community Event schema expansion
+- Expanded `sanity/schemaTypes/communityEvent.ts` into the Phase 1 public Event model.
+- Added public content language:
+  - Nepali: `ne`
+  - Norwegian Bokmal: `nb`
+- Added an optional translated Event reference with alternate-language filtering and self-reference protection.
+- Added actual Event languages as a separate required multi-select field:
+  - Nepali
+  - Norwegian
+  - English
+  - Language-independent
+  - Other
+- Added conditional Other Event Language.
+- Made Language-independent exclusive from spoken or working languages.
+- Kept public English Event pages deferred; organizers may provide English source material and Events may be conducted in English while the public page remains Nepali or Norwegian in Phase 1.
+- Expanded Event categories to cover genuine community use cases:
+  - cultural celebrations
+  - festivals
+  - concerts and visiting artists
+  - community gatherings
+  - social meetups
+  - students and youth
+  - children and families
+  - workshops and seminars
+  - information and integration sessions
+  - sports tournaments and recreation
+  - religious and traditional programmes
+  - charity, fundraising and volunteering
+  - business and networking
+  - other community Events
+- Replaced the Online boolean with Event Format:
+  - In person
+  - Online
+  - Hybrid
+- Replaced the cancellation boolean with Event Status:
+  - Scheduled
+  - Postponed
+  - Rescheduled
+  - Cancelled
+- Added all-day presentation support while retaining required underlying datetimes.
+- Retained optional end time with validation that it must be later than the start time.
+- Added physical Event details:
+  - venue name
+  - street address
+  - postal code
+  - city
+  - map URL
+  - accessibility information
+  - transport or parking information
+- Added Online and Hybrid details:
+  - online platform
+  - public Event or joining-information URL
+  - warning not to expose private meeting links
+- Expanded organizer information:
+  - organizer name
+  - organizer website or public page
+  - public organizer email
+  - public organizer telephone
+- Added external registration workflow:
+  - no registration required
+  - registration recommended
+  - registration required
+  - tickets required
+- Added registration status:
+  - not applicable
+  - not yet open
+  - open
+  - closed
+  - sold out
+- Added external registration or ticket URL and registration deadline.
+- Clarified that registration and payment are handled externally.
+- Added flexible pricing through simple NOK price plus public price description.
+- Added optional intended audience guidance.
+- Retained featured image with required alt text, caption, credit and hotspot.
+- Added inline images to Event Description with required alt text, caption and credit.
+- Required at least one Event Description item.
+- Added original Event or source URL, last verification date and editorial reviewer.
+- Improved Studio previews with language, date, format, location, Event status and significant registration status.
+- Sanity TypeScript validation passed.
+- Sanity Studio production build passed.
+- Final whitespace validation passed.
+- Complete schema diff was reviewed in focused sections.
+- Schema checkpoint created and pushed:
+  - `df72612 expand community event schema`
+
+#### Automatic Event lifecycle queries
+- Replaced the unused prototype Event query block with multilingual lifecycle-aware queries:
+  - `UPCOMING_EVENTS_BY_LANGUAGE_QUERY`
+  - `PAST_EVENTS_BY_LANGUAGE_QUERY`
+  - `HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY`
+  - updated `EVENT_BY_SLUG_QUERY`
+- Upcoming Events are language-filtered and remain visible while ongoing.
+- Current-versus-Past classification uses:
+  - `coalesce(endDateTime, startDateTime) >= now()` for Upcoming or ongoing
+  - `coalesce(endDateTime, startDateTime) < now()` for Past
+- An Event without an end time uses its start time as the lifecycle cutoff.
+- Past Events are ordered most recently completed first.
+- Homepage query shows up to three Upcoming or ongoing Events.
+- Featured Events receive priority; remaining positions are filled by soonest Events.
+- Cancelled Events are excluded from homepage promotion but remain available in archives and individual pages.
+- Postponed and Rescheduled Events remain discoverable and must be labelled clearly by the frontend.
+- Individual Event lookup requires both slug and public content language.
+- Expanded Event fields, verification metadata and inline image credits are projected.
+- GROQ lifecycle expression was tested read-only against the production dataset and returned an expected empty array without query errors.
+- Astro Check passed across 47 files with 0 errors and 0 warnings.
+- Astro production build passed with the existing 13-page baseline.
+- Query whitespace validation passed and complete Event-only diff was reviewed.
+- Query checkpoint created and pushed:
+  - `ffcaba9 add event lifecycle queries`
+
+#### Event interface translations
+- Confirmed only navigation-level Event labels previously existed.
+- Added a complete symmetrical `events` translation object to:
+  - `src/i18n/ne.ts`
+  - `src/i18n/nb.ts`
+- Added centralized labels for:
+  - Upcoming, ongoing and Past Events
+  - empty states and archive navigation
+  - Event details, date, time and all-day presentation
+  - ongoing and completed states
+  - venue, address, map, accessibility and transport
+  - organizer, contact and organizer website
+  - actual Event languages and intended audience
+  - free and paid Event information
+  - registration requirement, status and deadline
+  - external registration and ticket actions
+  - external registration privacy notice
+  - original source and last verification date
+  - translation link
+  - In-person, Online and Hybrid formats
+  - Event submission call to action
+  - Event statuses
+  - registration requirements and statuses
+  - Event-language labels
+  - all Event category labels
+- Used proofreader-approved Nepali Event wording before the translation milestone was applied.
+- Retained a matching Norwegian translation structure.
+- Astro Check passed across 47 files with 0 errors and 0 warnings.
+- Production build passed with the existing 13-page baseline.
+- Translation whitespace validation passed.
+- Both translation files received exactly 87 insertions.
+- Translation checkpoint created and pushed:
+  - `6591f7a add event interface translations`
+
+#### Event lifecycle and archive decision
+- Ordinary completed Events will not be automatically unpublished.
+- After an Event finishes, it will:
+  - disappear from homepage promotion
+  - leave the Upcoming section
+  - appear automatically in a Past Events archive
+  - retain its stable individual URL
+  - display a Completed state
+  - hide expired registration or ticket actions
+- Cancelled Events remain visible until and after their original date with a prominent Cancelled state.
+- Postponed Events remain accessible while awaiting a new date.
+- Rescheduled Events display their new date with a Rescheduled state.
+- Manual unpublishing is reserved for fraud, duplicates, unauthorized publication, privacy problems, safety concerns, legal issues or genuine organizer-removal requests.
+- Time determines Upcoming, ongoing or Past classification; editorial status determines Scheduled, Postponed, Rescheduled or Cancelled presentation.
+
+#### Planned organizer submission workflow
+- Build a separate private `eventSubmission` document type instead of allowing public submissions directly into approved `communityEvent` documents.
+- Planned bilingual organizer submission routes:
+  - `/ne/events/submit/`
+  - `/nb/events/submit/`
+- Planned workflow:
+  - organizer submits through a public form
+  - submission enters a private moderation queue
+  - staff verifies, edits and approves
+  - staff creates or converts the approved public Event
+  - staff publishes through Sanity
+- Planned submission statuses:
+  - New
+  - Under review
+  - More information requested
+  - Approved
+  - Converted to Event
+  - Rejected
+  - Duplicate
+  - Withdrawn
+  - Archived
+- Separate private moderation contacts from public organizer contacts.
+- Accept organizer source submissions in Nepali, Norwegian or English.
+- Planned image requirements:
+  - JPG, PNG or WebP
+  - preferred landscape image around 1600 x 900 pixels
+  - minimum recommended width around 1200 pixels
+  - proposed maximum file size around 5 MB
+  - alt text, image credit and publication-permission confirmation
+  - posters accepted only as supplementary images; all essential details must also be entered as structured text
+- Planned server-side validation, upload controls, rate limiting, spam protection, moderation, privacy declarations and retention rules.
+- A Sanity write token must never be exposed in browser JavaScript.
+- Public submissions must never publish automatically.
+
+### Current Git Status
+- Latest pushed checkpoint: `6591f7a add event interface translations`.
+- The working tree should be verified after resuming.
+- No public Event routes have been created yet.
+- This append was prepared outside the repository and has not yet been appended or committed.
+
+### Next Recommended Work
+- Verify Git state at `6591f7a`.
+- Append this milestone to `PROJECT_PROGRESS.md` and create a documentation-only checkpoint when convenient.
+- Build bilingual public Event routes:
+  - `/ne/events/`
+  - `/nb/events/`
+  - `/ne/events/past/`
+  - `/nb/events/past/`
+  - `/ne/events/[slug]/`
+  - `/nb/events/[slug]/`
+- Implement automatic Ongoing and Completed presentation.
+- Hide registration actions after completion and for Cancelled Events.
+- Implement safe translated-Event language-switch fallback.
+- Integrate up to three Upcoming or ongoing Events on the homepage.
+- Create one genuine controlled test Event in Sanity and verify desktop and mobile behavior.
+- Build the private organizer-submission and moderation workflow only after the approved public Event routes are stable.
