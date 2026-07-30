@@ -63,6 +63,35 @@ export const ne = {
     emptyMessage: "नयाँ समाचार प्रकाशित भएपछि यहाँ देखिनेछ।",
     readMore: "थप पढ्नुहोस्",
     readInNorwegian: "नर्वेजियनमा पढ्नुहोस्",
+    moreNews: "थप समाचार",
+    articleCount: (count: number) => `${count} समाचार`,
+    author: "लेखक",
+    source: "मूल स्रोत",
+    sourceDescription:
+      "सम्बन्धित मूल सामग्री वा आधिकारिक जानकारी हेर्नुहोस्।",
+    translation: "अर्को भाषामा पढ्नुहोस्",
+    region: "क्षेत्र",
+    category: "विषय",
+    usefulInformation: "उपयोगी जानकारी",
+    usefulInformationDescription:
+      "समाचारसँगै काम लाग्ने आधिकारिक स्रोतमा आधारित मार्गदर्शनहरू।",
+    readGuide: "मार्गदर्शन पढ्नुहोस्",
+    reviewed: "पछिल्लो समीक्षा",
+    regions: {
+      norway: "नर्वे",
+      nepal: "नेपाल",
+      community: "समुदाय",
+      international: "अन्तर्राष्ट्रिय",
+    },
+    categories: {
+      "current-affairs": "समसामयिक विषय",
+      "immigration-integration": "आप्रवासन र एकीकरण",
+      "education-student-life": "शिक्षा र विद्यार्थी जीवन",
+      "employment-economy": "रोजगारी र अर्थतन्त्र",
+      "culture-community": "संस्कृति र समुदाय",
+      "health-welfare": "स्वास्थ्य र कल्याण",
+      sports: "खेलकुद",
+    },
   },
 
   information: {

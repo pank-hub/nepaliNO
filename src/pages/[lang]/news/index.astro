@@ -78,39 +78,11 @@ const formatDate = (date: string) =>
     day: 'numeric',
   })
 
-const regionLabels: Record<string, Record<SupportedLanguage, string>> = {
-  norway: {ne: 'नर्वे', nb: 'Norge'},
-  nepal: {ne: 'नेपाल', nb: 'Nepal'},
-  community: {ne: 'समुदाय', nb: 'Fellesskap'},
-  international: {ne: 'अन्तर्राष्ट्रिय', nb: 'Internasjonalt'},
-}
-
-const categoryLabels: Record<string, Record<SupportedLanguage, string>> = {
-  'current-affairs': {ne: 'समसामयिक विषय', nb: 'Aktuelt'},
-  'immigration-integration': {
-    ne: 'आप्रवासन र एकीकरण',
-    nb: 'Innvandring og integrering',
-  },
-  'education-student-life': {
-    ne: 'शिक्षा र विद्यार्थी जीवन',
-    nb: 'Utdanning og studentliv',
-  },
-  'employment-economy': {
-    ne: 'रोजगारी र अर्थतन्त्र',
-    nb: 'Arbeidsliv og økonomi',
-  },
-  'culture-community': {
-    ne: 'संस्कृति र समुदाय',
-    nb: 'Kultur og fellesskap',
-  },
-  'health-welfare': {ne: 'स्वास्थ्य र कल्याण', nb: 'Helse og velferd'},
-  sports: {ne: 'खेलकुद', nb: 'Sport'},
-}
-
-const getRegionLabel = (value: string) =>
-  regionLabels[value]?.[language] ?? value
-const getCategoryLabel = (value: string) =>
-  categoryLabels[value]?.[language] ?? value
+const newsLabels = labels.news
+const regionLabels = newsLabels.regions as Record<string, string>
+const categoryLabels = newsLabels.categories as Record<string, string>
+const getRegionLabel = (value: string) => regionLabels[value] ?? value
+const getCategoryLabel = (value: string) => categoryLabels[value] ?? value
 const imageUrl = (image?: ArchiveImage, width = 1200) =>
   image?.asset
     ? urlFor(image as any).width(width).fit('crop').auto('format').url()
@@ -122,14 +94,10 @@ const latestArticles = featuredArticle
   ? articles.filter((article) => article._id !== featuredArticle._id)
   : []
 
-const usefulInformationTitle =
-  language === 'ne' ? 'उपयोगी जानकारी' : 'Nyttig informasjon'
-const usefulInformationDescription =
-  language === 'ne'
-    ? 'समाचारसँगै काम लाग्ने आधिकारिक स्रोतमा आधारित मार्गदर्शनहरू।'
-    : 'Praktiske veiledninger basert på offisielle kilder.'
-const readGuideLabel = language === 'ne' ? 'मार्गदर्शन पढ्नुहोस्' : 'Les veiledningen'
-const reviewedLabel = language === 'ne' ? 'पछिल्लो समीक्षा' : 'Sist gjennomgått'
+const usefulInformationTitle = newsLabels.usefulInformation
+const usefulInformationDescription = newsLabels.usefulInformationDescription
+const readGuideLabel = newsLabels.readGuide
+const reviewedLabel = newsLabels.reviewed
 ---
 
 <BaseLayout
@@ -158,9 +126,7 @@ const reviewedLabel = language === 'ne' ? 'पछिल्लो समीक्
           <h2 id="latest-news-heading">{labels.news.latestHeading}</h2>
           {articles.length > 0 && (
             <p>
-              {language === 'ne'
-                ? `${articles.length} समाचार`
-                : `${articles.length} ${articles.length === 1 ? 'sak' : 'saker'}`}
+              {newsLabels.articleCount(articles.length)}
             </p>
           )}
         </div>
@@ -235,7 +201,7 @@ const reviewedLabel = language === 'ne' ? 'पछिल्लो समीक्
             {latestArticles.length > 0 && (
               <section class="archive-list" aria-labelledby="more-news-heading">
                 <h3 id="more-news-heading">
-                  {language === 'ne' ? 'थप समाचार' : 'Flere nyheter'}
+                  {newsLabels.moreNews}
                 </h3>
 
                 <ol>

@@ -118,28 +118,14 @@ const portableTextComponents = {
   },
 }
 
-const regionLabels: Record<string, Record<SupportedLanguage, string>> = {
-  norway: {ne: 'नर्वे', nb: 'Norge'},
-  nepal: {ne: 'नेपाल', nb: 'Nepal'},
-  community: {ne: 'समुदाय', nb: 'Fellesskap'},
-  international: {ne: 'अन्तर्राष्ट्रिय', nb: 'Internasjonalt'},
-}
-
-const categoryLabels: Record<string, Record<SupportedLanguage, string>> = {
-  'current-affairs': {ne: 'समसामयिक विषय', nb: 'Aktuelt'},
-  'immigration-integration': {ne: 'आप्रवासन र एकीकरण', nb: 'Innvandring og integrering'},
-  'education-student-life': {ne: 'शिक्षा र विद्यार्थी जीवन', nb: 'Utdanning og studentliv'},
-  'employment-economy': {ne: 'रोजगारी र अर्थतन्त्र', nb: 'Arbeidsliv og økonomi'},
-  'culture-community': {ne: 'संस्कृति र समुदाय', nb: 'Kultur og fellesskap'},
-  'health-welfare': {ne: 'स्वास्थ्य र कल्याण', nb: 'Helse og velferd'},
-  sports: {ne: 'खेलकुद', nb: 'Sport'},
-}
-
-const regionLabel = regionLabels[article.newsRegion]?.[language] ?? article.newsRegion
-const categoryLabel = categoryLabels[article.category]?.[language] ?? article.category
-const sourceLabel = language === 'ne' ? 'मूल स्रोत' : 'Opprinnelig kilde'
-const authorLabel = language === 'ne' ? 'लेखक' : 'Av'
-const translationLabel = language === 'ne' ? 'अर्को भाषामा पढ्नुहोस्' : 'Les på et annet språk'
+const newsLabels = labels.news
+const regionLabels = newsLabels.regions as Record<string, string>
+const categoryLabels = newsLabels.categories as Record<string, string>
+const regionLabel = regionLabels[article.newsRegion] ?? article.newsRegion
+const categoryLabel = categoryLabels[article.category] ?? article.category
+const sourceLabel = newsLabels.source
+const authorLabel = newsLabels.author
+const translationLabel = newsLabels.translation
 ---
 
 <BaseLayout
@@ -220,9 +206,7 @@ const translationLabel = language === 'ne' ? 'अर्को भाषामा
             <div>
               <p class="source-note__label">{sourceLabel}</p>
               <p>
-                {language === 'ne'
-                  ? 'सम्बन्धित मूल सामग्री वा आधिकारिक जानकारी हेर्नुहोस्।'
-                  : 'Se den opprinnelige saken eller den offisielle informasjonen.'}
+                {newsLabels.sourceDescription}
               </p>
             </div>
             <a
@@ -251,11 +235,11 @@ const translationLabel = language === 'ne' ? 'अर्को भाषामा
               <dd>{article.authorName}</dd>
             </div>
             <div>
-              <dt>{language === 'ne' ? 'क्षेत्र' : 'Område'}</dt>
+              <dt>{newsLabels.region}</dt>
               <dd>{regionLabel}</dd>
             </div>
             <div>
-              <dt>{language === 'ne' ? 'विषय' : 'Kategori'}</dt>
+              <dt>{newsLabels.category}</dt>
               <dd>{categoryLabel}</dd>
             </div>
           </dl>

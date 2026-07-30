@@ -63,6 +63,35 @@ export const nb = {
     emptyMessage: "Nye artikler vises her når de blir publisert.",
     readMore: "Les mer",
     readInNepali: "Les på nepali",
+    moreNews: "Flere nyheter",
+    articleCount: (count: number) => `${count} ${count === 1 ? "sak" : "saker"}`,
+    author: "Av",
+    source: "Opprinnelig kilde",
+    sourceDescription:
+      "Se den opprinnelige saken eller den offisielle informasjonen.",
+    translation: "Les på et annet språk",
+    region: "Område",
+    category: "Kategori",
+    usefulInformation: "Nyttig informasjon",
+    usefulInformationDescription:
+      "Praktiske veiledninger basert på offisielle kilder.",
+    readGuide: "Les veiledningen",
+    reviewed: "Sist gjennomgått",
+    regions: {
+      norway: "Norge",
+      nepal: "Nepal",
+      community: "Fellesskap",
+      international: "Internasjonalt",
+    },
+    categories: {
+      "current-affairs": "Aktuelt",
+      "immigration-integration": "Innvandring og integrering",
+      "education-student-life": "Utdanning og studentliv",
+      "employment-economy": "Arbeidsliv og økonomi",
+      "culture-community": "Kultur og fellesskap",
+      "health-welfare": "Helse og velferd",
+      sports: "Sport",
+    },
   },
 
   information: {
