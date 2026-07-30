@@ -1,0 +1,49 @@
+---
+import {sanityClient} from 'sanity:client'
+import SiteFooter from '../../../components/SiteFooter.astro'
+import SiteHeader from '../../../components/SiteHeader.astro'
+import {getTranslations} from '../../../i18n'
+import {supportedLanguages, type SupportedLanguage} from '../../../i18n/config'
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {PAST_EVENTS_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
+
+export function getStaticPaths() { return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}})) }
+interface PastEvent { _id: string; title: string; slug: string; summary: string; eventType: string; eventFormat: string; eventStatus: string; startDateTime: string; endDateTime?: string; city?: string; onlinePlatform?: string; organizerName: string }
+const {language} = Astro.props
+const labels = getTranslations(language)
+const eventLabels = labels.events
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const events = await sanityClient.fetch<PastEvent[]>(PAST_EVENTS_BY_LANGUAGE_QUERY, {language})
+const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const categories = eventLabels.categories as Record<string, string>
+const statuses = eventLabels.statuses as Record<string, string>
+const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {year: 'numeric', month: 'long', day: 'numeric'})
+const locationLabel = (event: PastEvent) => event.eventFormat === 'online' ? event.onlinePlatform || eventLabels.online : event.city || (event.eventFormat === 'hybrid' ? eventLabels.hybrid : eventLabels.inPerson)
+---
+<BaseLayout language={language} title={`${eventLabels.pastHeading} | nepali.no`} description={eventLabels.pageDescription}>
+  <SiteHeader slot="header" language={language} alternatePath={`/${alternateLanguage}/events/past/`} />
+  <header class="past-hero"><div class="container"><p class="eyebrow">{eventLabels.pageTitle}</p><h1>{eventLabels.pastHeading}</h1><a href={`/${language}/events/`}>{eventLabels.viewUpcomingEvents} <span aria-hidden="true">→</span></a></div></header>
+  <main><section class="section"><div class="container">
+    {events.length === 0 ? <div class="empty-state"><span aria-hidden="true"></span><h2>{eventLabels.emptyPastHeading}</h2></div> : <ol class="past-list">{events.map((event) => <li><article><div class="past-date"><time datetime={event.endDateTime || event.startDateTime}>{formatDate(event.endDateTime || event.startDateTime)}</time></div><div><div class="past-badges"><strong>{eventLabels.completed}</strong>{event.eventStatus !== 'scheduled' && <span>{statuses[event.eventStatus] ?? event.eventStatus}</span>}<span>{categories[event.eventType] ?? event.eventType}</span></div><h2><a href={`/${language}/events/${event.slug}/`}>{event.title}</a></h2><p>{event.summary}</p><p class="past-meta">{locationLabel(event)} · {event.organizerName}</p><a class="past-link" href={`/${language}/events/${event.slug}/`}>{eventLabels.readMore} <span aria-hidden="true">→</span></a></div></article></li>)}</ol>}
+  </div></section></main>
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+<style>
+  .past-hero { padding-block: clamp(2.5rem, 6vw, 4.5rem); border-bottom: 1px solid var(--border); background: var(--surface-muted); }
+  .past-hero h1 { margin-block: .5rem 1rem; }
+  .past-hero a, .past-link { color: var(--civic-deep); font-weight: 760; }
+  .past-list { margin: 0; padding: 0; list-style: none; }
+  .past-list li { border-bottom: 1px solid var(--border); }
+  .past-list article { display: grid; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr); gap: clamp(1.25rem, 4vw, 3rem); padding-block: 1.75rem; }
+  .past-date time { color: var(--text-soft); font-weight: 700; }
+  .past-badges { display: flex; flex-wrap: wrap; gap: .45rem; }
+  .past-badges > * { padding: .28rem .5rem; border-radius: 999px; background: var(--surface-muted); color: var(--civic-deep); font-size: .75rem; }
+  .past-list h2 { margin-block-start: .7rem; font-size: clamp(1.3rem, 2.8vw, 2rem); }
+  .past-list h2 a { color: var(--civic-deep); text-decoration: none; }
+  .past-list div > p:not(.past-meta) { margin-block-start: .55rem; color: var(--text-muted); }
+  .past-meta { margin-block-start: .75rem; color: var(--text-soft); font-size: .88rem; }
+  .past-link { display: inline-flex; gap: .4rem; margin-block-start: 1rem; }
+  .empty-state { padding: clamp(3rem, 8vw, 6rem); text-align: center; }
+  .empty-state span { display: block; width: 3rem; height: .2rem; margin: 0 auto 1rem; background: var(--brand); }
+  @media (max-width: 38rem) { .past-list article { grid-template-columns: 1fr; gap: .75rem; } }
+</style>

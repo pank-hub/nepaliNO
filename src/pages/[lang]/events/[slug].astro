@@ -1,0 +1,149 @@
+---
+import {PortableText} from 'astro-portabletext'
+import {sanityClient} from 'sanity:client'
+import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import SiteFooter from '../../../components/SiteFooter.astro'
+import SiteHeader from '../../../components/SiteHeader.astro'
+import {getTranslations} from '../../../i18n'
+import type {SupportedLanguage} from '../../../i18n/config'
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {urlFor} from '../../../lib/sanity/image'
+import {EVENT_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
+
+interface TranslationSummary { _id: string; title: string; slug: string; language: SupportedLanguage }
+interface EventImage { asset?: unknown; alt?: string; caption?: string; credit?: string; hotspot?: unknown; crop?: unknown }
+interface EventDocument {
+  _id: string; title: string; slug: string; language: SupportedLanguage; translation?: TranslationSummary; summary: string
+  eventLanguages?: string[]; otherEventLanguage?: string; eventType: string; eventFormat: string; eventStatus: string; isAllDay?: boolean
+  startDateTime: string; endDateTime?: string; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string
+  accessibilityInformation?: string; transportInformation?: string; onlinePlatform?: string; onlineUrl?: string
+  organizerName: string; organizerUrl?: string; organizerEmail?: string; organizerPhone?: string
+  registrationRequirement: string; registrationStatus: string; registrationUrl?: string; registrationDeadline?: string
+  isFree?: boolean; priceNok?: number; priceDescription?: string; intendedAudience?: string
+  featuredImage?: EventImage; description?: any[]; sourceUrl?: string; lastVerifiedAt: string
+}
+interface EventPath { slug: string; language: SupportedLanguage }
+export async function getStaticPaths() {
+  const paths = await sanityClient.fetch<EventPath[]>(`*[_type == "communityEvent" && defined(slug.current) && language in ["ne", "nb"]]{"slug": slug.current, language}`)
+  return paths.map(({slug, language}) => ({params: {lang: language, slug}}))
+}
+const {lang, slug} = Astro.params
+if ((lang !== 'ne' && lang !== 'nb') || !slug) return Astro.redirect('/ne/events/')
+const language: SupportedLanguage = lang
+const labels = getTranslations(language)
+const eventLabels = labels.events
+const event = await sanityClient.fetch<EventDocument | null>(EVENT_BY_SLUG_QUERY, {language, slug})
+if (!event) return Astro.redirect(`/${language}/events/`)
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const activeTranslation = event.translation?.slug && event.translation.language === alternateLanguage ? event.translation : undefined
+const alternatePath = activeTranslation ? `/${activeTranslation.language}/events/${activeTranslation.slug}/` : `/${alternateLanguage}/events/`
+const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const now = Date.now()
+const start = new Date(event.startDateTime).getTime()
+const end = new Date(event.endDateTime || event.startDateTime).getTime()
+const isPast = end < now
+const isOngoing = start <= now && end >= now
+const registrationDeadlineOpen =
+  !event.registrationDeadline || new Date(event.registrationDeadline).getTime() >= now
+const canRegister =
+  !isPast &&
+  !['cancelled', 'postponed'].includes(event.eventStatus) &&
+  event.registrationStatus === 'open' &&
+  registrationDeadlineOpen &&
+  !!event.registrationUrl &&
+  event.registrationRequirement !== 'not-required'
+const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})
+const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit'})
+const formats: Record<string, string> = {'in-person': eventLabels.inPerson, online: eventLabels.online, hybrid: eventLabels.hybrid}
+const categories = eventLabels.categories as Record<string, string>
+const statuses = eventLabels.statuses as Record<string, string>
+const languages = eventLabels.languages as Record<string, string>
+const registrationRequirements = eventLabels.registrationRequirements as Record<string, string>
+const registrationStatuses = eventLabels.registrationStatuses as Record<string, string>
+const heroUrl = event.featuredImage?.asset ? urlFor(event.featuredImage as any).width(1600).height(960).fit('crop').auto('format').url() : null
+const portableTextComponents = {type: {image: SanityPortableImage}}
+const spokenLanguages = [...(event.eventLanguages || []).map((value) => languages[value] ?? value), ...(event.otherEventLanguage ? [event.otherEventLanguage] : [])].join(', ')
+const address = [event.address, event.postalCode, event.city].filter(Boolean).join(', ')
+const priceLabel = event.isFree ? eventLabels.freeEvent : event.priceDescription || (typeof event.priceNok === 'number' ? `${event.priceNok} NOK` : eventLabels.price)
+const actionLabel = event.registrationRequirement === 'tickets-required' ? eventLabels.buyTickets : eventLabels.registerExternally
+---
+<BaseLayout language={language} title={`${event.title} | nepali.no`} description={event.summary}>
+  <SiteHeader slot="header" language={language} alternatePath={alternatePath} />
+  <article class="event-page">
+    <header class="event-header"><div class="container">
+      <nav class="breadcrumbs" aria-label={eventLabels.pageTitle}><a href={`/${language}/`}>{labels.navigation.home}</a><span aria-hidden="true">/</span><a href={`/${language}/events/`}>{eventLabels.pageTitle}</a></nav>
+      <div class="event-statuses">
+        {isOngoing && <strong class="status status-live">{eventLabels.ongoing}</strong>}
+        {isPast && <strong class="status">{eventLabels.completed}</strong>}
+        {event.eventStatus !== 'scheduled' && <strong class={`status status-${event.eventStatus}`}>{statuses[event.eventStatus] ?? event.eventStatus}</strong>}
+        <span>{categories[event.eventType] ?? event.eventType}</span><span>{formats[event.eventFormat] ?? event.eventFormat}</span>
+      </div>
+      <h1>{event.title}</h1><p class="lead">{event.summary}</p>
+    </div></header>
+
+    {heroUrl && <figure class="event-hero container"><img src={heroUrl} alt={event.featuredImage?.alt ?? ''} width="1600" height="960" decoding="async" />{(event.featuredImage?.caption || event.featuredImage?.credit) && <figcaption>{event.featuredImage?.caption && <span>{event.featuredImage.caption}</span>}{event.featuredImage?.credit && <span>{event.featuredImage.credit}</span>}</figcaption>}</figure>}
+
+    <div class="container event-layout">
+      <main class="event-content">
+        {event.description && event.description.length > 0 && <section class="prose"><PortableText value={event.description} components={portableTextComponents} /></section>}
+        {canRegister && <section class="registration-panel"><div><h2>{eventLabels.registration}</h2><p>{eventLabels.externalRegistrationNotice}</p></div><a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{actionLabel} <span aria-hidden="true">↗</span></a></section>}
+        {!canRegister && event.registrationRequirement !== 'not-required' && <p class="registration-unavailable">{isPast || event.eventStatus === 'cancelled' ? eventLabels.registrationUnavailable : registrationStatuses[event.registrationStatus] ?? eventLabels.registrationUnavailable}</p>}
+        {event.sourceUrl && <aside class="source-note"><div><strong>{eventLabels.originalSource}</strong><p>{eventLabels.lastVerified}: <time datetime={event.lastVerifiedAt}>{formatDate(event.lastVerifiedAt)}</time></p></div><a class="button button-secondary" href={event.sourceUrl} target="_blank" rel="noopener noreferrer">{eventLabels.originalSource} <span aria-hidden="true">↗</span></a></aside>}
+      </main>
+
+      <aside class="event-sidebar">
+        <section class="event-facts"><h2>{eventLabels.eventDetails}</h2><dl>
+          <div><dt>{eventLabels.dateAndTime}</dt><dd><time datetime={event.startDateTime}>{formatDate(event.startDateTime)}</time>{event.isAllDay ? <><br />{eventLabels.allDay}</> : <><br />{formatTime(event.startDateTime)}{event.endDateTime && ` – ${formatTime(event.endDateTime)}`}</>}</dd></div>
+          <div><dt>{eventLabels.venue}</dt><dd>{formats[event.eventFormat] ?? event.eventFormat}{event.venueName && <><br />{event.venueName}</>}{address && <><br />{address}</>}{event.onlinePlatform && <><br />{event.onlinePlatform}</>}</dd></div>
+          {event.mapUrl && <div><dt>{eventLabels.address}</dt><dd><a href={event.mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} ↗</a></dd></div>}
+          <div><dt>{eventLabels.organizer}</dt><dd>{event.organizerUrl ? <a href={event.organizerUrl} target="_blank" rel="noopener noreferrer">{event.organizerName} ↗</a> : event.organizerName}</dd></div>
+          {(event.organizerEmail || event.organizerPhone) && <div><dt>{eventLabels.contact}</dt><dd>{event.organizerEmail && <a href={`mailto:${event.organizerEmail}`}>{event.organizerEmail}</a>}{event.organizerEmail && event.organizerPhone && <br />}{event.organizerPhone && <a href={`tel:${event.organizerPhone}`}>{event.organizerPhone}</a>}</dd></div>}
+          {spokenLanguages && <div><dt>{eventLabels.eventLanguages}</dt><dd>{spokenLanguages}</dd></div>}
+          {event.intendedAudience && <div><dt>{eventLabels.intendedAudience}</dt><dd>{event.intendedAudience}</dd></div>}
+          <div><dt>{eventLabels.price}</dt><dd>{priceLabel}</dd></div>
+          <div><dt>{eventLabels.registration}</dt><dd>{registrationRequirements[event.registrationRequirement] ?? event.registrationRequirement}<br />{registrationStatuses[event.registrationStatus] ?? event.registrationStatus}</dd></div>
+          {event.registrationDeadline && <div><dt>{eventLabels.registrationDeadline}</dt><dd><time datetime={event.registrationDeadline}>{formatDate(event.registrationDeadline)}</time></dd></div>}
+          {event.accessibilityInformation && <div><dt>{eventLabels.accessibility}</dt><dd>{event.accessibilityInformation}</dd></div>}
+          {event.transportInformation && <div><dt>{eventLabels.transport}</dt><dd>{event.transportInformation}</dd></div>}
+        </dl></section>
+        {activeTranslation && <a class="translation-card" href={alternatePath} hreflang={activeTranslation.language}><span>{eventLabels.translation}</span><strong>{activeTranslation.title}</strong></a>}
+      </aside>
+    </div>
+  </article>
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+<style>
+  .event-page { min-width: 0; background: #fff; }
+  .event-header { border-bottom: 1px solid var(--border); background: radial-gradient(circle at 88% 0%, rgb(198 42 31 / .08), transparent 20rem), var(--page-bg); }
+  .event-header .container { padding-block: clamp(2.5rem, 7vw, 5.5rem); }
+  .breadcrumbs { display: flex; flex-wrap: wrap; gap: .5rem; color: var(--text-soft); font-size: .85rem; }
+  .breadcrumbs a { color: var(--civic); font-weight: 650; }
+  .event-statuses { display: flex; flex-wrap: wrap; gap: .45rem; margin-block-start: 1.75rem; }
+  .event-statuses > * { padding: .3rem .55rem; border-radius: 999px; background: var(--surface-muted); color: var(--civic-deep); font-size: .76rem; font-weight: 760; }
+  .event-statuses .status-live { background: #e3f5ea; color: #15603a; }
+  .event-statuses .status-cancelled { background: #fde8e6; color: #9e281f; }
+  .event-statuses .status-postponed, .event-statuses .status-rescheduled { background: #fff2cc; color: #6f5200; }
+  .event-header h1 { max-width: 20ch; margin-block-start: 1rem; font-size: clamp(2.25rem, 6vw, 4.75rem); }
+  .event-header .lead { max-width: 52rem; margin-block-start: 1.1rem; }
+  .event-hero { margin-block-start: clamp(1.25rem, 4vw, 3rem); }
+  .event-hero img { width: 100%; max-height: 46rem; object-fit: cover; }
+  .event-hero figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding-block: .65rem; border-bottom: 1px solid var(--border); color: var(--text-soft); font-size: .8rem; }
+  .event-layout { display: grid; grid-template-columns: minmax(0, 46rem) minmax(17rem, 21rem); justify-content: space-between; gap: clamp(2.5rem, 8vw, 7rem); padding-block: clamp(2.5rem, 8vw, 6rem); }
+  .event-content { min-width: 0; }
+  .event-content .prose { font-size: 1.08rem; }
+  .registration-panel, .source-note { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-block-start: 2.5rem; padding: 1.25rem; border-block: 1px solid var(--border-strong); }
+  .registration-panel p, .source-note p { margin-block-start: .35rem; color: var(--text-muted); font-size: .9rem; }
+  .registration-unavailable { margin-block-start: 2rem; padding: 1rem; border-inline-start: .3rem solid var(--brand); background: var(--surface-muted); font-weight: 700; }
+  .event-sidebar { display: grid; gap: 1rem; align-content: start; position: sticky; inset-block-start: 1.5rem; }
+  .event-facts, .translation-card { padding: 1.25rem; border-top: .25rem solid var(--brand); background: var(--surface-muted); }
+  .event-facts h2 { font-size: 1.15rem; }
+  .event-facts dl { display: grid; gap: 1rem; margin-block-start: 1rem; }
+  .event-facts dl > div { padding-block-start: .8rem; border-top: 1px solid var(--border); }
+  .event-facts dt { color: var(--text-soft); font-size: .72rem; font-weight: 760; text-transform: uppercase; }
+  html[lang='ne'] .event-facts dt { font-size: .82rem; text-transform: none; }
+  .event-facts dd { margin: .22rem 0 0; color: var(--civic-deep); font-weight: 650; overflow-wrap: anywhere; }
+  .translation-card { display: grid; gap: .35rem; border-top-color: var(--civic); color: var(--civic-deep); text-decoration: none; }
+  .translation-card span { color: var(--text-muted); font-size: .78rem; font-weight: 700; }
+  @media (max-width: 58rem) { .event-layout { grid-template-columns: 1fr; } .event-sidebar { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 38rem) { .event-header .container { padding-block: 2.25rem 3rem; } .event-header h1 { font-size: clamp(2rem, 11vw, 3.3rem); } .event-hero { width: 100%; margin-block-start: 0; } .event-hero img { aspect-ratio: 4 / 3; } .event-hero figcaption { padding-inline: var(--page-gutter); } .event-layout { padding-block: 2.25rem 4rem; } .registration-panel, .source-note { align-items: stretch; flex-direction: column; } .registration-panel .button, .source-note .button { width: 100%; } .event-sidebar { grid-template-columns: 1fr; } }
+</style>

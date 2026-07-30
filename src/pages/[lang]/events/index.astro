@@ -1,0 +1,161 @@
+---
+import {sanityClient} from 'sanity:client'
+import SiteFooter from '../../../components/SiteFooter.astro'
+import SiteHeader from '../../../components/SiteHeader.astro'
+import {getTranslations} from '../../../i18n'
+import {supportedLanguages, type SupportedLanguage} from '../../../i18n/config'
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {urlFor} from '../../../lib/sanity/image'
+import {UPCOMING_EVENTS_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+}
+
+interface EventImage { asset?: unknown; alt?: string; hotspot?: unknown; crop?: unknown }
+interface EventSummary {
+  _id: string
+  title: string
+  slug: string
+  summary: string
+  eventLanguages?: string[]
+  otherEventLanguage?: string
+  eventType: string
+  eventFormat: string
+  eventStatus: string
+  isAllDay?: boolean
+  startDateTime: string
+  endDateTime?: string
+  venueName?: string
+  city?: string
+  onlinePlatform?: string
+  organizerName: string
+  registrationRequirement: string
+  registrationStatus: string
+  isFree?: boolean
+  priceNok?: number
+  priceDescription?: string
+  featuredImage?: EventImage
+}
+
+const {language} = Astro.props
+const labels = getTranslations(language)
+const eventLabels = labels.events
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const events = await sanityClient.fetch<EventSummary[]>(UPCOMING_EVENTS_BY_LANGUAGE_QUERY, {language})
+const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const now = Date.now()
+const categories = eventLabels.categories as Record<string, string>
+const statuses = eventLabels.statuses as Record<string, string>
+const registrationStatuses = eventLabels.registrationStatuses as Record<string, string>
+const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'})
+const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit'})
+const formatLabel = (event: EventSummary) => event.eventFormat === 'online' ? eventLabels.online : event.eventFormat === 'hybrid' ? eventLabels.hybrid : eventLabels.inPerson
+const locationLabel = (event: EventSummary) => event.eventFormat === 'online' ? event.onlinePlatform || eventLabels.online : event.city || event.venueName || formatLabel(event)
+const isOngoing = (event: EventSummary) => new Date(event.startDateTime).getTime() <= now && new Date(event.endDateTime || event.startDateTime).getTime() >= now
+const imageUrl = (image?: EventImage) => image?.asset ? urlFor(image as any).width(720).height(480).fit('crop').auto('format').url() : null
+---
+
+<BaseLayout language={language} title={`${eventLabels.pageTitle} | nepali.no`} description={eventLabels.pageDescription}>
+  <SiteHeader slot="header" language={language} alternatePath={`/${alternateLanguage}/events/`} />
+
+  <header class="events-hero">
+    <div class="container events-hero__inner">
+      <p class="eyebrow">nepali.no</p>
+      <h1>{eventLabels.pageTitle}</h1>
+      <p class="lead">{eventLabels.pageDescription}</p>
+      <a class="past-link" href={`/${language}/events/past/`}>{eventLabels.viewPastEvents} <span aria-hidden="true">→</span></a>
+    </div>
+  </header>
+
+  <main class="events-main">
+    <section class="section" aria-labelledby="upcoming-events-heading">
+      <div class="container">
+        <div class="events-heading">
+          <h2 id="upcoming-events-heading">{eventLabels.upcomingHeading}</h2>
+          {events.length > 0 && <p>{events.length}</p>}
+        </div>
+
+        {events.length === 0 ? (
+          <div class="empty-state">
+            <span aria-hidden="true"></span>
+            <h3>{eventLabels.emptyUpcomingHeading}</h3>
+            <p>{eventLabels.emptyUpcomingMessage}</p>
+          </div>
+        ) : (
+          <ol class="event-list">
+            {events.map((event) => (
+              <li>
+                <article class="event-card">
+                  <div class="event-date" aria-hidden="true">
+                    <strong>{new Date(event.startDateTime).toLocaleDateString(locale, {day: '2-digit'})}</strong>
+                    <span>{new Date(event.startDateTime).toLocaleDateString(locale, {month: 'short'})}</span>
+                  </div>
+
+                  <div class="event-card__content">
+                    <div class="event-badges">
+                      {isOngoing(event) && <strong class="badge badge-live">{eventLabels.ongoing}</strong>}
+                      {event.eventStatus !== 'scheduled' && <strong class={`badge badge-${event.eventStatus}`}>{statuses[event.eventStatus] ?? event.eventStatus}</strong>}
+                      <span class="badge">{categories[event.eventType] ?? event.eventType}</span>
+                    </div>
+                    <h3><a href={`/${language}/events/${event.slug}/`}>{event.title}</a></h3>
+                    <p>{event.summary}</p>
+                    <dl class="event-meta">
+                      <div><dt>{eventLabels.dateAndTime}</dt><dd><time datetime={event.startDateTime}>{formatDate(event.startDateTime)}{event.isAllDay ? ` · ${eventLabels.allDay}` : ` · ${formatTime(event.startDateTime)}`}</time></dd></div>
+                      <div><dt>{eventLabels.venue}</dt><dd>{locationLabel(event)}</dd></div>
+                      <div><dt>{eventLabels.organizer}</dt><dd>{event.organizerName}</dd></div>
+                      {event.registrationStatus !== 'not-applicable' && <div><dt>{eventLabels.registration}</dt><dd>{registrationStatuses[event.registrationStatus] ?? event.registrationStatus}</dd></div>}
+                    </dl>
+                    <a class="event-link" href={`/${language}/events/${event.slug}/`}>{eventLabels.readMore} <span aria-hidden="true">→</span></a>
+                  </div>
+
+                  {imageUrl(event.featuredImage) ? <a class="event-card__image" href={`/${language}/events/${event.slug}/`} tabindex="-1" aria-hidden="true"><img src={imageUrl(event.featuredImage) ?? ''} alt="" width="720" height="480" loading="lazy" decoding="async" /></a> : <div class="event-card__placeholder" aria-hidden="true"></div>}
+                </article>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </section>
+  </main>
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .events-hero { border-bottom: 1px solid var(--border); background: radial-gradient(circle at 88% 5%, rgb(198 42 31 / .09), transparent 20rem), linear-gradient(135deg, #f5f8fb, #fff 65%, #fff6f5); }
+  .events-hero__inner { padding-block: clamp(2.5rem, 6vw, 4.75rem); }
+  .events-hero h1 { margin-block-start: .55rem; }
+  .events-hero .lead { max-width: 48rem; margin-block-start: 1rem; }
+  .past-link { display: inline-flex; gap: .45rem; margin-block-start: 1.25rem; color: var(--civic-deep); font-weight: 760; }
+  .events-main { background: #fff; }
+  .events-heading { display: flex; justify-content: space-between; align-items: end; gap: 1rem; padding-block-end: 1rem; border-bottom: 2px solid var(--civic-deep); }
+  .events-heading p { color: var(--text-soft); font-weight: 700; }
+  .event-list { margin: 0; padding: 0; list-style: none; }
+  .event-list > li { border-bottom: 1px solid var(--border); }
+  .event-card { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) minmax(12rem, 18rem); gap: clamp(1rem, 3vw, 2.25rem); align-items: start; padding-block: clamp(1.5rem, 4vw, 2.5rem); }
+  .event-date { display: grid; place-items: center; align-content: center; min-height: 5.5rem; border-top: .3rem solid var(--brand); background: var(--surface-muted); color: var(--civic-deep); }
+  .event-date strong { font-size: 1.8rem; line-height: 1; }
+  .event-date span { margin-block-start: .3rem; font-size: .78rem; font-weight: 760; text-transform: uppercase; }
+  .event-badges { display: flex; flex-wrap: wrap; gap: .45rem; }
+  .badge { display: inline-flex; padding: .3rem .55rem; border-radius: 999px; background: var(--surface-muted); color: var(--civic-deep); font-size: .75rem; font-weight: 740; }
+  .badge-live { background: #e3f5ea; color: #15603a; }
+  .badge-cancelled { background: #fde8e6; color: #9e281f; }
+  .badge-postponed, .badge-rescheduled { background: #fff2cc; color: #6f5200; }
+  .event-card h3 { margin-block-start: .7rem; font-size: clamp(1.35rem, 2.8vw, 2rem); }
+  .event-card h3 a { color: var(--civic-deep); text-decoration: none; }
+  .event-card h3 a:hover { color: var(--brand); }
+  .event-card__content > p { margin-block-start: .65rem; color: var(--text-muted); }
+  .event-meta { display: flex; flex-wrap: wrap; gap: .7rem 1.4rem; margin-block-start: 1rem; }
+  .event-meta div { min-width: min(100%, 10rem); }
+  .event-meta dt { color: var(--text-soft); font-size: .7rem; font-weight: 760; text-transform: uppercase; }
+  html[lang='ne'] .event-meta dt { font-size: .8rem; text-transform: none; }
+  .event-meta dd { margin: .2rem 0 0; color: var(--civic-deep); font-size: .9rem; font-weight: 650; }
+  .event-link { display: inline-flex; gap: .45rem; margin-block-start: 1.2rem; color: var(--civic-deep); font-weight: 760; }
+  .event-card__image, .event-card__placeholder { display: block; overflow: hidden; aspect-ratio: 3 / 2; background: linear-gradient(135deg, var(--civic), var(--civic-deep)); }
+  .event-card__image img { width: 100%; height: 100%; object-fit: cover; }
+  .empty-state { padding: clamp(2.5rem, 8vw, 5rem); text-align: center; }
+  .empty-state > span { display: block; width: 3rem; height: .2rem; margin: 0 auto 1rem; background: var(--brand); }
+  .empty-state p { margin-block-start: .65rem; color: var(--text-muted); }
+  @media (max-width: 52rem) { .event-card { grid-template-columns: 4.75rem minmax(0, 1fr); } .event-card__image, .event-card__placeholder { grid-column: 2; max-width: 24rem; } }
+  @media (max-width: 36rem) { .event-card { grid-template-columns: 3.9rem minmax(0, 1fr); gap: .9rem; } .event-date { min-height: 4.2rem; } .event-date strong { font-size: 1.4rem; } .event-card__image, .event-card__placeholder { grid-column: 1 / -1; max-width: none; } .event-meta { display: grid; grid-template-columns: 1fr; } }
+</style>
