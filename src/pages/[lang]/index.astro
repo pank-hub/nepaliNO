@@ -80,27 +80,10 @@ const latestStories = await sanityClient.fetch<HomeArticle[]>(
 
 const imageUrl = (image?: HomeArticleImage, width = 1200) =>
   image?.asset ? urlFor(image as any).width(width).fit('crop').auto('format').url() : null
-const homepageRegionLabels: Record<string, Record<SupportedLanguage, string>> = {
-  norway: {ne: 'नर्वे', nb: 'Norge'},
-  nepal: {ne: 'नेपाल', nb: 'Nepal'},
-  community: {ne: 'समुदाय', nb: 'Fellesskap'},
-  international: {ne: 'अन्तर्राष्ट्रिय', nb: 'Internasjonalt'},
-}
-
-const homepageCategoryLabels: Record<string, Record<SupportedLanguage, string>> = {
-  'current-affairs': {ne: 'समसामयिक विषय', nb: 'Aktuelt'},
-  'immigration-integration': {ne: 'आप्रवासन र एकीकरण', nb: 'Innvandring og integrering'},
-  'education-student-life': {ne: 'शिक्षा र विद्यार्थी जीवन', nb: 'Utdanning og studentliv'},
-  'employment-economy': {ne: 'रोजगारी र अर्थतन्त्र', nb: 'Arbeidsliv og økonomi'},
-  'culture-community': {ne: 'संस्कृति र समुदाय', nb: 'Kultur og fellesskap'},
-  'health-welfare': {ne: 'स्वास्थ्य र कल्याण', nb: 'Helse og velferd'},
-  sports: {ne: 'खेलकुद', nb: 'Sport'},
-}
-
-const getRegionLabel = (value: string) =>
-  homepageRegionLabels[value]?.[language] ?? value
-const getCategoryLabel = (value: string) =>
-  homepageCategoryLabels[value]?.[language] ?? value
+const homepageRegionLabels = labels.news.regions as Record<string, string>
+const homepageCategoryLabels = labels.news.categories as Record<string, string>
+const getRegionLabel = (value: string) => homepageRegionLabels[value] ?? value
+const getCategoryLabel = (value: string) => homepageCategoryLabels[value] ?? value
 
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const formatDate = (date: string) =>
