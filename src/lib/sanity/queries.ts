@@ -147,29 +147,54 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
     isFeatured
   }
 `
-export const UPCOMING_EVENTS_QUERY = `
+export const UPCOMING_EVENTS_BY_LANGUAGE_QUERY = `
   *[
     _type == "communityEvent" &&
     defined(slug.current) &&
-    startDateTime >= now() &&
-    isCancelled != true
+    language == $language &&
+    defined(startDateTime) &&
+    coalesce(endDateTime, startDateTime) >= now()
   ] | order(startDateTime asc) {
     _id,
     title,
     "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
     summary,
+    eventLanguages,
+    otherEventLanguage,
     eventType,
+    eventFormat,
+    eventStatus,
+    isAllDay,
     startDateTime,
     endDateTime,
-    isOnline,
     venueName,
     address,
+    postalCode,
     city,
+    mapUrl,
+    accessibilityInformation,
+    transportInformation,
+    onlinePlatform,
     onlineUrl,
     organizerName,
+    organizerUrl,
+    organizerEmail,
+    organizerPhone,
+    registrationRequirement,
+    registrationStatus,
     registrationUrl,
+    registrationDeadline,
     isFree,
     priceNok,
+    priceDescription,
+    intendedAudience,
     featuredImage {
       asset,
       alt,
@@ -178,32 +203,61 @@ export const UPCOMING_EVENTS_QUERY = `
       hotspot,
       crop
     },
+    sourceUrl,
+    lastVerifiedAt,
+    editorialReviewer,
     isFeatured
   }
 `
 
-export const FEATURED_EVENTS_QUERY = `
+export const PAST_EVENTS_BY_LANGUAGE_QUERY = `
   *[
     _type == "communityEvent" &&
     defined(slug.current) &&
-    startDateTime >= now() &&
-    isCancelled != true &&
-    isFeatured == true
-  ] | order(startDateTime asc) [0...4] {
+    language == $language &&
+    defined(startDateTime) &&
+    coalesce(endDateTime, startDateTime) < now()
+  ] | order(coalesce(endDateTime, startDateTime) desc) {
     _id,
     title,
     "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
     summary,
+    eventLanguages,
+    otherEventLanguage,
     eventType,
+    eventFormat,
+    eventStatus,
+    isAllDay,
     startDateTime,
     endDateTime,
-    isOnline,
     venueName,
+    address,
+    postalCode,
     city,
+    mapUrl,
+    accessibilityInformation,
+    transportInformation,
+    onlinePlatform,
     onlineUrl,
+    organizerName,
+    organizerUrl,
+    organizerEmail,
+    organizerPhone,
+    registrationRequirement,
+    registrationStatus,
     registrationUrl,
+    registrationDeadline,
     isFree,
     priceNok,
+    priceDescription,
+    intendedAudience,
     featuredImage {
       asset,
       alt,
@@ -211,33 +265,124 @@ export const FEATURED_EVENTS_QUERY = `
       credit,
       hotspot,
       crop
-    }
+    },
+    sourceUrl,
+    lastVerifiedAt,
+    editorialReviewer,
+    isFeatured
+  }
+`
+
+export const HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY = `
+  *[
+    _type == "communityEvent" &&
+    defined(slug.current) &&
+    language == $language &&
+    defined(startDateTime) &&
+    coalesce(endDateTime, startDateTime) >= now() &&
+    eventStatus != "cancelled"
+  ] | order(isFeatured desc, startDateTime asc) [0...3] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
+    summary,
+    eventLanguages,
+    otherEventLanguage,
+    eventType,
+    eventFormat,
+    eventStatus,
+    isAllDay,
+    startDateTime,
+    endDateTime,
+    venueName,
+    address,
+    postalCode,
+    city,
+    mapUrl,
+    accessibilityInformation,
+    transportInformation,
+    onlinePlatform,
+    onlineUrl,
+    organizerName,
+    organizerUrl,
+    organizerEmail,
+    organizerPhone,
+    registrationRequirement,
+    registrationStatus,
+    registrationUrl,
+    registrationDeadline,
+    isFree,
+    priceNok,
+    priceDescription,
+    intendedAudience,
+    featuredImage {
+      asset,
+      alt,
+      caption,
+      credit,
+      hotspot,
+      crop
+    },
+    sourceUrl,
+    lastVerifiedAt,
+    editorialReviewer,
+    isFeatured
   }
 `
 
 export const EVENT_BY_SLUG_QUERY = `
   *[
     _type == "communityEvent" &&
-    slug.current == $slug
+    slug.current == $slug &&
+    language == $language
   ][0] {
     _id,
     title,
     "slug": slug.current,
+    language,
+    translation-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
     summary,
+    eventLanguages,
+    otherEventLanguage,
     eventType,
+    eventFormat,
+    eventStatus,
+    isAllDay,
     startDateTime,
     endDateTime,
-    isOnline,
     venueName,
     address,
+    postalCode,
     city,
+    mapUrl,
+    accessibilityInformation,
+    transportInformation,
+    onlinePlatform,
     onlineUrl,
     organizerName,
+    organizerUrl,
     organizerEmail,
     organizerPhone,
+    registrationRequirement,
+    registrationStatus,
     registrationUrl,
+    registrationDeadline,
     isFree,
     priceNok,
+    priceDescription,
+    intendedAudience,
     featuredImage {
       asset,
       alt,
@@ -246,11 +391,24 @@ export const EVENT_BY_SLUG_QUERY = `
       hotspot,
       crop
     },
-    description,
+    sourceUrl,
+    lastVerifiedAt,
+    editorialReviewer,
     isFeatured,
-    isCancelled
+    description[] {
+      ...,
+      _type == "image" => {
+        asset,
+        alt,
+        caption,
+        credit,
+        hotspot,
+        crop
+      }
+    }
   }
 `
+
 export const ACTIVE_BUSINESS_LISTINGS_QUERY = `
   *[
     _type == "businessListing" &&
