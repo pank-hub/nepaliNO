@@ -24,7 +24,7 @@ export const ne = {
     informationEyebrow: "भरपर्दो जानकारी",
     informationHeading: "नर्वेमा जीवन",
     informationDescription:
-      "सरकारी निकायका आधिकारिक स्रोतमा आधारित बुझ्न सजिलो मार्गदर्शन।",
+      "सरकारी स्रोतमा आधारित सरल जानकारी।",
     viewAllInformation: "सबै जानकारी हेर्नुहोस्",
     newsEyebrow: "समुदायसँग जोडिनुहोस्",
     newsHeading: "पछिल्ला समाचार",
@@ -50,7 +50,7 @@ export const ne = {
     featuredStory: "प्रमुख समाचार",
     latestNews: "पछिल्ला समाचार",
     readFullStory: "पूरा समाचार पढ्नुहोस्",
-    emptyInformation: "नयाँ मार्गदर्शन प्रकाशित भएपछि यहाँ देखिनेछ।",
+    emptyInformation: "नयाँ मार्गदर्शन प्रकाशित भएपछि यहाँ उपलब्ध हुनेछ।",
     emptyNews: "नयाँ समाचार प्रकाशित भएपछि यहाँ देखिनेछ।",
   },
 
@@ -74,7 +74,7 @@ export const ne = {
     category: "विषय",
     usefulInformation: "उपयोगी जानकारी",
     usefulInformationDescription:
-      "समाचारसँगै काम लाग्ने आधिकारिक स्रोतमा आधारित मार्गदर्शनहरू।",
+      "समाचारका साथै आधिकारिक स्रोतमा आधारित उपयोगी जानकारी।",
     readGuide: "मार्गदर्शन पढ्नुहोस्",
     reviewed: "पछिल्लो समीक्षा",
     regions: {
