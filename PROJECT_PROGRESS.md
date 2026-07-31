@@ -2047,3 +2047,156 @@ Completed and verified on 31 July 2026.
 4. Preserve the existing homepage rule that no empty Coming Soon Event section should appear at official presentation.
 5. After homepage Events integration is stable, design the separate private `eventSubmission` schema, bilingual organizer-submission form and moderated staff workflow.
 6. Revisit the no-image Event fallback as a later isolated visual refinement.
+
+### Private Event Submission Foundation and Moderation Workspace Milestone
+
+Completed and verified on 31 July 2026.
+
+#### Storage and plan decision
+- Selected Sanity Growth for private organizer-submission storage.
+- Upgraded the Sanity project from Growth Trial to the active paid Growth plan.
+- Created the second included dataset:
+  - name: `submissions`
+  - visibility: Private
+  - started empty
+  - no copy or clone of `production`
+- Preserved the existing public `production` dataset for approved public editorial content only.
+- Current dataset boundary:
+  - `production`: public News, Public Information, Topic Hubs, approved Community Events, approved Business Listings and other public editorial content
+  - `submissions`: private organizer proposals, private contacts, moderation records, declarations and retention metadata
+- Sanity Growth currently uses both included datasets, 2 of 2.
+- The future forum platform has not been selected. Discourse remains only the current front-runner pending a structured platform review. The future forum must maintain its own appropriate operational data store and must not use the private Sanity submission dataset as its forum database.
+
+#### Permanent Event-submission architecture
+- Added `EVENT_SUBMISSION_ARCHITECTURE.md` as the authoritative repository document for the submission boundary.
+- Documented:
+  - Nepali, Norwegian Bokmal and English submission interfaces
+  - English as a submission and source-information language, not a complete English public website
+  - separation of form language, submission language, actual Event language and requested public output language
+  - strict separation between `eventSubmission` and public `communityEvent`
+  - no automatic public publication
+  - no browser-side Sanity write token
+  - private and proposed public organizer-contact separation
+  - server-side allowlisting and validation requirements
+  - direct file-upload deferral
+  - moderation workflow
+  - privacy, retention and deletion requirements
+  - Sanity private dataset as the selected production architecture
+  - requirement to use synthetic data until the complete endpoint and privacy workflow are verified
+- Foundation checkpoint created and pushed:
+  - `43d0a7d add Event submission foundation`
+
+#### Private Event Submission schema
+- Added:
+  - `sanity/schemaTypes/eventSubmission.ts`
+  - `sanity/schemaTypes/submissionSchemaTypes.ts`
+- The private submission schema supports:
+  - moderation statuses: New, Under review, More information requested, Approved, Converted, Rejected, Duplicate, Withdrawn and Archived
+  - server-generated submission timestamp
+  - Nepali, Norwegian and English form-interface languages
+  - submission content language, including Other
+  - requested Nepali, Norwegian, both or editorial-decision public output
+  - assigned reviewer, internal notes and clarification notes
+  - retention review date
+  - final public Event ID, URL and conversion timestamp
+  - private organizer name, contact person, email, telephone and preferred contact language
+  - conditional Other preferred contact language
+  - separately proposed public organizer name, website, email and telephone
+  - explicit permission before proposed public email or telephone may be published
+  - proposed Event title, summary and full plain-text source description
+  - actual Event languages and conditional Other language
+  - Event category, format, all-day setting, dates, venue, map, online information, accessibility, transport and audience
+  - source URL
+  - registration requirement, status, URL and deadline
+  - validation that No registration required uses Not applicable status and other requirements use a real current status
+  - free or described pricing
+  - proposed image URL, alternative-text suggestion, image credit and publication-rights confirmation
+  - required authority, accuracy, editing/translation, no-publication-guarantee and privacy/retention declarations
+- No reference to public `communityEvent` was introduced.
+- Cross-dataset references are deliberately avoided; approved public Event ID and URL are stored as controlled metadata after staff conversion.
+- The schema was not registered in the public `production` schema index.
+- Sanity TypeScript validation and Studio build passed before the foundation checkpoint.
+
+#### Separate Sanity Studio workspaces
+- Updated `sanity/sanity.config.ts` to define two workspaces.
+- Public Content workspace:
+  - workspace name: `public-content`
+  - base path: `/content`
+  - dataset: `production`
+  - existing public `schemaTypes`
+  - Structure and Vision tools retained
+- Event Moderation workspace:
+  - workspace name: `event-moderation`
+  - base path: `/event-moderation`
+  - dataset: private `submissions`
+  - only `submissionSchemaTypes`
+  - Structure tool only
+  - Publish, Unpublish and Duplicate actions removed for `eventSubmission`
+- The workspace selector was visually confirmed in the deployed Vercel-hosted Studio.
+- Private moderation-workspace checkpoint created and pushed:
+  - `e3efbc6 add private Event moderation workspace`
+
+#### Vercel Studio SPA routing correction
+- Multi-workspace Studio navigation initially produced Vercel `404: NOT_FOUND` responses on direct workspace URLs.
+- Confirmed that Sanity Studio built as a single-page application with `sanity/dist/index.html` and static assets under `sanity/dist/static/`.
+- Added a narrowly scoped root `vercel.json` for Studio workspace SPA rewrites.
+- An initial downloaded `vercel.json` was accidentally saved as an empty file and transparently committed:
+  - `fdc7f86 fix Studio workspace routing`
+- The empty file produced an expected failed Vercel deployment and was corrected immediately without rewriting Git history.
+- Added the real JSON configuration:
+  - `31e125b configure Studio workspace rewrites`
+- Initial wildcard rules did not match the workspace root URLs.
+- Added explicit exact rules for workspace roots with and without trailing slashes while preserving nested wildcard rules:
+  - `/content`
+  - `/content/`
+  - `/content/:path*`
+  - `/event-moderation`
+  - `/event-moderation/`
+  - `/event-moderation/:path*`
+- Final routing checkpoint created and pushed:
+  - `ec88d63 cover Studio workspace root routes`
+- The rewrites remain narrowly scoped. No global catch-all was introduced.
+
+#### Routing and visual validation
+- Confirmed HTTP 200 for:
+  - `https://nepali-no-studio.vercel.app/`
+  - `https://nepali-no-studio.vercel.app/content`
+  - `https://nepali-no-studio.vercel.app/content/`
+  - `https://nepali-no-studio.vercel.app/event-moderation`
+  - `https://nepali-no-studio.vercel.app/event-moderation/`
+  - `https://nepali-no.vercel.app/ne/events/`
+- Confirmed the nested moderation route loads:
+  - `/event-moderation/structure/eventSubmission`
+- Visually confirmed that Event Moderation shows only:
+  - Event Submission
+- Confirmed the private moderation workspace does not show News Articles, approved Community Events, Business Listings, Public Information Guides or Topic Hubs.
+- Confirmed no Vision tool is shown in Event Moderation.
+- The private `submissions` dataset is empty at this checkpoint.
+- No genuine organizer names, email addresses, telephone numbers or confidential proposals have been entered.
+
+#### Codespaces operational note
+- GitHub Codespaces free included usage was exhausted during this milestone.
+- Codespaces paid usage had a zero-dollar stopping budget, so the existing Codespace was temporarily blocked without generating a charge.
+- A controlled paid Codespaces budget was enabled to resume work.
+- All project work had already been pushed before the interruption.
+- Continue stopping the Codespace during breaks and keep spending capped.
+
+### Current Git Status
+- Latest pushed checkpoint: `ec88d63 cover Studio workspace root routes`.
+- `git status --short` returned no output after the push and routing validation.
+- HEAD, local `main`, `origin/main` and `origin/HEAD` were synchronized at `ec88d63`.
+- This milestone has now been appended to `PROJECT_PROGRESS.md` and is awaiting a documentation-only checkpoint.
+
+### Exact Next Work
+1. Open the blank Event Submission editor in the private Event Moderation workspace.
+2. Confirm Publish, Unpublish and Duplicate actions are absent before entering data.
+3. Create one clearly marked synthetic submission only:
+   - title: `SYNTHETIC TEST - Delete after moderation validation`
+   - use fictional organizer and contact information
+   - do not use any real email address, telephone number or confidential proposal
+4. Validate moderation defaults, language choices, conditional Other-language fields, private/public contact separation, registration consistency, date validation, image permission and required declarations.
+5. Confirm the synthetic document is stored only in the private `submissions` dataset and never appears in `production` or public Event routes.
+6. Delete the synthetic submission after moderation validation unless it is temporarily needed for endpoint testing.
+7. Only after the private moderation workflow is stable, install the Vercel adapter and build the server-side submission endpoint.
+8. The future endpoint must use a dedicated server-only robot token, allowlist visitor fields, generate internal fields server-side, add spam protection and rate limiting, and never expose the token to browser JavaScript.
+9. Add Nepali, Norwegian and English public submission forms only after endpoint, privacy, retention and abuse controls are validated.
