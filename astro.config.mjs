@@ -1,6 +1,7 @@
 // @ts-check
 
 import sanity from "@sanity/astro";
+import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { loadEnv } from "vite";
@@ -16,6 +17,8 @@ export default defineConfig({
       useCdn: false,
     }),
   ],
+
+  adapter: vercel(),
 
   vite: {
     plugins: [tailwindcss()],
