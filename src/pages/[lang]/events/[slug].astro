@@ -38,6 +38,7 @@ const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 const activeTranslation = event.translation?.slug && event.translation.language === alternateLanguage ? event.translation : undefined
 const alternatePath = activeTranslation ? `/${activeTranslation.language}/events/${activeTranslation.slug}/` : `/${alternateLanguage}/events/`
 const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const eventTimeZone = 'Europe/Oslo'
 const now = Date.now()
 const start = new Date(event.startDateTime).getTime()
 const end = new Date(event.endDateTime || event.startDateTime).getTime()
@@ -52,8 +53,8 @@ const canRegister =
   registrationDeadlineOpen &&
   !!event.registrationUrl &&
   event.registrationRequirement !== 'not-required'
-const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})
-const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit'})
+const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {timeZone: eventTimeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})
+const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {timeZone: eventTimeZone, hour: '2-digit', minute: '2-digit'})
 const formats: Record<string, string> = {'in-person': eventLabels.inPerson, online: eventLabels.online, hybrid: eventLabels.hybrid}
 const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>

@@ -15,9 +15,10 @@ const eventLabels = labels.events
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 const events = await sanityClient.fetch<PastEvent[]>(PAST_EVENTS_BY_LANGUAGE_QUERY, {language})
 const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const eventTimeZone = 'Europe/Oslo'
 const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>
-const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {year: 'numeric', month: 'long', day: 'numeric'})
+const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {timeZone: eventTimeZone, year: 'numeric', month: 'long', day: 'numeric'})
 const locationLabel = (event: PastEvent) => event.eventFormat === 'online' ? event.onlinePlatform || eventLabels.online : event.city || (event.eventFormat === 'hybrid' ? eventLabels.hybrid : eventLabels.inPerson)
 ---
 <BaseLayout language={language} title={`${eventLabels.pastHeading} | nepali.no`} description={eventLabels.pageDescription}>

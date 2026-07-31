@@ -44,12 +44,13 @@ const eventLabels = labels.events
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 const events = await sanityClient.fetch<EventSummary[]>(UPCOMING_EVENTS_BY_LANGUAGE_QUERY, {language})
 const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const eventTimeZone = 'Europe/Oslo'
 const now = Date.now()
 const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>
 const registrationStatuses = eventLabels.registrationStatuses as Record<string, string>
-const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'})
-const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit'})
+const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {timeZone: eventTimeZone, weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'})
+const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {timeZone: eventTimeZone, hour: '2-digit', minute: '2-digit'})
 const formatLabel = (event: EventSummary) => event.eventFormat === 'online' ? eventLabels.online : event.eventFormat === 'hybrid' ? eventLabels.hybrid : eventLabels.inPerson
 const locationLabel = (event: EventSummary) => event.eventFormat === 'online' ? event.onlinePlatform || eventLabels.online : event.city || event.venueName || formatLabel(event)
 const isOngoing = (event: EventSummary) => new Date(event.startDateTime).getTime() <= now && new Date(event.endDateTime || event.startDateTime).getTime() >= now
@@ -88,8 +89,8 @@ const imageUrl = (image?: EventImage) => image?.asset ? urlFor(image as any).wid
               <li>
                 <article class="event-card">
                   <div class="event-date" aria-hidden="true">
-                    <strong>{new Date(event.startDateTime).toLocaleDateString(locale, {day: '2-digit'})}</strong>
-                    <span>{new Date(event.startDateTime).toLocaleDateString(locale, {month: 'short'})}</span>
+                    <strong>{new Date(event.startDateTime).toLocaleDateString(locale, {timeZone: eventTimeZone, day: '2-digit'})}</strong>
+                    <span>{new Date(event.startDateTime).toLocaleDateString(locale, {timeZone: eventTimeZone, month: 'short'})}</span>
                   </div>
 
                   <div class="event-card__content">
