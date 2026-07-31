@@ -54,6 +54,11 @@ const canRegister =
   !!event.registrationUrl &&
   event.registrationRequirement !== 'not-required'
 const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {timeZone: eventTimeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})
+const formatDateRange = (startValue: string, endValue?: string) => {
+  if (!endValue) return formatDate(startValue)
+  const formatter = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})
+  return formatter.formatRange(new Date(startValue), new Date(endValue))
+}
 const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {timeZone: eventTimeZone, hour: '2-digit', minute: '2-digit'})
 const formats: Record<string, string> = {'in-person': eventLabels.inPerson, online: eventLabels.online, hybrid: eventLabels.hybrid}
 const categories = eventLabels.categories as Record<string, string>
@@ -94,7 +99,7 @@ const actionLabel = event.registrationRequirement === 'tickets-required' ? event
 
       <aside class="event-sidebar">
         <section class="event-facts"><h2>{eventLabels.eventDetails}</h2><dl>
-          <div><dt>{eventLabels.dateAndTime}</dt><dd><time datetime={event.startDateTime}>{formatDate(event.startDateTime)}</time>{event.isAllDay ? <><br />{eventLabels.allDay}</> : <><br />{formatTime(event.startDateTime)}{event.endDateTime && ` – ${formatTime(event.endDateTime)}`}</>}</dd></div>
+          <div><dt>{eventLabels.dateAndTime}</dt><dd><span>{formatDateRange(event.startDateTime, event.endDateTime)}</span>{event.isAllDay ? <><br />{eventLabels.allDay}</> : <><br />{formatTime(event.startDateTime)}{event.endDateTime && ` – ${formatTime(event.endDateTime)}`}</>}</dd></div>
           <div><dt>{eventLabels.venue}</dt><dd>{formats[event.eventFormat] ?? event.eventFormat}{event.venueName && <><br />{event.venueName}</>}{address && <><br />{address}</>}{event.onlinePlatform && <><br />{event.onlinePlatform}</>}</dd></div>
           {event.mapUrl && <div><dt>{eventLabels.address}</dt><dd><a href={event.mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} ↗</a></dd></div>}
           <div><dt>{eventLabels.organizer}</dt><dd>{event.organizerUrl ? <a href={event.organizerUrl} target="_blank" rel="noopener noreferrer">{event.organizerName} ↗</a> : event.organizerName}</dd></div>

@@ -50,6 +50,11 @@ const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>
 const registrationStatuses = eventLabels.registrationStatuses as Record<string, string>
 const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {timeZone: eventTimeZone, weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'})
+const formatDateRange = (startValue: string, endValue?: string) => {
+  if (!endValue) return formatDate(startValue)
+  const formatter = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'})
+  return formatter.formatRange(new Date(startValue), new Date(endValue))
+}
 const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {timeZone: eventTimeZone, hour: '2-digit', minute: '2-digit'})
 const formatLabel = (event: EventSummary) => event.eventFormat === 'online' ? eventLabels.online : event.eventFormat === 'hybrid' ? eventLabels.hybrid : eventLabels.inPerson
 const locationLabel = (event: EventSummary) => event.eventFormat === 'online' ? event.onlinePlatform || eventLabels.online : event.city || event.venueName || formatLabel(event)
@@ -102,7 +107,7 @@ const imageUrl = (image?: EventImage) => image?.asset ? urlFor(image as any).wid
                     <h3><a href={`/${language}/events/${event.slug}/`}>{event.title}</a></h3>
                     <p>{event.summary}</p>
                     <dl class="event-meta">
-                      <div><dt>{eventLabels.dateAndTime}</dt><dd><time datetime={event.startDateTime}>{formatDate(event.startDateTime)}{event.isAllDay ? ` · ${eventLabels.allDay}` : ` · ${formatTime(event.startDateTime)}`}</time></dd></div>
+                      <div><dt>{eventLabels.dateAndTime}</dt><dd><span>{formatDateRange(event.startDateTime, event.endDateTime)}{event.isAllDay ? ` · ${eventLabels.allDay}` : ` · ${formatTime(event.startDateTime)}`}</span></dd></div>
                       <div><dt>{eventLabels.venue}</dt><dd>{locationLabel(event)}</dd></div>
                       <div><dt>{eventLabels.organizer}</dt><dd>{event.organizerName}</dd></div>
                       {event.registrationStatus !== 'not-applicable' && <div><dt>{eventLabels.registration}</dt><dd>{registrationStatuses[event.registrationStatus] ?? event.registrationStatus}</dd></div>}
