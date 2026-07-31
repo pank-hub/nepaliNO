@@ -2,7 +2,23 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/content",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/content/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/content/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/event-moderation",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/event-moderation/",
       "destination": "/index.html"
     },
     {
