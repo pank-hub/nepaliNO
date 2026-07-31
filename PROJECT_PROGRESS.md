@@ -1931,3 +1931,119 @@ Completed and verified on 30 July 2026.
 4. Create a Norwegian translated Event only if useful for the first test; a missing translation must safely fall back to the Norwegian Events archive.
 5. Integrate up to three Upcoming or ongoing Events into the homepage using `HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY`.
 6. After the approved public Event workflow is stable, build the separate private `eventSubmission` schema, bilingual organizer submission form and moderated staff workflow.
+### First Genuine Event, Timezone and Compact Date Presentation Milestone
+
+Completed and verified on 31 July 2026.
+
+#### First genuine controlled Nepali Event
+- Created and published the first genuine Nepali Community Event through the Vercel-hosted Sanity Studio.
+- The Event is based on the official IMDi conference:
+  - Fagverksted for bosetting og kvalifisering 2026 - "A hore til"
+  - 15-16 October 2026
+  - Clarion Hotel & Congress Oslo Airport, Gardermoen
+- Public content language: Nepali.
+- Actual Event language: Norwegian.
+- Event type: Workshops and seminars.
+- Event format: In person.
+- Event status: Scheduled.
+- Organizer: Integrerings- og mangfoldsdirektoratet (IMDi).
+- Registration is handled externally by the organizer.
+- No Norwegian translated Event document was created for this controlled milestone.
+- The Event was published without an image because no organizer-approved reusable image was available.
+- The existing no-image archive fallback was therefore exercised intentionally.
+- Sanity publication triggered the established public Vercel deploy webhook automatically.
+- The public Astro production build increased from 17 to 18 generated pages.
+- Generated individual route:
+  - `/ne/events/imdi-fagverksted-bosetting-kvalifisering-2026/`
+
+#### Public Event workflow validation
+- Verified that the genuine Event appears in the Nepali Upcoming Events archive.
+- Verified the individual Nepali Event page.
+- Confirmed public presentation of:
+  - Event title and summary
+  - Event category and in-person format
+  - venue and city
+  - organizer and public contact
+  - actual Event language
+  - intended audience
+  - external registration status and action
+  - official source
+  - last verification date
+  - all-day and multi-day data
+- Verified the archive card and individual page on desktop and mobile.
+- Confirmed that the Event Description uses normal body weight after accidental Portable Text bold formatting was removed in Sanity and republished.
+- Confirmed that no manual public Vercel redeployment was required for the Sanity content correction.
+
+#### Event timezone correction
+- Genuine Event testing revealed that a Norwegian midnight timestamp could display as the previous calendar date in Vercel's UTC build environment.
+- The Sanity Event value was correct; the defect was in frontend date formatting without an explicit display timezone.
+- Added the IANA timezone `Europe/Oslo` to Event date and time formatting in:
+  - `src/pages/[lang]/events/index.astro`
+  - `src/pages/[lang]/events/past.astro`
+  - `src/pages/[lang]/events/[slug].astro`
+- Daylight-saving changes are now handled automatically by the timezone database.
+- Editors do not need and must not receive a manual daylight-saving switch.
+- Event lifecycle comparisons remain based on absolute timestamps and were not changed.
+- Code checkpoint created and pushed:
+  - `7be4e4d fix Event timezone formatting`
+
+#### Multi-day Event range presentation
+- Genuine Event testing showed that the archive metadata and individual Event page displayed only the start date even when an end date existed.
+- Added locale-aware `Intl.DateTimeFormat.formatRange()` handling to:
+  - the Upcoming Events archive metadata
+  - the individual Event details panel
+- Preserved the compact calendar block as a start-date marker.
+- Used neutral HTML wrappers for visible date ranges rather than associating a multi-day visible range with a single-instant `datetime` value.
+- Code checkpoint created and pushed:
+  - `28c07e2 show Event date ranges`
+
+#### Compact localized date presentation
+- Live review showed that full weekday-rich date ranges were accurate but visually crowded in compact Event layouts.
+- Refined the Upcoming archive to omit weekday names and omit the year when the complete Event falls within the current Oslo calendar year.
+- Current-year archive example:
+  - `15-16 October • All day`, localized by the active page language
+- Another-year archive example:
+  - `15-16 October 2027 • All day`, localized by the active page language
+- Refined the individual Event page to omit weekday names while retaining the year.
+- Current individual-page example:
+  - `15-16 October 2026`, localized by the active page language
+- Current-year detection uses `Europe/Oslo`, not the Vercel server timezone.
+- Cross-month and cross-year ranges remain unambiguous through locale-aware range formatting.
+- Removed the archive helper that became unused after the compact-date refinement.
+- Code checkpoint created and pushed:
+  - `5e1a953 compact Event date ranges`
+
+#### Validation
+- `git diff --check` passed for each code checkpoint.
+- Astro Check passed across 50 files with:
+  - 0 errors
+  - 0 warnings
+  - 55 informational hints
+- Astro production build passed with 18 generated pages.
+- Live deployment confirmed:
+  - correct 15 October start date rather than the previous-day UTC shift
+  - complete 15-16 October range
+  - compact archive presentation
+  - year retained on the individual Event page
+  - no weekday names in the compact range
+  - unchanged venue, organizer, registration, source and lifecycle presentation
+
+#### Known visual refinement
+- The current no-image archive fallback is a large dark empty rectangle.
+- It is functional and acceptable for the present milestone but visually dominant and not purpose-specific.
+- Later evaluate a lightweight branded Event placeholder, category-aware fallback, or a compact no-image card layout.
+- Do not delay homepage Events integration or the current Phase 1 milestone for this refinement.
+
+### Current Git Status
+- Latest pushed checkpoint: `5e1a953 compact Event date ranges`.
+- `git status --short` returned no output after the push.
+- HEAD, local `main`, `origin/main` and `origin/HEAD` were synchronized at `5e1a953`.
+- This milestone has now been appended to `PROJECT_PROGRESS.md` and is awaiting a documentation-only checkpoint.
+
+### Exact Next Work
+1. Verify the individual Event page language switch safely falls back to `/nb/events/` when no Norwegian translated Event exists.
+2. Confirm the compact date presentation on the Norwegian archive with genuine or controlled language-appropriate data when practical.
+3. Integrate up to three Upcoming or ongoing Events into the multilingual homepage using `HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY`.
+4. Preserve the existing homepage rule that no empty Coming Soon Event section should appear at official presentation.
+5. After homepage Events integration is stable, design the separate private `eventSubmission` schema, bilingual organizer-submission form and moderated staff workflow.
+6. Revisit the no-image Event fallback as a later isolated visual refinement.
