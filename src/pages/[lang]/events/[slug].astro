@@ -55,9 +55,9 @@ const canRegister =
   event.registrationRequirement !== 'not-required'
 const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {timeZone: eventTimeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})
 const formatDateRange = (startValue: string, endValue?: string) => {
-  if (!endValue) return formatDate(startValue)
-  const formatter = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})
-  return formatter.formatRange(new Date(startValue), new Date(endValue))
+  const end = endValue || startValue
+  const formatter = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, year: 'numeric', month: 'long', day: 'numeric'})
+  return formatter.formatRange(new Date(startValue), new Date(end))
 }
 const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {timeZone: eventTimeZone, hour: '2-digit', minute: '2-digit'})
 const formats: Record<string, string> = {'in-person': eventLabels.inPerson, online: eventLabels.online, hybrid: eventLabels.hybrid}

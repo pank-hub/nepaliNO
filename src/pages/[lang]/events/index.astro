@@ -49,11 +49,15 @@ const now = Date.now()
 const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>
 const registrationStatuses = eventLabels.registrationStatuses as Record<string, string>
-const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {timeZone: eventTimeZone, weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'})
+const currentEventYear = Number(new Intl.DateTimeFormat('en', {timeZone: eventTimeZone, year: 'numeric'}).format(new Date()))
+const eventYear = (value: string) => Number(new Intl.DateTimeFormat('en', {timeZone: eventTimeZone, year: 'numeric'}).format(new Date(value)))
 const formatDateRange = (startValue: string, endValue?: string) => {
-  if (!endValue) return formatDate(startValue)
-  const formatter = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'})
-  return formatter.formatRange(new Date(startValue), new Date(endValue))
+  const end = endValue || startValue
+  const includeYear = eventYear(startValue) !== currentEventYear || eventYear(end) !== currentEventYear
+  const options: Intl.DateTimeFormatOptions = {timeZone: eventTimeZone, month: 'long', day: 'numeric'}
+  if (includeYear) options.year = 'numeric'
+  const formatter = new Intl.DateTimeFormat(locale, options)
+  return formatter.formatRange(new Date(startValue), new Date(end))
 }
 const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {timeZone: eventTimeZone, hour: '2-digit', minute: '2-digit'})
 const formatLabel = (event: EventSummary) => event.eventFormat === 'online' ? eventLabels.online : event.eventFormat === 'hybrid' ? eventLabels.hybrid : eventLabels.inPerson
@@ -107,7 +111,7 @@ const imageUrl = (image?: EventImage) => image?.asset ? urlFor(image as any).wid
                     <h3><a href={`/${language}/events/${event.slug}/`}>{event.title}</a></h3>
                     <p>{event.summary}</p>
                     <dl class="event-meta">
-                      <div><dt>{eventLabels.dateAndTime}</dt><dd><span>{formatDateRange(event.startDateTime, event.endDateTime)}{event.isAllDay ? ` · ${eventLabels.allDay}` : ` · ${formatTime(event.startDateTime)}`}</span></dd></div>
+                      <div><dt>{eventLabels.dateAndTime}</dt><dd><span>{formatDateRange(event.startDateTime, event.endDateTime)}{event.isAllDay ? ` • ${eventLabels.allDay}` : ` • ${formatTime(event.startDateTime)}`}</span></dd></div>
                       <div><dt>{eventLabels.venue}</dt><dd>{locationLabel(event)}</dd></div>
                       <div><dt>{eventLabels.organizer}</dt><dd>{event.organizerName}</dd></div>
                       {event.registrationStatus !== 'not-applicable' && <div><dt>{eventLabels.registration}</dt><dd>{registrationStatuses[event.registrationStatus] ?? event.registrationStatus}</dd></div>}
