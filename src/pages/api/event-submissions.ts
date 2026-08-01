@@ -1,5 +1,9 @@
 import type {APIRoute} from 'astro'
 import {validateEventSubmission} from '../../lib/eventSubmissions/validateEventSubmission'
+import {
+  createPrivateEventSubmission,
+  SubmissionStorageUnavailableError,
+} from '../../lib/eventSubmissions/createEventSubmission'
 
 export const prerender = false
 
@@ -94,11 +98,35 @@ export const POST: APIRoute = async ({request}) => {
     })
   }
 
-  return jsonResponse(503, {
-    ok: false,
-    code: 'submission_service_not_enabled',
-    message: 'The Event submission service is not enabled yet.',
-  })
+  try {
+    const stored = await createPrivateEventSubmission(validation.data)
+
+    return jsonResponse(201, {
+      ok: true,
+      code: 'submission_received',
+      message: 'The Event submission was received for moderation.',
+      submissionId: stored.submissionId,
+      submittedAt: stored.submittedAt,
+    })
+  } catch (error) {
+    if (error instanceof SubmissionStorageUnavailableError) {
+      return jsonResponse(503, {
+        ok: false,
+        code: 'submission_service_unavailable',
+        message: 'The Event submission service is temporarily unavailable.',
+      })
+    }
+
+    console.error('Event submission storage failed', {
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    })
+
+    return jsonResponse(500, {
+      ok: false,
+      code: 'submission_failed',
+      message: 'The Event submission could not be stored. Please try again later.',
+    })
+  }
 }
 
 export const ALL: APIRoute = async () =>
