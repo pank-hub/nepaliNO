@@ -1,4 +1,5 @@
 import type {APIRoute} from 'astro'
+import {validateEventSubmission} from '../../lib/eventSubmissions/validateEventSubmission'
 
 export const prerender = false
 
@@ -71,6 +72,25 @@ export const POST: APIRoute = async ({request}) => {
       ok: false,
       code: 'invalid_payload',
       message: 'The submission payload must be a JSON object.',
+    })
+  }
+
+  const validation = validateEventSubmission(payload)
+
+  if (!validation.ok) {
+    if (validation.spam) {
+      return jsonResponse(400, {
+        ok: false,
+        code: 'invalid_payload',
+        message: 'The submission could not be accepted.',
+      })
+    }
+
+    return jsonResponse(400, {
+      ok: false,
+      code: 'validation_failed',
+      message: 'Review the submitted fields.',
+      errors: validation.errors,
     })
   }
 
