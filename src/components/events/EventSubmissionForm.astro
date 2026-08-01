@@ -45,7 +45,11 @@ const optionEntries = (options: Readonly<Record<string, string>>) => Object.entr
   data-action-submit={copy.actions.submit}
   data-action-submitting={copy.actions.submitting}
 >
-  <aside class="before-you-begin surface" aria-labelledby={`${idPrefix}-before-title`}>
+  <aside
+    class="before-you-begin surface"
+    aria-labelledby={`${idPrefix}-before-title`}
+    data-before-you-begin
+  >
     <div class="before-you-begin__mark" aria-hidden="true">✓</div>
     <div>
       <h2 id={`${idPrefix}-before-title`}>{copy.beforeYouBeginTitle}</h2>
@@ -371,6 +375,7 @@ const optionEntries = (options: Readonly<Record<string, string>>) => Object.entr
     const errorSummary = root.querySelector<HTMLElement>('[data-error-summary]')
     const errorList = root.querySelector<HTMLUListElement>('[data-error-list]')
     const successPanel = root.querySelector<HTMLElement>('[data-success-panel]')
+    const beforeYouBegin = root.querySelector<HTMLElement>('[data-before-you-begin]')
     const submitButton = root.querySelector<HTMLButtonElement>('[data-submit-button]')
     const submitLabel = root.querySelector<HTMLElement>('[data-submit-label]')
     const spinner = root.querySelector<HTMLElement>('.submit-spinner')
@@ -542,6 +547,7 @@ const optionEntries = (options: Readonly<Record<string, string>>) => Object.entr
 
         if (response.ok && result.ok) {
           form.hidden = true
+          if (beforeYouBegin) beforeYouBegin.hidden = true
           if (errorSummary) errorSummary.hidden = true
           if (successPanel) {
             successPanel.hidden = false
