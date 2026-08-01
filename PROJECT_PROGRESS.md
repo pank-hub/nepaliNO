@@ -2200,3 +2200,156 @@ Completed and verified on 31 July 2026.
 7. Only after the private moderation workflow is stable, install the Vercel adapter and build the server-side submission endpoint.
 8. The future endpoint must use a dedicated server-only robot token, allowlist visitor fields, generate internal fields server-side, add spam protection and rate limiting, and never expose the token to browser JavaScript.
 9. Add Nepali, Norwegian and English public submission forms only after endpoint, privacy, retention and abuse controls are validated.
+### Secure Event Submission Endpoint and Private Storage Milestone
+
+Completed and verified on 1 August 2026.
+
+#### Public Event completion validation
+- Reconfirmed the Nepali individual IMDi Event, Upcoming archive and Past archive.
+- Confirmed the untranslated Event language switch safely falls back from the Nepali individual Event to `/nb/events/`.
+- Confirmed the Norwegian Upcoming and Past archives display correct localized empty states and support navigation in both directions.
+- Confirmed the external registration, organizer, map and original-source links open the expected destinations.
+- Confirmed the public Events archive remains isolated from all private submission records.
+- The large dark no-image Event fallback remains accepted temporarily and is reserved for a later isolated visual refinement.
+
+#### Private moderation workflow validation
+- Completed a full synthetic Event Submission manually in the private Event Moderation workspace.
+- Confirmed Publish, Unpublish and Duplicate actions are absent.
+- Confirmed moderation groups, defaults and conditional fields work.
+- Confirmed Other submission language, Other preferred contact language and Other Event language behavior.
+- Confirmed private and proposed public organizer contacts remain separate.
+- Confirmed proposed public email or telephone requires explicit publication permission.
+- Confirmed Event end time must be later than the start time.
+- Confirmed registration requirement and status consistency.
+- Confirmed an image URL requires image-publication permission.
+- Confirmed all five required declarations validate correctly.
+- Confirmed the manually created synthetic record remains a private draft.
+
+#### Secure Vercel server adapter
+- Installed and configured `@astrojs/vercel@11.0.4` while preserving static output for public pages.
+- Added a targeted npm override so `@vercel/routing-utils@5.3.3` resolves patched `path-to-regexp@6.3.0` instead of vulnerable `6.1.0`.
+- Added `.vercel` to `.gitignore`.
+- Verified Astro Check with 0 errors and 0 warnings.
+- Verified all existing public routes remained prerendered while the Event-submission API was emitted as a Vercel server function.
+- Adapter checkpoint created and pushed:
+  - `d808511 add secure Vercel server adapter`
+
+#### Event-submission endpoint skeleton
+- Added the on-demand endpoint:
+  - `src/pages/api/event-submissions.ts`
+- The initial endpoint:
+  - accepted POST requests only
+  - accepted JSON only
+  - enforced a 64 KiB request limit using declared and actual byte length
+  - rejected malformed JSON and non-object payloads
+  - returned JSON with `Cache-Control: no-store`
+  - performed no Sanity mutation
+  - returned a deliberate service-disabled response for valid input
+- Confirmed the generated Vercel routing configuration maps `/api/event-submissions` to the server function.
+- Live deployment tests passed for method rejection, malformed JSON, invalid payload shape, valid disabled input and oversized requests.
+- Astro additionally blocked browser-style cross-site plain-text POST submissions before the endpoint handler.
+- Endpoint-skeleton checkpoint created and pushed:
+  - `9646a64 add Event submission endpoint skeleton`
+
+#### Strict allowlisting and validation
+- Added:
+  - `src/lib/eventSubmissions/validateEventSubmission.ts`
+- The validator now:
+  - accepts only explicit visitor-facing fields
+  - rejects unknown and internal fields such as `_id`, `_type`, `moderationStatus`, reviewer notes and conversion metadata
+  - trims and normalizes strings
+  - enforces field-length limits
+  - validates supported interface, submission, public-output and Event languages
+  - validates Event categories, formats and registration values
+  - validates email addresses and HTTP or HTTPS URLs
+  - requires ISO datetimes with explicit timezones
+  - rejects impossible calendar dates
+  - requires end time later than start time
+  - enforces conditional Other-language values
+  - enforces physical and online Event requirements
+  - enforces registration requirement and status consistency
+  - enforces free and paid price consistency
+  - enforces public-contact and image-publication permission
+  - requires all five declarations
+  - normalizes duplicate Event-language values
+  - supports a `website` honeypot field
+  - limits returned validation errors
+- All 16 automated synthetic validation tests passed.
+- Live tests confirmed rejection of internal fields, filled honeypot, impossible dates and missing declarations.
+- A fully valid synthetic payload reached the deliberate disabled-storage response.
+- Validation checkpoint created and pushed:
+  - `5fc192b validate Event submission payloads`
+
+#### Server-only Sanity credential
+- Created the Sanity robot token:
+  - name: `nepali.no Event Submission Endpoint`
+  - role: Contributor
+  - expiration: No expiration
+- Stored the token only in the public `nepali-no` Vercel project as:
+  - `SANITY_EVENT_SUBMISSION_TOKEN`
+- The value is Sensitive and enabled for Production only.
+- The token was not placed in Git, source files, chat, screenshots, Codespaces environment files or a `PUBLIC_` variable.
+- Contributor can create and edit drafts but cannot publish documents.
+- Growth does not provide a custom dataset-scoped role, so the endpoint independently hard-codes the private dataset and server-controlled document fields.
+
+#### Controlled private draft storage
+- Added:
+  - `src/lib/eventSubmissions/createEventSubmission.ts`
+- The storage helper hard-codes:
+  - Sanity project: `f9johco4`
+  - dataset: `submissions`
+  - API version: `2026-03-01`
+  - document type: `eventSubmission`
+  - moderation status: `new`
+- The server generates:
+  - UUID submission reference
+  - draft ID using `drafts.eventSubmission-<UUID>`
+  - `submittedAt` timestamp
+- Server-controlled fields are applied after normalized visitor data so they cannot be overwritten even if the validator changes later.
+- The storage client uses `useCdn: false` and never exposes the token.
+- Missing-token failures return a generic 503 response.
+- Sanity storage failures return a generic 500 response and log only the error class name, not the payload, contacts or token.
+- Private-storage checkpoint created and pushed:
+  - `12be7cd store private Event submissions`
+
+#### End-to-end private storage proof
+- Submitted one fully synthetic payload through the deployed public endpoint.
+- Received HTTP 201 with `submission_received`, a server-generated submission reference and server-generated timestamp.
+- Confirmed the endpoint-generated record appears in the private Event Moderation workspace as:
+  - `SYNTHETIC ENDPOINT TEST - Delete after storage validation`
+- Confirmed the endpoint-generated record is a Draft.
+- Confirmed moderation status is `New`.
+- Confirmed Submitted At is server-generated and appears in Studio using local display time.
+- Confirmed the form interface language and normalized synthetic Event data were stored correctly.
+- Confirmed the record did not create a public Community Event.
+- Retained both clearly marked synthetic records temporarily for notification, form-mapping and endpoint workflow tests.
+
+#### Current security boundary
+- Public visitors cannot control the dataset, document type, document ID, moderation status, submission timestamp, reviewer fields, internal notes or conversion metadata.
+- The browser never receives the Sanity write token.
+- Submissions are drafts in the private `submissions` dataset.
+- The Contributor robot token cannot publish documents.
+- Staff must review, edit and intentionally create approved public `communityEvent` documents in `production`.
+- The public Events archive continues to read only approved public Event documents from `production`.
+
+### Current Git Status
+- Latest pushed checkpoint: `12be7cd store private Event submissions`.
+- `git status --short` returned no output after the push and end-to-end test.
+- HEAD, local `main`, `origin/main` and `origin/HEAD` were synchronized at `12be7cd`.
+- This milestone has now been appended to `PROJECT_PROGRESS.md` and is awaiting a documentation-only checkpoint.
+
+### Exact Next Work
+1. Add basic rate limiting before opening the endpoint to genuine visitors.
+2. Add an administrative notification for each successfully stored new submission.
+3. Keep the private moderation queue as the authoritative record even if notification delivery fails.
+4. Ensure notification content contains only minimal operational information and a secure moderation link, not full private contact details.
+5. Test successful notification, notification failure and duplicate or repeated submissions using synthetic data only.
+6. Build the Nepali Event-submission form.
+7. Build the Norwegian Event-submission form.
+8. Build the limited English Event-submission form without enabling a complete English public website.
+9. Add localized success, validation and temporary-failure states.
+10. Add `Submit an Event` links to the Nepali and Norwegian Events archives only after the form service is operational.
+11. Later add submission links to the homepage Events section and the appropriate footer participation area.
+12. Connect `HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY`, show Featured and Upcoming Events and hide the section when no suitable Events exist.
+13. Remove remaining homepage dummy, placeholder and Coming Soon content.
+14. Delete both synthetic submission records before public launch unless one is formally retained as a governed test fixture.
