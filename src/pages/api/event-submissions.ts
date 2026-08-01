@@ -4,6 +4,7 @@ import {
   createPrivateEventSubmission,
   SubmissionStorageUnavailableError,
 } from '../../lib/eventSubmissions/createEventSubmission'
+import {notifyEventSubmission} from '../../lib/eventSubmissions/notifyEventSubmission'
 
 export const prerender = false
 
@@ -100,6 +101,19 @@ export const POST: APIRoute = async ({request}) => {
 
   try {
     const stored = await createPrivateEventSubmission(validation.data)
+
+    const notification = await notifyEventSubmission({
+      submissionId: stored.submissionId,
+      submittedAt: stored.submittedAt,
+      input: validation.data,
+    })
+
+    if (!notification.ok) {
+      console.error('Event submission notification failed', {
+        reason: notification.reason,
+        submissionId: stored.submissionId,
+      })
+    }
 
     return jsonResponse(201, {
       ok: true,
