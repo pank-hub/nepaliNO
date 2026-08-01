@@ -291,6 +291,7 @@ const optionEntries = (options: Readonly<Record<string, string>>) => Object.entr
       </div>
 
       <div class="conditional-panel" data-location-panel="online" hidden>
+        <p class="conditional-guidance">{copy.help.onlineAccessRequirement}</p>
         <div class="field-grid field-grid--two">
           <div class="field"><label for={`${idPrefix}-onlinePlatform`}>{copy.fields.onlinePlatform}</label><input id={`${idPrefix}-onlinePlatform`} name="onlinePlatform" type="text" maxlength="120" /><p class="field-error" data-error-for="onlinePlatform"></p></div>
           <div class="field"><label for={`${idPrefix}-onlineInformationUrl`}>{copy.fields.onlineInformationUrl}</label><input id={`${idPrefix}-onlineInformationUrl`} name="onlineInformationUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://" /><p class="field-error" data-error-for="onlineInformationUrl"></p></div>
@@ -411,9 +412,15 @@ const optionEntries = (options: Readonly<Record<string, string>>) => Object.entr
       setVisible(root.querySelector<HTMLElement>('[data-location-panel="physical"]'), format === 'in-person' || format === 'hybrid')
       setVisible(root.querySelector<HTMLElement>('[data-location-panel="online"]'), format === 'online' || format === 'hybrid')
 
-      const registrationRequired = input('registrationRequirement')?.value !== '' && input('registrationRequirement')?.value !== 'not-required'
+      const registrationRequirement = input('registrationRequirement')?.value ?? ''
+      const registrationRequired = registrationRequirement !== '' && registrationRequirement !== 'not-required'
       root.querySelectorAll<HTMLElement>('[data-registration-detail]').forEach((element) => setVisible(element, registrationRequired))
-      if (!registrationRequired && input('registrationStatus')) input('registrationStatus')!.value = 'not-applicable'
+      const registrationStatus = input('registrationStatus')
+      if (!registrationRequired && registrationRequirement === 'not-required' && registrationStatus) {
+        registrationStatus.value = 'not-applicable'
+      } else if (registrationRequired && registrationStatus?.value === 'not-applicable') {
+        registrationStatus.value = 'not-yet-open'
+      }
 
       setVisible(root.querySelector<HTMLElement>('[data-price-detail]'), !(input('isFree') as HTMLInputElement | null)?.checked)
       setVisible(root.querySelector<HTMLElement>('[data-image-permission]'), Boolean(input('proposedImageUrl')?.value.trim()))
@@ -493,7 +500,25 @@ const optionEntries = (options: Readonly<Record<string, string>>) => Object.entr
     }
 
     form.addEventListener('input', updateConditionals)
-    form.addEventListener('change', updateConditionals)
+    form.addEventListener('change', (event) => {
+      const target = event.target
+      if (target instanceof HTMLInputElement && target.name === 'eventLanguages' && target.checked) {
+        const languageChoices = Array.from(
+          form.querySelectorAll<HTMLInputElement>('input[name="eventLanguages"]'),
+        )
+        if (target.value === 'language-independent') {
+          languageChoices.forEach((choice) => {
+            if (choice !== target) choice.checked = false
+          })
+        } else {
+          const languageIndependent = languageChoices.find(
+            (choice) => choice.value === 'language-independent',
+          )
+          if (languageIndependent) languageIndependent.checked = false
+        }
+      }
+      updateConditionals()
+    })
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault()
@@ -589,6 +614,7 @@ const optionEntries = (options: Readonly<Record<string, string>>) => Object.entr
   .choice-card:has(input:checked) { border-color: var(--civic); background: var(--surface-muted); box-shadow: inset 0 0 0 .08rem var(--civic); }
   .choice-card input { accent-color: var(--brand); }
   .conditional-panel { margin-block-start: 1.15rem; padding-block-start: 1.15rem; border-top: 1px solid var(--border); }
+  .conditional-guidance { margin-block-end: 1rem; padding: .75rem .9rem; border-inline-start: .22rem solid var(--civic); background: var(--surface-muted); color: var(--text-muted); font-size: .9rem; }
   .practical-fields { margin-block-start: 1.15rem; }
   .declaration-list { display: grid; gap: .75rem; }
   .submit-panel { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: clamp(1rem, 3vw, 1.5rem); border-color: var(--border-strong); }

@@ -81,6 +81,7 @@ export type EventSubmissionCopy = {
     summary: string
     descriptionPlainText: string
     eventLanguages: string
+    onlineAccessRequirement: string
     sourceUrl: string
     proposedImageUrl: string
     imagePermissionConfirmed: string

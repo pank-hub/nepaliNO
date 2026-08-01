@@ -1,0 +1,212 @@
+---
+import '../../../styles/global.css'
+import EventSubmissionForm from '../../../components/events/EventSubmissionForm.astro'
+import {en} from '../../../i18n/en'
+
+const copy = en.events.submission
+const eventLabels = en.events
+const year = new Date().getFullYear()
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={copy.metaDescription} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#172534" />
+    <title>{copy.metaTitle}</title>
+  </head>
+  <body class="english-event-submission-page">
+    <a class="skip-link" href="#main-content">{en.common.skipToContent}</a>
+
+    <header class="service-header">
+      <div class="container service-header__inner">
+        <a class="service-brand" href="/ne/events/" aria-label="nepali.no Events">
+          <span class="service-brand__symbol" aria-hidden="true">न</span>
+          <span class="service-brand__name">nepali<span>.no</span></span>
+        </a>
+        <span class="service-label">Event submission service</span>
+      </div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <header class="submission-hero">
+        <div class="container submission-hero__inner">
+          <div class="submission-hero__copy">
+            <p class="eyebrow">{copy.eyebrow}</p>
+            <h1>{copy.title}</h1>
+            <p class="lead">{copy.introduction}</p>
+          </div>
+
+          <nav class="form-languages" aria-label="Choose form language">
+            <a href="/ne/events/submit/" lang="ne" hreflang="ne">{copy.actions.useNepali}</a>
+            <a href="/nb/events/submit/" lang="nb" hreflang="nb">{copy.actions.useNorwegian}</a>
+            <a href="/en/events/submit/" lang="en" hreflang="en" aria-current="page">{copy.actions.useEnglish}</a>
+          </nav>
+        </div>
+      </header>
+
+      <section class="section-sm submission-content" aria-label={copy.title}>
+        <div class="container submission-container">
+          <a class="return-link" href="/ne/events/">
+            <span aria-hidden="true">←</span> {copy.actions.returnToEvents}
+          </a>
+
+          <EventSubmissionForm
+            language="en"
+            copy={copy}
+            categories={eventLabels.categories}
+            eventLanguages={eventLabels.languages}
+            registrationRequirements={eventLabels.registrationRequirements}
+            registrationStatuses={eventLabels.registrationStatuses}
+          />
+        </div>
+      </section>
+    </main>
+
+    <footer class="service-footer">
+      <div class="container service-footer__inner">
+        <p>© {year} nepali.no.</p>
+        <p>This English page is limited to the Event submission service.</p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .service-header {
+    border-bottom: 1px solid var(--border);
+    background: rgb(253 252 249 / 0.96);
+  }
+
+  .service-header__inner {
+    display: flex;
+    min-height: 4.75rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .service-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .service-brand__symbol {
+    display: grid;
+    width: 2.45rem;
+    height: 2.45rem;
+    place-items: center;
+    border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
+    background: var(--brand);
+    color: #ffffff;
+    font-family: "Noto Sans Devanagari Variable", sans-serif;
+    font-size: 1.25rem;
+    font-weight: 720;
+  }
+
+  .service-brand__name {
+    font-size: 1.18rem;
+    font-weight: 790;
+    letter-spacing: -0.035em;
+  }
+
+  .service-brand__name span { color: var(--brand); }
+
+  .service-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .submission-hero {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 88% 10%, rgb(198 42 31 / 0.09), transparent 22rem),
+      linear-gradient(135deg, var(--surface-muted), #ffffff 65%, #fff6f5);
+  }
+
+  .submission-hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(1.5rem, 5vw, 4rem);
+    align-items: end;
+    padding-block: clamp(2.5rem, 6vw, 5rem);
+  }
+
+  .submission-hero__copy { max-width: 52rem; }
+  .submission-hero h1 { margin-block-start: 0.6rem; }
+  .submission-hero .lead { max-width: 48rem; margin-block-start: 1rem; }
+
+  .form-languages {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.45rem;
+  }
+
+  .form-languages a {
+    display: inline-flex;
+    min-height: 2.6rem;
+    align-items: center;
+    padding-inline: 0.85rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.8);
+    color: var(--civic-deep);
+    font-size: 0.875rem;
+    font-weight: 720;
+    text-decoration: none;
+  }
+
+  .form-languages a:hover,
+  .form-languages a[aria-current='page'] {
+    border-color: var(--civic);
+    background: var(--civic-deep);
+    color: #ffffff;
+  }
+
+  .submission-content {
+    background: linear-gradient(180deg, var(--page-bg), #ffffff 18rem);
+  }
+
+  .submission-container { max-width: 68rem; }
+
+  .return-link {
+    display: inline-flex;
+    gap: 0.45rem;
+    align-items: center;
+    margin-block-end: 1.25rem;
+    color: var(--civic-deep);
+    font-weight: 720;
+  }
+
+  .service-footer {
+    margin-block-start: var(--section-space);
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    background: var(--civic-deep);
+    color: rgb(255 255 255 / 0.72);
+  }
+
+  .service-footer__inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1.5rem;
+  }
+
+  @media (max-width: 48rem) {
+    .submission-hero__inner { grid-template-columns: 1fr; align-items: start; }
+    .form-languages { justify-content: flex-start; }
+    .service-footer__inner { flex-direction: column; }
+  }
+
+  @media (max-width: 34rem) {
+    .service-header__inner { align-items: flex-start; flex-direction: column; padding-block: 1rem; }
+  }
+</style>
