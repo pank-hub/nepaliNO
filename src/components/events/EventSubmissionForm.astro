@@ -1,0 +1,619 @@
+---
+import type {
+  EventSubmissionCopy,
+  EventSubmissionInterfaceLanguage,
+} from '../../i18n/eventSubmission'
+
+interface Props {
+  language: EventSubmissionInterfaceLanguage
+  copy: EventSubmissionCopy
+  categories: Readonly<Record<string, string>>
+  eventLanguages: Readonly<Record<string, string>>
+  registrationRequirements: Readonly<Record<string, string>>
+  registrationStatuses: Readonly<Record<string, string>>
+}
+
+const {
+  language,
+  copy,
+  categories,
+  eventLanguages,
+  registrationRequirements,
+  registrationStatuses,
+} = Astro.props
+
+const idPrefix = `event-submission-${language}`
+const requiredMark = '*'
+const optionEntries = (options: Readonly<Record<string, string>>) => Object.entries(options)
+---
+
+<div
+  class="event-submission"
+  data-event-submission
+  data-language={language}
+  data-message-validation-title={copy.messages.validationSummaryTitle}
+  data-message-validation-body={copy.messages.validationSummaryBody}
+  data-message-success-title={copy.messages.successTitle}
+  data-message-success-body={copy.messages.successBody}
+  data-message-success-reference={copy.messages.successReference}
+  data-message-publication={copy.messages.publicationNotice}
+  data-message-rate-limited={copy.messages.rateLimited}
+  data-message-unavailable={copy.messages.temporarilyUnavailable}
+  data-message-storage-failed={copy.messages.storageFailed}
+  data-message-network-failed={copy.messages.networkFailed}
+  data-message-unexpected={copy.messages.unexpectedError}
+  data-action-submit={copy.actions.submit}
+  data-action-submitting={copy.actions.submitting}
+>
+  <aside class="before-you-begin surface" aria-labelledby={`${idPrefix}-before-title`}>
+    <div class="before-you-begin__mark" aria-hidden="true">✓</div>
+    <div>
+      <h2 id={`${idPrefix}-before-title`}>{copy.beforeYouBeginTitle}</h2>
+      <ul>
+        {copy.beforeYouBeginItems.map((item) => <li>{item}</li>)}
+      </ul>
+      <p class="required-notice">{copy.requiredNotice}</p>
+    </div>
+  </aside>
+
+  <div class="form-alert form-alert--error" data-error-summary role="alert" tabindex="-1" hidden>
+    <h2>{copy.messages.validationSummaryTitle}</h2>
+    <p>{copy.messages.validationSummaryBody}</p>
+    <ul data-error-list></ul>
+  </div>
+
+  <div class="form-alert form-alert--success" data-success-panel role="status" tabindex="-1" hidden>
+    <span class="success-symbol" aria-hidden="true">✓</span>
+    <div>
+      <h2 data-success-title>{copy.messages.successTitle}</h2>
+      <p data-success-body>{copy.messages.successBody}</p>
+      <p class="success-reference" data-success-reference></p>
+      <p>{copy.messages.publicationNotice}</p>
+    </div>
+  </div>
+
+  <form class="submission-form" data-submission-form novalidate>
+    <div class="honeypot" aria-hidden="true">
+      <label for={`${idPrefix}-website`}>Website</label>
+      <input
+        id={`${idPrefix}-website`}
+        name="website"
+        type="text"
+        tabindex="-1"
+        autocomplete="off"
+      />
+    </div>
+
+    <input name="formInterfaceLanguage" type="hidden" value={language} />
+
+    <fieldset class="form-section surface">
+      <legend><span>1</span>{copy.sections.language}</legend>
+      <div class="field-grid field-grid--two">
+        <div class="field">
+          <label for={`${idPrefix}-submissionLanguage`}>
+            {copy.fields.submissionLanguage} <span aria-hidden="true">{requiredMark}</span>
+          </label>
+          <select id={`${idPrefix}-submissionLanguage`} name="submissionLanguage" required>
+            <option value="">—</option>
+            {optionEntries(copy.options.submissionLanguages).map(([value, label]) => (
+              <option value={value}>{label}</option>
+            ))}
+          </select>
+          <p class="field-help">{copy.help.submissionLanguage}</p>
+          <p class="field-error" data-error-for="submissionLanguage"></p>
+        </div>
+
+        <div class="field" data-conditional="otherSubmissionLanguage" hidden>
+          <label for={`${idPrefix}-otherSubmissionLanguage`}>
+            {copy.fields.otherSubmissionLanguage} <span aria-hidden="true">{requiredMark}</span>
+          </label>
+          <input id={`${idPrefix}-otherSubmissionLanguage`} name="otherSubmissionLanguage" type="text" maxlength="80" />
+          <p class="field-error" data-error-for="otherSubmissionLanguage"></p>
+        </div>
+
+        <div class="field field-grid__wide">
+          <label for={`${idPrefix}-requestedPublicLanguage`}>
+            {copy.fields.requestedPublicLanguage} <span aria-hidden="true">{requiredMark}</span>
+          </label>
+          <select id={`${idPrefix}-requestedPublicLanguage`} name="requestedPublicLanguage" required>
+            <option value="">—</option>
+            <option value="ne">{copy.options.publicLanguages.ne}</option>
+            <option value="nb">{copy.options.publicLanguages.nb}</option>
+            <option value="both">{copy.options.publicLanguages.both}</option>
+            <option value="editorial-decision">{copy.options.publicLanguages.editorialDecision}</option>
+          </select>
+          <p class="field-help">{copy.help.requestedPublicLanguage}</p>
+          <p class="field-error" data-error-for="requestedPublicLanguage"></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>2</span>{copy.sections.organizer}</legend>
+      <p class="section-notice section-notice--private">{copy.privateNotice}</p>
+      <div class="field-grid field-grid--two">
+        <div class="field field-grid__wide">
+          <label for={`${idPrefix}-organizerName`}>{copy.fields.organizerName} <span aria-hidden="true">{requiredMark}</span></label>
+          <input id={`${idPrefix}-organizerName`} name="organizerName" type="text" maxlength="150" autocomplete="organization" required />
+          <p class="field-error" data-error-for="organizerName"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-privateContactName`}>{copy.fields.privateContactName} <span aria-hidden="true">{requiredMark}</span></label>
+          <input id={`${idPrefix}-privateContactName`} name="privateContactName" type="text" maxlength="120" autocomplete="name" required />
+          <p class="field-error" data-error-for="privateContactName"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-privateContactEmail`}>{copy.fields.privateContactEmail} <span aria-hidden="true">{requiredMark}</span></label>
+          <input id={`${idPrefix}-privateContactEmail`} name="privateContactEmail" type="email" maxlength="254" autocomplete="email" required />
+          <p class="field-error" data-error-for="privateContactEmail"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-privateContactPhone`}>{copy.fields.privateContactPhone}</label>
+          <input id={`${idPrefix}-privateContactPhone`} name="privateContactPhone" type="tel" maxlength="40" autocomplete="tel" />
+          <p class="field-error" data-error-for="privateContactPhone"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-preferredContactLanguage`}>{copy.fields.preferredContactLanguage} <span aria-hidden="true">{requiredMark}</span></label>
+          <select id={`${idPrefix}-preferredContactLanguage`} name="preferredContactLanguage" required>
+            <option value="">—</option>
+            {optionEntries(copy.options.contactLanguages).map(([value, label]) => <option value={value}>{label}</option>)}
+          </select>
+          <p class="field-error" data-error-for="preferredContactLanguage"></p>
+        </div>
+        <div class="field" data-conditional="otherPreferredContactLanguage" hidden>
+          <label for={`${idPrefix}-otherPreferredContactLanguage`}>{copy.fields.otherPreferredContactLanguage} <span aria-hidden="true">{requiredMark}</span></label>
+          <input id={`${idPrefix}-otherPreferredContactLanguage`} name="otherPreferredContactLanguage" type="text" maxlength="80" />
+          <p class="field-error" data-error-for="otherPreferredContactLanguage"></p>
+        </div>
+      </div>
+      <p class="field-help section-help">{copy.help.privateContact}</p>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>3</span>{copy.sections.publicContact}</legend>
+      <p class="section-notice">{copy.publicContactNotice}</p>
+      <div class="field-grid field-grid--two">
+        <div class="field">
+          <label for={`${idPrefix}-publicOrganizerName`}>{copy.fields.publicOrganizerName}</label>
+          <input id={`${idPrefix}-publicOrganizerName`} name="publicOrganizerName" type="text" maxlength="150" />
+          <p class="field-error" data-error-for="publicOrganizerName"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-publicOrganizerUrl`}>{copy.fields.publicOrganizerUrl}</label>
+          <input id={`${idPrefix}-publicOrganizerUrl`} name="publicOrganizerUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://" />
+          <p class="field-error" data-error-for="publicOrganizerUrl"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-publicOrganizerEmail`}>{copy.fields.publicOrganizerEmail}</label>
+          <input id={`${idPrefix}-publicOrganizerEmail`} name="publicOrganizerEmail" type="email" maxlength="254" />
+          <p class="field-error" data-error-for="publicOrganizerEmail"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-publicOrganizerPhone`}>{copy.fields.publicOrganizerPhone}</label>
+          <input id={`${idPrefix}-publicOrganizerPhone`} name="publicOrganizerPhone" type="tel" maxlength="40" />
+          <p class="field-error" data-error-for="publicOrganizerPhone"></p>
+        </div>
+        <div class="field field-grid__wide checkbox-field" data-public-permission hidden>
+          <label>
+            <input name="publicContactPermission" type="checkbox" />
+            <span>{copy.fields.publicContactPermission}</span>
+          </label>
+          <p class="field-help">{copy.help.publicContactPermission}</p>
+          <p class="field-error" data-error-for="publicContactPermission"></p>
+        </div>
+      </div>
+      <p class="field-help section-help">{copy.help.publicContact}</p>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>4</span>{copy.sections.event}</legend>
+      <div class="field-grid field-grid--two">
+        <div class="field field-grid__wide">
+          <label for={`${idPrefix}-proposedTitle`}>{copy.fields.proposedTitle} <span aria-hidden="true">{requiredMark}</span></label>
+          <input id={`${idPrefix}-proposedTitle`} name="proposedTitle" type="text" minlength="5" maxlength="150" required />
+          <p class="field-error" data-error-for="proposedTitle"></p>
+        </div>
+        <div class="field field-grid__wide">
+          <label for={`${idPrefix}-summary`}>{copy.fields.summary} <span aria-hidden="true">{requiredMark}</span></label>
+          <textarea id={`${idPrefix}-summary`} name="summary" rows="4" minlength="30" maxlength="600" required></textarea>
+          <p class="field-help">{copy.help.summary}</p>
+          <p class="field-error" data-error-for="summary"></p>
+        </div>
+        <div class="field field-grid__wide">
+          <label for={`${idPrefix}-descriptionPlainText`}>{copy.fields.descriptionPlainText} <span aria-hidden="true">{requiredMark}</span></label>
+          <textarea id={`${idPrefix}-descriptionPlainText`} name="descriptionPlainText" rows="8" minlength="80" maxlength="10000" required></textarea>
+          <p class="field-help">{copy.help.descriptionPlainText}</p>
+          <p class="field-error" data-error-for="descriptionPlainText"></p>
+        </div>
+        <div class="field field-grid__wide">
+          <span class="field-label">{copy.fields.eventLanguages} <span aria-hidden="true">{requiredMark}</span></span>
+          <div class="choice-grid" data-event-language-group>
+            {optionEntries(eventLanguages).map(([value, label]) => (
+              <label class="choice-card"><input name="eventLanguages" type="checkbox" value={value} /><span>{label}</span></label>
+            ))}
+          </div>
+          <p class="field-help">{copy.help.eventLanguages}</p>
+          <p class="field-error" data-error-for="eventLanguages"></p>
+        </div>
+        <div class="field field-grid__wide" data-conditional="otherEventLanguage" hidden>
+          <label for={`${idPrefix}-otherEventLanguage`}>{copy.fields.otherEventLanguage} <span aria-hidden="true">{requiredMark}</span></label>
+          <input id={`${idPrefix}-otherEventLanguage`} name="otherEventLanguage" type="text" maxlength="80" />
+          <p class="field-error" data-error-for="otherEventLanguage"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-eventType`}>{copy.fields.eventType} <span aria-hidden="true">{requiredMark}</span></label>
+          <select id={`${idPrefix}-eventType`} name="eventType" required>
+            <option value="">—</option>
+            {optionEntries(categories).map(([value, label]) => <option value={value}>{label}</option>)}
+          </select>
+          <p class="field-error" data-error-for="eventType"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-eventFormat`}>{copy.fields.eventFormat} <span aria-hidden="true">{requiredMark}</span></label>
+          <select id={`${idPrefix}-eventFormat`} name="eventFormat" required>
+            <option value="">—</option>
+            <option value="in-person">{copy.options.eventFormats.inPerson}</option>
+            <option value="online">{copy.options.eventFormats.online}</option>
+            <option value="hybrid">{copy.options.eventFormats.hybrid}</option>
+          </select>
+          <p class="field-error" data-error-for="eventFormat"></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>5</span>{copy.sections.location}</legend>
+      <div class="field-grid field-grid--two">
+        <div class="field checkbox-field field-grid__wide">
+          <label><input name="isAllDay" type="checkbox" /><span>{copy.fields.isAllDay}</span></label>
+          <p class="field-error" data-error-for="isAllDay"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-startDateTime`}>{copy.fields.startDateTime} <span aria-hidden="true">{requiredMark}</span></label>
+          <input id={`${idPrefix}-startDateTime`} name="startDateTime" type="datetime-local" required />
+          <p class="field-error" data-error-for="startDateTime"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-endDateTime`}>{copy.fields.endDateTime}</label>
+          <input id={`${idPrefix}-endDateTime`} name="endDateTime" type="datetime-local" />
+          <p class="field-error" data-error-for="endDateTime"></p>
+        </div>
+      </div>
+
+      <div class="conditional-panel" data-location-panel="physical" hidden>
+        <div class="field-grid field-grid--two">
+          <div class="field"><label for={`${idPrefix}-venueName`}>{copy.fields.venueName}</label><input id={`${idPrefix}-venueName`} name="venueName" type="text" maxlength="180" /><p class="field-error" data-error-for="venueName"></p></div>
+          <div class="field"><label for={`${idPrefix}-address`}>{copy.fields.address}</label><input id={`${idPrefix}-address`} name="address" type="text" maxlength="200" autocomplete="street-address" /><p class="field-error" data-error-for="address"></p></div>
+          <div class="field"><label for={`${idPrefix}-postalCode`}>{copy.fields.postalCode}</label><input id={`${idPrefix}-postalCode`} name="postalCode" type="text" maxlength="20" autocomplete="postal-code" /><p class="field-error" data-error-for="postalCode"></p></div>
+          <div class="field"><label for={`${idPrefix}-city`}>{copy.fields.city} <span aria-hidden="true">{requiredMark}</span></label><input id={`${idPrefix}-city`} name="city" type="text" maxlength="100" autocomplete="address-level2" /><p class="field-error" data-error-for="city"></p></div>
+          <div class="field field-grid__wide"><label for={`${idPrefix}-mapUrl`}>{copy.fields.mapUrl}</label><input id={`${idPrefix}-mapUrl`} name="mapUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://" /><p class="field-error" data-error-for="mapUrl"></p></div>
+        </div>
+      </div>
+
+      <div class="conditional-panel" data-location-panel="online" hidden>
+        <div class="field-grid field-grid--two">
+          <div class="field"><label for={`${idPrefix}-onlinePlatform`}>{copy.fields.onlinePlatform}</label><input id={`${idPrefix}-onlinePlatform`} name="onlinePlatform" type="text" maxlength="120" /><p class="field-error" data-error-for="onlinePlatform"></p></div>
+          <div class="field"><label for={`${idPrefix}-onlineInformationUrl`}>{copy.fields.onlineInformationUrl}</label><input id={`${idPrefix}-onlineInformationUrl`} name="onlineInformationUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://" /><p class="field-error" data-error-for="onlineInformationUrl"></p></div>
+        </div>
+      </div>
+
+      <div class="field-grid field-grid--two practical-fields">
+        <div class="field field-grid__wide"><label for={`${idPrefix}-accessibilityInformation`}>{copy.fields.accessibilityInformation}</label><textarea id={`${idPrefix}-accessibilityInformation`} name="accessibilityInformation" rows="3" maxlength="1000"></textarea><p class="field-error" data-error-for="accessibilityInformation"></p></div>
+        <div class="field field-grid__wide"><label for={`${idPrefix}-transportInformation`}>{copy.fields.transportInformation}</label><textarea id={`${idPrefix}-transportInformation`} name="transportInformation" rows="3" maxlength="1000"></textarea><p class="field-error" data-error-for="transportInformation"></p></div>
+        <div class="field"><label for={`${idPrefix}-intendedAudience`}>{copy.fields.intendedAudience}</label><input id={`${idPrefix}-intendedAudience`} name="intendedAudience" type="text" maxlength="300" /><p class="field-error" data-error-for="intendedAudience"></p></div>
+        <div class="field"><label for={`${idPrefix}-sourceUrl`}>{copy.fields.sourceUrl}</label><input id={`${idPrefix}-sourceUrl`} name="sourceUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://" /><p class="field-help">{copy.help.sourceUrl}</p><p class="field-error" data-error-for="sourceUrl"></p></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>6</span>{copy.sections.registration}</legend>
+      <div class="field-grid field-grid--two">
+        <div class="field"><label for={`${idPrefix}-registrationRequirement`}>{copy.fields.registrationRequirement} <span aria-hidden="true">{requiredMark}</span></label><select id={`${idPrefix}-registrationRequirement`} name="registrationRequirement" required><option value="">—</option>{optionEntries(registrationRequirements).map(([value, label]) => <option value={value}>{label}</option>)}</select><p class="field-error" data-error-for="registrationRequirement"></p></div>
+        <div class="field"><label for={`${idPrefix}-registrationStatus`}>{copy.fields.registrationStatus} <span aria-hidden="true">{requiredMark}</span></label><select id={`${idPrefix}-registrationStatus`} name="registrationStatus" required><option value="">—</option>{optionEntries(registrationStatuses).map(([value, label]) => <option value={value}>{label}</option>)}</select><p class="field-error" data-error-for="registrationStatus"></p></div>
+        <div class="field" data-registration-detail hidden><label for={`${idPrefix}-registrationUrl`}>{copy.fields.registrationUrl}</label><input id={`${idPrefix}-registrationUrl`} name="registrationUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://" /><p class="field-error" data-error-for="registrationUrl"></p></div>
+        <div class="field" data-registration-detail hidden><label for={`${idPrefix}-registrationDeadline`}>{copy.fields.registrationDeadline}</label><input id={`${idPrefix}-registrationDeadline`} name="registrationDeadline" type="datetime-local" /><p class="field-error" data-error-for="registrationDeadline"></p></div>
+        <div class="field checkbox-field field-grid__wide"><label><input name="isFree" type="checkbox" checked /><span>{copy.fields.isFree}</span></label><p class="field-error" data-error-for="isFree"></p></div>
+        <div class="field field-grid__wide" data-price-detail hidden><label for={`${idPrefix}-priceDescription`}>{copy.fields.priceDescription} <span aria-hidden="true">{requiredMark}</span></label><input id={`${idPrefix}-priceDescription`} name="priceDescription" type="text" maxlength="300" /><p class="field-error" data-error-for="priceDescription"></p></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>7</span>{copy.sections.image}</legend>
+      <div class="field-grid field-grid--two">
+        <div class="field field-grid__wide"><label for={`${idPrefix}-proposedImageUrl`}>{copy.fields.proposedImageUrl}</label><input id={`${idPrefix}-proposedImageUrl`} name="proposedImageUrl" type="url" maxlength="2048" inputmode="url" placeholder="https://" /><p class="field-help">{copy.help.proposedImageUrl}</p><p class="field-error" data-error-for="proposedImageUrl"></p></div>
+        <div class="field"><label for={`${idPrefix}-imageAltSuggestion`}>{copy.fields.imageAltSuggestion}</label><input id={`${idPrefix}-imageAltSuggestion`} name="imageAltSuggestion" type="text" maxlength="300" /><p class="field-error" data-error-for="imageAltSuggestion"></p></div>
+        <div class="field"><label for={`${idPrefix}-imageCredit`}>{copy.fields.imageCredit}</label><input id={`${idPrefix}-imageCredit`} name="imageCredit" type="text" maxlength="200" /><p class="field-error" data-error-for="imageCredit"></p></div>
+        <div class="field field-grid__wide checkbox-field" data-image-permission hidden><label><input name="imagePermissionConfirmed" type="checkbox" /><span>{copy.fields.imagePermissionConfirmed}</span></label><p class="field-help">{copy.help.imagePermissionConfirmed}</p><p class="field-error" data-error-for="imagePermissionConfirmed"></p></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface declarations-section">
+      <legend><span>8</span>{copy.sections.declarations}</legend>
+      <div class="declaration-list">
+        <div class="field checkbox-field"><label><input name="authorityConfirmed" type="checkbox" required /><span>{copy.fields.authorityConfirmed} <span aria-hidden="true">{requiredMark}</span></span></label><p class="field-error" data-error-for="authorityConfirmed"></p></div>
+        <div class="field checkbox-field"><label><input name="accuracyConfirmed" type="checkbox" required /><span>{copy.fields.accuracyConfirmed} <span aria-hidden="true">{requiredMark}</span></span></label><p class="field-error" data-error-for="accuracyConfirmed"></p></div>
+        <div class="field checkbox-field"><label><input name="editingTranslationAccepted" type="checkbox" required /><span>{copy.fields.editingTranslationAccepted} <span aria-hidden="true">{requiredMark}</span></span></label><p class="field-error" data-error-for="editingTranslationAccepted"></p></div>
+        <div class="field checkbox-field"><label><input name="publicationNotGuaranteedAccepted" type="checkbox" required /><span>{copy.fields.publicationNotGuaranteedAccepted} <span aria-hidden="true">{requiredMark}</span></span></label><p class="field-error" data-error-for="publicationNotGuaranteedAccepted"></p></div>
+        <div class="field checkbox-field"><label><input name="privacyRetentionAccepted" type="checkbox" required /><span>{copy.fields.privacyRetentionAccepted} <span aria-hidden="true">{requiredMark}</span></span></label><p class="field-help">{copy.help.privacyRetentionAccepted}</p><p class="field-error" data-error-for="privacyRetentionAccepted"></p></div>
+      </div>
+    </fieldset>
+
+    <div class="submit-panel surface">
+      <div>
+        <strong>{copy.actions.submit}</strong>
+        <p>{copy.messages.publicationNotice}</p>
+      </div>
+      <button class="button button-primary submit-button" type="submit" data-submit-button>
+        <span data-submit-label>{copy.actions.submit}</span>
+        <span class="submit-spinner" aria-hidden="true" hidden></span>
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  type ApiError = {field?: string; code?: string; message?: string}
+  type ApiResponse = {
+    ok?: boolean
+    code?: string
+    message?: string
+    submissionId?: string
+    submittedAt?: string
+    errors?: ApiError[]
+  }
+
+  const initializeEventSubmissionForm = (root: HTMLElement) => {
+    const form = root.querySelector<HTMLFormElement>('[data-submission-form]')
+    if (!form || root.dataset.initialized === 'true') return
+    root.dataset.initialized = 'true'
+
+    const errorSummary = root.querySelector<HTMLElement>('[data-error-summary]')
+    const errorList = root.querySelector<HTMLUListElement>('[data-error-list]')
+    const successPanel = root.querySelector<HTMLElement>('[data-success-panel]')
+    const submitButton = root.querySelector<HTMLButtonElement>('[data-submit-button]')
+    const submitLabel = root.querySelector<HTMLElement>('[data-submit-label]')
+    const spinner = root.querySelector<HTMLElement>('.submit-spinner')
+
+    const input = (name: string) => form.elements.namedItem(name) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null
+    const conditional = (name: string) => root.querySelector<HTMLElement>(`[data-conditional="${name}"]`)
+    const setVisible = (element: HTMLElement | null, visible: boolean) => {
+      if (!element) return
+      element.hidden = !visible
+      element.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea').forEach((control) => {
+        control.disabled = !visible
+        if (!visible && control.type !== 'checkbox' && control.type !== 'radio') control.value = ''
+        if (!visible && control instanceof HTMLInputElement && (control.type === 'checkbox' || control.type === 'radio')) control.checked = false
+      })
+    }
+
+    const toIsoWithOffset = (value: string) => {
+      if (!value) return undefined
+      const date = new Date(value)
+      if (!Number.isFinite(date.getTime())) return value
+      const offset = -date.getTimezoneOffset()
+      const sign = offset >= 0 ? '+' : '-'
+      const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0')
+      const minutes = String(Math.abs(offset) % 60).padStart(2, '0')
+      return `${value}:00${sign}${hours}:${minutes}`
+    }
+
+    const updateConditionals = () => {
+      setVisible(conditional('otherSubmissionLanguage'), input('submissionLanguage')?.value === 'other')
+      setVisible(conditional('otherPreferredContactLanguage'), input('preferredContactLanguage')?.value === 'other')
+
+      const selectedLanguages = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="eventLanguages"]:checked')).map((item) => item.value)
+      setVisible(conditional('otherEventLanguage'), selectedLanguages.includes('other'))
+
+      const publicDetailsPresent = ['publicOrganizerEmail', 'publicOrganizerPhone'].some((name) => Boolean(input(name)?.value.trim()))
+      setVisible(root.querySelector<HTMLElement>('[data-public-permission]'), publicDetailsPresent)
+
+      const format = input('eventFormat')?.value
+      setVisible(root.querySelector<HTMLElement>('[data-location-panel="physical"]'), format === 'in-person' || format === 'hybrid')
+      setVisible(root.querySelector<HTMLElement>('[data-location-panel="online"]'), format === 'online' || format === 'hybrid')
+
+      const registrationRequired = input('registrationRequirement')?.value !== '' && input('registrationRequirement')?.value !== 'not-required'
+      root.querySelectorAll<HTMLElement>('[data-registration-detail]').forEach((element) => setVisible(element, registrationRequired))
+      if (!registrationRequired && input('registrationStatus')) input('registrationStatus')!.value = 'not-applicable'
+
+      setVisible(root.querySelector<HTMLElement>('[data-price-detail]'), !(input('isFree') as HTMLInputElement | null)?.checked)
+      setVisible(root.querySelector<HTMLElement>('[data-image-permission]'), Boolean(input('proposedImageUrl')?.value.trim()))
+    }
+
+    const clearErrors = () => {
+      root.querySelectorAll<HTMLElement>('[data-error-for]').forEach((element) => { element.textContent = '' })
+      form.querySelectorAll<HTMLElement>('[aria-invalid="true"]').forEach((element) => element.removeAttribute('aria-invalid'))
+      if (errorSummary) errorSummary.hidden = true
+      if (errorList) errorList.replaceChildren()
+    }
+
+    const showErrors = (errors: ApiError[], fallbackMessage?: string) => {
+      clearErrors()
+      const items: string[] = []
+      errors.forEach((error) => {
+        if (!error.field || !error.message) return
+        const target = root.querySelector<HTMLElement>(`[data-error-for="${CSS.escape(error.field)}"]`)
+        if (target) target.textContent = error.message
+        const control = form.elements.namedItem(error.field)
+        if (control instanceof HTMLElement) control.setAttribute('aria-invalid', 'true')
+        items.push(error.message)
+      })
+      if (items.length === 0 && fallbackMessage) items.push(fallbackMessage)
+      if (errorList) items.forEach((message) => { const li = document.createElement('li'); li.textContent = message; errorList.append(li) })
+      if (errorSummary) { errorSummary.hidden = false; errorSummary.focus() }
+    }
+
+    const buildPayload = () => {
+      const data = new FormData(form)
+      const optionalTextFields = [
+        'otherSubmissionLanguage', 'privateContactPhone', 'otherPreferredContactLanguage', 'publicOrganizerName', 'publicOrganizerUrl', 'publicOrganizerEmail', 'publicOrganizerPhone',
+        'otherEventLanguage', 'endDateTime', 'venueName', 'address', 'postalCode', 'city', 'mapUrl', 'onlinePlatform', 'onlineInformationUrl', 'accessibilityInformation',
+        'transportInformation', 'intendedAudience', 'sourceUrl', 'registrationUrl', 'registrationDeadline', 'priceDescription', 'proposedImageUrl', 'imageAltSuggestion', 'imageCredit',
+      ]
+      const payload: Record<string, unknown> = {
+        website: String(data.get('website') ?? ''),
+        formInterfaceLanguage: root.dataset.language,
+        submissionLanguage: String(data.get('submissionLanguage') ?? ''),
+        requestedPublicLanguage: String(data.get('requestedPublicLanguage') ?? ''),
+        organizerName: String(data.get('organizerName') ?? ''),
+        privateContactName: String(data.get('privateContactName') ?? ''),
+        privateContactEmail: String(data.get('privateContactEmail') ?? ''),
+        preferredContactLanguage: String(data.get('preferredContactLanguage') ?? ''),
+        publicContactPermission: data.has('publicContactPermission'),
+        proposedTitle: String(data.get('proposedTitle') ?? ''),
+        summary: String(data.get('summary') ?? ''),
+        descriptionPlainText: String(data.get('descriptionPlainText') ?? ''),
+        eventLanguages: data.getAll('eventLanguages').map(String),
+        eventType: String(data.get('eventType') ?? ''),
+        eventFormat: String(data.get('eventFormat') ?? ''),
+        isAllDay: data.has('isAllDay'),
+        startDateTime: toIsoWithOffset(String(data.get('startDateTime') ?? '')),
+        registrationRequirement: String(data.get('registrationRequirement') ?? ''),
+        registrationStatus: String(data.get('registrationStatus') ?? ''),
+        isFree: data.has('isFree'),
+        imagePermissionConfirmed: data.has('imagePermissionConfirmed'),
+        authorityConfirmed: data.has('authorityConfirmed'),
+        accuracyConfirmed: data.has('accuracyConfirmed'),
+        editingTranslationAccepted: data.has('editingTranslationAccepted'),
+        publicationNotGuaranteedAccepted: data.has('publicationNotGuaranteedAccepted'),
+        privacyRetentionAccepted: data.has('privacyRetentionAccepted'),
+      }
+      optionalTextFields.forEach((name) => {
+        const value = String(data.get(name) ?? '').trim()
+        if (!value) return
+        payload[name] = ['endDateTime', 'registrationDeadline'].includes(name) ? toIsoWithOffset(value) : value
+      })
+      return payload
+    }
+
+    const setSubmitting = (submitting: boolean) => {
+      if (submitButton) submitButton.disabled = submitting
+      if (submitLabel) submitLabel.textContent = submitting ? root.dataset.actionSubmitting ?? '' : root.dataset.actionSubmit ?? ''
+      if (spinner) spinner.hidden = !submitting
+      form.setAttribute('aria-busy', String(submitting))
+    }
+
+    form.addEventListener('input', updateConditionals)
+    form.addEventListener('change', updateConditionals)
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      clearErrors()
+      if (successPanel) successPanel.hidden = true
+
+      if (!form.checkValidity()) {
+        form.reportValidity()
+        showErrors([], root.dataset.messageValidationBody)
+        return
+      }
+
+      setSubmitting(true)
+      try {
+        const response = await fetch('/api/event-submissions', {
+          method: 'POST',
+          headers: {'content-type': 'application/json'},
+          body: JSON.stringify(buildPayload()),
+        })
+        const result = await response.json().catch(() => ({})) as ApiResponse
+
+        if (response.ok && result.ok) {
+          form.hidden = true
+          if (errorSummary) errorSummary.hidden = true
+          if (successPanel) {
+            successPanel.hidden = false
+            const reference = successPanel.querySelector<HTMLElement>('[data-success-reference]')
+            if (reference) reference.textContent = `${root.dataset.messageSuccessReference}: ${result.submissionId ?? ''}`
+            successPanel.focus()
+          }
+          return
+        }
+
+        if (result.code === 'validation_failed') {
+          showErrors(result.errors ?? [], result.message ?? root.dataset.messageValidationBody)
+        } else {
+          const message = response.status === 429
+            ? root.dataset.messageRateLimited
+            : response.status === 503
+              ? root.dataset.messageUnavailable
+              : response.status >= 500
+                ? root.dataset.messageStorageFailed
+                : result.message ?? root.dataset.messageUnexpected
+          showErrors([], message)
+        }
+      } catch {
+        showErrors([], root.dataset.messageNetworkFailed)
+      } finally {
+        setSubmitting(false)
+      }
+    })
+
+    updateConditionals()
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-event-submission]').forEach(initializeEventSubmissionForm)
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll<HTMLElement>('[data-event-submission]').forEach(initializeEventSubmissionForm)
+  })
+</script>
+
+<style>
+  .event-submission { display: grid; gap: clamp(1.25rem, 3vw, 2rem); }
+  .before-you-begin { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; padding: clamp(1.1rem, 3vw, 1.75rem); background: linear-gradient(135deg, #fff, var(--surface-warm)); }
+  .before-you-begin__mark { display: grid; width: 2.4rem; height: 2.4rem; place-items: center; border-radius: 999px; background: #ecfdf3; color: var(--success); font-weight: 800; }
+  .before-you-begin h2, .form-alert h2 { font-size: clamp(1.25rem, 2vw, 1.55rem); }
+  .before-you-begin ul { margin-block-start: .75rem; color: var(--text-muted); }
+  .required-notice { margin-block-start: .8rem; color: var(--civic-deep); font-weight: 700; }
+  .submission-form { display: grid; gap: clamp(1.2rem, 3vw, 2rem); }
+  .form-section { min-width: 0; margin: 0; padding: clamp(1.1rem, 3vw, 2rem); }
+  .form-section legend { display: flex; align-items: center; gap: .7rem; padding-inline: .25rem .9rem; color: var(--civic-deep); font-size: clamp(1.2rem, 2vw, 1.55rem); font-weight: 760; }
+  .form-section legend span { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: .65rem; background: var(--civic-deep); color: #fff; font-size: .85rem; }
+  .section-notice { margin-block: .45rem 1.25rem; padding: .85rem 1rem; border-inline-start: .25rem solid var(--gold); background: var(--surface-warm); color: var(--text-muted); }
+  .section-notice--private { border-inline-start-color: var(--civic); background: var(--surface-muted); }
+  .section-help { margin-block-start: 1rem; }
+  .field-grid { display: grid; gap: 1.15rem; }
+  .field-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .field-grid__wide { grid-column: 1 / -1; }
+  .field { min-width: 0; }
+  .field label, .field-label { display: block; color: var(--civic-deep); font-weight: 720; }
+  .field label > span[aria-hidden='true'], .field-label > span { color: var(--brand); }
+  .field input:not([type='checkbox']):not([type='radio']), .field select, .field textarea { width: 100%; margin-block-start: .42rem; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: #fff; color: var(--text); }
+  .field input:not([type='checkbox']):not([type='radio']), .field select { min-height: 3rem; padding: .65rem .75rem; }
+  .field textarea { min-height: 7rem; padding: .75rem; resize: vertical; }
+  .field input:hover, .field select:hover, .field textarea:hover { border-color: var(--civic); }
+  .field [aria-invalid='true'] { border-color: var(--brand) !important; box-shadow: 0 0 0 .12rem rgb(198 42 31 / .12); }
+  .field-help { margin-block-start: .42rem; color: var(--text-soft); font-size: .88rem; line-height: 1.55; }
+  .field-error { min-height: 1.25rem; margin-block-start: .3rem; color: #9e281f; font-size: .86rem; font-weight: 650; }
+  .checkbox-field label { display: flex; gap: .75rem; align-items: flex-start; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-muted); }
+  .checkbox-field input { flex: 0 0 auto; width: 1.2rem; height: 1.2rem; margin-block-start: .18rem; accent-color: var(--brand); }
+  .choice-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; margin-block-start: .55rem; }
+  .choice-card { display: flex !important; align-items: center; gap: .55rem; min-height: 3rem; padding: .65rem .75rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: #fff; cursor: pointer; }
+  .choice-card:has(input:checked) { border-color: var(--civic); background: var(--surface-muted); box-shadow: inset 0 0 0 .08rem var(--civic); }
+  .choice-card input { accent-color: var(--brand); }
+  .conditional-panel { margin-block-start: 1.15rem; padding-block-start: 1.15rem; border-top: 1px solid var(--border); }
+  .practical-fields { margin-block-start: 1.15rem; }
+  .declaration-list { display: grid; gap: .75rem; }
+  .submit-panel { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: clamp(1rem, 3vw, 1.5rem); border-color: var(--border-strong); }
+  .submit-panel p { margin-block-start: .25rem; color: var(--text-muted); }
+  .submit-button { min-width: min(100%, 13rem); }
+  .submit-button:disabled { cursor: wait; opacity: .7; }
+  .submit-spinner { width: 1rem; height: 1rem; border: .15rem solid rgb(255 255 255 / .45); border-top-color: #fff; border-radius: 999px; animation: spin .8s linear infinite; }
+  .form-alert { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; padding: clamp(1rem, 3vw, 1.5rem); border: 1px solid; border-radius: var(--radius-lg); }
+  .form-alert--error { display: block; border-color: #efb6b0; background: #fff5f4; color: #7a271a; }
+  .form-alert--error ul { margin-block-start: .65rem; }
+  .form-alert--success { border-color: #a6e2bd; background: #ecfdf3; }
+  .success-symbol { display: grid; width: 2.6rem; height: 2.6rem; place-items: center; border-radius: 999px; background: var(--success); color: #fff; font-weight: 800; }
+  .form-alert p { margin-block-start: .45rem; }
+  .success-reference { font-weight: 760; overflow-wrap: anywhere; }
+  .honeypot { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important; }
+  [hidden] { display: none !important; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 48rem) {
+    .field-grid--two, .choice-grid { grid-template-columns: 1fr; }
+    .submit-panel { align-items: stretch; flex-direction: column; }
+    .submit-button { width: 100%; }
+  }
+  @media (max-width: 32rem) {
+    .form-section { padding: 1rem; }
+    .form-section legend { align-items: flex-start; font-size: 1.15rem; }
+    .before-you-begin { grid-template-columns: 1fr; }
+  }
+</style>
