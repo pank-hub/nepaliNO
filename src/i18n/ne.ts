@@ -1,3 +1,5 @@
+import {eventSubmissionNe} from "./eventSubmission.ne";
+
 export const ne = {
   languageName: "नेपाली",
 
@@ -137,6 +139,7 @@ export const ne = {
     inPerson: "भौतिक उपस्थिति",
     hybrid: "हाइब्रिड (भौतिक र अनलाइन)",
     submitEvent: "कार्यक्रम थप्नुहोस्",
+    submission: eventSubmissionNe,
     statuses: {
       scheduled: "निर्धारित",
       postponed: "स्थगित",

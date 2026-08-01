@@ -1,3 +1,5 @@
+import {eventSubmissionNB} from "./eventSubmission.nb";
+
 export const nb = {
   languageName: "Norsk",
 
@@ -137,6 +139,7 @@ export const nb = {
     inPerson: "Fysisk",
     hybrid: "Fysisk og på nett",
     submitEvent: "Send inn et arrangement",
+    submission: eventSubmissionNB,
     statuses: {
       scheduled: "Planlagt",
       postponed: "Utsatt",
