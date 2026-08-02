@@ -1,0 +1,453 @@
+---
+import {sanityClient} from 'sanity:client'
+import SiteFooter from '../../../components/SiteFooter.astro'
+import SiteHeader from '../../../components/SiteHeader.astro'
+import {getTranslations} from '../../../i18n'
+import {supportedLanguages, type SupportedLanguage} from '../../../i18n/config'
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {urlFor} from '../../../lib/sanity/image'
+import {ACTIVE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+}
+
+interface ListingImage {
+  asset?: unknown
+  alt?: string
+  hotspot?: unknown
+  crop?: unknown
+}
+
+interface DirectoryListingSummary {
+  _id: string
+  name: string
+  slug: string
+  language: SupportedLanguage
+  listingType: string
+  otherListingType?: string
+  primaryCategory: string
+  otherCategory?: string
+  communityConnections: string[]
+  connectionExplanation: string
+  serviceLanguages: string[]
+  otherServiceLanguages?: string[]
+  summary: string
+  organizationNumber?: string
+  website?: string
+  publicEmail?: string
+  publicPhone?: string
+  publicContactRole?: string
+  presenceType: string
+  country?: string
+  county?: string
+  municipality?: string
+  city?: string
+  streetAddress?: string
+  postalCode?: string
+  mapUrl?: string
+  coverageModes: string[]
+  serviceCounties?: string[]
+  serviceMunicipalities?: string[]
+  otherCoverage?: string
+  logo?: ListingImage
+  coverImage?: ListingImage
+  verificationScopes?: string[]
+  isVerified?: boolean
+  lastVerifiedAt?: string
+  nextReviewAt?: string
+  editorialReviewer: string
+  isFeatured?: boolean
+  publishedAt: string
+}
+
+const {language} = Astro.props
+const labels = getTranslations(language)
+const directoryLabels = labels.directory
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const listings = await sanityClient.fetch<DirectoryListingSummary[]>(
+  ACTIVE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY,
+  {language},
+)
+
+const listingTypes = directoryLabels.listingTypes as Record<string, string>
+const categories = directoryLabels.categories as Record<string, string>
+const connections = directoryLabels.connections as Record<string, string>
+const counties = directoryLabels.counties as Record<string, string>
+const presenceTypes = directoryLabels.presenceTypes as Record<string, string>
+const coverageModes = directoryLabels.coverageModes as Record<string, string>
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+
+const formatDate = (value?: string) =>
+  value
+    ? new Date(`${value}T00:00:00`).toLocaleDateString(dateLocale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : ''
+
+const imageUrl = (image?: ListingImage) =>
+  image?.asset
+    ? urlFor(image as any).width(720).height(480).fit('crop').auto('format').url()
+    : null
+
+const locationLabel = (listing: DirectoryListingSummary) => {
+  if (listing.presenceType === 'online-only') return presenceTypes['online-only']
+  if (listing.presenceType === 'no-public-location') return presenceTypes['no-public-location']
+
+  return [listing.city || listing.municipality, listing.county ? counties[listing.county] : null]
+    .filter(Boolean)
+    .join(' · ') || presenceTypes[listing.presenceType] || listing.presenceType
+}
+
+const typeLabel = (listing: DirectoryListingSummary) =>
+  listing.listingType === 'other'
+    ? listing.otherListingType || listingTypes.other
+    : listingTypes[listing.listingType] || listing.listingType
+
+const categoryLabel = (listing: DirectoryListingSummary) =>
+  listing.primaryCategory === 'other'
+    ? listing.otherCategory || categories.other
+    : categories[listing.primaryCategory] || listing.primaryCategory
+---
+
+<BaseLayout
+  language={language}
+  title={`${directoryLabels.pageTitle} | nepali.no`}
+  description={directoryLabels.pageDescription}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={`/${alternateLanguage}/directory/`}
+  />
+
+  <main class="directory-page">
+    <header class="directory-hero">
+      <div class="container directory-hero__inner">
+        <div class="reading-width">
+          <p class="eyebrow">{directoryLabels.eyebrow}</p>
+          <h1>{directoryLabels.pageTitle}</h1>
+          <p class="lead">{directoryLabels.pageDescription}</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="section directory-section" aria-labelledby="directory-heading">
+      <div class="container">
+        <div class="directory-heading">
+          <div>
+            <p class="eyebrow">{directoryLabels.exploreListings}</p>
+            <h2 id="directory-heading">{directoryLabels.archiveHeading}</h2>
+          </div>
+          {listings.length > 0 && <p>{directoryLabels.resultCount(listings.length)}</p>}
+        </div>
+
+        {listings.length === 0 ? (
+          <div class="directory-empty">
+            <span aria-hidden="true"></span>
+            <h3>{directoryLabels.emptyHeading}</h3>
+            <p>{directoryLabels.emptyMessage}</p>
+          </div>
+        ) : (
+          <ol class="listing-grid">
+            {listings.map((listing) => (
+              <li>
+                <article class="listing-card">
+                  {imageUrl(listing.coverImage || listing.logo) && (
+                    <a
+                      class="listing-card__image"
+                      href={`/${language}/directory/${listing.slug}/`}
+                      tabindex="-1"
+                      aria-hidden="true"
+                    >
+                      <img
+                        src={imageUrl(listing.coverImage || listing.logo) ?? ''}
+                        alt=""
+                        width="720"
+                        height="480"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </a>
+                  )}
+
+                  <div class="listing-card__content">
+                    <div class="listing-badges">
+                      {listing.isFeatured && (
+                        <strong class="badge badge-brand">{directoryLabels.featuredListing}</strong>
+                      )}
+                      {listing.isVerified && (
+                        <strong class="badge badge-success">{directoryLabels.verified}</strong>
+                      )}
+                      <span class="badge">{typeLabel(listing)}</span>
+                    </div>
+
+                    <p class="listing-card__category">{categoryLabel(listing)}</p>
+                    <h3>
+                      <a href={`/${language}/directory/${listing.slug}/`}>{listing.name}</a>
+                    </h3>
+                    <p class="listing-card__summary">{listing.summary}</p>
+
+                    <dl class="listing-meta">
+                      <div>
+                        <dt>{directoryLabels.location}</dt>
+                        <dd>{locationLabel(listing)}</dd>
+                      </div>
+                      <div>
+                        <dt>{directoryLabels.connection}</dt>
+                        <dd>
+                          {listing.communityConnections
+                            .slice(0, 2)
+                            .map((value) => connections[value] || value)
+                            .join(' · ')}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{directoryLabels.serviceCoverage}</dt>
+                        <dd>
+                          {listing.coverageModes
+                            .slice(0, 2)
+                            .map((value) => coverageModes[value] || value)
+                            .join(' · ')}
+                        </dd>
+                      </div>
+                      {listing.lastVerifiedAt && (
+                        <div>
+                          <dt>{directoryLabels.lastVerified}</dt>
+                          <dd>
+                            <time datetime={listing.lastVerifiedAt}>
+                              {formatDate(listing.lastVerifiedAt)}
+                            </time>
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+
+                    <a class="listing-card__link" href={`/${language}/directory/${listing.slug}/`}>
+                      {directoryLabels.viewDetails} <span aria-hidden="true">→</span>
+                    </a>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </section>
+  </main>
+
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .directory-page {
+    background: #ffffff;
+  }
+
+  .directory-hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 88% 15%, rgb(198 42 31 / 0.1), transparent 19rem),
+      linear-gradient(135deg, #f5f8fb 0%, #fdfcf9 62%, #fff5f4 100%);
+  }
+
+  .directory-hero::after {
+    content: '';
+    position: absolute;
+    width: 17rem;
+    height: 17rem;
+    inset-block-end: -11rem;
+    inset-inline-end: 8%;
+    border: 1px solid rgb(198 42 31 / 0.13);
+    border-radius: 50%;
+  }
+
+  .directory-hero__inner {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(3rem, 7vw, 5.5rem);
+  }
+
+  .directory-hero h1 {
+    max-width: 17ch;
+    margin-block-start: 0.7rem;
+  }
+
+  .directory-hero .lead {
+    max-width: 52rem;
+    margin-block-start: 1.25rem;
+  }
+
+  .directory-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-block-end: 1.2rem;
+    border-bottom: 2px solid var(--civic-deep);
+  }
+
+  .directory-heading h2 {
+    margin-block-start: 0.5rem;
+  }
+
+  .directory-heading > p {
+    color: var(--text-soft);
+    font-weight: 700;
+  }
+
+  .directory-empty {
+    padding: clamp(3rem, 9vw, 6rem) var(--page-gutter);
+    text-align: center;
+  }
+
+  .directory-empty > span {
+    display: block;
+    width: 3rem;
+    height: 0.2rem;
+    margin: 0 auto 1rem;
+    background: var(--brand);
+  }
+
+  .directory-empty p {
+    max-width: 34rem;
+    margin: 0.65rem auto 0;
+    color: var(--text-muted);
+  }
+
+  .listing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin: 0;
+    padding: 2rem 0 0;
+    list-style: none;
+  }
+
+  .listing-card {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: #ffffff;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .listing-card__image {
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 3 / 2;
+    background: var(--surface-muted);
+  }
+
+  .listing-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 300ms ease;
+  }
+
+  .listing-card__image:hover img {
+    transform: scale(1.015);
+  }
+
+  .listing-card__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 1.35rem;
+  }
+
+  .listing-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .listing-card__category {
+    margin-block-start: 1rem;
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 760;
+  }
+
+  .listing-card h3 {
+    margin-block-start: 0.45rem;
+    font-size: clamp(1.35rem, 2.7vw, 1.8rem);
+    line-height: 1.25;
+  }
+
+  .listing-card h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .listing-card h3 a:hover {
+    color: var(--brand);
+  }
+
+  .listing-card__summary {
+    margin-block-start: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  .listing-meta {
+    display: grid;
+    gap: 0.65rem;
+    margin-block-start: 1.1rem;
+  }
+
+  .listing-meta div {
+    padding-block-start: 0.65rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .listing-meta dt {
+    color: var(--text-soft);
+    font-size: 0.7rem;
+    font-weight: 760;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .listing-meta dt {
+    font-size: 0.8rem;
+    text-transform: none;
+  }
+
+  .listing-meta dd {
+    margin: 0.2rem 0 0;
+    color: var(--civic-deep);
+    font-size: 0.9rem;
+    font-weight: 650;
+  }
+
+  .listing-card__link {
+    margin-block-start: auto;
+    padding-block-start: 1.2rem;
+    font-weight: 760;
+  }
+
+  @media (max-width: 63rem) {
+    .listing-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 47.999rem) {
+    .directory-heading {
+      align-items: start;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .listing-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
