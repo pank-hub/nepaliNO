@@ -1,0 +1,808 @@
+---
+import {PortableText} from 'astro-portabletext'
+import {sanityClient} from 'sanity:client'
+import SiteFooter from '../../../components/SiteFooter.astro'
+import SiteHeader from '../../../components/SiteHeader.astro'
+import {getTranslations} from '../../../i18n'
+import type {SupportedLanguage} from '../../../i18n/config'
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {urlFor} from '../../../lib/sanity/image'
+import {DIRECTORY_LISTING_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
+
+interface TranslationSummary {
+  _id: string
+  name: string
+  slug: string
+  language: SupportedLanguage
+  listingStatus: string
+  publishedAt?: string
+}
+
+interface ListingImage {
+  asset?: unknown
+  alt?: string
+  caption?: string
+  credit?: string
+  hotspot?: unknown
+  crop?: unknown
+}
+
+interface DirectoryListingDocument {
+  _id: string
+  name: string
+  slug: string
+  language: SupportedLanguage
+  translation?: TranslationSummary
+  listingType: string
+  otherListingType?: string
+  primaryCategory: string
+  otherCategory?: string
+  communityConnections: string[]
+  connectionExplanation: string
+  serviceLanguages: string[]
+  otherServiceLanguages?: string[]
+  summary: string
+  description?: any[]
+  organizationNumber?: string
+  website?: string
+  publicEmail?: string
+  publicPhone?: string
+  publicContactRole?: string
+  presenceType: string
+  country?: string
+  county?: string
+  municipality?: string
+  city?: string
+  streetAddress?: string
+  postalCode?: string
+  mapUrl?: string
+  coverageModes: string[]
+  serviceCounties?: string[]
+  serviceMunicipalities?: string[]
+  otherCoverage?: string
+  logo?: ListingImage
+  coverImage?: ListingImage
+  facebookUrl?: string
+  instagramUrl?: string
+  linkedInUrl?: string
+  verificationScopes?: string[]
+  isVerified?: boolean
+  lastVerifiedAt?: string
+  nextReviewAt?: string
+  editorialReviewer: string
+  listingStatus: string
+  statusExplanation?: string
+  statusEffectiveAt?: string
+  isFeatured?: boolean
+  publishedAt: string
+}
+
+interface DirectoryListingPath {
+  slug: string
+  language: SupportedLanguage
+}
+
+export async function getStaticPaths() {
+  const paths = await sanityClient.fetch<DirectoryListingPath[]>(`
+    *[
+      _type == "directoryListing" &&
+      defined(slug.current) &&
+      language in ["ne", "nb"] &&
+      listingStatus in ["active", "temporarily-closed", "permanently-closed"] &&
+      defined(publishedAt) &&
+      publishedAt <= now()
+    ] {
+      "slug": slug.current,
+      language
+    }
+  `)
+
+  return paths.map(({slug, language}) => ({params: {lang: language, slug}}))
+}
+
+const {lang, slug} = Astro.params
+
+if ((lang !== 'ne' && lang !== 'nb') || !slug) {
+  return Astro.redirect('/ne/directory/')
+}
+
+const language: SupportedLanguage = lang
+const labels = getTranslations(language)
+const directoryLabels = labels.directory
+const listing = await sanityClient.fetch<DirectoryListingDocument | null>(
+  DIRECTORY_LISTING_BY_SLUG_QUERY,
+  {language, slug},
+)
+
+if (!listing) {
+  return Astro.redirect(`/${language}/directory/`)
+}
+
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const publicTranslationStatuses = new Set([
+  'active',
+  'temporarily-closed',
+  'permanently-closed',
+])
+const translationPublishedAt = listing.translation?.publishedAt
+const activeTranslation =
+  listing.translation?.slug &&
+  listing.translation.language === alternateLanguage &&
+  publicTranslationStatuses.has(listing.translation.listingStatus) &&
+  translationPublishedAt &&
+  new Date(translationPublishedAt).getTime() <= Date.now()
+    ? listing.translation
+    : undefined
+const alternatePath = activeTranslation
+  ? `/${activeTranslation.language}/directory/${activeTranslation.slug}/`
+  : `/${alternateLanguage}/directory/`
+
+const listingTypes = directoryLabels.listingTypes as Record<string, string>
+const categories = directoryLabels.categories as Record<string, string>
+const connections = directoryLabels.connections as Record<string, string>
+const serviceLanguageLabels = directoryLabels.serviceLanguageLabels as Record<string, string>
+const presenceTypes = directoryLabels.presenceTypes as Record<string, string>
+const coverageModes = directoryLabels.coverageModes as Record<string, string>
+const counties = directoryLabels.counties as Record<string, string>
+const statuses = directoryLabels.statuses as Record<string, string>
+const verificationScopes = directoryLabels.verificationScopes as Record<string, string>
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+
+const formatDate = (value?: string) =>
+  value
+    ? new Date(`${value}T00:00:00`).toLocaleDateString(dateLocale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : ''
+
+const typeLabel =
+  listing.listingType === 'other'
+    ? listing.otherListingType || listingTypes.other
+    : listingTypes[listing.listingType] || listing.listingType
+const categoryLabel =
+  listing.primaryCategory === 'other'
+    ? listing.otherCategory || categories.other
+    : categories[listing.primaryCategory] || listing.primaryCategory
+const connectionLabels = listing.communityConnections.map(
+  (value) => connections[value] || value,
+)
+const languageLabels = [
+  ...listing.serviceLanguages.map((value) => serviceLanguageLabels[value] || value),
+  ...(listing.otherServiceLanguages || []),
+]
+const coverageLabels = [
+  ...listing.coverageModes.map((value) => coverageModes[value] || value),
+  ...(listing.serviceCounties || []).map((value) => counties[value] || value),
+  ...(listing.serviceMunicipalities || []),
+  ...(listing.otherCoverage ? [listing.otherCoverage] : []),
+]
+const address = [
+  listing.streetAddress,
+  listing.postalCode,
+  listing.city || listing.municipality,
+  listing.county ? counties[listing.county] || listing.county : undefined,
+  listing.country,
+]
+  .filter(Boolean)
+  .join(', ')
+const locationLabel =
+  listing.presenceType === 'online-only' || listing.presenceType === 'no-public-location'
+    ? presenceTypes[listing.presenceType] || listing.presenceType
+    : address || presenceTypes[listing.presenceType] || listing.presenceType
+const isClosed = ['temporarily-closed', 'permanently-closed'].includes(
+  listing.listingStatus,
+)
+const heroUrl = listing.coverImage?.asset
+  ? urlFor(listing.coverImage as any)
+      .width(1600)
+      .height(960)
+      .fit('crop')
+      .auto('format')
+      .url()
+  : null
+const logoUrl = listing.logo?.asset
+  ? urlFor(listing.logo as any).width(360).height(360).fit('max').auto('format').url()
+  : null
+const portableTextComponents = {}
+const socialLinks = [
+  listing.facebookUrl ? {label: 'Facebook', url: listing.facebookUrl} : null,
+  listing.instagramUrl ? {label: 'Instagram', url: listing.instagramUrl} : null,
+  listing.linkedInUrl ? {label: 'LinkedIn', url: listing.linkedInUrl} : null,
+].filter((item): item is {label: string; url: string} => Boolean(item))
+---
+
+<BaseLayout language={language} title={`${listing.name} | nepali.no`} description={listing.summary}>
+  <SiteHeader slot="header" language={language} alternatePath={alternatePath} />
+
+  <article class="listing-page">
+    <header class="listing-header">
+      <div class="container listing-header__inner">
+        <nav class="breadcrumbs" aria-label={directoryLabels.pageTitle}>
+          <a href={`/${language}/`}>{labels.navigation.home}</a>
+          <span aria-hidden="true">/</span>
+          <a href={`/${language}/directory/`}>{directoryLabels.pageTitle}</a>
+        </nav>
+
+        <div class="listing-header__badges">
+          {isClosed && (
+            <strong class:list={['badge', `status-${listing.listingStatus}`]}>
+              {statuses[listing.listingStatus] || listing.listingStatus}
+            </strong>
+          )}
+          {listing.isFeatured && (
+            <span class="badge badge-brand">{directoryLabels.featuredListing}</span>
+          )}
+          {listing.isVerified && (
+            <span class="badge badge-success">{directoryLabels.verified}</span>
+          )}
+          <span class="badge">{typeLabel}</span>
+          <span class="badge">{categoryLabel}</span>
+        </div>
+
+        <div class="listing-header__title">
+          {logoUrl && (
+            <div class="listing-logo">
+              <img
+                src={logoUrl}
+                alt={listing.logo?.alt ?? ''}
+                width="360"
+                height="360"
+                decoding="async"
+              />
+            </div>
+          )}
+          <div>
+            <h1>{listing.name}</h1>
+            <p class="lead">{listing.summary}</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {isClosed && listing.statusExplanation && (
+      <section class="status-notice" aria-labelledby="listing-status-heading">
+        <div class="container status-notice__inner">
+          <div>
+            <p class="eyebrow">{statuses[listing.listingStatus] || listing.listingStatus}</p>
+            <h2 id="listing-status-heading">{directoryLabels.statusExplanation}</h2>
+            <p>{listing.statusExplanation}</p>
+          </div>
+          {listing.statusEffectiveAt && (
+            <p class="status-notice__date">
+              <span>{directoryLabels.statusEffectiveAt}</span>
+              <time datetime={listing.statusEffectiveAt}>
+                {formatDate(listing.statusEffectiveAt)}
+              </time>
+            </p>
+          )}
+        </div>
+      </section>
+    )}
+
+    {heroUrl && (
+      <figure class="listing-hero container">
+        <img
+          src={heroUrl}
+          alt={listing.coverImage?.alt ?? ''}
+          width="1600"
+          height="960"
+          decoding="async"
+        />
+        {(listing.coverImage?.caption || listing.coverImage?.credit) && (
+          <figcaption>
+            {listing.coverImage?.caption && <span>{listing.coverImage.caption}</span>}
+            {listing.coverImage?.credit && <span>{listing.coverImage.credit}</span>}
+          </figcaption>
+        )}
+      </figure>
+    )}
+
+    <div class="container listing-layout">
+      <main class="listing-content">
+        <section class="connection-panel" aria-labelledby="connection-heading">
+          <p class="eyebrow">{directoryLabels.connection}</p>
+          <h2 id="connection-heading">{connectionLabels.join(' · ')}</h2>
+          <p>{listing.connectionExplanation}</p>
+        </section>
+
+        {listing.description && listing.description.length > 0 && (
+          <section class="prose listing-description" aria-label={listing.name}>
+            <PortableText value={listing.description} components={portableTextComponents} />
+          </section>
+        )}
+
+        {listing.isVerified && (
+          <aside class="verification-notice" aria-labelledby="verification-heading">
+            <div class="verification-notice__symbol" aria-hidden="true">✓</div>
+            <div>
+              <h2 id="verification-heading">{directoryLabels.verified}</h2>
+              <p>{directoryLabels.verificationNotice}</p>
+            </div>
+          </aside>
+        )}
+      </main>
+
+      <aside class="listing-sidebar">
+        <section class="listing-facts">
+          <h2>{directoryLabels.viewDetails}</h2>
+          <dl>
+            <div>
+              <dt>{directoryLabels.listingType}</dt>
+              <dd>{typeLabel}</dd>
+            </div>
+            <div>
+              <dt>{directoryLabels.category}</dt>
+              <dd>{categoryLabel}</dd>
+            </div>
+            <div>
+              <dt>{directoryLabels.location}</dt>
+              <dd>{locationLabel}</dd>
+            </div>
+            {listing.mapUrl && (
+              <div>
+                <dt>{directoryLabels.address}</dt>
+                <dd>
+                  <a href={listing.mapUrl} target="_blank" rel="noopener noreferrer">
+                    {directoryLabels.openMap} <span aria-hidden="true">↗</span>
+                  </a>
+                </dd>
+              </div>
+            )}
+            <div>
+              <dt>{directoryLabels.serviceCoverage}</dt>
+              <dd>{coverageLabels.join(' · ')}</dd>
+            </div>
+            <div>
+              <dt>{directoryLabels.serviceLanguages}</dt>
+              <dd>{languageLabels.join(' · ')}</dd>
+            </div>
+            {listing.organizationNumber && (
+              <div>
+                <dt>{directoryLabels.organizationNumber}</dt>
+                <dd>{listing.organizationNumber}</dd>
+              </div>
+            )}
+          </dl>
+        </section>
+
+        {(listing.website ||
+          listing.publicEmail ||
+          listing.publicPhone ||
+          listing.publicContactRole ||
+          socialLinks.length > 0) && (
+          <section class="contact-card">
+            <h2>{directoryLabels.contact}</h2>
+            <ul>
+              {listing.publicContactRole && <li>{listing.publicContactRole}</li>}
+              {listing.website && (
+                <li>
+                  <a href={listing.website} target="_blank" rel="noopener noreferrer">
+                    {directoryLabels.website} <span aria-hidden="true">↗</span>
+                  </a>
+                </li>
+              )}
+              {listing.publicEmail && (
+                <li><a href={`mailto:${listing.publicEmail}`}>{listing.publicEmail}</a></li>
+              )}
+              {listing.publicPhone && (
+                <li><a href={`tel:${listing.publicPhone}`}>{listing.publicPhone}</a></li>
+              )}
+              {socialLinks.map((link) => (
+                <li>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    {link.label} <span aria-hidden="true">↗</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {listing.isVerified && (
+          <section class="review-card">
+            <h2>{directoryLabels.verificationScope}</h2>
+            {listing.verificationScopes && listing.verificationScopes.length > 0 && (
+              <ul>
+                {listing.verificationScopes.map((scope) => (
+                  <li>{verificationScopes[scope] || scope}</li>
+                ))}
+              </ul>
+            )}
+            <dl>
+              {listing.lastVerifiedAt && (
+                <div>
+                  <dt>{directoryLabels.lastVerified}</dt>
+                  <dd><time datetime={listing.lastVerifiedAt}>{formatDate(listing.lastVerifiedAt)}</time></dd>
+                </div>
+              )}
+              {listing.nextReviewAt && (
+                <div>
+                  <dt>{directoryLabels.nextReview}</dt>
+                  <dd><time datetime={listing.nextReviewAt}>{formatDate(listing.nextReviewAt)}</time></dd>
+                </div>
+              )}
+            </dl>
+          </section>
+        )}
+
+        {activeTranslation && (
+          <a class="translation-card" href={alternatePath} hreflang={activeTranslation.language}>
+            <span>{directoryLabels.translation}</span>
+            <strong>{activeTranslation.name}</strong>
+          </a>
+        )}
+      </aside>
+    </div>
+  </article>
+
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .listing-page {
+    min-width: 0;
+    background: #ffffff;
+  }
+
+  .listing-header {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 88% 8%, rgb(198 42 31 / 0.09), transparent 20rem),
+      linear-gradient(135deg, #f5f8fb 0%, #fdfcf9 64%, #fff5f4 100%);
+  }
+
+  .listing-header__inner {
+    padding-block: clamp(2.5rem, 7vw, 5.5rem);
+  }
+
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+  }
+
+  .breadcrumbs a {
+    color: var(--civic);
+    font-weight: 650;
+  }
+
+  .listing-header__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block-start: 1.5rem;
+  }
+
+  .listing-header__badges > * {
+    display: inline-flex;
+  }
+
+  .status-temporarily-closed {
+    background: #fff2cc;
+    color: #6f5200;
+  }
+
+  .status-permanently-closed {
+    background: #fde8e6;
+    color: #9e281f;
+  }
+
+  .listing-header__title {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2rem);
+    margin-block-start: 1.25rem;
+  }
+
+  .listing-logo {
+    display: grid;
+    overflow: hidden;
+    width: clamp(5rem, 10vw, 8rem);
+    flex: 0 0 auto;
+    aspect-ratio: 1;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: #ffffff;
+  }
+
+  .listing-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .listing-header h1 {
+    max-width: 20ch;
+    font-size: clamp(2.25rem, 6vw, 4.75rem);
+  }
+
+  .listing-header .lead {
+    max-width: 52rem;
+    margin-block-start: 1rem;
+  }
+
+  .status-notice {
+    border-bottom: 1px solid #e2b59f;
+    background: #fff8f2;
+  }
+
+  .status-notice__inner {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-block: 1.5rem;
+  }
+
+  .status-notice h2 {
+    margin-block-start: 0.35rem;
+  }
+
+  .status-notice p:not(.eyebrow) {
+    max-width: 48rem;
+    margin-block-start: 0.5rem;
+    color: var(--text-muted);
+  }
+
+  .status-notice__date {
+    flex: 0 0 auto;
+    text-align: end;
+  }
+
+  .status-notice__date span {
+    display: block;
+    color: var(--text-soft);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .status-notice__date time {
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--civic-deep);
+    font-weight: 750;
+  }
+
+  .listing-hero {
+    margin-block-start: clamp(1.25rem, 4vw, 3rem);
+  }
+
+  .listing-hero img {
+    width: 100%;
+    max-height: 46rem;
+    object-fit: cover;
+  }
+
+  .listing-hero figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-block: 0.65rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-soft);
+    font-size: 0.8rem;
+  }
+
+  .listing-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 46rem) minmax(17rem, 21rem);
+    justify-content: space-between;
+    gap: clamp(2.5rem, 8vw, 7rem);
+    padding-block: clamp(2.5rem, 8vw, 6rem);
+  }
+
+  .listing-content {
+    min-width: 0;
+  }
+
+  .connection-panel {
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border-inline-start: 0.3rem solid var(--brand);
+    background: var(--surface-warm);
+  }
+
+  .connection-panel h2 {
+    margin-block-start: 0.45rem;
+    font-size: clamp(1.3rem, 3vw, 1.75rem);
+  }
+
+  .connection-panel p:not(.eyebrow) {
+    margin-block-start: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .listing-description {
+    margin-block-start: 2.25rem;
+    font-size: 1.08rem;
+  }
+
+  .verification-notice {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    margin-block-start: 2.5rem;
+    padding: 1.25rem;
+    border: 1px solid #a5bdd4;
+    border-radius: var(--radius-lg);
+    background: #f5f8fb;
+  }
+
+  .verification-notice__symbol {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--civic-deep);
+    color: #ffffff;
+    font-weight: 800;
+  }
+
+  .verification-notice h2 {
+    font-size: 1.05rem;
+  }
+
+  .verification-notice p {
+    margin-block-start: 0.35rem;
+    color: var(--text-muted);
+  }
+
+  .listing-sidebar {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    position: sticky;
+    inset-block-start: 1.5rem;
+  }
+
+  .listing-facts,
+  .contact-card,
+  .review-card,
+  .translation-card {
+    padding: 1.25rem;
+    border-top: 0.25rem solid var(--brand);
+    background: var(--surface-muted);
+  }
+
+  .listing-facts h2,
+  .contact-card h2,
+  .review-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .listing-facts dl,
+  .review-card dl {
+    display: grid;
+    gap: 1rem;
+    margin-block-start: 1rem;
+  }
+
+  .listing-facts dl > div,
+  .review-card dl > div {
+    padding-block-start: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .listing-facts dt,
+  .review-card dt {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 760;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .listing-facts dt,
+  html[lang='ne'] .review-card dt {
+    font-size: 0.82rem;
+    text-transform: none;
+  }
+
+  .listing-facts dd,
+  .review-card dd {
+    margin: 0.22rem 0 0;
+    color: var(--civic-deep);
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+
+  .contact-card ul,
+  .review-card ul {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0.9rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .review-card li {
+    padding-inline-start: 1rem;
+    position: relative;
+    color: var(--civic-deep);
+    font-size: 0.9rem;
+  }
+
+  .review-card li::before {
+    content: '✓';
+    position: absolute;
+    inset-inline-start: 0;
+    color: #15603a;
+    font-weight: 800;
+  }
+
+  .translation-card {
+    display: grid;
+    gap: 0.35rem;
+    border-top-color: var(--civic);
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .translation-card span {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 58rem) {
+    .listing-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .listing-sidebar {
+      position: static;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 38rem) {
+    .listing-header__inner {
+      padding-block: 2.25rem 3rem;
+    }
+
+    .listing-header__title {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .listing-header h1 {
+      font-size: clamp(2rem, 11vw, 3.3rem);
+    }
+
+    .status-notice__inner {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .status-notice__date {
+      text-align: start;
+    }
+
+    .listing-hero {
+      width: 100%;
+      margin-block-start: 0;
+    }
+
+    .listing-hero img {
+      aspect-ratio: 4 / 3;
+    }
+
+    .listing-hero figcaption {
+      padding-inline: var(--page-gutter);
+    }
+
+    .listing-layout {
+      padding-block: 2.25rem 4rem;
+    }
+
+    .listing-sidebar {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
