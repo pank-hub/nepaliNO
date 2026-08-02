@@ -11,6 +11,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import {urlFor} from '../../lib/sanity/image'
 import {
   FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY,
+  HOMEPAGE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY,
   HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY,
   HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY,
   HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY,
@@ -77,11 +78,36 @@ interface HomeEvent {
   isFeatured?: boolean
 }
 
+interface HomeDirectoryListing {
+  _id: string
+  name: string
+  slug: string
+  language: SupportedLanguage
+  listingType: string
+  otherListingType?: string
+  primaryCategory: string
+  otherCategory?: string
+  summary: string
+  presenceType: string
+  county?: string
+  municipality?: string
+  city?: string
+  logo?: HomeArticleImage
+  isVerified?: boolean
+  isFeatured?: boolean
+}
+
 const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 
-const [featuredGuides, importantNow, featuredStory, homepageEvents] = await Promise.all([
+const [
+  featuredGuides,
+  importantNow,
+  featuredStory,
+  homepageEvents,
+  homepageDirectoryListings,
+] = await Promise.all([
   sanityClient.fetch<HomeGuide[]>(FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY, {
     language,
   }),
@@ -92,6 +118,10 @@ const [featuredGuides, importantNow, featuredStory, homepageEvents] = await Prom
     language,
   }),
   sanityClient.fetch<HomeEvent[]>(HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY, {language}),
+  sanityClient.fetch<HomeDirectoryListing[]>(
+    HOMEPAGE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY,
+    {language},
+  ),
 ])
 
 const latestStories = await sanityClient.fetch<HomeArticle[]>(
@@ -160,6 +190,41 @@ const eventLocation = (event: HomeEvent) =>
   event.eventFormat === 'online'
     ? event.onlinePlatform || labels.events.online
     : event.city || event.venueName || eventFormats[event.eventFormat] || event.eventFormat
+
+const directoryTypes = labels.directory.listingTypes as Record<string, string>
+const directoryCategories = labels.directory.categories as Record<string, string>
+const directoryCounties = labels.directory.counties as Record<string, string>
+const directoryPresenceTypes = labels.directory.presenceTypes as Record<string, string>
+const directoryTypeLabel = (listing: HomeDirectoryListing) =>
+  listing.listingType === 'other'
+    ? listing.otherListingType || directoryTypes.other
+    : directoryTypes[listing.listingType] || listing.listingType
+const directoryCategoryLabel = (listing: HomeDirectoryListing) =>
+  listing.primaryCategory === 'other'
+    ? listing.otherCategory || directoryCategories.other
+    : directoryCategories[listing.primaryCategory] || listing.primaryCategory
+const directoryLocationLabel = (listing: HomeDirectoryListing) => {
+  if (listing.presenceType === 'online-only') {
+    return directoryPresenceTypes['online-only']
+  }
+  if (listing.presenceType === 'no-public-location') {
+    return directoryPresenceTypes['no-public-location']
+  }
+
+  return (
+    [
+      listing.city || listing.municipality,
+      listing.county ? directoryCounties[listing.county] || listing.county : null,
+    ]
+      .filter(Boolean)
+      .join(' · ') || directoryPresenceTypes[listing.presenceType] || listing.presenceType
+  )
+}
+const directoryLogoUrl = (logo?: HomeArticleImage) =>
+  logo?.asset
+    ? urlFor(logo as any).width(160).height(160).fit('max').auto('format').url()
+    : null
+
 ---
 
 <BaseLayout
@@ -511,16 +576,74 @@ const eventLocation = (event: HomeEvent) =>
     </div>
   </section>
 
-  <section class="section-sm future-sections">
-    <div class="container future-sections__grid">
-      <article class="future-card future-card--single">
-        <span class="future-card__number" aria-hidden="true">01</span>
-        <h2>{labels.home.businessesHeading}</h2>
-        <p>{labels.home.businessesDescription}</p>
-        <span class="badge">{labels.home.comingSoon}</span>
-      </article>
-    </div>
-  </section>
+  {
+    homepageDirectoryListings.length > 0 && (
+      <section class="section home-directory" aria-labelledby="home-directory-heading">
+        <div class="container">
+          <div class="section-heading home-directory__heading">
+            <div>
+              <p class="eyebrow">{labels.directory.pageTitle}</p>
+              <h2 id="home-directory-heading">{labels.home.businessesHeading}</h2>
+              <p>{labels.home.businessesDescription}</p>
+            </div>
+            <a class="section-link" href={`/${language}/directory/`}>
+              {labels.directory.exploreListings} <span aria-hidden="true">→</span>
+            </a>
+          </div>
+
+          <ol class="directory-rail">
+            {homepageDirectoryListings.map((listing) => (
+              <li>
+                <article class="directory-rail__item">
+                  <div class="directory-rail__topline">
+                    {directoryLogoUrl(listing.logo) && (
+                      <div class="directory-rail__logo">
+                        <img
+                          src={directoryLogoUrl(listing.logo) ?? ''}
+                          alt=""
+                          width="160"
+                          height="160"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
+                    )}
+                    <div class="directory-rail__badges">
+                      {listing.isFeatured && (
+                        <strong class="badge badge-brand">
+                          {labels.directory.featuredListing}
+                        </strong>
+                      )}
+                      {listing.isVerified && (
+                        <strong class="badge badge-success">{labels.directory.verified}</strong>
+                      )}
+                    </div>
+                  </div>
+
+                  <p class="directory-rail__category">
+                    {directoryCategoryLabel(listing)}
+                  </p>
+                  <h3>
+                    <a href={`/${language}/directory/${listing.slug}/`}>{listing.name}</a>
+                  </h3>
+                  <p class="directory-rail__type">
+                    {directoryTypeLabel(listing)} · {directoryLocationLabel(listing)}
+                  </p>
+                  <p class="directory-rail__summary">{listing.summary}</p>
+                  <a
+                    class="directory-rail__link"
+                    href={`/${language}/directory/${listing.slug}/`}
+                  >
+                    {labels.directory.viewDetails} <span aria-hidden="true">→</span>
+                  </a>
+                </article>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+    )
+  }
 
   <SiteFooter slot="footer" language={language} />
 </BaseLayout>
@@ -1155,39 +1278,118 @@ const eventLocation = (event: HomeEvent) =>
     font-size: 0.875rem;
   }
 
-  .future-sections__grid {
+  .home-directory {
+    border-block-start: 1px solid var(--border);
+    background: #ffffff;
+  }
+
+  .home-directory__heading {
+    padding-block-end: 1.25rem;
+    border-bottom: 2px solid var(--civic-deep);
+  }
+
+  .directory-rail {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
-  .future-card {
-    position: relative;
+  .directory-rail > li {
+    min-width: 0;
+    padding: clamp(1.35rem, 3vw, 2rem);
+    border-inline-start: 1px solid var(--border);
+  }
+
+  .directory-rail > li:first-child {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .directory-rail > li:last-child {
+    padding-inline-end: 0;
+  }
+
+  .directory-rail__item {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+  }
+
+  .directory-rail__topline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.5rem;
+  }
+
+  .directory-rail__logo {
+    display: grid;
     overflow: hidden;
-    padding: clamp(1.5rem, 4vw, 2.5rem);
+    width: 3rem;
+    flex: 0 0 3rem;
+    aspect-ratio: 1;
+    place-items: center;
     border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    background: var(--surface-warm);
+    border-radius: var(--radius-md);
+    background: #ffffff;
   }
 
-  .future-card__number {
+  .directory-rail__logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .directory-rail__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .directory-rail__category {
+    margin-block-start: 1rem;
     color: var(--brand);
-    font-size: 0.75rem;
-    font-weight: 800;
+    font-size: 0.76rem;
+    font-weight: 760;
   }
 
-  .future-card h2 {
-    margin-block-start: 0.65rem;
-    font-size: clamp(1.45rem, 3vw, 2rem);
+  .directory-rail h3 {
+    margin-block-start: 0.35rem;
+    font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+    line-height: 1.2;
   }
 
-  .future-card p {
-    margin-block: 0.75rem 1.25rem;
+  .directory-rail h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .directory-rail h3 a:hover {
+    color: var(--brand);
+  }
+
+  .directory-rail__type {
+    margin-block-start: 0.45rem;
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .directory-rail__summary {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-block-start: 0.75rem;
     color: var(--text-muted);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
-  .future-card--single {
-    grid-column: 1 / -1;
+  .directory-rail__link {
+    margin-block-start: auto;
+    padding-block-start: 1rem;
+    font-weight: 760;
   }
 
   @media (max-width: 63rem) {
@@ -1204,6 +1406,17 @@ const eventLocation = (event: HomeEvent) =>
     .content-grid,
     .home-event-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .directory-rail {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .directory-rail > li:nth-child(3) {
+      padding-inline: 0;
+      border-block-start: 1px solid var(--border);
+      border-inline-start: 0;
+      grid-column: 1 / -1;
     }
 
     .latest-stories {
@@ -1274,8 +1487,22 @@ const eventLocation = (event: HomeEvent) =>
     .home-hero__pathways,
     .content-grid,
     .home-event-grid,
-    .future-sections__grid {
+    .directory-rail {
       grid-template-columns: 1fr;
+    }
+
+    .directory-rail > li,
+    .directory-rail > li:first-child,
+    .directory-rail > li:last-child,
+    .directory-rail > li:nth-child(3) {
+      padding: 1.25rem 0;
+      border-block-start: 1px solid var(--border);
+      border-inline-start: 0;
+      grid-column: auto;
+    }
+
+    .directory-rail > li:first-child {
+      border-block-start: 0;
     }
 
     .home-events__submit {
