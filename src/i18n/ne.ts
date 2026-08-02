@@ -1,3 +1,4 @@
+import { directorySubmissionNe } from "./directorySubmission.ne";
 import { eventSubmissionNe } from "./eventSubmission.ne";
 
 export const ne = {
@@ -338,6 +339,7 @@ export const ne = {
     suggestCorrection: "सुधार सुझाव दिनुहोस्",
     reportListing: "यो सूचीबारे जानकारी दिनुहोस्",
     reportClosed: "बन्द भएको जानकारी दिनुहोस्",
+    submission: directorySubmissionNe,
   },
 
   information: {

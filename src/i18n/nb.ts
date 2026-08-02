@@ -1,3 +1,4 @@
+import { directorySubmissionNB } from "./directorySubmission.nb";
 import { eventSubmissionNB } from "./eventSubmission.nb";
 
 export const nb = {
@@ -346,6 +347,7 @@ export const nb = {
     suggestCorrection: "Foreslå en rettelse",
     reportListing: "Meld fra om denne oppføringen",
     reportClosed: "Meld fra om at stedet er stengt",
+    submission: directorySubmissionNB,
   },
 
   information: {
