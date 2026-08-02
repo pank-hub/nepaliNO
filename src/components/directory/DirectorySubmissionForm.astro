@@ -877,7 +877,8 @@ const relationshipValues: Record<string, string> = {
         ><span data-submit-label>{copy.actions.submit}</span><span
           class="submit-spinner"
           aria-hidden="true"
-          hidden></span></button>
+          hidden></span></button
+      >
     </div>
   </form>
 </div>
@@ -1125,7 +1126,7 @@ const relationshipValues: Record<string, string> = {
       clearErrors();
       if (!form.checkValidity()) {
         form.reportValidity();
-        showErrors([], root.dataset.messageValidationBody);
+        showErrors([]);
         return;
       }
       setSubmitting(true);

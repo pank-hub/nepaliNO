@@ -1,0 +1,188 @@
+---
+import DirectorySubmissionForm from "../../../components/directory/DirectorySubmissionForm.astro";
+import SiteFooter from "../../../components/SiteFooter.astro";
+import SiteHeader from "../../../components/SiteHeader.astro";
+import { getTranslations } from "../../../i18n";
+import {
+  supportedLanguages,
+  type SupportedLanguage,
+} from "../../../i18n/config";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({
+    params: { lang: language },
+    props: { language },
+  }));
+}
+
+interface Props {
+  language: SupportedLanguage;
+}
+
+const { language } = Astro.props;
+const labels = getTranslations(language);
+const directoryLabels = labels.directory;
+const copy = directoryLabels.submission;
+const alternateLanguage: SupportedLanguage = language === "ne" ? "nb" : "ne";
+const languageLinks = [
+  { href: "/ne/directory/submit/", label: copy.actions.useNepali, lang: "ne" },
+  {
+    href: "/nb/directory/submit/",
+    label: copy.actions.useNorwegian,
+    lang: "nb",
+  },
+  { href: "/en/directory/submit/", label: copy.actions.useEnglish, lang: "en" },
+];
+---
+
+<BaseLayout
+  language={language}
+  title={copy.metaTitle}
+  description={copy.metaDescription}
+  bodyClass="directory-submission-page"
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={`/${alternateLanguage}/directory/submit/`}
+  />
+
+  <header class="submission-hero">
+    <div class="container submission-hero__inner">
+      <div class="submission-hero__copy">
+        <p class="eyebrow">{copy.eyebrow}</p>
+        <h1>{copy.title}</h1>
+        <p class="lead">{copy.introduction}</p>
+      </div>
+
+      <nav class="form-languages" aria-label={labels.common.languageSelector}>
+        {
+          languageLinks.map((item) => (
+            <a
+              href={item.href}
+              lang={item.lang}
+              hreflang={item.lang}
+              aria-current={item.lang === language ? "page" : undefined}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </header>
+
+  <section class="section-sm submission-content" aria-label={copy.title}>
+    <div class="container submission-container">
+      <a class="return-link" href={`/${language}/directory/`}>
+        <span aria-hidden="true">←</span>
+        {copy.actions.returnToDirectory}
+      </a>
+
+      <DirectorySubmissionForm
+        language={language}
+        copy={copy}
+        listingTypes={directoryLabels.listingTypes}
+        categories={directoryLabels.categories}
+        connections={directoryLabels.connections}
+        serviceLanguages={directoryLabels.serviceLanguageLabels}
+        presenceTypes={directoryLabels.presenceTypes}
+        coverageModes={directoryLabels.coverageModes}
+        counties={directoryLabels.counties}
+      />
+    </div>
+  </section>
+
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .submission-hero {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(
+        circle at 88% 10%,
+        rgb(198 42 31 / 0.09),
+        transparent 22rem
+      ),
+      linear-gradient(135deg, var(--surface-muted), #ffffff 65%, #fff6f5);
+  }
+
+  .submission-hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: clamp(1.5rem, 5vw, 4rem);
+    align-items: end;
+    padding-block: clamp(2.5rem, 6vw, 5rem);
+  }
+
+  .submission-hero__copy {
+    max-width: 52rem;
+  }
+
+  .submission-hero h1 {
+    margin-block-start: 0.6rem;
+  }
+
+  .submission-hero .lead {
+    max-width: 48rem;
+    margin-block-start: 1rem;
+  }
+
+  .form-languages {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.45rem;
+  }
+
+  .form-languages a {
+    display: inline-flex;
+    min-height: 2.6rem;
+    align-items: center;
+    padding-inline: 0.85rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.8);
+    color: var(--civic-deep);
+    font-size: 0.875rem;
+    font-weight: 720;
+    text-decoration: none;
+  }
+
+  .form-languages a:hover,
+  .form-languages a[aria-current="page"] {
+    border-color: var(--civic);
+    background: var(--civic-deep);
+    color: #ffffff;
+  }
+
+  .submission-content {
+    background: linear-gradient(180deg, var(--page-bg), #ffffff 18rem);
+  }
+
+  .submission-container {
+    max-width: 68rem;
+  }
+
+  .return-link {
+    display: inline-flex;
+    gap: 0.45rem;
+    align-items: center;
+    margin-block-end: 1.25rem;
+    color: var(--civic-deep);
+    font-weight: 720;
+  }
+
+  @media (max-width: 48rem) {
+    .submission-hero__inner {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+
+    .form-languages {
+      justify-content: flex-start;
+    }
+  }
+</style>
