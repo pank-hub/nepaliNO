@@ -1,0 +1,1452 @@
+---
+import type {
+  DirectorySubmissionCopy,
+  DirectorySubmissionInterfaceLanguage,
+} from "../../i18n/directorySubmission";
+
+interface Props {
+  language: DirectorySubmissionInterfaceLanguage;
+  copy: DirectorySubmissionCopy;
+  listingTypes: Readonly<Record<string, string>>;
+  categories: Readonly<Record<string, string>>;
+  connections: Readonly<Record<string, string>>;
+  serviceLanguages: Readonly<Record<string, string>>;
+  presenceTypes: Readonly<Record<string, string>>;
+  coverageModes: Readonly<Record<string, string>>;
+  counties: Readonly<Record<string, string>>;
+}
+
+const {
+  language,
+  copy,
+  listingTypes,
+  categories,
+  connections,
+  serviceLanguages,
+  presenceTypes,
+  coverageModes,
+  counties,
+} = Astro.props;
+
+const idPrefix = `directory-submission-${language}`;
+const requiredMark = "*";
+const entries = (values: Readonly<Record<string, string>>) =>
+  Object.entries(values);
+const relationshipValues: Record<string, string> = {
+  ownerAuthorizedRepresentative: "owner-authorized-representative",
+  founderLeader: "founder-leader",
+  employeeVolunteer: "employee-volunteer",
+  websiteAdministrator: "website-administrator",
+  communityMember: "community-member",
+  other: "other",
+};
+---
+
+<div
+  class="directory-submission"
+  data-directory-submission
+  data-language={language}
+  data-message-validation-title={copy.messages.validationSummaryTitle}
+  data-message-validation-body={copy.messages.validationSummaryBody}
+  data-message-success-reference={copy.messages.successReference}
+  data-message-rate-limited={copy.messages.rateLimited}
+  data-message-unavailable={copy.messages.temporarilyUnavailable}
+  data-message-storage-failed={copy.messages.storageFailed}
+  data-message-network-failed={copy.messages.networkFailed}
+  data-message-unexpected={copy.messages.unexpectedError}
+  data-action-submit={copy.actions.submit}
+  data-action-submitting={copy.actions.submitting}
+>
+  <aside
+    class="before-you-begin surface"
+    aria-labelledby={`${idPrefix}-before-title`}
+    data-before-you-begin
+  >
+    <div class="before-you-begin__mark" aria-hidden="true">✓</div>
+    <div>
+      <h2 id={`${idPrefix}-before-title`}>{copy.beforeYouBeginTitle}</h2>
+      <ul>{copy.beforeYouBeginItems.map((item) => <li>{item}</li>)}</ul>
+      <p class="required-notice">{copy.requiredNotice}</p>
+    </div>
+  </aside>
+
+  <div
+    class="form-alert form-alert--error"
+    data-error-summary
+    role="alert"
+    tabindex="-1"
+    hidden
+  >
+    <h2>{copy.messages.validationSummaryTitle}</h2>
+    <p>{copy.messages.validationSummaryBody}</p>
+    <ul data-error-list></ul>
+  </div>
+
+  <div
+    class="form-alert form-alert--success"
+    data-success-panel
+    role="status"
+    tabindex="-1"
+    hidden
+  >
+    <span class="success-symbol" aria-hidden="true">✓</span>
+    <div>
+      <h2>{copy.messages.successTitle}</h2>
+      <p>{copy.messages.successBody}</p>
+      <p class="success-reference" data-success-reference></p>
+      <p>{copy.messages.publicationNotice}</p>
+    </div>
+  </div>
+
+  <form class="submission-form" data-submission-form novalidate>
+    <div class="honeypot" aria-hidden="true">
+      <label for={`${idPrefix}-website`}>Website</label>
+      <input
+        id={`${idPrefix}-website`}
+        name="website"
+        type="text"
+        tabindex="-1"
+        autocomplete="off"
+      />
+    </div>
+
+    <fieldset class="form-section surface">
+      <legend><span>1</span>{copy.sections.language}</legend>
+      <div class="field-grid field-grid--two">
+        <div class="field">
+          <label for={`${idPrefix}-submissionLanguage`}
+            >{copy.fields.submissionLanguage}
+            <span aria-hidden="true">{requiredMark}</span></label
+          >
+          <select
+            id={`${idPrefix}-submissionLanguage`}
+            name="submissionLanguage"
+            required
+          >
+            <option value="">—</option>
+            {
+              Object.entries(copy.options.submissionLanguages).map(
+                ([value, label]) => <option value={value}>{label}</option>,
+              )
+            }
+          </select>
+          <p class="field-help">{copy.help.submissionLanguage}</p>
+          <p class="field-error" data-error-for="submissionLanguage"></p>
+        </div>
+        <div class="field" data-conditional="otherSubmissionLanguage" hidden>
+          <label for={`${idPrefix}-otherSubmissionLanguage`}
+            >{copy.fields.otherSubmissionLanguage}
+            <span aria-hidden="true">{requiredMark}</span></label
+          >
+          <input
+            id={`${idPrefix}-otherSubmissionLanguage`}
+            name="otherSubmissionLanguage"
+            maxlength="80"
+          />
+          <p class="field-error" data-error-for="otherSubmissionLanguage"></p>
+        </div>
+        <div class="field field-grid__wide">
+          <label for={`${idPrefix}-requestedPublicLanguage`}
+            >{copy.fields.requestedPublicLanguage}
+            <span aria-hidden="true">{requiredMark}</span></label
+          >
+          <select
+            id={`${idPrefix}-requestedPublicLanguage`}
+            name="requestedPublicLanguage"
+            required
+          >
+            <option value="">—</option>
+            <option value="ne">{copy.options.publicLanguages.ne}</option>
+            <option value="nb">{copy.options.publicLanguages.nb}</option>
+            <option value="both">{copy.options.publicLanguages.both}</option>
+            <option value="editorial-decision"
+              >{copy.options.publicLanguages.editorialDecision}</option
+            >
+          </select>
+          <p class="field-help">{copy.help.requestedPublicLanguage}</p>
+          <p class="field-error" data-error-for="requestedPublicLanguage"></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>2</span>{copy.sections.applicant}</legend>
+      <p class="section-notice section-notice--private">{copy.privateNotice}</p>
+      <div class="field-grid field-grid--two">
+        <div class="field">
+          <label for={`${idPrefix}-applicantName`}
+            >{copy.fields.applicantName}
+            <span aria-hidden="true">*</span></label
+          ><input
+            id={`${idPrefix}-applicantName`}
+            name="applicantName"
+            maxlength="120"
+            autocomplete="name"
+            required
+          /><p class="field-error" data-error-for="applicantName"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-applicantEmail`}
+            >{copy.fields.applicantEmail}
+            <span aria-hidden="true">*</span></label
+          ><input
+            id={`${idPrefix}-applicantEmail`}
+            name="applicantEmail"
+            type="email"
+            maxlength="254"
+            autocomplete="email"
+            required
+          /><p class="field-error" data-error-for="applicantEmail"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-applicantPhone`}
+            >{copy.fields.applicantPhone}</label
+          ><input
+            id={`${idPrefix}-applicantPhone`}
+            name="applicantPhone"
+            type="tel"
+            maxlength="40"
+            autocomplete="tel"
+          /><p class="field-error" data-error-for="applicantPhone"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-preferredContactLanguage`}
+            >{copy.fields.preferredContactLanguage}
+            <span aria-hidden="true">*</span></label
+          ><select
+            id={`${idPrefix}-preferredContactLanguage`}
+            name="preferredContactLanguage"
+            required
+            ><option value="">—</option>{
+              Object.entries(copy.options.contactLanguages).map(
+                ([value, label]) => <option value={value}>{label}</option>,
+              )
+            }</select
+          ><p class="field-error" data-error-for="preferredContactLanguage"></p>
+        </div>
+        <div
+          class="field field-grid__wide"
+          data-conditional="otherPreferredContactLanguage"
+          hidden
+        >
+          <label for={`${idPrefix}-otherPreferredContactLanguage`}
+            >{copy.fields.otherPreferredContactLanguage}
+            <span aria-hidden="true">*</span></label
+          ><input
+            id={`${idPrefix}-otherPreferredContactLanguage`}
+            name="otherPreferredContactLanguage"
+            maxlength="80"
+          /><p
+            class="field-error"
+            data-error-for="otherPreferredContactLanguage"
+          >
+          </p>
+        </div>
+      </div>
+      <p class="field-help section-help">{copy.help.privateContact}</p>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>3</span>{copy.sections.relationship}</legend>
+      <p class="section-notice">{copy.suggestionNotice}</p>
+      <div class="field-grid">
+        <div class="field">
+          <span class="field-label"
+            >{copy.fields.applicantRelationship}
+            <span aria-hidden="true">*</span></span
+          >
+          <div class="choice-grid choice-grid--two">
+            {
+              Object.entries(copy.options.relationships).map(([key, label]) => (
+                <label class="choice-card">
+                  <input
+                    name="applicantRelationship"
+                    type="radio"
+                    value={relationshipValues[key]}
+                    required
+                  />
+                  <span>{label}</span>
+                </label>
+              ))
+            }
+          </div>
+          <p class="field-error" data-error-for="applicantRelationship"></p>
+        </div>
+        <div class="field" data-conditional="otherApplicantRelationship" hidden>
+          <label for={`${idPrefix}-otherApplicantRelationship`}
+            >{copy.fields.otherApplicantRelationship}
+            <span aria-hidden="true">*</span></label
+          ><input
+            id={`${idPrefix}-otherApplicantRelationship`}
+            name="otherApplicantRelationship"
+            maxlength="160"
+          /><p class="field-error" data-error-for="otherApplicantRelationship">
+          </p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-authorityExplanation`}
+            >{copy.fields.authorityExplanation}
+            <span aria-hidden="true">*</span></label
+          ><textarea
+            id={`${idPrefix}-authorityExplanation`}
+            name="authorityExplanation"
+            rows="4"
+            minlength="20"
+            maxlength="1000"
+            required></textarea><p class="field-help">
+            {copy.help.relationship}
+          </p><p class="field-help">{copy.help.communitySuggestion}</p><p
+            class="field-error"
+            data-error-for="authorityExplanation"
+          >
+          </p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>4</span>{copy.sections.identity}</legend>
+      <div class="field-grid field-grid--two">
+        <div class="field field-grid__wide">
+          <label for={`${idPrefix}-proposedName`}
+            >{copy.fields.proposedName} <span aria-hidden="true">*</span></label
+          ><input
+            id={`${idPrefix}-proposedName`}
+            name="proposedName"
+            minlength="2"
+            maxlength="160"
+            required
+          /><p class="field-error" data-error-for="proposedName"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-listingType`}
+            >{copy.fields.listingType} <span aria-hidden="true">*</span></label
+          ><select id={`${idPrefix}-listingType`} name="listingType" required
+            ><option value="">—</option>{
+              entries(listingTypes).map(([value, label]) => (
+                <option value={value}>{label}</option>
+              ))
+            }</select
+          ><p class="field-error" data-error-for="listingType"></p>
+        </div>
+        <div class="field" data-conditional="otherListingType" hidden>
+          <label for={`${idPrefix}-otherListingType`}
+            >{copy.fields.otherListingType}
+            <span aria-hidden="true">*</span></label
+          ><input
+            id={`${idPrefix}-otherListingType`}
+            name="otherListingType"
+            maxlength="160"
+          /><p class="field-error" data-error-for="otherListingType"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-primaryCategory`}
+            >{copy.fields.primaryCategory}
+            <span aria-hidden="true">*</span></label
+          ><select
+            id={`${idPrefix}-primaryCategory`}
+            name="primaryCategory"
+            required
+            ><option value="">—</option>{
+              entries(categories).map(([value, label]) => (
+                <option value={value}>{label}</option>
+              ))
+            }</select
+          ><p class="field-error" data-error-for="primaryCategory"></p>
+        </div>
+        <div class="field" data-conditional="otherCategory" hidden>
+          <label for={`${idPrefix}-otherCategory`}
+            >{copy.fields.otherCategory}
+            <span aria-hidden="true">*</span></label
+          ><input
+            id={`${idPrefix}-otherCategory`}
+            name="otherCategory"
+            maxlength="160"
+          /><p class="field-error" data-error-for="otherCategory"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-organizationNumber`}
+            >{copy.fields.organizationNumber}</label
+          ><input
+            id={`${idPrefix}-organizationNumber`}
+            name="organizationNumber"
+            inputmode="numeric"
+            maxlength="20"
+          /><p class="field-help">{copy.help.organizationNumber}</p><p
+            class="field-error"
+            data-error-for="organizationNumber"
+          >
+          </p>
+        </div>
+        <div
+          class="field"
+          data-conditional="entityExplanationWithoutOrganizationNumber"
+        >
+          <label for={`${idPrefix}-entityExplanationWithoutOrganizationNumber`}
+            >{copy.fields.entityExplanationWithoutOrganizationNumber}
+            <span aria-hidden="true">*</span></label
+          ><textarea
+            id={`${idPrefix}-entityExplanationWithoutOrganizationNumber`}
+            name="entityExplanationWithoutOrganizationNumber"
+            rows="3"
+            maxlength="1000"></textarea><p
+            class="field-error"
+            data-error-for="entityExplanationWithoutOrganizationNumber"
+          >
+          </p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>5</span>{copy.sections.connection}</legend>
+      <div class="field-grid">
+        <div class="field">
+          <span class="field-label"
+            >{copy.fields.communityConnections}
+            <span aria-hidden="true">*</span></span
+          ><div class="choice-grid">
+            {
+              entries(connections).map(([value, label]) => (
+                <label class="choice-card">
+                  <>
+                    <input
+                      name="communityConnections"
+                      type="checkbox"
+                      value={value}
+                    />
+                    <span>{label}</span>
+                  </>
+                </label>
+              ))
+            }
+          </div><p class="field-error" data-error-for="communityConnections">
+          </p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-connectionExplanation`}
+            >{copy.fields.connectionExplanation}
+            <span aria-hidden="true">*</span></label
+          ><textarea
+            id={`${idPrefix}-connectionExplanation`}
+            name="connectionExplanation"
+            rows="4"
+            minlength="20"
+            maxlength="1000"
+            required></textarea><p class="field-help">
+            {copy.help.connectionExplanation}
+          </p><p class="field-error" data-error-for="connectionExplanation"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-ownershipLeadershipExplanation`}
+            >{copy.fields.ownershipLeadershipExplanation}</label
+          ><textarea
+            id={`${idPrefix}-ownershipLeadershipExplanation`}
+            name="ownershipLeadershipExplanation"
+            rows="4"
+            maxlength="1500"></textarea><p class="field-help">
+            {copy.help.ownershipLeadershipExplanation}
+          </p><p
+            class="field-error"
+            data-error-for="ownershipLeadershipExplanation"
+          >
+          </p>
+        </div>
+        <div class="field">
+          <span class="field-label"
+            >{copy.fields.serviceLanguages}
+            <span aria-hidden="true">*</span></span
+          ><div class="choice-grid">
+            {
+              entries(serviceLanguages).map(([value, label]) => (
+                <label class="choice-card">
+                  <>
+                    <input
+                      name="serviceLanguages"
+                      type="checkbox"
+                      value={value}
+                    />
+                    <span>{label}</span>
+                  </>
+                </label>
+              ))
+            }
+          </div><p class="field-error" data-error-for="serviceLanguages"></p>
+        </div>
+        <div class="field" data-conditional="otherServiceLanguages" hidden>
+          <label for={`${idPrefix}-otherServiceLanguages`}
+            >{copy.fields.otherServiceLanguages}
+            <span aria-hidden="true">*</span></label
+          ><textarea
+            id={`${idPrefix}-otherServiceLanguages`}
+            name="otherServiceLanguages"
+            rows="3"
+            placeholder="One language per line"></textarea><p
+            class="field-error"
+            data-error-for="otherServiceLanguages"
+          >
+          </p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>6</span>{copy.sections.description}</legend>
+      <div class="field-grid">
+        <div class="field">
+          <label for={`${idPrefix}-summary`}
+            >{copy.fields.summary} <span aria-hidden="true">*</span></label
+          ><textarea
+            id={`${idPrefix}-summary`}
+            name="summary"
+            rows="4"
+            minlength="30"
+            maxlength="600"
+            required></textarea><p class="field-help">{copy.help.summary}</p><p
+            class="field-error"
+            data-error-for="summary"
+          >
+          </p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-descriptionPlainText`}
+            >{copy.fields.descriptionPlainText}
+            <span aria-hidden="true">*</span></label
+          ><textarea
+            id={`${idPrefix}-descriptionPlainText`}
+            name="descriptionPlainText"
+            rows="8"
+            minlength="80"
+            maxlength="10000"
+            required></textarea><p class="field-help">
+            {copy.help.descriptionPlainText}
+          </p><p class="field-error" data-error-for="descriptionPlainText"></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>7</span>{copy.sections.publicContact}</legend>
+      <p class="section-notice">{copy.publicContactNotice}</p>
+      <div class="field-grid field-grid--two">
+        <div class="field">
+          <label for={`${idPrefix}-publicWebsite`}
+            >{copy.fields.publicWebsite}</label
+          ><input
+            id={`${idPrefix}-publicWebsite`}
+            name="publicWebsite"
+            type="url"
+            maxlength="2048"
+            placeholder="https://"
+          /><p class="field-error" data-error-for="publicWebsite"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-publicContactRole`}
+            >{copy.fields.publicContactRole}</label
+          ><input
+            id={`${idPrefix}-publicContactRole`}
+            name="publicContactRole"
+            maxlength="120"
+          /><p class="field-error" data-error-for="publicContactRole"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-publicEmail`}
+            >{copy.fields.publicEmail}</label
+          ><input
+            id={`${idPrefix}-publicEmail`}
+            name="publicEmail"
+            type="email"
+            maxlength="254"
+          /><p class="field-error" data-error-for="publicEmail"></p>
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-publicPhone`}
+            >{copy.fields.publicPhone}</label
+          ><input
+            id={`${idPrefix}-publicPhone`}
+            name="publicPhone"
+            type="tel"
+            maxlength="40"
+          /><p class="field-error" data-error-for="publicPhone"></p>
+        </div>
+        <div
+          class="field field-grid__wide checkbox-field"
+          data-public-permission
+          hidden
+        >
+          <label
+            ><input name="publicContactPermission" type="checkbox" /><span
+              >{copy.fields.publicContactPermission}</span
+            ></label
+          ><p class="field-help">{copy.help.publicContactPermission}</p><p
+            class="field-error"
+            data-error-for="publicContactPermission"
+          >
+          </p>
+        </div>
+      </div>
+      <p class="field-help section-help">{copy.help.publicContact}</p>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>8</span>{copy.sections.location}</legend>
+      <div class="field-grid">
+        <div class="field">
+          <span class="field-label"
+            >{copy.fields.presenceType} <span aria-hidden="true">*</span></span
+          ><div class="choice-grid choice-grid--two">
+            {
+              entries(presenceTypes).map(([value, label]) => (
+                <label class="choice-card">
+                  <>
+                    <input
+                      name="presenceType"
+                      type="radio"
+                      value={value}
+                      required
+                    />
+                    <span>{label}</span>
+                  </>
+                </label>
+              ))
+            }
+          </div><p class="field-error" data-error-for="presenceType"></p>
+        </div>
+        <div class="conditional-panel" data-location-panel hidden>
+          <div class="field-grid field-grid--two">
+            <div class="field">
+              <label for={`${idPrefix}-country`}
+                >{copy.fields.country} <span aria-hidden="true">*</span></label
+              ><input
+                id={`${idPrefix}-country`}
+                name="country"
+                maxlength="120"
+                value="Norway"
+              />
+            </div>
+            <div class="field">
+              <label for={`${idPrefix}-county`}>{copy.fields.county}</label
+              ><select id={`${idPrefix}-county`} name="county"
+                ><option value="">—</option>{
+                  entries(counties).map(([value, label]) => (
+                    <option value={value}>{label}</option>
+                  ))
+                }</select
+              ><p class="field-error" data-error-for="county"></p>
+            </div>
+            <div class="field">
+              <label for={`${idPrefix}-municipality`}
+                >{copy.fields.municipality}</label
+              ><input
+                id={`${idPrefix}-municipality`}
+                name="municipality"
+                maxlength="120"
+              />
+            </div>
+            <div class="field">
+              <label for={`${idPrefix}-city`}
+                >{copy.fields.city} <span aria-hidden="true">*</span></label
+              ><input id={`${idPrefix}-city`} name="city" maxlength="120" /><p
+                class="field-error"
+                data-error-for="city"
+              >
+              </p>
+            </div>
+            <div class="field">
+              <label for={`${idPrefix}-streetAddress`}
+                >{copy.fields.streetAddress}</label
+              ><input
+                id={`${idPrefix}-streetAddress`}
+                name="streetAddress"
+                maxlength="200"
+              />
+            </div>
+            <div class="field">
+              <label for={`${idPrefix}-postalCode`}
+                >{copy.fields.postalCode}</label
+              ><input
+                id={`${idPrefix}-postalCode`}
+                name="postalCode"
+                maxlength="20"
+              />
+            </div>
+            <div class="field field-grid__wide">
+              <label for={`${idPrefix}-mapUrl`}>{copy.fields.mapUrl}</label
+              ><input
+                id={`${idPrefix}-mapUrl`}
+                name="mapUrl"
+                type="url"
+                maxlength="2048"
+                placeholder="https://"
+              />
+            </div>
+            <div
+              class="field field-grid__wide checkbox-field"
+              data-address-permission
+              hidden
+            >
+              <label
+                ><input
+                  name="addressPublicationPermission"
+                  type="checkbox"
+                /><span>{copy.fields.addressPublicationPermission}</span></label
+              ><p class="field-help">
+                {copy.help.addressPublicationPermission}
+              </p><p
+                class="field-error"
+                data-error-for="addressPublicationPermission"
+              >
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label"
+            >{copy.fields.coverageModes} <span aria-hidden="true">*</span></span
+          ><div class="choice-grid">
+            {
+              entries(coverageModes).map(([value, label]) => (
+                <label class="choice-card">
+                  <>
+                    <input name="coverageModes" type="checkbox" value={value} />
+                    <span>{label}</span>
+                  </>
+                </label>
+              ))
+            }
+          </div><p class="field-help">{copy.help.coverage}</p><p
+            class="field-error"
+            data-error-for="coverageModes"
+          >
+          </p>
+        </div>
+        <div class="field" data-conditional="serviceCounties" hidden>
+          <span class="field-label"
+            >{copy.fields.serviceCounties}
+            <span aria-hidden="true">*</span></span
+          ><div class="choice-grid">
+            {
+              entries(counties).map(([value, label]) => (
+                <label class="choice-card">
+                  <>
+                    <input
+                      name="serviceCounties"
+                      type="checkbox"
+                      value={value}
+                    />
+                    <span>{label}</span>
+                  </>
+                </label>
+              ))
+            }
+          </div><p class="field-error" data-error-for="serviceCounties"></p>
+        </div>
+        <div class="field" data-conditional="serviceMunicipalities" hidden>
+          <label for={`${idPrefix}-serviceMunicipalities`}
+            >{copy.fields.serviceMunicipalities}
+            <span aria-hidden="true">*</span></label
+          ><textarea
+            id={`${idPrefix}-serviceMunicipalities`}
+            name="serviceMunicipalities"
+            rows="4"
+            placeholder="One municipality per line"></textarea><p
+            class="field-error"
+            data-error-for="serviceMunicipalities"
+          >
+          </p>
+        </div>
+        <div class="field" data-conditional="otherCoverage" hidden>
+          <label for={`${idPrefix}-otherCoverage`}
+            >{copy.fields.otherCoverage}
+            <span aria-hidden="true">*</span></label
+          ><input
+            id={`${idPrefix}-otherCoverage`}
+            name="otherCoverage"
+            maxlength="300"
+          /><p class="field-error" data-error-for="otherCoverage"></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section surface">
+      <legend><span>9</span>{copy.sections.links}</legend>
+      <div class="field-grid field-grid--two">
+        {
+          [
+            "facebookUrl",
+            "instagramUrl",
+            "linkedInUrl",
+            "proposedLogoUrl",
+            "proposedCoverImageUrl",
+          ].map((name) => (
+            <div class="field">
+              <>
+                <label for={`${idPrefix}-${name}`}>
+                  {copy.fields[name as keyof typeof copy.fields]}
+                </label>
+                <input
+                  id={`${idPrefix}-${name}`}
+                  name={name}
+                  type="url"
+                  maxlength="2048"
+                  placeholder="https://"
+                />
+                <p class="field-error" data-error-for={name} />
+              </>
+            </div>
+          ))
+        }
+        <div class="field">
+          <label for={`${idPrefix}-imageAltSuggestion`}
+            >{copy.fields.imageAltSuggestion}</label
+          ><input
+            id={`${idPrefix}-imageAltSuggestion`}
+            name="imageAltSuggestion"
+            maxlength="300"
+          />
+        </div>
+        <div class="field">
+          <label for={`${idPrefix}-imageCredit`}
+            >{copy.fields.imageCredit}</label
+          ><input
+            id={`${idPrefix}-imageCredit`}
+            name="imageCredit"
+            maxlength="200"
+          />
+        </div>
+        <div
+          class="field field-grid__wide checkbox-field"
+          data-image-permission
+          hidden
+        >
+          <label
+            ><input name="imagePermissionConfirmed" type="checkbox" /><span
+              >{copy.fields.imagePermissionConfirmed}</span
+            ></label
+          ><p class="field-help">{copy.help.imagePermissionConfirmed}</p><p
+            class="field-error"
+            data-error-for="imagePermissionConfirmed"
+          >
+          </p>
+        </div>
+      </div>
+      <p class="field-help section-help">{copy.help.imageUrls}</p>
+    </fieldset>
+
+    <fieldset class="form-section surface declarations-section">
+      <legend><span>10</span>{copy.sections.declarations}</legend>
+      <div class="declaration-list">
+        {
+          [
+            "legitimateBasisConfirmed",
+            "connectionClaimsConfirmed",
+            "accuracyConfirmed",
+            "editingTranslationAccepted",
+            "publicationNotGuaranteedAccepted",
+            "privacyRetentionAccepted",
+          ].map((name) => (
+            <div class="field checkbox-field">
+              <label>
+                <>
+                  <input name={name} type="checkbox" required />
+                  <span>
+                    {copy.fields[name as keyof typeof copy.fields]}{" "}
+                    <span aria-hidden="true">*</span>
+                  </span>
+                </>
+              </label>
+              {name === "privacyRetentionAccepted" && (
+                <p class="field-help">{copy.help.privacyRetentionAccepted}</p>
+              )}
+              <p class="field-error" data-error-for={name} />
+            </div>
+          ))
+        }
+      </div>
+    </fieldset>
+
+    <div class="submit-panel surface">
+      <div>
+        <strong>{copy.actions.submit}</strong><p>
+          {copy.messages.publicationNotice}
+        </p>
+      </div><button
+        class="button button-primary submit-button"
+        type="submit"
+        data-submit-button
+        ><span data-submit-label>{copy.actions.submit}</span><span
+          class="submit-spinner"
+          aria-hidden="true"
+          hidden></span></button>
+    </div>
+  </form>
+</div>
+
+<script>
+  type ApiError = { field?: string; message?: string };
+  type ApiResponse = {
+    ok?: boolean;
+    code?: string;
+    message?: string;
+    submissionId?: string;
+    errors?: ApiError[];
+  };
+
+  const initializeDirectorySubmission = (root: HTMLElement) => {
+    const form = root.querySelector<HTMLFormElement>("[data-submission-form]");
+    if (!form || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+    const input = (name: string) =>
+      form.elements.namedItem(name) as
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
+    const conditional = (name: string) =>
+      root.querySelector<HTMLElement>(`[data-conditional="${name}"]`);
+    const errorSummary = root.querySelector<HTMLElement>(
+      "[data-error-summary]",
+    );
+    const errorList = root.querySelector<HTMLUListElement>("[data-error-list]");
+    const successPanel = root.querySelector<HTMLElement>(
+      "[data-success-panel]",
+    );
+    const beforePanel = root.querySelector<HTMLElement>(
+      "[data-before-you-begin]",
+    );
+    const submitButton = root.querySelector<HTMLButtonElement>(
+      "[data-submit-button]",
+    );
+    const submitLabel = root.querySelector<HTMLElement>("[data-submit-label]");
+    const spinner = root.querySelector<HTMLElement>(".submit-spinner");
+
+    const setVisible = (element: HTMLElement | null, visible: boolean) => {
+      if (!element) return;
+      element.hidden = !visible;
+      element
+        .querySelectorAll<
+          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >("input,select,textarea")
+        .forEach((control) => {
+          control.disabled = !visible;
+          if (!visible) {
+            if (
+              control instanceof HTMLInputElement &&
+              ["checkbox", "radio"].includes(control.type)
+            )
+              control.checked = false;
+            else control.value = "";
+          }
+        });
+    };
+    const checked = (name: string) =>
+      Array.from(
+        form.querySelectorAll<HTMLInputElement>(
+          `input[name="${name}"]:checked`,
+        ),
+      ).map((item) => item.value);
+    const lines = (name: string) =>
+      String(input(name)?.value ?? "")
+        .split(/\n/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    const updateConditionals = () => {
+      setVisible(
+        conditional("otherSubmissionLanguage"),
+        input("submissionLanguage")?.value === "other",
+      );
+      setVisible(
+        conditional("otherPreferredContactLanguage"),
+        input("preferredContactLanguage")?.value === "other",
+      );
+      setVisible(
+        conditional("otherApplicantRelationship"),
+        checked("applicantRelationship").includes("other"),
+      );
+      setVisible(
+        conditional("otherListingType"),
+        input("listingType")?.value === "other",
+      );
+      setVisible(
+        conditional("otherCategory"),
+        input("primaryCategory")?.value === "other",
+      );
+      setVisible(
+        conditional("entityExplanationWithoutOrganizationNumber"),
+        !input("organizationNumber")?.value.trim(),
+      );
+      setVisible(
+        conditional("otherServiceLanguages"),
+        checked("serviceLanguages").includes("other"),
+      );
+      const publicContact = [
+        "publicEmail",
+        "publicPhone",
+        "publicContactRole",
+      ].some((name) => Boolean(input(name)?.value.trim()));
+      setVisible(
+        root.querySelector<HTMLElement>("[data-public-permission]"),
+        publicContact,
+      );
+      const presence = checked("presenceType")[0];
+      const physical =
+        presence === "physical" || presence === "physical-and-online";
+      setVisible(
+        root.querySelector<HTMLElement>("[data-location-panel]"),
+        physical,
+      );
+      setVisible(
+        root.querySelector<HTMLElement>("[data-address-permission]"),
+        physical && Boolean(input("streetAddress")?.value.trim()),
+      );
+      const coverage = checked("coverageModes");
+      setVisible(
+        conditional("serviceCounties"),
+        coverage.includes("selected-counties"),
+      );
+      setVisible(
+        conditional("serviceMunicipalities"),
+        coverage.includes("selected-municipalities"),
+      );
+      setVisible(conditional("otherCoverage"), coverage.includes("other"));
+      const imageUrl = Boolean(
+        input("proposedLogoUrl")?.value.trim() ||
+        input("proposedCoverImageUrl")?.value.trim(),
+      );
+      setVisible(
+        root.querySelector<HTMLElement>("[data-image-permission]"),
+        imageUrl,
+      );
+    };
+
+    const clearErrors = () => {
+      root
+        .querySelectorAll<HTMLElement>("[data-error-for]")
+        .forEach((item) => (item.textContent = ""));
+      form
+        .querySelectorAll<HTMLElement>('[aria-invalid="true"]')
+        .forEach((item) => item.removeAttribute("aria-invalid"));
+      if (errorSummary) errorSummary.hidden = true;
+      if (errorList) errorList.replaceChildren();
+    };
+    const showErrors = (errors: ApiError[], fallback?: string) => {
+      clearErrors();
+      const messages: string[] = [];
+      errors.forEach((error) => {
+        if (!error.field || !error.message) return;
+        const target = root.querySelector<HTMLElement>(
+          `[data-error-for="${CSS.escape(error.field)}"]`,
+        );
+        if (target) target.textContent = error.message;
+        const control = form.elements.namedItem(error.field);
+        if (control instanceof HTMLElement)
+          control.setAttribute("aria-invalid", "true");
+        messages.push(error.message);
+      });
+      if (messages.length === 0 && fallback) messages.push(fallback);
+      messages.forEach((message) => {
+        const li = document.createElement("li");
+        li.textContent = message;
+        errorList?.append(li);
+      });
+      if (errorSummary) {
+        errorSummary.hidden = false;
+        errorSummary.focus();
+      }
+    };
+
+    const buildPayload = () => {
+      const data = new FormData(form);
+      const payload: Record<string, unknown> = {
+        website: String(data.get("website") ?? ""),
+        formInterfaceLanguage: root.dataset.language,
+        communityConnections: data.getAll("communityConnections").map(String),
+        serviceLanguages: data.getAll("serviceLanguages").map(String),
+        coverageModes: data.getAll("coverageModes").map(String),
+        serviceCounties: data.getAll("serviceCounties").map(String),
+        otherServiceLanguages: lines("otherServiceLanguages"),
+        serviceMunicipalities: lines("serviceMunicipalities"),
+        publicContactPermission: data.has("publicContactPermission"),
+        addressPublicationPermission: data.has("addressPublicationPermission"),
+        imagePermissionConfirmed: data.has("imagePermissionConfirmed"),
+        legitimateBasisConfirmed: data.has("legitimateBasisConfirmed"),
+        connectionClaimsConfirmed: data.has("connectionClaimsConfirmed"),
+        accuracyConfirmed: data.has("accuracyConfirmed"),
+        editingTranslationAccepted: data.has("editingTranslationAccepted"),
+        publicationNotGuaranteedAccepted: data.has(
+          "publicationNotGuaranteedAccepted",
+        ),
+        privacyRetentionAccepted: data.has("privacyRetentionAccepted"),
+      };
+      const arrayNames = new Set([
+        "communityConnections",
+        "serviceLanguages",
+        "coverageModes",
+        "serviceCounties",
+        "otherServiceLanguages",
+        "serviceMunicipalities",
+      ]);
+      const booleanNames = new Set([
+        "publicContactPermission",
+        "addressPublicationPermission",
+        "imagePermissionConfirmed",
+        "legitimateBasisConfirmed",
+        "connectionClaimsConfirmed",
+        "accuracyConfirmed",
+        "editingTranslationAccepted",
+        "publicationNotGuaranteedAccepted",
+        "privacyRetentionAccepted",
+      ]);
+      for (const [name, value] of data.entries()) {
+        if (
+          name === "website" ||
+          arrayNames.has(name) ||
+          booleanNames.has(name)
+        )
+          continue;
+        const normalized = String(value).trim();
+        if (normalized) payload[name] = normalized;
+      }
+      return payload;
+    };
+
+    const setSubmitting = (value: boolean) => {
+      if (submitButton) submitButton.disabled = value;
+      if (submitLabel)
+        submitLabel.textContent = value
+          ? (root.dataset.actionSubmitting ?? "")
+          : (root.dataset.actionSubmit ?? "");
+      if (spinner) spinner.hidden = !value;
+      form.setAttribute("aria-busy", String(value));
+    };
+
+    form.addEventListener("input", updateConditionals);
+    form.addEventListener("change", updateConditionals);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearErrors();
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        showErrors([], root.dataset.messageValidationBody);
+        return;
+      }
+      setSubmitting(true);
+      try {
+        const response = await fetch("/api/directory-submissions", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(buildPayload()),
+        });
+        const result = (await response.json().catch(() => ({}))) as ApiResponse;
+        if (response.ok && result.ok) {
+          form.hidden = true;
+          if (beforePanel) beforePanel.hidden = true;
+          if (successPanel) {
+            successPanel.hidden = false;
+            const reference = successPanel.querySelector<HTMLElement>(
+              "[data-success-reference]",
+            );
+            if (reference)
+              reference.textContent = `${root.dataset.messageSuccessReference}: ${result.submissionId ?? ""}`;
+            successPanel.focus();
+          }
+        } else if (result.code === "validation_failed")
+          showErrors(result.errors ?? [], result.message);
+        else {
+          const message =
+            response.status === 429
+              ? root.dataset.messageRateLimited
+              : response.status === 503
+                ? root.dataset.messageUnavailable
+                : response.status >= 500
+                  ? root.dataset.messageStorageFailed
+                  : (result.message ?? root.dataset.messageUnexpected);
+          showErrors([], message);
+        }
+      } catch {
+        showErrors([], root.dataset.messageNetworkFailed);
+      } finally {
+        setSubmitting(false);
+      }
+    });
+    updateConditionals();
+  };
+
+  document
+    .querySelectorAll<HTMLElement>("[data-directory-submission]")
+    .forEach(initializeDirectorySubmission);
+  document.addEventListener("astro:page-load", () =>
+    document
+      .querySelectorAll<HTMLElement>("[data-directory-submission]")
+      .forEach(initializeDirectorySubmission),
+  );
+</script>
+
+<style>
+  .directory-submission,
+  .submission-form {
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+  .before-you-begin {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1rem;
+    padding: clamp(1.1rem, 3vw, 1.75rem);
+    background: linear-gradient(135deg, #fff, var(--surface-warm));
+  }
+  .before-you-begin__mark,
+  .success-symbol {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: 999px;
+    background: #ecfdf3;
+    color: var(--success);
+    font-weight: 800;
+  }
+  .before-you-begin ul {
+    margin-block-start: 0.75rem;
+    color: var(--text-muted);
+  }
+  .required-notice {
+    margin-block-start: 0.8rem;
+    font-weight: 700;
+  }
+  .form-section {
+    min-width: 0;
+    margin: 0;
+    padding: clamp(1.1rem, 3vw, 2rem);
+  }
+  .form-section legend {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding-inline: 0.25rem 0.9rem;
+    color: var(--civic-deep);
+    font-size: clamp(1.2rem, 2vw, 1.55rem);
+    font-weight: 760;
+  }
+  .form-section legend > span {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border-radius: 0.65rem;
+    background: var(--civic-deep);
+    color: #fff;
+    font-size: 0.85rem;
+  }
+  .section-notice {
+    margin-block: 0.45rem 1.25rem;
+    padding: 0.85rem 1rem;
+    border-inline-start: 0.25rem solid var(--gold);
+    background: var(--surface-warm);
+    color: var(--text-muted);
+  }
+  .section-notice--private {
+    border-inline-start-color: var(--civic);
+    background: var(--surface-muted);
+  }
+  .field-grid {
+    display: grid;
+    gap: 1.15rem;
+  }
+  .field-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .field-grid__wide {
+    grid-column: 1/-1;
+  }
+  .field {
+    min-width: 0;
+  }
+  .field label,
+  .field-label {
+    display: block;
+    color: var(--civic-deep);
+    font-weight: 720;
+  }
+  .field label span[aria-hidden],
+  .field-label span {
+    color: var(--brand);
+  }
+  .field input:not([type="checkbox"]):not([type="radio"]),
+  .field select,
+  .field textarea {
+    width: 100%;
+    margin-block-start: 0.42rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: #fff;
+    color: var(--text);
+  }
+  .field input:not([type="checkbox"]):not([type="radio"]),
+  .field select {
+    min-height: 3rem;
+    padding: 0.65rem 0.75rem;
+  }
+  .field textarea {
+    min-height: 7rem;
+    padding: 0.75rem;
+    resize: vertical;
+  }
+  .field [aria-invalid="true"] {
+    border-color: var(--brand) !important;
+    box-shadow: 0 0 0 0.12rem rgb(198 42 31/0.12);
+  }
+  .field-help {
+    margin-block-start: 0.42rem;
+    color: var(--text-soft);
+    font-size: 0.88rem;
+  }
+  .section-help {
+    margin-block-start: 1rem;
+  }
+  .field-error {
+    min-height: 1.2rem;
+    margin-block-start: 0.3rem;
+    color: #9e281f;
+    font-size: 0.86rem;
+    font-weight: 650;
+  }
+  .checkbox-field label {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+  }
+  .checkbox-field input {
+    flex: 0 0 auto;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-block-start: 0.18rem;
+    accent-color: var(--brand);
+  }
+  .choice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.7rem;
+    margin-block-start: 0.55rem;
+  }
+  .choice-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .choice-card {
+    display: flex !important;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 3rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: #fff;
+    cursor: pointer;
+  }
+  .choice-card:has(input:checked) {
+    border-color: var(--civic);
+    background: var(--surface-muted);
+    box-shadow: inset 0 0 0 0.08rem var(--civic);
+  }
+  .conditional-panel {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--page-bg);
+  }
+  .declaration-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .submit-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: clamp(1rem, 3vw, 1.5rem);
+  }
+  .submit-panel p {
+    margin-block-start: 0.25rem;
+    color: var(--text-muted);
+  }
+  .submit-button {
+    min-width: min(100%, 13rem);
+  }
+  .submit-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 0.15rem solid rgb(255 255 255/0.45);
+    border-top-color: #fff;
+    border-radius: 999px;
+    animation: spin 0.8s linear infinite;
+  }
+  .form-alert {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1rem;
+    padding: clamp(1rem, 3vw, 1.5rem);
+    border: 1px solid;
+    border-radius: var(--radius-lg);
+  }
+  .form-alert--error {
+    display: block;
+    border-color: #efb6b0;
+    background: #fff5f4;
+    color: #7a271a;
+  }
+  .form-alert--success {
+    border-color: #a6e2bd;
+    background: #ecfdf3;
+  }
+  .form-alert p {
+    margin-block-start: 0.45rem;
+  }
+  .success-reference {
+    font-weight: 760;
+    overflow-wrap: anywhere;
+  }
+  .honeypot {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    white-space: nowrap !important;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (max-width: 48rem) {
+    .field-grid--two,
+    .choice-grid,
+    .choice-grid--two {
+      grid-template-columns: 1fr;
+    }
+    .submit-panel {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .submit-button {
+      width: 100%;
+    }
+  }
+  @media (max-width: 32rem) {
+    .form-section {
+      padding: 1rem;
+    }
+    .form-section legend {
+      align-items: flex-start;
+      font-size: 1.15rem;
+    }
+    .before-you-begin {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
