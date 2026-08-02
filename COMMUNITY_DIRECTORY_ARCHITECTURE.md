@@ -340,13 +340,17 @@ Recommended public editorial statuses:
 - `draft`
 - `active`
 - `needs-review`
+- `temporarily-closed`
+- `permanently-closed`
 - `suspended`
 - `expired`
 - `archived`
 
-Only Active listings with valid slugs and eligible public languages should appear in normal public queries.
+Only Active listings with valid slugs and eligible public languages should appear in normal public directory results.
 
-Suspended, Expired, and Archived listings should not appear in public archives. Whether an individual old URL returns a controlled unavailable page or is omitted from static generation should be decided during route implementation.
+Temporarily Closed and Permanently Closed listings should not appear as ordinary active results. A controlled individual page may remain available to prevent confusion and show the reviewed closure state.
+
+Suspended, Expired, and Archived listings should not appear in public archives. Whether an unavailable or historical individual URL remains accessible should be decided deliberately during route implementation.
 
 Recommended review controls:
 
@@ -406,6 +410,67 @@ Required future workflows:
 Claims and corrections must enter private moderation. They must not overwrite public content automatically.
 
 A claimant must demonstrate authority before receiving control over public information. The first version does not require user accounts or owner dashboards.
+
+## Closure and inactivity reporting
+
+Every public listing page should eventually provide a discreet reporting action for:
+
+- permanently closed entity
+- temporarily closed entity
+- organization or community group that appears inactive
+- website or digital service that is no longer available
+- moved address
+- public contact information that no longer works
+- duplicate listing
+- incorrect or misleading information
+- other correction or concern
+
+Both an authorized owner or representative and an ordinary visitor may submit a report.
+
+The report form must ask for the reporter's relationship to the listing, using stable values such as:
+
+- `owner-authorized-representative`
+- `employee-volunteer`
+- `customer-service-user`
+- `community-member`
+- `other`
+
+An owner or representative report may carry stronger evidence, but the claim of authority must still be reviewed. An ordinary visitor report is a useful moderation lead and must not be treated as authoritative without verification.
+
+A report must never automatically change, close, suspend, archive, or unpublish the public listing.
+
+Recommended workflow:
+
+1. The reporter submits a closure, inactivity, or correction report.
+2. The server validates and stores the report privately in `submissions`.
+3. Staff checks appropriate public sources, official registers, websites, contact details, or contacts the listed entity when appropriate.
+4. Staff records findings and decides whether the public listing should remain active, be corrected, be marked temporarily closed, be marked permanently closed, be suspended, or be archived.
+5. Staff deliberately updates and publishes the public listing.
+6. The private report records the resolution and resolution timestamp.
+7. Private reporter information is reviewed for deletion according to the retention policy.
+
+The future private report type should be separate from a new-listing application. Recommended document type:
+
+- `directoryListingReport`
+
+The private report may contain:
+
+- public listing ID and public URL
+- report reason
+- reporter relationship
+- optional private reporter contact
+- explanation
+- supporting public URL
+- submitted timestamp
+- moderation status
+- staff findings
+- resolution
+- resolved timestamp
+- retention metadata
+
+Do not use a cross-dataset reference. Store the public listing ID and URL as controlled values.
+
+Anonymous or contact-optional visitor reporting may be allowed, but abuse controls and moderation guidance must be designed before launch. A reporter's private identity or contact details must never appear publicly.
 
 ## Featured listings and sponsorship
 
@@ -630,10 +695,12 @@ The existing Sanity-to-Vercel webhook currently recognizes the earlier `business
 13. Configure rate limiting and administrative notification.
 14. Build the shared Nepali, Norwegian, and limited English application form.
 15. Publish privacy, retention, eligibility, correction, complaint, and sponsorship policies.
-16. Add public application entry points only after the service is operational.
-17. Replace the homepage placeholder only after approved listings exist and the section has a hidden empty state.
-18. Update the Sanity-to-Vercel webhook for `directoryListing` and verify automatic deployment.
-19. Update editor, administrator, operations, and recovery documentation.
+16. Build the private `directoryListingReport` workflow for closure, inactivity, and correction reports.
+17. Add reporting actions to public listing pages only after private moderation and abuse controls are operational.
+18. Add public application entry points only after the application service is operational.
+19. Replace the homepage placeholder only after approved listings exist and the section has a hidden empty state.
+20. Update the Sanity-to-Vercel webhook for `directoryListing` and verify automatic deployment.
+21. Update editor, administrator, operations, and recovery documentation.
 
 ## Security invariants
 
