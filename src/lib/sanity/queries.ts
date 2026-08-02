@@ -30,7 +30,7 @@ export const NEWS_ARTICLES_QUERY = `
     publishedAt,
     isFeatured
   }
-`
+`;
 export const NEWS_ARTICLES_BY_LANGUAGE_QUERY = `
   *[
     _type == "newsArticle" &&
@@ -64,7 +64,7 @@ export const NEWS_ARTICLES_BY_LANGUAGE_QUERY = `
     publishedAt,
     isFeatured
   }
-`
+`;
 
 export const FEATURED_NEWS_ARTICLES_QUERY = `
   *[
@@ -98,7 +98,7 @@ export const FEATURED_NEWS_ARTICLES_QUERY = `
     authorName,
     publishedAt
   }
-`
+`;
 
 export const NEWS_ARTICLE_BY_SLUG_QUERY = `
   *[
@@ -146,7 +146,7 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
     sourceUrl,
     isFeatured
   }
-`
+`;
 export const UPCOMING_EVENTS_BY_LANGUAGE_QUERY = `
   *[
     _type == "communityEvent" &&
@@ -208,7 +208,7 @@ export const UPCOMING_EVENTS_BY_LANGUAGE_QUERY = `
     editorialReviewer,
     isFeatured
   }
-`
+`;
 
 export const PAST_EVENTS_BY_LANGUAGE_QUERY = `
   *[
@@ -271,7 +271,7 @@ export const PAST_EVENTS_BY_LANGUAGE_QUERY = `
     editorialReviewer,
     isFeatured
   }
-`
+`;
 
 export const HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY = `
   *[
@@ -335,7 +335,7 @@ export const HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY = `
     editorialReviewer,
     isFeatured
   }
-`
+`;
 
 export const EVENT_BY_SLUG_QUERY = `
   *[
@@ -407,50 +407,47 @@ export const EVENT_BY_SLUG_QUERY = `
       }
     }
   }
-`
+`;
 
-export const ACTIVE_BUSINESS_LISTINGS_QUERY = `
+export const ACTIVE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY = `
   *[
-    _type == "businessListing" &&
+    _type == "directoryListing" &&
     defined(slug.current) &&
-    listingStatus == "active"
-  ] | order(isFeatured desc, businessName asc) {
-    _id,
-    businessName,
-    "slug": slug.current,
-    category,
-    shortDescription,
-    city,
-    serviceArea,
-    phone,
-    email,
-    website,
-    logo {
-      asset,
-      alt,
-      hotspot,
-      crop
-    },
-    isVerified,
-    isFeatured
-  }
-`
-
-export const FEATURED_BUSINESS_LISTINGS_QUERY = `
-  *[
-    _type == "businessListing" &&
-    defined(slug.current) &&
+    language == $language &&
     listingStatus == "active" &&
-    isFeatured == true
-  ] | order(businessName asc) [0...6] {
+    defined(publishedAt) &&
+    publishedAt <= now()
+  ] | order(isFeatured desc, lastVerifiedAt desc, name asc) {
     _id,
-    businessName,
+    name,
     "slug": slug.current,
-    category,
-    shortDescription,
-    city,
-    serviceArea,
+    language,
+    listingType,
+    otherListingType,
+    primaryCategory,
+    otherCategory,
+    communityConnections,
+    connectionExplanation,
+    serviceLanguages,
+    otherServiceLanguages,
+    summary,
+    organizationNumber,
     website,
+    publicEmail,
+    publicPhone,
+    publicContactRole,
+    presenceType,
+    country,
+    county,
+    municipality,
+    city,
+    streetAddress,
+    postalCode,
+    mapUrl,
+    coverageModes,
+    serviceCounties,
+    serviceMunicipalities,
+    otherCoverage,
     logo {
       asset,
       alt,
@@ -465,31 +462,116 @@ export const FEATURED_BUSINESS_LISTINGS_QUERY = `
       hotspot,
       crop
     },
-    isVerified
+    verificationScopes,
+    isVerified,
+    lastVerifiedAt,
+    nextReviewAt,
+    editorialReviewer,
+    isFeatured,
+    publishedAt
   }
-`
+`;
 
-export const BUSINESS_LISTING_BY_SLUG_QUERY = `
+export const HOMEPAGE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY = `
   *[
-    _type == "businessListing" &&
+    _type == "directoryListing" &&
+    defined(slug.current) &&
+    language == $language &&
+    listingStatus == "active" &&
+    defined(publishedAt) &&
+    publishedAt <= now()
+  ] | order(isFeatured desc, lastVerifiedAt desc, name asc) [0...3] {
+    _id,
+    name,
+    "slug": slug.current,
+    language,
+    listingType,
+    otherListingType,
+    primaryCategory,
+    otherCategory,
+    communityConnections,
+    connectionExplanation,
+    serviceLanguages,
+    otherServiceLanguages,
+    summary,
+    website,
+    presenceType,
+    county,
+    municipality,
+    city,
+    coverageModes,
+    serviceCounties,
+    serviceMunicipalities,
+    otherCoverage,
+    logo {
+      asset,
+      alt,
+      hotspot,
+      crop
+    },
+    coverImage {
+      asset,
+      alt,
+      caption,
+      credit,
+      hotspot,
+      crop
+    },
+    verificationScopes,
+    isVerified,
+    lastVerifiedAt,
+    isFeatured
+  }
+`;
+
+export const DIRECTORY_LISTING_BY_SLUG_QUERY = `
+  *[
+    _type == "directoryListing" &&
     slug.current == $slug &&
-    listingStatus == "active"
+    language == $language &&
+    listingStatus in ["active", "temporarily-closed", "permanently-closed"] &&
+    defined(publishedAt) &&
+    publishedAt <= now()
   ][0] {
     _id,
-    businessName,
+    name,
     "slug": slug.current,
-    category,
-    shortDescription,
+    language,
+    translation-> {
+      _id,
+      name,
+      "slug": slug.current,
+      language,
+      listingStatus,
+      publishedAt
+    },
+    listingType,
+    otherListingType,
+    primaryCategory,
+    otherCategory,
+    communityConnections,
+    connectionExplanation,
+    serviceLanguages,
+    otherServiceLanguages,
+    summary,
     description,
     organizationNumber,
-    contactPerson,
-    email,
-    phone,
     website,
-    address,
-    postalCode,
+    publicEmail,
+    publicPhone,
+    publicContactRole,
+    presenceType,
+    country,
+    county,
+    municipality,
     city,
-    serviceArea,
+    streetAddress,
+    postalCode,
+    mapUrl,
+    coverageModes,
+    serviceCounties,
+    serviceMunicipalities,
+    otherCoverage,
     logo {
       asset,
       alt,
@@ -506,11 +588,20 @@ export const BUSINESS_LISTING_BY_SLUG_QUERY = `
     },
     facebookUrl,
     instagramUrl,
+    linkedInUrl,
+    verificationScopes,
     isVerified,
+    lastVerifiedAt,
+    nextReviewAt,
+    editorialReviewer,
+    listingStatus,
+    statusExplanation,
+    statusEffectiveAt,
     isFeatured,
     publishedAt
   }
-`
+`;
+
 export const ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY = `
   *[
     _type == "publicInformationGuide" &&
@@ -539,7 +630,7 @@ export const ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY = `
     isFeatured,
     isUrgent
   }
-`
+`;
 
 export const FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY = `
   *[
@@ -559,7 +650,7 @@ export const FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY = `
     lastReviewedAt,
     isUrgent
   }
-`
+`;
 
 export const URGENT_PUBLIC_INFORMATION_GUIDES_QUERY = `
   *[
@@ -580,7 +671,7 @@ export const URGENT_PUBLIC_INFORMATION_GUIDES_QUERY = `
     lastReviewedAt,
     nextReviewAt
   }
-`
+`;
 
 export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
   *[
@@ -632,7 +723,7 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
     isUrgent,
     fundingAcknowledgement
   }
-`
+`;
 
 export const OVERDUE_PUBLIC_INFORMATION_GUIDES_QUERY = `
   *[
@@ -652,7 +743,7 @@ export const OVERDUE_PUBLIC_INFORMATION_GUIDES_QUERY = `
     nextReviewAt,
     status
   }
-`
+`;
 
 export const IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY = `
   *[
@@ -676,7 +767,7 @@ export const IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY = `
     importantUntil,
     sourceUrl
   }
-`
+`;
 
 export const HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY = `
   *[
@@ -705,7 +796,7 @@ export const HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY = `
     authorName,
     publishedAt
   }
-`
+`;
 
 export const HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY = `
   *[
@@ -734,7 +825,7 @@ export const HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY = `
     authorName,
     publishedAt
   }
-`
+`;
 
 export const NEWS_ARCHIVE_USEFUL_GUIDES_QUERY = `
   *[
@@ -754,7 +845,7 @@ export const NEWS_ARCHIVE_USEFUL_GUIDES_QUERY = `
     isFeatured,
     isUrgent
   }
-`
+`;
 
 export const PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY = `
   *[
@@ -780,7 +871,7 @@ export const PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY = `
       defined(slug.current)
     ])
   }
-`
+`;
 
 export const PUBLIC_INFORMATION_TOPIC_BY_SLUG_QUERY = `
   *[
@@ -821,7 +912,7 @@ export const PUBLIC_INFORMATION_TOPIC_BY_SLUG_QUERY = `
       isUrgent
     }
   }
-`
+`;
 
 export const PUBLIC_INFORMATION_GUIDES_BY_TOPIC_QUERY = `
   *[
@@ -845,5 +936,4 @@ export const PUBLIC_INFORMATION_GUIDES_BY_TOPIC_QUERY = `
     isFeatured,
     isUrgent
   }
-`
-
+`;
