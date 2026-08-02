@@ -144,6 +144,16 @@ const categoryLabel = (listing: DirectoryListingSummary) =>
           {listings.length > 0 && <p>{directoryLabels.resultCount(listings.length)}</p>}
         </div>
 
+        <aside class="directory-submit-cta" aria-label={directoryLabels.submitListing}>
+          <div>
+            <strong>{directoryLabels.submitListing}</strong>
+            <p>{directoryLabels.submitListingDescription}</p>
+          </div>
+          <a class="directory-submit-cta__link" href={`/${language}/directory/submit/`}>
+            {directoryLabels.submitListing} <span aria-hidden="true">→</span>
+          </a>
+        </aside>
+
         {listings.length === 0 ? (
           <div class="directory-empty">
             <span aria-hidden="true"></span>
@@ -280,6 +290,31 @@ const categoryLabel = (listing: DirectoryListingSummary) =>
   .directory-hero .lead {
     max-width: 52rem;
     margin-block-start: 1.25rem;
+  }
+
+  .directory-submit-cta {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-block: 1.25rem 2rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--border);
+    border-inline-start: 0.3rem solid var(--brand);
+    border-radius: var(--radius-lg);
+    background: var(--surface-warm);
+  }
+
+  .directory-submit-cta p {
+    max-width: 48rem;
+    margin-block-start: 0.25rem;
+    color: var(--text-muted);
+  }
+
+  .directory-submit-cta__link {
+    flex: 0 0 auto;
+    font-weight: 760;
+    white-space: nowrap;
   }
 
   .directory-heading {
@@ -440,6 +475,16 @@ const categoryLabel = (listing: DirectoryListingSummary) =>
   }
 
   @media (max-width: 47.999rem) {
+    .directory-submit-cta {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .directory-submit-cta__link {
+      width: 100%;
+      text-align: center;
+    }
+
     .directory-heading {
       align-items: start;
       flex-direction: column;

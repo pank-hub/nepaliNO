@@ -336,6 +336,8 @@ export const ne = {
     statusEffectiveAt: "यो स्थिति लागू भएको मिति",
     translation: "अर्को भाषामा हेर्नुहोस्",
     submitListing: "सूची पठाउनुहोस्",
+    submitListingDescription:
+      "उपयोगी व्यवसाय, संस्था, सेवा वा डिजिटल स्रोत निजी सम्पादकीय समीक्षाका लागि सुझाउनुहोस्।",
     suggestCorrection: "सुधार सुझाव दिनुहोस्",
     reportListing: "यो सूचीबारे जानकारी दिनुहोस्",
     reportClosed: "बन्द भएको जानकारी दिनुहोस्",

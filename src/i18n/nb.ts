@@ -344,6 +344,8 @@ export const nb = {
     statusEffectiveAt: "Status gjelder fra",
     translation: "Se på et annet språk",
     submitListing: "Send inn en oppføring",
+    submitListingDescription:
+      "Foreslå en nyttig virksomhet, organisasjon, tjeneste eller digital ressurs for privat redaksjonell vurdering.",
     suggestCorrection: "Foreslå en rettelse",
     reportListing: "Meld fra om denne oppføringen",
     reportClosed: "Meld fra om at stedet er stengt",

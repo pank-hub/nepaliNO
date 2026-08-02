@@ -640,6 +640,16 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
               </li>
             ))}
           </ol>
+
+          <aside class="directory-submit-cta home-directory__submit" aria-label={labels.directory.submitListing}>
+            <div>
+              <strong>{labels.directory.submitListing}</strong>
+              <p>{labels.directory.submitListingDescription}</p>
+            </div>
+            <a class="directory-submit-cta__link" href={`/${language}/directory/submit/`}>
+              {labels.directory.submitListing} <span aria-hidden="true">→</span>
+            </a>
+          </aside>
         </div>
       </section>
     )
@@ -1288,6 +1298,29 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     border-bottom: 2px solid var(--civic-deep);
   }
 
+  .home-directory__submit {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-block-start: 0.25rem;
+    padding: 1rem 0;
+    border-block-start: 1px solid var(--border);
+  }
+
+  .home-directory__submit p {
+    max-width: 44rem;
+    margin-block-start: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .home-directory__submit .directory-submit-cta__link {
+    flex: 0 0 auto;
+    font-weight: 760;
+    white-space: nowrap;
+  }
+
   .directory-rail {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1425,6 +1458,16 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
   }
 
   @media (max-width: 47.999rem) {
+    .home-directory__submit {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .home-directory__submit .directory-submit-cta__link {
+      width: 100%;
+      text-align: center;
+    }
+
     .important-now {
       grid-template-columns: 1fr;
       gap: 0.45rem;
