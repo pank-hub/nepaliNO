@@ -2601,3 +2601,487 @@ At handover creation:
 7. Replace the temporary large dark no-image Event placeholder with a lightweight branded placeholder or compact no-image layout.
 8. Update editor and administrator documentation and the operations runbook.
 9. Create the final Event-module completion checkpoint before or alongside the transition into Business Directory work.
+
+
+## Community Directory Submission, Moderation and Public Activation Milestone
+
+Completed and production-verified on 2 August 2026 through checkpoint `ddd4004 activate Community Directory submission links`.
+
+### Delivered scope
+
+The Community Directory moved from a governed public-content foundation to a complete public contribution and private moderation service.
+
+Implemented and verified:
+
+- private `directoryListingSubmission` schema in the private `submissions` dataset
+- shared `nepali.no Submission Moderation` Studio workspace for Event and Directory submissions
+- Publish, Unpublish and Duplicate actions removed from both private submission document types
+- public suggestions accepted from owners, authorized representatives, employees, volunteers, website administrators, community members and ordinary visitors
+- ordinary visitors may suggest a legitimate listing without claiming authority over the entity
+- every suggestion remains a private editorial lead until nepali.no deliberately creates and publishes a public `directoryListing`
+- strict allowlist-based server validation
+- private draft storage with server-generated ID, status and timestamp
+- dedicated Sanity Contributor token for the Directory submission service
+- production API endpoint at `/api/directory-submissions`
+- JSON-only request handling and 64 KiB body limit
+- honeypot handling and rejection of browser-supplied moderation, verification, Featured, lifecycle and publication fields
+- privacy-safe administrative notification through Resend
+- storage-first behavior so notification failure cannot invalidate a stored submission
+- shared Vercel WAF rule protecting both Event and Directory submission endpoints
+- typed multilingual copy contract
+- Nepali, Norwegian and deliberately limited English interfaces
+- one shared light, mobile-first, accessible ten-section public form
+- localized production routes
+- public archive and homepage entry points
+- desktop and mobile visual validation
+- genuine end-to-end production-form proof
+- explicit proof that the private submission created no public `directoryListing`
+
+### Visitor-suggestion policy
+
+The Community Directory intentionally allows any visitor to suggest an establishment, organization, service or digital resource that appears to fit the Directory.
+
+The relationship option is presented as:
+
+- Nepali: `सूची सुझाउने समुदाय सदस्य वा आगन्तुक`
+- Norwegian: `Fellesskapsmedlem eller besøkende som foreslår en oppføring`
+- English: `Community member or visitor suggesting a listing`
+
+This policy does not grant the submitter ownership, verification status, editorial control or publication rights. A visitor suggestion is only a private lead for independent editorial review.
+
+The form distinguishes:
+
+1. an owner or authorized representative
+2. a founder or leader
+3. an employee or volunteer
+4. a website or resource administrator
+5. a community member or visitor suggesting a listing
+6. another legitimate relationship or basis
+
+The declaration therefore confirms authority **or a legitimate basis to suggest**, rather than falsely requiring every submitter to represent the entity.
+
+### Private submission schema and moderation
+
+Private type:
+
+```text
+directoryListingSubmission
+```
+
+Public type:
+
+```text
+directoryListing
+```
+
+The private schema includes:
+
+- moderation status
+- server-generated submission timestamp
+- interface, source and requested public languages
+- assigned reviewer
+- internal and clarification notes
+- retention review date
+- converted public IDs, URLs and timestamp
+- private applicant contact
+- relationship and legitimate-basis explanation
+- proposed identity, type and category
+- optional organization number
+- community-connection declarations
+- private ownership or leadership context
+- service languages
+- proposed public summary and description
+- proposed public contacts and permission
+- presence, location and service coverage
+- public-address confirmation
+- social, logo and image proposals
+- image publication permission
+- accuracy, editing, translation, publication and privacy declarations
+
+Public conversion remains manual. Cross-dataset references are not used; final public IDs and URLs are stored as controlled metadata.
+
+### Strict validation and storage boundary
+
+Authoritative modules:
+
+```text
+src/lib/directorySubmissions/validateDirectorySubmission.ts
+src/lib/directorySubmissions/createDirectorySubmission.ts
+src/pages/api/directory-submissions.ts
+```
+
+The browser cannot control:
+
+- `_id`
+- `_type`
+- `moderationStatus`
+- `submittedAt`
+- assigned reviewer
+- internal notes
+- clarification notes
+- retention-review fields
+- converted public IDs or URLs
+- verification status or scopes
+- Featured status
+- public lifecycle status
+- publication timestamp
+
+Server hard-coded storage values:
+
+```text
+project: f9johco4
+dataset: submissions
+type: directoryListingSubmission
+status: new
+draft prefix: drafts.directoryListingSubmission-
+```
+
+Server-only environment variable:
+
+```text
+SANITY_DIRECTORY_SUBMISSION_TOKEN
+```
+
+The dedicated token uses Sanity Contributor permission. Contributor can create drafts but cannot publish. Because Growth does not provide the desired dataset-scoped custom role, hard-coded project, dataset and type boundaries remain mandatory.
+
+### API and live safeguard tests
+
+The production endpoint was tested before private write access was activated:
+
+- GET returned HTTP 405 and `Cache-Control: no-store`
+- cross-site form submission was rejected upstream by Astro/Vercel with HTTP 403
+- malformed JSON returned HTTP 400 `invalid_json`
+- empty JSON returned controlled field-validation errors
+- browser-supplied moderation and public lifecycle fields returned `unknown_field`
+
+After Production variables and rate limiting were active, a valid request returned HTTP 201 with only a non-secret reference and timestamp.
+
+### Resend moderator notification
+
+Verified sending domain:
+
+```text
+notifications.nepali.no
+```
+
+Directory sender:
+
+```text
+Nepali.no Notifications <directory@notifications.nepali.no>
+```
+
+Server variables:
+
+```text
+RESEND_API_KEY
+DIRECTORY_SUBMISSION_NOTIFICATION_TO
+```
+
+Current recipient:
+
+```text
+pankaj@kafley.no
+```
+
+The recipient should later be changed to an official organizational mailbox without changing application code.
+
+The email contains only:
+
+- proposed listing name
+- listing type
+- applicant relationship category
+- received timestamp
+- non-secret submission reference
+- private moderation-workspace link
+
+It excludes applicant email and telephone, complete description, authority or ownership context, address, declarations and other private data.
+
+Operational order:
+
+```text
+validate
+  -> store private draft
+  -> attempt moderator notification
+  -> return browser success
+```
+
+Notification failure is logged using only a controlled reason and submission reference. It must never roll back storage or encourage duplicate resubmission.
+
+### Shared Vercel WAF rule
+
+The former Event-only rule was renamed:
+
+```text
+Submission endpoint rate limit
+```
+
+It matches exactly:
+
+```text
+/api/event-submissions
+/api/directory-submissions
+```
+
+Configuration:
+
+- Fixed Window
+- 600 seconds
+- 10 requests
+- IP Address key
+- HTTP 429 action
+
+Changing the administrative rule name did not affect Event functionality. Both submission endpoints share the same per-IP counter. Normal GET requests and ordinary public pages are unaffected.
+
+### Multilingual public form
+
+Shared component:
+
+```text
+src/components/directory/DirectorySubmissionForm.astro
+```
+
+Typed copy contract:
+
+```text
+src/i18n/directorySubmission.ts
+```
+
+Localized copy:
+
+```text
+src/i18n/directorySubmission.ne.ts
+src/i18n/directorySubmission.nb.ts
+src/i18n/en.ts
+```
+
+Routes:
+
+```text
+/ne/directory/submit/
+/nb/directory/submit/
+/en/directory/submit/
+```
+
+The English route uses a restricted service header and footer. It does not imply a complete English website.
+
+The form contains ten numbered sections:
+
+1. Language and publication preference
+2. Private applicant contact
+3. Relationship or legitimate basis
+4. Proposed listing identity
+5. Nepal and Nepali community connection
+6. Proposed public description
+7. Proposed public contact
+8. Location and service coverage
+9. Links and optional images
+10. Declarations and consent
+
+Verified conditional behavior includes:
+
+- Other source language
+- Other preferred contact language
+- Other applicant relationship
+- Other listing type and category
+- organization-number explanation
+- Other service languages
+- proposed public-contact permission
+- physical-location fields
+- public-address confirmation
+- selected counties
+- selected municipalities
+- Other coverage
+- image publication permission
+
+Hidden controls are disabled and cleared. Language switching reloads the page and deliberately does not carry private unfinished data through URLs or browser storage.
+
+### Accessibility and visual validation
+
+Verified:
+
+- light public-facing design, separate from Sanity Studio
+- normal Nepali and Norwegian site header and footer
+- restricted English service header and footer
+- keyboard-usable native controls
+- visible required indicators
+- native browser validation
+- accessible error summary and field errors
+- loading state and spinner
+- focused success panel
+- desktop presentation
+- mobile presentation at approximately 390 by 844 pixels
+- no horizontal overflow
+- long Nepali and Norwegian strings wrap correctly
+- duplicate browser-validation instruction removed after visual review
+
+Prettier and `prettier-plugin-astro` were added as development dependencies with `prettier.config.mjs` so future Astro files can be formatted safely. Existing large Astro files should not be reformatted casually because doing so can create noisy unrelated diffs; use focused semantic changes and review before committing.
+
+### Production proof
+
+Controlled backend test:
+
+```text
+nepali.no Directory Backend Test
+reference: bc1ff6c1-42c6-4fb3-8e93-fa5b62bca426
+```
+
+Controlled production-form test:
+
+```text
+nepali.no Directory Production Form Test
+reference: 8cbf7d16-6838-4fac-98cc-671079b0d69d
+```
+
+Verified for the production-form test:
+
+- HTTP 201 success
+- private `directoryListingSubmission` draft created
+- moderation status New
+- correct relationship, presence and coverage values
+- no Publish action
+- moderator email delivered
+- notification contained no private applicant contact details
+- GROQ query against public `production` returned `[]`
+- no public archive card or detail page was created
+
+The two controlled private test submissions should later be archived or deleted under the approved retention workflow and must never be converted to public listings.
+
+### Public discovery
+
+Directory archive:
+
+- one localized contextual submission panel
+- no duplicate submission button
+- result count preserved
+- panel remains visible when the archive is empty
+- localized link opens the appropriate submission form
+
+Homepage:
+
+- one lightweight CTA beneath the Directory editorial rail
+- CTA exists only inside the already guarded Directory section
+- no orphaned CTA appears on the Norwegian homepage when no eligible Norwegian listings exist
+- mobile CTA stacks cleanly
+
+Final public activation checkpoint:
+
+```text
+ddd4004 activate Community Directory submission links
+```
+
+### Directory submission checkpoints
+
+- `004ef98 add private Community Directory submission schema`
+- `25d0d1c add Community Directory submission validation and storage`
+- `5c4f1a6 add Community Directory submission endpoint and notification`
+- `eb29609 add Community Directory submission copy contract`
+- `affa064 add multilingual Community Directory submission copy`
+- `31a0d6d add shared Community Directory submission form`
+- `1a6cf21 add localized Community Directory submission routes`
+- `ddd4004 activate Community Directory submission links`
+
+### Development-effort estimate
+
+Actual elapsed project-lead and AI-assisted work for this milestone was approximately 11 hours on 2 August 2026.
+
+Estimated conventional equivalent for a competent mid-level developer:
+
+```text
+reasonable range: 90–120 hours
+central planning estimate: approximately 100 hours
+wider plausible range: 75–140 hours
+```
+
+This is a retrospective indicative estimate, not an audited timesheet. It includes requirements, architecture, schemas, validation, security controls, multilingual content, accessible form development, deployment, external-service configuration, responsive testing and production verification.
+
+### Remaining Directory work
+
+1. Approve and publish concrete privacy and retention wording.
+2. Archive or delete the two controlled private test submissions at the appropriate time.
+3. Create editor and administrator instructions covering review, clarification, rejection, conversion and deletion.
+4. Add an operations-runbook section for endpoint, Sanity, Resend and WAF failures.
+5. Consider a separate submitter receipt email later. It must remain best-effort and storage-first.
+6. Define the manual conversion checklist from private submission to public bilingual listings.
+7. Continue normal public-directory population and translation review.
+8. Preserve the rule that submissions never publish automatically.
+
+## Final Major Phase 1 Milestone: Controlled Forum Integration
+
+The final major functional milestone in Phase 1 is a moderated discussion platform integrated carefully with News and Public Information Guides.
+
+### Platform decision remains open
+
+The forum may use Discourse or another suitable platform. Do not treat Discourse as selected until hosting, moderation, authentication, cost, operational ownership and integration requirements have been evaluated.
+
+The forum must retain its own database and operational boundary. Sanity remains the editorial content system for News, Public Information Guides, Events, Directory content and other approved public material.
+
+### Intended relationship with News
+
+A published News article may optionally contain an editorially approved connection to one relevant forum topic.
+
+The public News page may show a restrained call to action such as:
+
+```text
+Discuss this topic in the community
+```
+
+The connection must not make discussion posts appear to be verified journalism. News remains edited public content; forum posts remain community discussion, questions and personal experiences.
+
+### Intended relationship with Public Information Guides
+
+A published Guide may optionally connect to a relevant forum topic for:
+
+- questions
+- practical experiences
+- peer discussion
+- community support
+
+The Guide remains the authoritative editorial layer based on official sources. Forum content must be clearly separated and must never override or modify the Guide.
+
+### Forum integration invariants
+
+- forum platform and database remain separate from Sanity
+- no automatic copying of forum posts into News or Guides
+- no automatic creation of public Sanity content from discussions
+- no automatic creation of forum links from unreviewed user input
+- only approved public News and Guide documents may show a forum-topic connection
+- editors can add, replace, disable or remove the connection
+- language and publication status must be checked before display
+- closed, hidden, deleted, unsafe or inaccessible topics must not leave misleading calls to action
+- unpublished Sanity drafts and private datasets must never be exposed
+- forum discussion must be visually and editorially distinguished from official-source guidance and journalism
+- homepage forum placeholders must not be activated until the service, moderation workflow and empty states are operational
+- moderation, abuse reporting, retention, privacy, backup, incident response and operational ownership must be decided before launch
+
+### Recommended forum implementation sequence
+
+1. Audit current News and Public Information Guide schemas and routes.
+2. Audit current homepage forum placeholders and related interface copy.
+3. Write the functional, moderation, privacy, operational and cost requirements.
+4. Compare Discourse with credible alternatives.
+5. Decide hosting, authentication, account recovery, moderation roles and operating cost.
+6. Define the controlled Sanity-to-forum connection contract.
+7. Add optional discussion metadata to News and Public Information Guides.
+8. Add publication-, language- and availability-safe frontend calls to action.
+9. Define forum-topic creation, closure, replacement and deletion procedures.
+10. Configure moderation, trust levels, abuse reporting, spam controls and retention.
+11. Test privately with synthetic content.
+12. Verify that forum failures do not break News or Guide pages.
+13. Replace homepage placeholder content only after the service is operational.
+14. Complete editor instructions, operations runbook and launch review.
+
+### Exact next work
+
+Begin with a read-only forum-integration audit. Do not install or provision a platform immediately.
+
+The next colleague should first inspect:
+
+- News schema and article routes
+- Public Information Guide schema and detail routes
+- existing Guide-to-News relationship fields and queries
+- any current discussion or forum placeholder copy
+- homepage forum presentation
+- current authentication assumptions
+- Vercel, Sanity and DNS operational boundaries
+
+The first deliverable should be a forum requirements and platform-evaluation document, followed by a controlled schema and frontend integration proposal for Pankaj's approval.

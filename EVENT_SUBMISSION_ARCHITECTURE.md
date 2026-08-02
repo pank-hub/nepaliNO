@@ -394,3 +394,293 @@ A future owner or hosting migration must preserve:
 - exact public and Studio project distinction
 
 Never move these secret values into Git, client code, `PUBLIC_` variables, or screenshots.
+
+
+## Shared Submission-Service Pattern After Community Directory Completion
+
+This Event-specific document remains authoritative for Event behavior. The completion of the Community Directory submission service on 2 August 2026 established a reusable public-contribution pattern. Shared principles are documented here so future changes do not accidentally weaken either service.
+
+Final Directory activation checkpoint:
+
+```text
+ddd4004 activate Community Directory submission links
+```
+
+### Shared public-to-private boundary
+
+Both services follow this invariant:
+
+```text
+localized public form
+  -> exact Vercel WAF route protection
+  -> JSON and body-size boundary
+  -> strict allowlist normalization and validation
+  -> server-only private Sanity draft creation
+  -> best-effort administrative notification
+  -> browser success with non-secret reference
+  -> deliberate staff review and manual public conversion
+```
+
+Neither service may publish automatically.
+
+Private types:
+
+```text
+eventSubmission
+directoryListingSubmission
+```
+
+Public types:
+
+```text
+communityEvent
+directoryListing
+```
+
+### Shared private dataset and moderation workspace
+
+Both private types live only in:
+
+```text
+submissions
+```
+
+The Studio workspace is now:
+
+```text
+nepali.no Submission Moderation
+```
+
+Its existing base path remains:
+
+```text
+/event-moderation
+```
+
+The path was retained to avoid breaking existing Vercel rewrites, bookmarks and Event notification links. A future path migration must use a planned redirect and notification update.
+
+Publish, Unpublish and Duplicate actions are blocked for both private submission types.
+
+Workspace visibility is not a security boundary. Private dataset access, authenticated roles, server-only tokens and hard-coded server mutation boundaries remain authoritative.
+
+### Separate service tokens
+
+Event:
+
+```text
+SANITY_EVENT_SUBMISSION_TOKEN
+```
+
+Directory:
+
+```text
+SANITY_DIRECTORY_SUBMISSION_TOKEN
+```
+
+Both use Contributor permission. The services deliberately do not share one token, even though Growth permissions are not dataset-scoped, because separate credentials improve rotation, revocation and operational diagnosis.
+
+Never replace these with a browser-visible or `PUBLIC_` token.
+
+### Shared Resend infrastructure
+
+Verified sending domain:
+
+```text
+notifications.nepali.no
+```
+
+Shared server variable:
+
+```text
+RESEND_API_KEY
+```
+
+Separate recipient variables:
+
+```text
+EVENT_SUBMISSION_NOTIFICATION_TO
+DIRECTORY_SUBMISSION_NOTIFICATION_TO
+```
+
+Senders:
+
+```text
+Nepali.no Notifications <events@notifications.nepali.no>
+Nepali.no Notifications <directory@notifications.nepali.no>
+```
+
+The current recipient is `pankaj@kafley.no` and should later be changed through Vercel environment configuration to an official organizational mailbox.
+
+Administrative notifications must remain minimal and privacy-safe. Full submissions belong in the authenticated moderation workspace, not email.
+
+### Storage-first notification rule
+
+For both services:
+
+1. Validate the visitor payload.
+2. Store the authoritative private draft.
+3. Attempt the administrative notification.
+4. Return success if storage succeeded, even when notification failed.
+
+Notification failure must never:
+
+- delete or roll back the submission
+- change the moderation record
+- return a misleading storage failure
+- encourage the visitor to create a duplicate submission
+
+### Shared WAF rule
+
+The Vercel rule is now named:
+
+```text
+Submission endpoint rate limit
+```
+
+Exact protected paths:
+
+```text
+/api/event-submissions
+/api/directory-submissions
+```
+
+Configuration:
+
+- Fixed Window
+- 600 seconds
+- 10 requests
+- IP Address key
+- HTTP 429 action
+
+The two paths share one per-IP counter. Normal browsing and GET routes are unaffected. This lives in Vercel configuration and must be preserved during migration.
+
+### Shared public-form architecture
+
+Both services use:
+
+- one shared Astro component per service
+- typed copy contracts
+- centralized Nepali and Norwegian copy
+- deliberately limited English submission pages
+- light, public-facing, mobile-first design
+- private versus proposed-public explanations
+- hidden keyboard-safe honeypot
+- field-level errors
+- accessible error summary
+- disabled submission state
+- focused success confirmation
+- stable internal values independent of translated labels
+- server-side validation as the authority
+
+Event files:
+
+```text
+src/components/events/EventSubmissionForm.astro
+src/i18n/eventSubmission.ts
+src/i18n/eventSubmission.ne.ts
+src/i18n/eventSubmission.nb.ts
+```
+
+Directory files:
+
+```text
+src/components/directory/DirectorySubmissionForm.astro
+src/i18n/directorySubmission.ts
+src/i18n/directorySubmission.ne.ts
+src/i18n/directorySubmission.nb.ts
+```
+
+Prettier and `prettier-plugin-astro` are installed as development dependencies. Avoid casually reformatting large established Astro files because doing so can create noisy unrelated diffs. Use focused changes, inspect semantic diffs and checkpoint cleanly.
+
+### Important difference: who may submit
+
+Event submissions currently require Event authority confirmation from the organizer or organization.
+
+Directory submissions deliberately allow any visitor to suggest a legitimate listing. A visitor suggestion is a private editorial lead and does not grant authority, control, verification or publication rights.
+
+The Directory declaration therefore confirms:
+
+```text
+authority or legitimate basis to suggest
+```
+
+It does not claim that every visitor represents the entity.
+
+Future developers must not copy the Event authority wording blindly into Directory.
+
+### Important difference: public-address handling
+
+An authorized representative may be able to grant publication permission for proposed public contact information.
+
+An ordinary Directory visitor cannot grant permission on behalf of an entity. For a proposed street address, the visitor can only confirm that the address is already publicly presented by the entity. Staff still review whether to publish it.
+
+### Manual conversion remains mandatory
+
+Event conversion:
+
+- create or edit a public `communityEvent` in `production`
+- verify dates, location, registration, contacts, image rights and language
+- publish deliberately
+- record final public ID and URL in the private submission
+
+Directory conversion:
+
+- independently verify identity, organization number when relevant, community connection, public contacts, address, coverage and image rights
+- create and edit one or two public `directoryListing` documents in `production`
+- manually translate Nepali and Norwegian when appropriate
+- publish deliberately
+- record final public IDs and URLs in the private submission
+
+No cross-dataset references are used.
+
+### Submitter receipt pattern
+
+A submitter acknowledgement remains deferred for both services.
+
+If implemented, it must be:
+
+- separate from administrative notification
+- sent only after authoritative private storage
+- minimal transactional communication
+- never marketing
+- best-effort
+- incapable of invalidating browser success or stored data
+- documented in privacy wording
+
+### Shared operational checks
+
+For either submission service, incident diagnosis should verify in this order:
+
+1. Vercel deployment is Ready.
+2. exact API route responds to safe malformed JSON with a controlled no-store error
+3. WAF rule is enabled and matches the exact route
+4. service-specific Sanity token exists in Production
+5. private `submissions` dataset remains accessible
+6. `RESEND_API_KEY` and service-specific recipient exist
+7. verified `notifications.nepali.no` DNS remains valid
+8. moderation workspace loads the private document type
+9. no public document appeared automatically
+
+Never paste secret tokens into chat, Git, screenshots, Markdown or client code.
+
+### Directory implementation references
+
+```text
+sanity/schemaTypes/directoryListingSubmission.ts
+src/lib/directorySubmissions/validateDirectorySubmission.ts
+src/lib/directorySubmissions/createDirectorySubmission.ts
+src/lib/directorySubmissions/notifyDirectorySubmission.ts
+src/pages/api/directory-submissions.ts
+src/components/directory/DirectorySubmissionForm.astro
+src/pages/[lang]/directory/submit.astro
+src/pages/en/directory/submit.astro
+```
+
+Controlled verification references:
+
+```text
+backend test: bc1ff6c1-42c6-4fb3-8e93-fa5b62bca426
+production-form test: 8cbf7d16-6838-4fac-98cc-671079b0d69d
+```
+
+Both test submissions are private and must never be converted to public listings. Archive or delete them later under the approved retention procedure.
