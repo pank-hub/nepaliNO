@@ -2353,3 +2353,251 @@ Completed and verified on 1 August 2026.
 12. Connect `HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY`, show Featured and Upcoming Events and hide the section when no suitable Events exist.
 13. Remove remaining homepage dummy, placeholder and Coming Soon content.
 14. Delete both synthetic submission records before public launch unless one is formally retained as a governed test fixture.
+
+## Event Submission Service Completed and Publicly Integrated
+
+Completed and verified through checkpoint `02d7356 add Event submission links to archives` on 2 August 2026.
+
+### Public Event submission service
+
+- Added one shared public form implementation:
+  - `src/components/events/EventSubmissionForm.astro`
+- Added a type-safe copy contract:
+  - `src/i18n/eventSubmission.ts`
+- Added centralized form copy:
+  - `src/i18n/eventSubmission.ne.ts`
+  - `src/i18n/eventSubmission.nb.ts`
+  - `src/i18n/en.ts`
+- Wired Nepali and Norwegian copy through:
+  - `ne.events.submission`
+  - `nb.events.submission`
+- Added public routes:
+  - `/ne/events/submit/`
+  - `/nb/events/submit/`
+  - `/en/events/submit/`
+- English remains a deliberately limited Event-submission service and was not added to global `supportedLanguages` or `getTranslations()`.
+- No incomplete English homepage, News, Public Information, or Events archive was generated.
+
+### Public form design and accessibility
+
+- Replaced any need for Sanity Studio's dark administrative form with a light, welcoming, mobile-first nepali.no form.
+- Reused the existing nepali.no colors, typography, surfaces, buttons, focus styles, and responsive containers.
+- Divided the form into eight clearly numbered sections.
+- Added clear separation between private organizer contact data and proposed public organizer information.
+- Added visible required-field guidance, contextual help, accessible error summary, field-level errors, submission progress, and a focused success panel.
+- Added a hidden, keyboard-safe honeypot field.
+- Verified desktop presentation in Nepali, Norwegian, and English.
+- Verified mobile presentation at approximately 390 by 844 pixels in English and Nepali without horizontal overflow.
+- Kept both the normal site-language switch and the form-specific Nepali, Norwegian, and English buttons. Manual testing confirmed the additional language buttons are useful and not disruptive.
+- Recorded this design pattern for the future Business Directory application form.
+
+### Conditional form behavior
+
+Verified all major conditional paths manually:
+
+- Other submission language
+- Other preferred contact language
+- Other Event language
+- proposed public contact permission
+- in-person, online, and hybrid location groups
+- registration requirement and registration details
+- free versus paid Event pricing
+- proposed image permission
+- all five declarations
+
+Additional refinements implemented after manual testing:
+
+- Language-independent is mutually exclusive with spoken-language choices.
+- Changing registration from Not required to Recommended, Required, or Tickets required changes Not applicable to Not yet open.
+- Tickets or registration may still be free, so Free Event remains an independent choice.
+- Online and hybrid Events display localized guidance requiring at least an online platform or a public information URL.
+- After successful submission, the completed form and Before you begin panel disappear, leaving a clean confirmation state.
+
+### Production browser-form proof
+
+A complete synthetic Event was submitted through the deployed English public form:
+
+- title: `SYNTHETIC PUBLIC FORM TEST - Delete after validation`
+- endpoint returned success
+- the on-screen green confirmation panel displayed a server-generated submission reference
+- the matching private draft appeared in Event Moderation
+- moderation status was New
+- Submitted At was server-generated
+- the administrative notification email arrived
+- private and proposed public contacts remained separate
+- no public Community Event was created
+
+The authoritative workflow is now proven:
+
+```text
+Public multilingual form
+  -> Vercel WAF rate limit
+  -> request and payload validation
+  -> private Sanity draft storage
+  -> administrative notification attempt
+  -> on-screen success confirmation
+```
+
+### Abuse prevention and validation
+
+- Vercel WAF rate limiting is active for `/api/event-submissions`:
+  - Fixed Window
+  - 600 seconds
+  - 10 requests
+  - IP Address key
+  - HTTP 429 when exceeded
+- Live test produced HTTP 400 for malformed requests 1 through 10 and HTTP 429 for requests 11 and 12.
+- Existing endpoint protections remain active:
+  - POST only
+  - JSON only
+  - 64 KiB body limit
+  - malformed JSON rejection
+  - object-payload requirement
+  - strict visitor-field allowlist
+  - field-length limits
+  - URL and email validation
+  - timezone-aware ISO datetimes
+  - impossible calendar-date rejection
+  - conditional-field consistency
+  - permissions and declarations
+  - honeypot detection
+  - generic no-store responses
+
+### Private storage boundary
+
+- Validated submissions are stored only in private dataset `submissions`.
+- The server hard-codes:
+  - Sanity project `f9johco4`
+  - dataset `submissions`
+  - type `eventSubmission`
+  - moderation status `new`
+  - draft ID prefix `drafts.eventSubmission-`
+- The server generates submission UUID and Submitted At.
+- Browser data cannot control dataset, document ID, type, moderation fields, reviewer fields, internal notes, timestamps, or public conversion metadata.
+- The Contributor robot token cannot publish.
+- Approved public `communityEvent` documents must still be deliberately created and published by staff in `production`.
+
+### Administrative notification
+
+- Verified sending domain:
+  - `notifications.nepali.no`
+- DNS configured through Domeneshop and verified by Resend:
+  - DKIM TXT
+  - SPF-related MX
+  - SPF TXT
+- Resend API key is restricted to:
+  - Sending access only
+  - `notifications.nepali.no`
+- Vercel Production-only sensitive variables in public project `nepali-no`:
+  - `RESEND_API_KEY`
+  - `EVENT_SUBMISSION_NOTIFICATION_TO`
+  - `SANITY_EVENT_SUBMISSION_TOKEN`
+- Current administrative recipient is `pankaj@kafley.no`; it should later be replaced by an official organizational mailbox.
+- Sender:
+  - `Nepali.no Notifications <events@notifications.nepali.no>`
+- Notification contains only:
+  - proposed Event title
+  - organizer name
+  - received timestamp
+  - non-secret submission reference
+  - Event Moderation link
+- Full description, private contact details, declarations, and internal notes are excluded.
+- Notification attempts have a five-second timeout.
+- Provider rejection, network failure, and missing configuration were tested using deterministic local mocks.
+- Notification failure cannot reverse or invalidate a stored submission.
+
+### Submitter receipt deferred
+
+A separate submitter acknowledgement email is required later, but was deliberately deferred.
+
+Requirements already agreed:
+
+- separate from the administrative notification
+- sent only after authoritative private storage
+- minimal transactional receipt, not marketing
+- Event title, received timestamp, submission reference, non-publication disclaimer, and future review guidance only
+- no complete submission, private telephone number, declarations, or moderation information
+- email failure must never invalidate the stored submission
+- privacy wording must disclose transactional email processing
+- later configure an official reply address when an organizational `@nepali.no` mailbox exists
+
+### Public archive entry points
+
+Added clear localized actions to all four public Event archives.
+
+Upcoming archive:
+
+- primary: Submit your Event
+- secondary: View past Events
+
+Past archive:
+
+- primary: Submit your Event
+- secondary: View upcoming Events
+
+Localized routes:
+
+- `/ne/events/submit/`
+- `/nb/events/submit/`
+
+Nepali call to action was refined from `कार्यक्रम थप्नुहोस्` to the moderated-workflow wording `आफ्नो कार्यक्रम पठाउनुहोस्`.
+
+Visual checks passed for:
+
+- Nepali Upcoming
+- Nepali Past
+- Norwegian Upcoming
+- Norwegian Past
+
+### Homepage Event requirement retained
+
+The homepage Event query already exists but is not connected to the homepage frontend:
+
+- `HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY`
+
+When the homepage Event section is implemented, it must:
+
+- prioritize Featured Events
+- fall back to appropriate upcoming or ongoing Events
+- hide the entire Event section when no suitable Events exist
+- show a localized Submit your Event link to the operational submission form
+- not show the submission link before both the Event section and submission service are operational
+- remove related dummy, placeholder, or Coming Soon text
+
+The genuine IMDi Event is marked for homepage featuring but still does not appear because the homepage frontend is not wired to the Event query.
+
+### Current Event-related checkpoints
+
+- `d808511 add secure Vercel server adapter`
+- `9646a64 add Event submission endpoint skeleton`
+- `5fc192b validate Event submission payloads`
+- `12be7cd store private Event submissions`
+- `1e81c4e document secure Event submission storage`
+- `6dc5845 notify admins of Event submissions`
+- `63dc891 add Event submission translations`
+- `bed0e40 add shared Event submission form`
+- `2ed7a16 add multilingual Event submission pages`
+- `8601027 refine Event submission confirmation`
+- `02d7356 add Event submission links to archives`
+
+### Current verified repository state
+
+At handover creation:
+
+```text
+02d7356 (HEAD -> main, origin/main, origin/HEAD) add Event submission links to archives
+```
+
+`git status --short` returned no output.
+
+### Remaining Event work before final launch
+
+1. Format the administrative notification timestamp for human-readable `Europe/Oslo` display while retaining UTC in storage.
+2. Implement the deferred submitter receipt email.
+3. Add or finalize Event-submission privacy and retention wording and link it from the form.
+4. Decide whether duplicate-submission mitigation needs an additional application-level strategy beyond WAF rate limiting.
+5. Delete clearly marked synthetic private submissions before launch unless one is deliberately retained as a governed test fixture.
+6. Connect the homepage Event query, display Featured and Upcoming Events, add the localized submission link, and hide the section when empty.
+7. Replace the temporary large dark no-image Event placeholder with a lightweight branded placeholder or compact no-image layout.
+8. Update editor and administrator documentation and the operations runbook.
+9. Create the final Event-module completion checkpoint before or alongside the transition into Business Directory work.

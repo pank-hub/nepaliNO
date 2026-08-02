@@ -208,3 +208,189 @@ Future developers and AI assistants must not weaken these rules:
 8. Test with synthetic data.
 9. Verify no submission appears in public queries or routes.
 10. Perform a security and abuse review before accepting genuine submissions.
+
+## Implemented Architecture Addendum: Public Submission Service
+
+This addendum records the production implementation validated through checkpoint `02d7356 add Event submission links to archives`. It supplements the original design decisions in this document and should not replace the earlier rationale.
+
+### Implemented request path
+
+```text
+Visitor opens localized public form
+  -> /ne/events/submit/
+  -> /nb/events/submit/
+  -> /en/events/submit/
+
+Shared EventSubmissionForm.astro
+  -> POST /api/event-submissions
+
+Vercel WAF
+  -> 10 requests per IP per 600-second fixed window
+
+API request boundary
+  -> POST and JSON only
+  -> 64 KiB request limit
+  -> malformed and non-object rejection
+
+Strict normalization and validation
+  -> visitor-field allowlist
+  -> conditional and permission rules
+  -> honeypot handling
+
+Server-only Sanity mutation
+  -> project f9johco4
+  -> private submissions dataset
+  -> eventSubmission draft
+  -> server-generated ID, status and timestamp
+
+Best-effort administrative notification
+  -> Resend through notifications.nepali.no
+  -> notification failure cannot roll back storage
+
+Browser response
+  -> HTTP 201 and non-secret submission reference
+```
+
+### Public form implementation
+
+The public form is intentionally separate from Sanity Studio. Sanity Studio remains the authenticated staff moderation interface. Visitors use a custom light, mobile-first nepali.no form.
+
+Files:
+
+- `src/components/events/EventSubmissionForm.astro`
+- `src/pages/[lang]/events/submit.astro`
+- `src/pages/en/events/submit.astro`
+- `src/i18n/eventSubmission.ts`
+- `src/i18n/eventSubmission.ne.ts`
+- `src/i18n/eventSubmission.nb.ts`
+- `src/i18n/en.ts`
+
+Nepali and Norwegian remain the only complete public-site languages. English is a limited Event-submission interface and is deliberately excluded from global `supportedLanguages` and `getTranslations()`.
+
+The shared form sends stable internal values independent of translated labels. Form copy must remain structure-compatible through `EventSubmissionCopy`.
+
+### Public form state and accessibility
+
+The public form includes:
+
+- eight numbered sections
+- private versus proposed-public data explanations
+- helper text and required indicators
+- native controls
+- visible keyboard focus
+- field-level error containers
+- accessible error summary
+- disabled submission state
+- focused success panel
+- mobile single-column layout
+- desktop two-column layout where appropriate
+- a keyboard-safe hidden `website` honeypot
+
+On success, the form and Before you begin panel are hidden. The hero, language controls, return link, confirmation, reference, and non-publication notice remain.
+
+### Conditional form rules
+
+Client-side interactions improve usability but do not replace server validation.
+
+Implemented examples:
+
+- Other-language fields appear only when applicable.
+- Language-independent is mutually exclusive with spoken-language selections.
+- Public contact permission appears when public email or phone is proposed.
+- In-person, online, and hybrid fields appear by format.
+- Online and hybrid forms explain that an online platform or public information URL is required.
+- Not-required registration sets Not applicable.
+- Changing to recommended, required, or ticketed registration converts Not applicable to Not yet open.
+- Free Event remains independent from registration and ticket requirements.
+- Price description appears for non-free Events.
+- Image permission appears when an image URL is proposed.
+
+### Validation boundary
+
+`src/lib/eventSubmissions/validateEventSubmission.ts` remains authoritative.
+
+The browser cannot submit internal fields such as:
+
+- `_id`
+- `_type`
+- `moderationStatus`
+- `submittedAt`
+- assigned reviewer
+- internal notes
+- retention-review fields
+- public conversion metadata
+
+The validator also enforces supported choices, length limits, HTTP/HTTPS URLs, email format, timezone-aware ISO datetimes, real calendar dates, end-after-start ordering, physical and online requirements, registration consistency, pricing consistency, permissions, and declarations.
+
+### Storage boundary
+
+`src/lib/eventSubmissions/createEventSubmission.ts` uses only `SANITY_EVENT_SUBMISSION_TOKEN` from the server environment.
+
+Hard-coded server values:
+
+- project ID: `f9johco4`
+- dataset: `submissions`
+- API version: `2026-03-01`
+- type: `eventSubmission`
+- moderation status: `new`
+- ID prefix: `drafts.eventSubmission-`
+
+The server generates the UUID and UTC Submitted At value. Protected fields are applied after normalized visitor data, so visitor-derived values cannot overwrite them.
+
+The standard Growth Contributor role is used. It can create drafts but cannot publish. Growth does not provide the desired dataset-scoped custom role, so hard-coded server boundaries remain mandatory.
+
+### Rate limiting
+
+Vercel WAF protects the exact route `/api/event-submissions` using:
+
+- Fixed Window
+- 600 seconds
+- 10 requests
+- IP Address
+- HTTP 429 after the limit
+
+This lives in Vercel configuration, not Git. It must be recreated or documented during project migration.
+
+### Administrative notification
+
+`src/lib/eventSubmissions/notifyEventSubmission.ts` runs only after successful private storage.
+
+Server variables:
+
+- `RESEND_API_KEY`
+- `EVENT_SUBMISSION_NOTIFICATION_TO`
+
+Verified sender:
+
+- `Nepali.no Notifications <events@notifications.nepali.no>`
+
+Notification content is intentionally minimal. The request times out after five seconds. Provider rejection, network failure, and missing configuration return controlled results. Failure is logged with only a reason and non-secret submission reference; storage remains authoritative and the organizer still receives the success response.
+
+The current administrative recipient is `pankaj@kafley.no` and should later be replaced by an official organizational mailbox.
+
+### Submitter receipt
+
+The submitter receipt is not implemented. It must be a separate best-effort function after storage and must not be coupled to administrative notification success.
+
+It must be transactional and minimal, never marketing. Failure must never alter the stored submission or browser success state.
+
+### Public discovery
+
+Localized submission links now appear in Upcoming and Past Event archive heroes.
+
+The homepage submission link remains deferred until the homepage Event query is actually connected and the section has a hidden empty state.
+
+### Migration and operations notes
+
+A future owner or hosting migration must preserve:
+
+- Vercel WAF rule
+- Production-only sensitive Vercel variables
+- Sanity Contributor robot token
+- private `submissions` dataset
+- Resend restricted sending key
+- verified `notifications.nepali.no` DNS records
+- DKIM, SPF-related MX, and SPF TXT records
+- exact public and Studio project distinction
+
+Never move these secret values into Git, client code, `PUBLIC_` variables, or screenshots.
