@@ -12,6 +12,7 @@ import {urlFor} from '../../lib/sanity/image'
 import {
   FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY,
   HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY,
+  HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY,
   HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY,
   IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY,
 } from '../../lib/sanity/queries'
@@ -57,11 +58,30 @@ interface HomeArticle {
   featuredImage?: HomeArticleImage
 }
 
+interface HomeEvent {
+  _id: string
+  title: string
+  slug: string
+  summary: string
+  eventType: string
+  eventFormat: string
+  eventStatus: string
+  isAllDay?: boolean
+  startDateTime: string
+  endDateTime?: string
+  venueName?: string
+  city?: string
+  onlinePlatform?: string
+  organizerName: string
+  featuredImage?: HomeArticleImage
+  isFeatured?: boolean
+}
+
 const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 
-const [featuredGuides, importantNow, featuredStory] = await Promise.all([
+const [featuredGuides, importantNow, featuredStory, homepageEvents] = await Promise.all([
   sanityClient.fetch<HomeGuide[]>(FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY, {
     language,
   }),
@@ -71,6 +91,7 @@ const [featuredGuides, importantNow, featuredStory] = await Promise.all([
   sanityClient.fetch<HomeArticle | null>(HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY, {
     language,
   }),
+  sanityClient.fetch<HomeEvent[]>(HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY, {language}),
 ])
 
 const latestStories = await sanityClient.fetch<HomeArticle[]>(
@@ -92,6 +113,53 @@ const formatDate = (date: string) =>
     month: 'long',
     day: 'numeric',
   })
+
+const eventTimeZone = 'Europe/Oslo'
+const now = Date.now()
+const eventCategories = labels.events.categories as Record<string, string>
+const eventStatuses = labels.events.statuses as Record<string, string>
+const eventFormats: Record<string, string> = {
+  'in-person': labels.events.inPerson,
+  online: labels.events.online,
+  hybrid: labels.events.hybrid,
+}
+const currentEventYear = Number(
+  new Intl.DateTimeFormat('en', {timeZone: eventTimeZone, year: 'numeric'}).format(new Date()),
+)
+const eventYear = (value: string) =>
+  Number(
+    new Intl.DateTimeFormat('en', {timeZone: eventTimeZone, year: 'numeric'}).format(
+      new Date(value),
+    ),
+  )
+const formatEventDateRange = (startValue: string, endValue?: string) => {
+  const end = endValue || startValue
+  const includeYear =
+    eventYear(startValue) !== currentEventYear || eventYear(end) !== currentEventYear
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: eventTimeZone,
+    month: 'long',
+    day: 'numeric',
+  }
+  if (includeYear) options.year = 'numeric'
+  return new Intl.DateTimeFormat(dateLocale, options).formatRange(
+    new Date(startValue),
+    new Date(end),
+  )
+}
+const formatEventTime = (value: string) =>
+  new Date(value).toLocaleTimeString(dateLocale, {
+    timeZone: eventTimeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+const isEventOngoing = (event: HomeEvent) =>
+  new Date(event.startDateTime).getTime() <= now &&
+  new Date(event.endDateTime || event.startDateTime).getTime() >= now
+const eventLocation = (event: HomeEvent) =>
+  event.eventFormat === 'online'
+    ? event.onlinePlatform || labels.events.online
+    : event.city || event.venueName || eventFormats[event.eventFormat] || event.eventFormat
 ---
 
 <BaseLayout
@@ -323,6 +391,105 @@ const formatDate = (date: string) =>
     </div>
   </section>
 
+  {
+    homepageEvents.length > 0 && (
+      <section class="section home-events" aria-labelledby="home-events-heading">
+        <div class="container">
+          <div class="section-heading home-events__heading">
+            <div>
+              <p class="eyebrow">{labels.events.pageTitle}</p>
+              <h2 id="home-events-heading">{labels.home.eventsHeading}</h2>
+              <p>{labels.home.eventsDescription}</p>
+            </div>
+            <a class="section-link" href={`/${language}/events/`}>
+              {labels.events.viewAllEvents} <span aria-hidden="true">→</span>
+            </a>
+          </div>
+
+          <ol class="home-event-grid">
+            {homepageEvents.map((event) => (
+              <li>
+                <article class="home-event-card">
+                  {imageUrl(event.featuredImage, 720) && (
+                    <a
+                      class="home-event-card__image"
+                      href={`/${language}/events/${event.slug}/`}
+                      tabindex="-1"
+                      aria-hidden="true"
+                    >
+                      <img
+                        src={imageUrl(event.featuredImage, 720) ?? ''}
+                        alt=""
+                        width="720"
+                        height="480"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </a>
+                  )}
+                  <div class="home-event-card__content">
+                    <div class="home-event-card__badges">
+                      {event.isFeatured && (
+                        <strong class="badge badge-brand">{labels.events.featuredEvent}</strong>
+                      )}
+                      {isEventOngoing(event) && (
+                        <strong class="badge badge-success">{labels.events.ongoing}</strong>
+                      )}
+                      {event.eventStatus !== 'scheduled' && (
+                        <strong class="badge">
+                          {eventStatuses[event.eventStatus] ?? event.eventStatus}
+                        </strong>
+                      )}
+                      <span class="badge">
+                        {eventCategories[event.eventType] ?? event.eventType}
+                      </span>
+                      <span class="badge">
+                        {eventFormats[event.eventFormat] ?? event.eventFormat}
+                      </span>
+                    </div>
+                    <p class="home-event-card__date">
+                      {formatEventDateRange(event.startDateTime, event.endDateTime)}
+                      {event.isAllDay
+                        ? ` • ${labels.events.allDay}`
+                        : ` • ${formatEventTime(event.startDateTime)}`}
+                    </p>
+                    <h3>
+                      <a href={`/${language}/events/${event.slug}/`}>{event.title}</a>
+                    </h3>
+                    <p class="home-event-card__summary">{event.summary}</p>
+                    <dl class="home-event-card__meta">
+                      <div>
+                        <dt>{labels.events.venue}</dt>
+                        <dd>{eventLocation(event)}</dd>
+                      </div>
+                      <div>
+                        <dt>{labels.events.organizer}</dt>
+                        <dd>{event.organizerName}</dd>
+                      </div>
+                    </dl>
+                    <a class="home-event-card__link" href={`/${language}/events/${event.slug}/`}>
+                      {labels.events.readMore} <span aria-hidden="true">→</span>
+                    </a>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ol>
+
+          <aside class="home-events__submit">
+            <div>
+              <h3>{labels.events.submitEvent}</h3>
+              <p>{labels.home.eventsDescription}</p>
+            </div>
+            <a class="button button-secondary" href={`/${language}/events/submit/`}>
+              {labels.events.submitEvent} <span aria-hidden="true">→</span>
+            </a>
+          </aside>
+        </div>
+      </section>
+    )
+  }
+
   <section class="section discussions" aria-labelledby="home-discussions-heading">
     <div class="container discussions__grid">
       <div>
@@ -346,14 +513,8 @@ const formatDate = (date: string) =>
 
   <section class="section-sm future-sections">
     <div class="container future-sections__grid">
-      <article class="future-card">
+      <article class="future-card future-card--single">
         <span class="future-card__number" aria-hidden="true">01</span>
-        <h2>{labels.home.eventsHeading}</h2>
-        <p>{labels.home.eventsDescription}</p>
-        <span class="badge">{labels.home.comingSoon}</span>
-      </article>
-      <article class="future-card">
-        <span class="future-card__number" aria-hidden="true">02</span>
         <h2>{labels.home.businessesHeading}</h2>
         <p>{labels.home.businessesDescription}</p>
         <span class="badge">{labels.home.comingSoon}</span>
@@ -794,6 +955,150 @@ const formatDate = (date: string) =>
     background: var(--brand);
   }
 
+  .home-events {
+    border-block: 1px solid var(--border);
+    background: var(--surface-muted);
+  }
+
+  .home-events__heading {
+    padding-block-end: 1.25rem;
+    border-bottom: 2px solid var(--civic-deep);
+  }
+
+  .home-event-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .home-event-card {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: #ffffff;
+  }
+
+  .home-event-card__image {
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 3 / 2;
+    background: linear-gradient(135deg, var(--civic), var(--civic-deep));
+  }
+
+  .home-event-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 300ms ease;
+  }
+
+  .home-event-card__image:hover img {
+    transform: scale(1.015);
+  }
+
+  .home-event-card__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 1.35rem;
+  }
+
+  .home-event-card__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .home-event-card__date {
+    margin-block-start: 1rem;
+    color: var(--brand);
+    font-size: 0.82rem;
+    font-weight: 760;
+  }
+
+  .home-event-card h3 {
+    margin-block-start: 0.45rem;
+    font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+    line-height: 1.25;
+  }
+
+  .home-event-card h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .home-event-card h3 a:hover {
+    color: var(--brand);
+  }
+
+  .home-event-card__summary {
+    margin-block-start: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  .home-event-card__meta {
+    display: grid;
+    gap: 0.65rem;
+    margin-block-start: 1rem;
+  }
+
+  .home-event-card__meta div {
+    padding-block-start: 0.65rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .home-event-card__meta dt {
+    color: var(--text-soft);
+    font-size: 0.7rem;
+    font-weight: 760;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .home-event-card__meta dt {
+    font-size: 0.8rem;
+    text-transform: none;
+  }
+
+  .home-event-card__meta dd {
+    margin: 0.2rem 0 0;
+    color: var(--civic-deep);
+    font-size: 0.9rem;
+    font-weight: 650;
+  }
+
+  .home-event-card__link {
+    margin-block-start: auto;
+    padding-block-start: 1.1rem;
+    font-weight: 760;
+  }
+
+  .home-events__submit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-block-start: 1.5rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border-inline-start: 0.3rem solid var(--brand);
+    background: #ffffff;
+  }
+
+  .home-events__submit p {
+    max-width: 42rem;
+    margin-block-start: 0.35rem;
+    color: var(--text-muted);
+  }
+
+  .home-events__submit .button {
+    flex: 0 0 auto;
+  }
+
   .discussions {
     background: var(--civic-deep);
     color: rgb(255 255 255 / 0.78);
@@ -881,6 +1186,10 @@ const formatDate = (date: string) =>
     color: var(--text-muted);
   }
 
+  .future-card--single {
+    grid-column: 1 / -1;
+  }
+
   @media (max-width: 63rem) {
     .home-hero__grid,
     .discussions__grid,
@@ -892,7 +1201,8 @@ const formatDate = (date: string) =>
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .content-grid {
+    .content-grid,
+    .home-event-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -963,8 +1273,18 @@ const formatDate = (date: string) =>
 
     .home-hero__pathways,
     .content-grid,
+    .home-event-grid,
     .future-sections__grid {
       grid-template-columns: 1fr;
+    }
+
+    .home-events__submit {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .home-events__submit .button {
+      width: 100%;
     }
 
     .section-heading {

@@ -108,6 +108,8 @@ export const ne = {
     viewPastEvents: "पुराना कार्यक्रमहरू हेर्नुहोस्",
     viewUpcomingEvents: "आगामी कार्यक्रमहरू हेर्नुहोस्",
     readMore: "थप विवरण हेर्नुहोस्",
+    featuredEvent: "विशेष कार्यक्रम",
+    viewAllEvents: "सबै कार्यक्रम हेर्नुहोस्",
     eventDetails: "कार्यक्रम विवरण",
     dateAndTime: "मिति र समय",
     allDay: "दिनभर",

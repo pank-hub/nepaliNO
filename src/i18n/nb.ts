@@ -108,6 +108,8 @@ export const nb = {
     viewPastEvents: "Se tidligere arrangementer",
     viewUpcomingEvents: "Se kommende arrangementer",
     readMore: "Se arrangementsdetaljer",
+    featuredEvent: "Fremhevet arrangement",
+    viewAllEvents: "Se alle arrangementer",
     eventDetails: "Arrangementsdetaljer",
     dateAndTime: "Dato og tid",
     allDay: "Hele dagen",
