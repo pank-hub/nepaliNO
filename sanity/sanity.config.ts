@@ -18,9 +18,9 @@ export default defineConfig([
     },
   },
   {
-    name: 'event-moderation',
-    title: 'nepali.no Event Moderation',
-    subtitle: 'Private organizer submissions',
+    name: 'submission-moderation',
+    title: 'nepali.no Submission Moderation',
+    subtitle: 'Private Event and Community Directory submissions',
     basePath: '/event-moderation',
     projectId: 'f9johco4',
     dataset: 'submissions',
@@ -30,12 +30,16 @@ export default defineConfig([
     },
     document: {
       actions: (previousActions, context) => {
-        if (context.schemaType !== 'eventSubmission') {
+        const privateSubmissionTypes = new Set(['eventSubmission', 'directoryListingSubmission'])
+
+        if (!privateSubmissionTypes.has(context.schemaType)) {
           return previousActions
         }
 
         const blockedActions = new Set(['publish', 'unpublish', 'duplicate'])
-        return previousActions.filter((action) => !action.action || !blockedActions.has(action.action))
+        return previousActions.filter(
+          (action) => !action.action || !blockedActions.has(action.action),
+        )
       },
     },
   },
