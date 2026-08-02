@@ -138,7 +138,7 @@ export const ne = {
     online: "अनलाइन",
     inPerson: "भौतिक उपस्थिति",
     hybrid: "हाइब्रिड (भौतिक र अनलाइन)",
-    submitEvent: "कार्यक्रम थप्नुहोस्",
+    submitEvent: "आफ्नो कार्यक्रम पठाउनुहोस्",
     submission: eventSubmissionNe,
     statuses: {
       scheduled: "निर्धारित",

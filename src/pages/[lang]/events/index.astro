@@ -74,7 +74,14 @@ const imageUrl = (image?: EventImage) => image?.asset ? urlFor(image as any).wid
       <p class="eyebrow">nepali.no</p>
       <h1>{eventLabels.pageTitle}</h1>
       <p class="lead">{eventLabels.pageDescription}</p>
-      <a class="past-link" href={`/${language}/events/past/`}>{eventLabels.viewPastEvents} <span aria-hidden="true">→</span></a>
+      <div class="events-hero__actions">
+        <a class="button button-primary" href={`/${language}/events/submit/`}>
+          {eventLabels.submitEvent} <span aria-hidden="true">→</span>
+        </a>
+        <a class="button button-secondary" href={`/${language}/events/past/`}>
+          {eventLabels.viewPastEvents}
+        </a>
+      </div>
     </div>
   </header>
 
@@ -136,7 +143,7 @@ const imageUrl = (image?: EventImage) => image?.asset ? urlFor(image as any).wid
   .events-hero__inner { padding-block: clamp(2.5rem, 6vw, 4.75rem); }
   .events-hero h1 { margin-block-start: .55rem; }
   .events-hero .lead { max-width: 48rem; margin-block-start: 1rem; }
-  .past-link { display: inline-flex; gap: .45rem; margin-block-start: 1.25rem; color: var(--civic-deep); font-weight: 760; }
+  .events-hero__actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-block-start: 1.35rem; }
   .events-main { background: #fff; }
   .events-heading { display: flex; justify-content: space-between; align-items: end; gap: 1rem; padding-block-end: 1rem; border-bottom: 2px solid var(--civic-deep); }
   .events-heading p { color: var(--text-soft); font-weight: 700; }
