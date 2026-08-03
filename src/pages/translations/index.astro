@@ -1,0 +1,58 @@
+---
+import TranslationPortalLayout from "../../layouts/TranslationPortalLayout.astro";
+import { readTranslationSession } from "../../lib/translationAuth/session";
+
+export const prerender = false;
+
+const session = await readTranslationSession(Astro.cookies);
+
+if (!session) {
+  return Astro.redirect("/translations/login/", 302);
+}
+---
+
+<TranslationPortalLayout
+  title="Translation Editor | nepali.no"
+  description="Protected interface translation editor for nepali.no."
+>
+  <section class="portal-panel surface" aria-labelledby="portal-title">
+    <p class="eyebrow">Protected workspace</p>
+    <h1 id="portal-title">Translation Editor</h1>
+    <p class="lead">
+      Signed in as <strong>@{session.login}</strong>. The authentication boundary is working.
+    </p>
+    <div class="status-box" role="status">
+      <span class="badge badge-success">Login verified</span>
+      <p>
+        Translation browsing and editing will be added in the next controlled checkpoint.
+      </p>
+    </div>
+    <a class="button button-secondary" href="/translations/logout/">Sign out</a>
+  </section>
+</TranslationPortalLayout>
+
+<style>
+  .portal-panel {
+    width: min(100%, 42rem);
+    padding: clamp(1.5rem, 5vw, 3rem);
+  }
+
+  h1 {
+    margin-top: 0.65rem;
+    font-size: clamp(2rem, 6vw, 3.75rem);
+  }
+
+  .lead {
+    margin-top: 1rem;
+  }
+
+  .status-box {
+    display: grid;
+    gap: 0.75rem;
+    margin-block: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #b7e4cd;
+    border-radius: var(--radius-md);
+    background: var(--color-success-50);
+  }
+</style>

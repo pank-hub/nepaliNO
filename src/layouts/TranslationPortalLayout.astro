@@ -1,0 +1,113 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#172534" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title}</title>
+  </head>
+  <body class="translation-portal">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="portal-header">
+      <div class="container portal-header__inner">
+        <a class="portal-brand" href="/translations/" aria-label="nepali.no Translation Editor home">
+          <span class="portal-brand__symbol" aria-hidden="true">न</span>
+          <span>
+            <strong>nepali.no</strong>
+            <small>Translation Editor</small>
+          </span>
+        </a>
+      </div>
+    </header>
+
+    <main id="main-content" class="container portal-main" tabindex="-1">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+  .translation-portal {
+    background:
+      radial-gradient(circle at 50% 0%, rgb(198 42 31 / 0.055), transparent 30rem),
+      var(--page-bg);
+  }
+
+  .portal-header {
+    border-bottom: 1px solid var(--border);
+    background: rgb(253 252 249 / 0.94);
+    backdrop-filter: blur(1rem);
+  }
+
+  .portal-header__inner {
+    display: flex;
+    min-height: 4.75rem;
+    align-items: center;
+  }
+
+  .portal-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .portal-brand:hover {
+    color: var(--civic-deep);
+  }
+
+  .portal-brand__symbol {
+    display: grid;
+    width: 2.45rem;
+    height: 2.45rem;
+    place-items: center;
+    border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
+    background: var(--brand);
+    color: #fff;
+    font-family: "Noto Sans Devanagari Variable", sans-serif;
+    font-size: 1.25rem;
+    font-weight: 720;
+    line-height: 1;
+    box-shadow: 0 0.35rem 1.2rem rgb(198 42 31 / 0.18);
+  }
+
+  .portal-brand strong,
+  .portal-brand small {
+    display: block;
+  }
+
+  .portal-brand strong {
+    font-size: 1.05rem;
+    letter-spacing: -0.025em;
+  }
+
+  .portal-brand small {
+    margin-top: 0.08rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .portal-main {
+    display: grid;
+    min-height: calc(100vh - 4.75rem);
+    place-items: center;
+    padding-block: clamp(2rem, 7vw, 5rem);
+  }
+</style>

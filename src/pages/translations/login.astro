@@ -1,0 +1,64 @@
+---
+import TranslationPortalLayout from "../../layouts/TranslationPortalLayout.astro";
+import { readTranslationSession } from "../../lib/translationAuth/session";
+
+export const prerender = false;
+
+const session = await readTranslationSession(Astro.cookies);
+
+if (session) {
+  return Astro.redirect("/translations/", 302);
+}
+---
+
+<TranslationPortalLayout
+  title="Sign in | nepali.no Translation Editor"
+  description="Sign in to the protected nepali.no Translation Editor."
+>
+  <section class="login-panel surface" aria-labelledby="login-title">
+    <p class="eyebrow">Administrator access</p>
+    <h1 id="login-title">Translation Editor</h1>
+    <p class="lead">
+      This private workspace is restricted to the approved nepali.no project administrator.
+    </p>
+    <div class="security-note">
+      <strong>Phase 1 access</strong>
+      <p>
+        GitHub verifies the account identity. The application does not yet have repository access.
+      </p>
+    </div>
+    <a class="button button-primary" href="/api/translations/auth/start">
+      Continue with GitHub
+    </a>
+  </section>
+</TranslationPortalLayout>
+
+<style>
+  .login-panel {
+    width: min(100%, 38rem);
+    padding: clamp(1.5rem, 5vw, 3rem);
+  }
+
+  h1 {
+    margin-top: 0.65rem;
+    font-size: clamp(2rem, 6vw, 3.75rem);
+  }
+
+  .lead {
+    margin-top: 1rem;
+  }
+
+  .security-note {
+    display: grid;
+    gap: 0.35rem;
+    margin-block: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+  }
+
+  .button {
+    width: 100%;
+  }
+</style>

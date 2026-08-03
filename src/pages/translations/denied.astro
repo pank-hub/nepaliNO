@@ -1,0 +1,48 @@
+---
+import TranslationPortalLayout from "../../layouts/TranslationPortalLayout.astro";
+
+export const prerender = false;
+
+const reason = Astro.url.searchParams.get("reason");
+const cancelled = reason === "github_cancelled";
+---
+
+<TranslationPortalLayout
+  title="Access not completed | nepali.no Translation Editor"
+  description="The Translation Editor sign-in could not be completed."
+>
+  <section class="denied-panel surface" aria-labelledby="denied-title">
+    <p class="eyebrow">Protected workspace</p>
+    <h1 id="denied-title">{cancelled ? "Sign-in cancelled" : "Access not granted"}</h1>
+    <p class="lead">
+      {cancelled
+        ? "GitHub sign-in was cancelled. No Translation Editor session was created."
+        : "The Translation Editor could not verify an approved administrator account."}
+    </p>
+    <p class="muted">
+      If this was unexpected, return to the sign-in page and use the approved GitHub account.
+    </p>
+    <a class="button button-secondary" href="/translations/login/">Return to sign in</a>
+  </section>
+</TranslationPortalLayout>
+
+<style>
+  .denied-panel {
+    width: min(100%, 42rem);
+    padding: clamp(1.5rem, 5vw, 3rem);
+  }
+
+  h1 {
+    margin-top: 0.65rem;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+  }
+
+  .lead,
+  .muted {
+    margin-top: 1rem;
+  }
+
+  .button {
+    margin-top: 1.5rem;
+  }
+</style>
