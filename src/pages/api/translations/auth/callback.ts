@@ -7,10 +7,19 @@ export const prerender = false;
 
 const OAUTH_STATE_COOKIE = "nepali_no_translation_oauth_state";
 
+const redirectResponse = (location: URL | string) =>
+  new Response(null, {
+    status: 302,
+    headers: {
+      location: location.toString(),
+      "cache-control": "no-store",
+    },
+  });
+
 const denied = (origin: string, reason: string) => {
   const url = new URL("/translations/denied/", origin);
   url.searchParams.set("reason", reason);
-  return Response.redirect(url, 302);
+  return redirectResponse(url);
 };
 
 export const GET: APIRoute = async ({ cookies, url }) => {
@@ -39,7 +48,7 @@ export const GET: APIRoute = async ({ cookies, url }) => {
     }
 
     await createTranslationSession(cookies, identity);
-    return Response.redirect(new URL("/translations/", url.origin), 302);
+    return redirectResponse(new URL("/translations/", url.origin));
   } catch (error) {
     console.error("Translation authentication failed", {
       errorName: error instanceof Error ? error.name : "UnknownError",
