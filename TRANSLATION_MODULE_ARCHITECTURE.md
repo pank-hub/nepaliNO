@@ -393,9 +393,24 @@ Production verification includes:
 - nine modules per language
 - 568 unique visible strings per language
 - matching Nepali and Norwegian counts
-- immutable keys
-- no editing controls
-- no repository API calls
+- immutable translation keys
+- generic detection of any number of unassigned top-level sections
+- Nepali-only and Norwegian-only section detection
+- array-length and structural mismatch detection
+- explicit handling of approved directional counterpart keys
+- controlled editing enabled only after an explicit user action
+- live changed-string counting
+- authenticated same-origin server validation
+- allowlisted language, module and key validation
+- duplicate-key, empty-value and outer-whitespace rejection
+- stale-source detection
+- placeholder preservation
+- exact current-versus-proposed review
+- cancel-and-restore behavior
+- no persistence of temporary proposals
+- no translation-file mutation
+- no repository API calls or GitHub write capability
+- disabled repository-update action
 - safe unknown-module 404 response
 - desktop visual verification
 - Devanagari and Norwegian rendering
@@ -420,19 +435,21 @@ After meaningful Translation Module changes:
 
 ## 18. Next planned work
 
-Before enabling editing:
+The read-only Translation Browser, generic registry safeguard, controlled editing interface and server-side proposal validation are now production-proven.
 
-1. Commit this architecture document as a documentation-only checkpoint.
-2. Add read-only detection of unassigned top-level sections.
-3. Add language-parity and missing-counterpart warnings.
-4. Test the safeguard with synthetic registry fixtures, not a fake public `school` feature.
-5. Preserve the current nine production modules.
+Before enabling repository writes:
 
-After the safeguard is validated:
+1. Preserve the current Pankaj-only authentication boundary.
+2. Keep temporary proposals in memory only until the GitHub integration is deliberately enabled.
+3. Review the GitHub App permission increase as a separate security milestone.
+4. Install the GitHub App only on `pank-hub/nepaliNO`.
+5. Generate and store the private key only in protected server configuration.
+6. Grant only the minimum repository permissions required for controlled branches and pull requests.
+7. Fix the repository, base branch, translation branch prefix and file allowlist server-side.
+8. Add deterministic TypeScript source updates that preserve keys, imports and application logic.
+9. Revalidate stale source wording immediately before creating a repository change.
+10. Create a translation branch and pull request only, never a direct commit to `main`.
+11. Run Astro Check, the production build and exact translation-file diff validation before a pull request is opened.
+12. Keep Pankaj as the final reviewer and merge authority.
 
-1. Add controlled edit fields for ordinary allowlisted strings.
-2. Add server-side proposal validation.
-3. Add stale-source protection.
-4. Add an exact review screen.
-5. Keep GitHub repository permissions disabled.
-6. Enable controlled pull-request integration only after editing and validation are proven safe.
+Actual proofreading should begin only after the controlled pull-request workflow is production-tested with harmless synthetic wording and confirmed not to modify `main` directly.

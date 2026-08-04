@@ -3231,3 +3231,181 @@ The next checkpoint must:
 - remain private, noindex, mobile-first and accessible
 
 Actual proofreading must not begin until Phase 1 is complete and operational.
+
+## Translation Registry Safeguard and Editing Validation Milestone
+
+Completed and production-verified on 4 August 2026 through checkpoint `a127e8b add Translation editing and validation`.
+
+### Architecture documentation
+
+Added the authoritative repository document:
+
+- `TRANSLATION_MODULE_ARCHITECTURE.md`
+
+Architecture checkpoint:
+
+- `936b9b8 document Translation Module architecture`
+
+The document explicitly states that adding wording to `ne.ts` or `nb.ts` does not by itself guarantee that a field appears in the Translation Editor. New strings inside recognized and assigned sections are discovered automatically, while entirely new top-level sections require registry integration or the generic unassigned-section safeguard.
+
+A new page or feature is not translation-complete until its intended strings have been verified in the protected web interface.
+
+### Read-only Translation Browser
+
+Added a protected server-owned registry and module browser.
+
+Checkpoint:
+
+- `764f316 add read-only Translation Browser`
+
+Production-verified behavior:
+
+- nine modules per complete language
+- 568 visible strings per language
+- 568 unique keys per language
+- matching Nepali and Norwegian module counts
+- immutable keys and current source wording
+- no editing or repository-writing capability at this checkpoint
+- Nepali Devanagari and Norwegian rendering verified
+- large 130-string Community Directory module verified
+- unknown module routes return a controlled 404 response
+- logout remains operational
+
+The six unresolved forum and Coming Soon strings remain deliberately deferred from ordinary translation work.
+
+### Generic registry safeguard
+
+Added generic detection for any number of future top-level translation sections. The detector does not depend on example names such as `school`.
+
+Checkpoint:
+
+- `f0f68a4 add Translation registry safeguards`
+
+The safeguard detects:
+
+- unassigned sections present in both languages
+- Nepali-only sections
+- Norwegian-only sections
+- missing nested keys
+- different array lengths
+- string-versus-object differences
+- string-versus-function differences
+- other structural mismatches
+
+Synthetic tests successfully discovered multiple arbitrary future section names simultaneously and detected expected language and structure differences.
+
+The real current sources returned:
+
+- unassigned sections: 0
+- unexplained structure mismatches: 0
+
+Two intentional directional counterpart pairs are explicitly and narrowly approved:
+
+- `news.readInNorwegian` and `news.readInNepali`
+- `information.readInNorwegian` and `information.readInNepali`
+
+The approval remains strict. Missing, duplicated, renamed or structurally changed directional keys trigger warnings again.
+
+The production dashboard now displays a registry-safeguard status, and `/translations/unassigned/` provides a protected read-only report.
+
+### Controlled editing and server validation
+
+Added controlled edit fields, live changed-string counting, proposal validation and exact review.
+
+Checkpoint:
+
+- `a127e8b add Translation editing and validation`
+
+Implemented:
+
+- explicit Enable editing action
+- one proposed-wording field per allowlisted string
+- live changed-string counter
+- Cancel editing and restoration of original values
+- authenticated validation endpoint at `/translations/api/validate`
+- same-origin request enforcement
+- JSON-only handling
+- 128 KiB request limit
+- maximum 200 changes per proposal
+- supported-language and recognized-module checks
+- exact allowlisted-key checks
+- duplicate-key rejection
+- maximum 5,000 characters per value
+- empty-value rejection
+- leading and trailing whitespace rejection
+- null-character rejection
+- placeholder preservation
+- stale-source detection
+- exact current-versus-proposed review
+- disabled Repository update not enabled action
+
+The endpoint only validates and returns a review response. It does not store a proposal, modify a translation file, call the GitHub repository API, create a branch, create a commit or open a pull request.
+
+### Automated validation proof
+
+Direct validator tests passed for:
+
+- valid allowlisted change
+- unknown key rejection
+- stale-source rejection
+- empty-value rejection
+- outer-whitespace rejection
+- unchanged-wording rejection
+- unsupported-language rejection
+- unknown-module rejection
+- unknown top-level payload-field rejection
+- duplicate-key rejection
+
+Astro Check passed across 93 files with:
+
+- 0 errors
+- 0 warnings
+- 55 informational hints
+
+The production build passed and generated the Vercel server bundle while preserving the public static routes.
+
+### Production browser proof
+
+A harmless synthetic Nepali Navigation proposal was tested in production:
+
+- editing was enabled explicitly
+- the changed-string counter updated correctly
+- the server validated the proposal
+- the exact old and proposed wording appeared in the review
+- repository update remained disabled
+- Cancel editing restored the original value
+- no translation source was modified
+- no GitHub repository content was modified
+- the synthetic wording was not stored or published
+
+The normal Edge profile briefly served older cached Translation Editor output after deployment. The latest Production deployment and an uncached session showed the correct controlled-editing interface. No code or Vercel correction was required.
+
+### Current security boundary
+
+The GitHub App remains:
+
+- Pankaj-only for identity verification
+- uninstalled on the repository
+- without a private key
+- without repository permissions
+- without a webhook
+- unable to create branches, commits or pull requests
+
+No Supabase project is used. Temporary proposals remain in browser memory and in the validation request-response only.
+
+### Exact next milestone
+
+Begin the controlled GitHub pull-request integration as a separate permission-expanding milestone.
+
+Before any permission is granted:
+
+- inspect and document the exact GitHub App permissions
+- preserve the fixed repository and `main` base branch server-side
+- preserve the translation-file and key allowlists
+- design deterministic source updates
+- require fresh stale-source verification
+- create a translation branch and pull request only
+- never commit automatically to `main`
+- keep Pankaj as final reviewer and merge authority
+
+Actual proofreading should begin only after a harmless synthetic pull-request test proves the complete workflow.
