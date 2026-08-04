@@ -3085,3 +3085,149 @@ The next colleague should first inspect:
 - Vercel, Sanity and DNS operational boundaries
 
 The first deliverable should be a forum requirements and platform-evaluation document, followed by a controlled schema and frontend integration proposal for Pankaj's approval.
+
+## Translation Editor Authentication Foundation Milestone
+
+Completed and production-verified on 3 August 2026 through checkpoint `a57f071 fix Translation Editor callback redirects`.
+
+### Translation Module phase definition
+
+The Translation Module scope and sequencing were clarified:
+
+**Phase 1, current implementation:**
+- a protected web-based interface used only by Pankaj
+- GitHub authentication using Pankaj's approved immutable GitHub user ID
+- browser-based access without requiring Codespaces for ordinary translation editing
+- Nepali and Norwegian translation modules
+- protected translation keys and TypeScript structure
+- server-side allowlists and validation
+- controlled GitHub branch and pull-request workflow
+- no direct or automatic commit to `main`
+
+**After Phase 1:**
+- real Nepali and Norwegian proofreading begins through the completed interface
+- proofreaders initially send suggestions to Pankaj through familiar channels
+- Pankaj enters approved changes through the protected portal
+
+**Phase 2, deferred until a risk assessment:**
+- invited proofreader or editor access
+- language-specific permissions
+- account invitation, suspension, revocation and recovery
+- drafts, moderation, review, approval, rejection and comments
+- audit history and more advanced translation workflows
+
+The module must remain a translation module and must not expand into a general contributor portal.
+
+### Authentication architecture decision
+
+A Supabase project was considered but deliberately not created. Because Phase 1 has only one user, a separate authentication database, invitation system and account-management layer would be disproportionate.
+
+Phase 1 uses a private GitHub App named `nepali.no Translation Editor` for identity verification.
+
+Current GitHub App boundary:
+- owner: `pank-hub`
+- installation availability: only the `pank-hub` account
+- callback: `https://nepali-no.vercel.app/api/translations/auth/callback`
+- webhook disabled
+- no repository, organization, account or enterprise permissions
+- no event subscriptions
+- App not installed on the repository
+- no private key generated
+
+Repository access remains deferred until the controlled pull-request checkpoint later in Phase 1.
+
+### Vercel authentication configuration
+
+The following Production-only Sensitive environment-variable names were added to the public `nepali-no` Vercel project:
+- `GITHUB_TRANSLATION_APP_CLIENT_ID`
+- `GITHUB_TRANSLATION_APP_CLIENT_SECRET`
+- `TRANSLATION_ALLOWED_GITHUB_USER_ID`
+- `TRANSLATION_SESSION_SECRET`
+
+No values were committed, displayed in documentation or placed in browser-visible variables.
+
+### Implemented authentication foundation
+
+Added:
+- `src/layouts/TranslationPortalLayout.astro`
+- `src/lib/translationAuth/config.ts`
+- `src/lib/translationAuth/github.ts`
+- `src/lib/translationAuth/session.ts`
+- `src/pages/api/translations/auth/start.ts`
+- `src/pages/api/translations/auth/callback.ts`
+- `src/pages/translations/index.astro`
+- `src/pages/translations/login.astro`
+- `src/pages/translations/denied.astro`
+- `src/pages/translations/logout.ts`
+
+Updated:
+- `src/env.d.ts`
+
+The portal:
+- is not linked from public navigation
+- uses `noindex, nofollow`
+- reuses the nepali.no design system in a dedicated administrative layout
+- uses on-demand Astro routes through the existing Vercel adapter
+- validates a random OAuth state cookie
+- exchanges the GitHub authorization code server-side
+- compares the returned immutable numeric GitHub user ID with the approved Vercel value
+- discards the temporary GitHub user token
+- creates a signed, HTTP-only, Secure, SameSite=Lax, four-hour nepali.no session
+- clears the session on sign-out
+
+### Validation and production proof
+
+Astro Check passed across 87 files with:
+- 0 errors
+- 0 warnings
+- 55 informational hints
+
+The production build passed and generated the Vercel server bundle while preserving existing static public routes.
+
+Production verification confirmed:
+- unauthenticated `/translations/` redirects to `/translations/login/`
+- GitHub authorization starts correctly
+- OAuth callback and state validation work
+- an incorrect allowed-user value produces the controlled `Access not granted` page
+- the corrected immutable GitHub user ID grants access
+- the protected dashboard shows `Signed in as @pank-hub` and `Login verified`
+- sign-out clears the session and returns to `/translations/login/`
+- protected access requires authentication again after sign-out
+
+### Runtime correction
+
+The original callback used static `Response.redirect()` responses. In the Vercel runtime, Astro needed to append `Set-Cookie` headers, but the redirect response headers were immutable. Runtime logging showed:
+
+`TypeError: immutable at appendHeader`
+
+The callback was corrected to construct mutable `302` responses with explicit `location` and `cache-control: no-store` headers.
+
+### Git checkpoints
+
+- `191cdba add Translation Editor authentication foundation`
+- `a57f071 fix Translation Editor callback redirects`
+
+At the stopping point:
+- `HEAD`, local `main`, `origin/main` and `origin/HEAD` were synchronized at `a57f071`
+- `git status --short` returned no output
+- no translation files were modified
+- no Supabase project was created
+- the GitHub App remained uninstalled and without repository permissions or a private key
+
+### Exact next milestone
+
+Build a read-only Translation Browser inside the protected portal.
+
+The next checkpoint must:
+- keep Pankaj-only access
+- add an explicit server-owned allowlisted translation registry
+- organize current Nepali and Norwegian wording by module
+- show keys as immutable context
+- exclude technical contract files
+- defer unresolved forum and Coming Soon wording from the ordinary first inventory
+- provide no editing yet
+- make no GitHub repository API calls
+- require no App installation, private key or repository permissions
+- remain private, noindex, mobile-first and accessible
+
+Actual proofreading must not begin until Phase 1 is complete and operational.
