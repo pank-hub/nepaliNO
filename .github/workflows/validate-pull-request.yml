@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  PUBLIC_SANITY_PROJECT_ID: f9johco4
+  PUBLIC_SANITY_DATASET: production
+
 concurrency:
   group: validate-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -27,8 +31,11 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install locked dependencies
+      - name: Install public application dependencies
         run: npm ci
+
+      - name: Install Sanity Studio dependencies
+        run: npm ci --prefix sanity
 
       - name: Run Astro Check
         run: npx astro check
