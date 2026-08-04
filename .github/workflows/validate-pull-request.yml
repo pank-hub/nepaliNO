@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  PUBLIC_SANITY_PROJECT_ID: f9johco4
+  PUBLIC_SANITY_DATASET: production
+
 concurrency:
   group: validate-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
