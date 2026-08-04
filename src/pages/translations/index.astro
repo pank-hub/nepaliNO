@@ -1,6 +1,11 @@
 ---
 import TranslationPortalLayout from "../../layouts/TranslationPortalLayout.astro";
 import { readTranslationSession } from "../../lib/translationAuth/session";
+import {
+  getTranslationLanguageLabel,
+  getTranslationModuleSummaries,
+  translationLanguages,
+} from "../../lib/translationBrowser/registry";
 
 export const prerender = false;
 
@@ -12,47 +17,211 @@ if (!session) {
 ---
 
 <TranslationPortalLayout
-  title="Translation Editor | nepali.no"
-  description="Protected interface translation editor for nepali.no."
+  title="Translation Browser | nepali.no"
+  description="Protected read-only interface translation browser for nepali.no."
 >
-  <section class="portal-panel surface" aria-labelledby="portal-title">
-    <p class="eyebrow">Protected workspace</p>
-    <h1 id="portal-title">Translation Editor</h1>
-    <p class="lead">
-      Signed in as <strong>@{session.login}</strong>. The authentication boundary is working.
-    </p>
-    <div class="status-box" role="status">
-      <span class="badge badge-success">Login verified</span>
+  <div class="browser-shell">
+    <header class="browser-intro">
+      <div>
+        <p class="eyebrow">Protected workspace</p>
+        <h1>Translation Browser</h1>
+        <p class="lead">
+          Review the current Nepali and Norwegian interface wording by module.
+          This checkpoint is read-only.
+        </p>
+      </div>
+
+      <div class="account-panel">
+        <span class="badge badge-success">Signed in as @{session.login}</span>
+        <a class="button button-secondary" href="/translations/logout/">Sign out</a>
+      </div>
+    </header>
+
+    <aside class="read-only-note" aria-label="Read-only status">
+      <strong>Read-only milestone</strong>
       <p>
-        Translation browsing and editing will be added in the next controlled checkpoint.
+        No wording can be changed here yet. Translation keys, TypeScript structure,
+        repository access and the main branch remain protected.
       </p>
+    </aside>
+
+    <div class="language-sections">
+      {translationLanguages.map((language) => (
+        <section class="language-section" aria-labelledby={`language-${language}`}>
+          <div class="language-heading">
+            <div>
+              <p class="eyebrow">Interface language</p>
+              <h2 id={`language-${language}`}>
+                {getTranslationLanguageLabel(language)}
+              </h2>
+            </div>
+            <span class="language-code">{language}</span>
+          </div>
+
+          <div class="module-grid">
+            {getTranslationModuleSummaries(language).map((module) => (
+              <a
+                class="module-card card"
+                href={`/translations/${language}/${module.id}/`}
+              >
+                <span class="module-card__count">
+                  {module.count} {module.count === 1 ? "string" : "strings"}
+                </span>
+                <h3>{module.title}</h3>
+                <p>{module.description}</p>
+                <span class="module-card__action">Browse wording <span aria-hidden="true">→</span></span>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
-    <a class="button button-secondary" href="/translations/logout/">Sign out</a>
-  </section>
+  </div>
 </TranslationPortalLayout>
 
 <style>
-  .portal-panel {
-    width: min(100%, 42rem);
-    padding: clamp(1.5rem, 5vw, 3rem);
+  :global(.portal-main) {
+    place-items: start center;
+  }
+
+  .browser-shell {
+    width: min(100%, 72rem);
+  }
+
+  .browser-intro {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
   }
 
   h1 {
     margin-top: 0.65rem;
-    font-size: clamp(2rem, 6vw, 3.75rem);
+    font-size: clamp(2.25rem, 6vw, 4rem);
   }
 
   .lead {
+    max-width: 48rem;
     margin-top: 1rem;
   }
 
-  .status-box {
-    display: grid;
+  .account-panel {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
     gap: 0.75rem;
-    margin-block: 1.5rem;
-    padding: 1rem;
-    border: 1px solid #b7e4cd;
+  }
+
+  .read-only-note {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 2rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    background: var(--color-success-50);
+    background: var(--surface-muted);
+  }
+
+  .language-sections {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+    margin-top: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  .language-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .language-heading h2 {
+    margin-top: 0.45rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  .language-code {
+    display: inline-grid;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--civic-deep);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 760;
+    text-transform: uppercase;
+  }
+
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .module-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .module-card:hover {
+    color: var(--text);
+  }
+
+  .module-card__count {
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 760;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .module-card h3 {
+    margin-top: 0.7rem;
+  }
+
+  .module-card p {
+    margin-top: 0.65rem;
+    color: var(--text-muted);
+  }
+
+  .module-card__action {
+    margin-top: auto;
+    padding-top: 1rem;
+    color: var(--brand);
+    font-weight: 720;
+  }
+
+  @media (max-width: 56rem) {
+    .browser-intro {
+      display: grid;
+    }
+
+    .account-panel {
+      justify-content: space-between;
+    }
+
+    .module-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 38rem) {
+    .account-panel {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .module-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

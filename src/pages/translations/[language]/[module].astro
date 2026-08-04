@@ -1,0 +1,208 @@
+---
+import TranslationPortalLayout from "../../../layouts/TranslationPortalLayout.astro";
+import { readTranslationSession } from "../../../lib/translationAuth/session";
+import {
+  getTranslationLanguageLabel,
+  getTranslationModule,
+  isTranslationLanguage,
+  isTranslationModuleId,
+} from "../../../lib/translationBrowser/registry";
+
+export const prerender = false;
+
+const session = await readTranslationSession(Astro.cookies);
+
+if (!session) {
+  return Astro.redirect("/translations/login/", 302);
+}
+
+const { language, module: moduleParameter } = Astro.params;
+
+if (
+  !isTranslationLanguage(language) ||
+  !isTranslationModuleId(moduleParameter)
+) {
+  return new Response("Translation module not found.", {
+    status: 404,
+    headers: { "cache-control": "no-store" },
+  });
+}
+
+const translationModule = getTranslationModule(language, moduleParameter);
+const languageLabel = getTranslationLanguageLabel(language);
+const pageTitle = `${translationModule.title} · ${languageLabel} | nepali.no`;
+---
+
+<TranslationPortalLayout
+  title={pageTitle}
+  description={`Read-only ${languageLabel} ${translationModule.title} interface wording.`}
+>
+  <div class="module-shell">
+    <nav class="module-nav" aria-label="Translation Browser navigation">
+      <a href="/translations/">← All translation modules</a>
+      <a class="button button-secondary" href="/translations/logout/">Sign out</a>
+    </nav>
+
+    <header class="module-header">
+      <div>
+        <p class="eyebrow">{languageLabel} · Read-only</p>
+        <h1>{translationModule.title}</h1>
+        <p class="lead">{translationModule.description}</p>
+      </div>
+      <div class="module-total" aria-label={`${translationModule.entries.length} strings`}>
+        <strong>{translationModule.entries.length}</strong>
+        <span>strings</span>
+      </div>
+    </header>
+
+    <aside class="scope-note">
+      <strong>Current source wording</strong>
+      <p>
+        Keys are shown only for context. Editing, saving and repository access are
+        deliberately disabled in this checkpoint.
+      </p>
+    </aside>
+
+    <ol class="translation-list">
+      {translationModule.entries.map((entry) => (
+        <li class="translation-item surface">
+          <div class="translation-item__meta">
+            <code>{entry.key}</code>
+          </div>
+          <p lang={language}>{entry.value}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</TranslationPortalLayout>
+
+<style>
+  :global(.portal-main) {
+    place-items: start center;
+  }
+
+  .module-shell {
+    width: min(100%, 68rem);
+  }
+
+  .module-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .module-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-top: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  h1 {
+    margin-top: 0.65rem;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+  }
+
+  .lead {
+    max-width: 48rem;
+    margin-top: 1rem;
+  }
+
+  .module-total {
+    display: grid;
+    min-width: 6rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    text-align: center;
+  }
+
+  .module-total strong {
+    color: var(--civic-deep);
+    font-size: 1.55rem;
+    line-height: 1;
+  }
+
+  .module-total span {
+    margin-top: 0.3rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 680;
+  }
+
+  .scope-note {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 2rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+  }
+
+  .translation-list {
+    display: grid;
+    gap: 0.85rem;
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .translation-item {
+    display: grid;
+    grid-template-columns: minmax(13rem, 0.8fr) minmax(0, 1.7fr);
+    gap: 1rem 1.5rem;
+    align-items: start;
+    padding: 1rem 1.1rem;
+  }
+
+  .translation-item__meta {
+    min-width: 0;
+  }
+
+  code {
+    display: inline-block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    color: var(--civic);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .translation-item p {
+    color: var(--text);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .translation-item p[lang="ne"] {
+    font-family: "Noto Sans Devanagari Variable", "Inter Variable", sans-serif;
+    font-size: 1.06rem;
+    line-height: 1.8;
+  }
+
+  @media (max-width: 44rem) {
+    .module-header {
+      display: grid;
+    }
+
+    .module-total {
+      justify-self: start;
+    }
+
+    .translation-item {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .module-nav {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>
