@@ -1,0 +1,335 @@
+---
+import TranslationPortalLayout from "../../layouts/TranslationPortalLayout.astro";
+import { readTranslationSession } from "../../lib/translationAuth/session";
+import { getTranslationDiagnostics } from "../../lib/translationBrowser/diagnostics";
+
+export const prerender = false;
+
+const session = await readTranslationSession(Astro.cookies);
+
+if (!session) {
+  return Astro.redirect("/translations/login/", 302);
+}
+
+const diagnostics = getTranslationDiagnostics();
+const hasWarnings =
+  diagnostics.unassignedSections.length > 0 ||
+  diagnostics.structuralIssues.length > 0;
+
+const availabilityLabel = {
+  both: "Nepali and Norwegian",
+  "ne-only": "Nepali only",
+  "nb-only": "Norwegian only",
+} as const;
+---
+
+<TranslationPortalLayout
+  title="Translation registry safeguard | nepali.no"
+  description="Read-only report for unassigned translation sections and language-structure mismatches."
+>
+  <div class="report-shell">
+    <nav class="report-nav" aria-label="Translation Browser navigation">
+      <a href="/translations/">← All translation modules</a>
+      <a class="button button-secondary" href="/translations/logout/">Sign out</a>
+    </nav>
+
+    <header class="report-header">
+      <p class="eyebrow">Read-only safeguard</p>
+      <h1>Translation registry report</h1>
+      <p class="lead">
+        This report detects any number of unassigned top-level translation sections
+        and compares the Nepali and Norwegian source structures.
+      </p>
+    </header>
+
+    <section
+      class:list={["report-status", hasWarnings ? "report-status--warning" : "report-status--clear"]}
+      aria-live="polite"
+    >
+      <strong>
+        {hasWarnings
+          ? "Translation registry review required"
+          : "No unassigned sections or structure mismatches detected"}
+      </strong>
+      <p>
+        {hasWarnings
+          ? "New or mismatched sections remain read-only until a developer deliberately classifies or corrects them."
+          : "All currently detected top-level sections are assigned, and the Nepali and Norwegian structures match."}
+      </p>
+    </section>
+
+    <section class="report-section" aria-labelledby="unassigned-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Automatic discovery</p>
+          <h2 id="unassigned-title">Unassigned top-level sections</h2>
+        </div>
+        <span class="count-badge">{diagnostics.unassignedSections.length}</span>
+      </div>
+
+      {diagnostics.unassignedSections.length === 0 ? (
+        <div class="empty-report surface">
+          <p>No unassigned top-level sections were found.</p>
+        </div>
+      ) : (
+        <div class="unassigned-list">
+          {diagnostics.unassignedSections.map((section) => (
+            <article class="unassigned-section surface">
+              <header>
+                <div>
+                  <code>{section.name}</code>
+                  <h3>{section.name}</h3>
+                </div>
+                <span class="badge">{availabilityLabel[section.availability]}</span>
+              </header>
+
+              {section.structuralIssues.length > 0 && (
+                <p class="warning-text">
+                  {section.structuralIssues.length} language-structure mismatch{section.structuralIssues.length === 1 ? "" : "es"}
+                </p>
+              )}
+
+              <div class="language-columns">
+                <section aria-label={`Nepali strings in ${section.name}`}>
+                  <h4>Nepali · {section.nepaliEntries.length} strings</h4>
+                  {section.nepaliEntries.length ? (
+                    <dl>
+                      {section.nepaliEntries.map((entry) => (
+                        <div>
+                          <dt><code>{entry.key}</code></dt>
+                          <dd lang="ne">{entry.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p class="muted">No Nepali string values detected.</p>
+                  )}
+                </section>
+
+                <section aria-label={`Norwegian strings in ${section.name}`}>
+                  <h4>Norwegian · {section.norwegianEntries.length} strings</h4>
+                  {section.norwegianEntries.length ? (
+                    <dl>
+                      {section.norwegianEntries.map((entry) => (
+                        <div>
+                          <dt><code>{entry.key}</code></dt>
+                          <dd lang="nb">{entry.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p class="muted">No Norwegian string values detected.</p>
+                  )}
+                </section>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+
+    <section class="report-section" aria-labelledby="structure-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Language parity</p>
+          <h2 id="structure-title">Structure mismatches</h2>
+        </div>
+        <span class="count-badge">{diagnostics.structuralIssues.length}</span>
+      </div>
+
+      {diagnostics.structuralIssues.length === 0 ? (
+        <div class="empty-report surface">
+          <p>The Nepali and Norwegian source structures currently match.</p>
+        </div>
+      ) : (
+        <ol class="issue-list">
+          {diagnostics.structuralIssues.map((issue) => (
+            <li class="surface">
+              <code>{issue.path}</code>
+              <span>Nepali: {issue.nepaliKind}</span>
+              <span>Norwegian: {issue.norwegianKind}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  </div>
+</TranslationPortalLayout>
+
+<style>
+  :global(.portal-main) {
+    place-items: start center;
+  }
+
+  .report-shell {
+    width: min(100%, 72rem);
+  }
+
+  .report-nav,
+  .section-heading,
+  .unassigned-section > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .report-header {
+    margin-top: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  h1 {
+    margin-top: 0.65rem;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+  }
+
+  .lead {
+    max-width: 50rem;
+    margin-top: 1rem;
+  }
+
+  .report-status {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 2rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid;
+    border-radius: var(--radius-md);
+  }
+
+  .report-status--clear {
+    border-color: #b7e4cd;
+    background: var(--color-success-50);
+  }
+
+  .report-status--warning {
+    border-color: #efc580;
+    background: #fff8e8;
+  }
+
+  .report-section {
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .section-heading {
+    align-items: end;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-heading h2 {
+    margin-top: 0.45rem;
+  }
+
+  .count-badge {
+    display: inline-grid;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--civic-deep);
+    color: #fff;
+    font-weight: 760;
+  }
+
+  .empty-report {
+    margin-top: 1rem;
+    padding: 1.25rem;
+  }
+
+  .unassigned-list,
+  .issue-list {
+    display: grid;
+    gap: 1rem;
+    margin: 1rem 0 0;
+    padding: 0;
+  }
+
+  .unassigned-section {
+    padding: 1.25rem;
+  }
+
+  .unassigned-section h3 {
+    margin-top: 0.35rem;
+  }
+
+  .warning-text {
+    margin-top: 1rem;
+    color: #8a4b08;
+    font-weight: 700;
+  }
+
+  .language-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .language-columns > section {
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+  }
+
+  dl {
+    display: grid;
+    gap: 0.85rem;
+    margin: 1rem 0 0;
+  }
+
+  dl > div {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  dt,
+  dd {
+    margin: 0;
+  }
+
+  code {
+    overflow-wrap: anywhere;
+    color: var(--civic);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+  }
+
+  dd {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  dd[lang="ne"] {
+    font-family: "Noto Sans Devanagari Variable", "Inter Variable", sans-serif;
+    line-height: 1.8;
+  }
+
+  .issue-list {
+    list-style: none;
+  }
+
+  .issue-list li {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1.5fr) repeat(2, minmax(8rem, 1fr));
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+  }
+
+  @media (max-width: 44rem) {
+    .language-columns,
+    .issue-list li {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .report-nav,
+    .unassigned-section > header {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>

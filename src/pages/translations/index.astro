@@ -6,6 +6,7 @@ import {
   getTranslationModuleSummaries,
   translationLanguages,
 } from "../../lib/translationBrowser/registry";
+import { getTranslationDiagnostics } from "../../lib/translationBrowser/diagnostics";
 
 export const prerender = false;
 
@@ -14,6 +15,10 @@ const session = await readTranslationSession(Astro.cookies);
 if (!session) {
   return Astro.redirect("/translations/login/", 302);
 }
+
+const diagnostics = getTranslationDiagnostics();
+const warningCount =
+  diagnostics.unassignedSections.length + diagnostics.structuralIssues.length;
 ---
 
 <TranslationPortalLayout
@@ -44,6 +49,28 @@ if (!session) {
         repository access and the main branch remain protected.
       </p>
     </aside>
+
+    <section
+      class:list={["safeguard-panel", warningCount ? "safeguard-panel--warning" : "safeguard-panel--clear"]}
+      aria-labelledby="safeguard-title"
+    >
+      <div>
+        <p class="eyebrow">Registry safeguard</p>
+        <h2 id="safeguard-title">
+          {warningCount
+            ? `${warningCount} translation registry warning${warningCount === 1 ? "" : "s"}`
+            : "All detected top-level sections are assigned"}
+        </h2>
+        <p>
+          {warningCount
+            ? "Review unassigned sections or language-structure mismatches before enabling editing."
+            : "No unassigned top-level sections or Nepali/Norwegian structure mismatches were detected."}
+        </p>
+      </div>
+      <a class="button button-secondary" href="/translations/unassigned/">
+        {warningCount ? "Review warnings" : "View safeguard report"}
+      </a>
+    </section>
 
     <div class="language-sections">
       {translationLanguages.map((language) => (
@@ -120,6 +147,37 @@ if (!session) {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface-muted);
+  }
+
+  .safeguard-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid;
+    border-radius: var(--radius-md);
+  }
+
+  .safeguard-panel--clear {
+    border-color: #b7e4cd;
+    background: var(--color-success-50);
+  }
+
+  .safeguard-panel--warning {
+    border-color: #efc580;
+    background: #fff8e8;
+  }
+
+  .safeguard-panel h2 {
+    margin-top: 0.35rem;
+    font-size: clamp(1.25rem, 3vw, 1.65rem);
+  }
+
+  .safeguard-panel p:last-child {
+    margin-top: 0.35rem;
+    color: var(--text-muted);
   }
 
   .language-sections {
@@ -215,7 +273,8 @@ if (!session) {
   }
 
   @media (max-width: 38rem) {
-    .account-panel {
+    .account-panel,
+    .safeguard-panel {
       align-items: stretch;
       flex-direction: column;
     }
