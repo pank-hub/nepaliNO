@@ -27,8 +27,11 @@ jobs:
         with:
           node-version: 24
 
-      - name: Install locked dependencies
+      - name: Install public application dependencies
         run: npm ci
+
+      - name: Install Sanity Studio dependencies
+        run: npm ci --prefix sanity
 
       - name: Run Astro Check
         run: npx astro check
