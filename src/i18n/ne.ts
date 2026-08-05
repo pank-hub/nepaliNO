@@ -5,7 +5,7 @@ export const ne = {
   languageName: "नेपाली",
 
   navigation: {
-    home: "गृहपृष्ठ",
+    home: "गृहपृष्ठ परीक्षण",
     news: "समाचार",
     information: "नर्वेमा जीवन",
     events: "कार्यक्रम",
