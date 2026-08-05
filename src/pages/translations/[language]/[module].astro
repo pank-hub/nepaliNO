@@ -63,8 +63,8 @@ const pageTitle = `${translationModule.title} · ${languageLabel} | nepali.no`;
     <aside class="scope-note">
       <strong>Validation-only checkpoint</strong>
       <p>
-        Proposed wording can be reviewed and validated, but no translation file,
-        Git branch, commit or pull request can be created yet.
+        Proposed wording is validated before a protected translation branch and
+        pull request can be created. The Translation Editor never updates main directly.
       </p>
     </aside>
 
@@ -125,8 +125,8 @@ const pageTitle = `${translationModule.title} · ${languageLabel} | nepali.no`;
         <button class="button button-secondary" type="button" data-close-review>
           Return to editing
         </button>
-        <button class="button button-primary" type="button" disabled>
-          Repository update not enabled
+        <button class="button button-primary" type="button" data-create-pull-request disabled>
+          Create protected pull request
         </button>
       </div>
     </section>
@@ -148,6 +148,12 @@ const pageTitle = `${translationModule.title} · ${languageLabel} | nepali.no`;
     const reviewList = editor.querySelector("[data-review-list]");
     const reviewMessage = editor.querySelector("[data-review-message]");
     const closeReview = editor.querySelector("[data-close-review]");
+    const createPullRequestButton = editor.querySelector("[data-create-pull-request]");
+    let validatedProposal: {
+      language: string;
+      module: string;
+      changes: Array<{ key: string; originalValue: string; proposedValue: string }>;
+    } | null = null;
     const textareas = Array.from(
       editor.querySelectorAll("textarea[data-translation-key]"),
     ).filter((element) => element instanceof HTMLTextAreaElement);
@@ -213,6 +219,11 @@ const pageTitle = `${translationModule.title} · ${languageLabel} | nepali.no`;
         changeCount.textContent = enabled ? "0 changed strings" : "Read-only";
       }
       clearErrors();
+      validatedProposal = null;
+      if (createPullRequestButton instanceof HTMLButtonElement) {
+        createPullRequestButton.disabled = true;
+        createPullRequestButton.textContent = "Create protected pull request";
+      }
       if (reviewPanel instanceof HTMLElement) reviewPanel.hidden = true;
     };
 
@@ -289,6 +300,14 @@ const pageTitle = `${translationModule.title} · ${languageLabel} | nepali.no`;
           reviewList.append(item);
         }
 
+        validatedProposal = {
+          language: editor.dataset.language ?? "",
+          module: editor.dataset.module ?? "",
+          changes: result.changes,
+        };
+        if (createPullRequestButton instanceof HTMLButtonElement) {
+          createPullRequestButton.disabled = false;
+        }
         if (reviewMessage instanceof HTMLElement) {
           reviewMessage.textContent = result.message;
         }
@@ -303,6 +322,56 @@ const pageTitle = `${translationModule.title} · ${languageLabel} | nepali.no`;
           reviewButton.disabled = false;
           reviewButton.textContent = "Validate and review changes";
         }
+      }
+    });
+
+    createPullRequestButton?.addEventListener("click", async () => {
+      if (
+        !validatedProposal ||
+        !(createPullRequestButton instanceof HTMLButtonElement)
+      ) {
+        return;
+      }
+
+      createPullRequestButton.disabled = true;
+      createPullRequestButton.textContent = "Creating pull request…";
+      clearErrors();
+
+      try {
+        const response = await fetch("/translations/api/create-pull-request", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(validatedProposal),
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.ok) {
+          showErrors([
+            { message: result.message ?? "The pull request could not be created." },
+          ]);
+          createPullRequestButton.disabled = false;
+          createPullRequestButton.textContent = "Create protected pull request";
+          return;
+        }
+
+        const link = document.createElement("a");
+        link.href = result.result.pullRequest.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.className = "button button-primary";
+        link.textContent = `Open pull request #${result.result.pullRequest.number}`;
+        createPullRequestButton.replaceWith(link);
+
+        if (reviewMessage instanceof HTMLElement) {
+          reviewMessage.textContent = result.message;
+        }
+        validatedProposal = null;
+      } catch {
+        showErrors([
+          { message: "The pull-request service is temporarily unavailable." },
+        ]);
+        createPullRequestButton.disabled = false;
+        createPullRequestButton.textContent = "Create protected pull request";
       }
     });
 
