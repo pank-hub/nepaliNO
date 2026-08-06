@@ -1,25 +1,25 @@
 # nepali.no Translation Module Architecture
 
-**Status:** Active architecture document
-**Last updated:** 4 August 2026
-**Current implementation stage:** Phase 1, read-only Translation Browser completed
+**Status:** Phase 1 operational and production-proven
+**Last updated:** 5 August 2026
+**Current checkpoint:** `a46a7fb add protected Translation pull request pipeline (#4)`
 
 ## 1. Purpose
 
-The Translation Module provides a protected browser-based workflow for reviewing and eventually updating nepali.no interface wording without requiring ordinary translation work to be performed directly in GitHub Codespaces.
+The Translation Module provides a protected browser-based workflow for reviewing and updating nepali.no interface wording without requiring ordinary proofreading work to be performed directly in GitHub Codespaces.
 
-The module is limited to interface translation and proofreading. It must not expand into a general contributor portal, newsroom, project-management system, replacement for Sanity, or public-content submission service.
+The module is intentionally limited to interface translation and proofreading. It must not become a general contributor portal, newsroom, project-management system, replacement for Sanity, or public-content submission service.
 
-The module currently supports the complete public interface languages:
+Complete public interface languages:
 
 - Nepali (`ne`)
 - Norwegian Bokmal (`nb`)
 
-English remains deliberately limited to selected services and strategic pages. English is not a complete public-site language and is not part of the initial complete-language Translation Module workflow.
+English remains intentionally limited to selected services and strategic pages. English is not a complete public-site language and is not part of the initial complete-language workflow.
 
-## 2. Non-negotiable source-of-truth rule
+## 2. Authoritative source model
 
-The repository translation sources remain authoritative. The Translation Module must not create a competing translation database in Phase 1.
+The repository translation files remain authoritative. Phase 1 does not create a competing translation database.
 
 Approved interface-wording sources:
 
@@ -37,16 +37,17 @@ Protected technical contracts and configuration:
 - `src/i18n/eventSubmission.ts`
 - `src/i18n/directorySubmission.ts`
 
-The protected technical files must never be presented as ordinary editable translation wording.
+Technical contracts, functions, imports, computed expressions, application logic, secrets, arbitrary repository files, Sanity editorial content, and private submission data must never be presented as ordinary editable wording.
 
-## 3. Important developer warning: adding a string is not sufficient
+## 3. Critical developer rule: adding a string is not enough
 
-**Adding a string to `ne.ts` or `nb.ts` does not, by itself, guarantee that a field will appear in the Translation Editor web interface.**
+**Adding a string to `ne.ts` or `nb.ts` does not, by itself, guarantee that a field appears in the Translation Editor.**
 
-A string is discovered automatically only when it is located inside a top-level section that the Translation Module registry already recognizes and assigns to a module.
+A string appears automatically only when it belongs to a top-level section already assigned by the server-owned Translation registry.
 
-Currently recognized main sections:
+Currently assigned main sections:
 
+- `languageName`
 - `navigation`
 - `home`
 - `news`
@@ -56,30 +57,13 @@ Currently recognized main sections:
 - `footer`
 - `common`
 
-For example, a new string added inside the recognized `news` object is expected to appear automatically in the News module:
+A new string inside an assigned section normally appears automatically. A completely new top-level section, regardless of name, is detected as unassigned but does not become editable automatically.
 
-```ts
-news: {
-  newLabel: "New wording",
-}
-```
+A new page or feature is not translation-complete until a developer has verified that every intended interface string appears under the correct module in the protected web interface.
 
-A new top-level object does not automatically create a new Translation Editor module. For example:
+## 4. Current Translation Editor modules
 
-```ts
-school: {
-  title: "Language school",
-  introduction: "Introduction wording",
-}
-```
-
-The current Translation Editor will not automatically create a School module or display those fields. A developer must deliberately update the Translation Module registry or implement the approved unassigned-section safeguard described below.
-
-A new page or feature is not translation-complete merely because wording has been added to `ne.ts` and `nb.ts`. Before the feature is considered complete, a developer must verify that all intended interface strings appear in the Translation Editor under the correct module.
-
-## 4. Current registry assignments
-
-The current Translation Browser exposes nine modules for each complete language:
+The editor exposes nine modules per complete language:
 
 1. Navigation
 2. Homepage
@@ -91,7 +75,7 @@ The current Translation Browser exposes nine modules for each complete language:
 8. Event submission form
 9. Directory submission form
 
-Current production-verified visible counts per language:
+Production-verified visible counts per language:
 
 - Navigation: 8
 - Homepage: 26
@@ -102,17 +86,15 @@ Current production-verified visible counts per language:
 - Footer and common wording: 20
 - Event submission form: 119
 - Directory submission form: 132
-- Total visible strings: 568
+- Total: 568 unique visible strings per language
 
-Nepali and Norwegian counts currently match exactly.
+Nepali and Norwegian module counts match.
 
-## 5. Automatic discovery within assigned sections
+## 5. Automatic discovery and supported structures
 
-Within a recognized and assigned section, the registry recursively discovers ordinary string values.
+Within assigned sections, the registry recursively discovers:
 
-Supported structures:
-
-- strings
+- string values
 - nested objects containing strings
 - ordered arrays containing strings
 
@@ -121,11 +103,9 @@ Array entries receive stable contextual paths such as:
 - `beforeYouBeginItems[0]`
 - `beforeYouBeginItems[1]`
 
-New strings inside an existing assigned section normally require no manual key-by-key registration.
+The registry excludes non-string leaves.
 
-## 6. Current exclusions
-
-The Translation Module must exclude technical or unsafe values.
+## 6. Explicit exclusions
 
 ### 6.1 Functions and application logic
 
@@ -134,20 +114,18 @@ Current excluded functions:
 - `news.articleCount`
 - `directory.resultCount`
 
-These values contain TypeScript application logic and must not be treated as ordinary text fields.
-
 ### 6.2 Imported submission references
 
-The following imported object references are excluded from the main Events and Directory modules:
+Excluded from the main Events and Directory modules to prevent duplication:
 
 - `events.submission`
 - `directory.submission`
 
-Their actual strings are shown separately in the Event submission form and Directory submission form modules. This prevents duplication.
+Their actual strings appear in separate submission-form modules.
 
 ### 6.3 Deferred forum and Coming Soon wording
 
-The following Homepage values are currently deferred:
+The following Homepage values remain excluded until the forum platform and final terminology are decided:
 
 - `home.discussionsEyebrow`
 - `home.discussionsHeading`
@@ -156,300 +134,358 @@ The following Homepage values are currently deferred:
 - `home.forumNotice`
 - `home.comingSoon`
 
-The forum platform, hosting model and final Nepali terminology remain unresolved. These values remain in the source files but are excluded from ordinary Translation Browser work until the forum architecture is selected.
+## 7. Generic unassigned-section safeguard
 
-### 6.4 Other excluded material
+The safeguard compares the actual top-level sections in the complete language sources with the assigned-section registry.
 
-The module must not expose:
+It supports any number of unknown future sections and does not depend on example names.
 
-- imports
-- TypeScript contracts
-- functions
-- computed expressions
-- application logic
-- arbitrary repository files
-- secrets or environment variables
-- Sanity editorial content
-- browser-supplied file paths
-- browser-supplied repository names
-- private Event or Directory submission data
+It detects:
 
-## 7. Planned unassigned-section safeguard
+- unassigned sections present in both languages
+- Nepali-only sections
+- Norwegian-only sections
+- missing nested keys
+- different array lengths
+- string-versus-object differences
+- string-versus-function differences
+- other structural mismatches
 
-A future safety improvement must detect new top-level translation sections that are not assigned to a known Translation Editor module.
+Unknown sections remain read-only until a developer deliberately assigns or excludes them.
 
-Example:
+Protected report route:
 
-- `school`
-- `volunteering`
-- `donations`
+- `/translations/unassigned/`
 
-The safeguard should report newly discovered top-level sections through a protected administrator warning or a read-only **New or unassigned sections** view.
+Current production state:
 
-The safeguard must:
+- unassigned top-level sections: 0
+- unexplained structure mismatches: 0
 
-- discover ordinary strings in unknown top-level sections
-- report the section in both languages
-- identify missing language counterparts
-- remain read-only until the section is reviewed
-- require deliberate classification before editing is enabled
-- never infer that an unknown technical object is safe to edit
+Approved directional counterpart pairs:
 
-The architecture must distinguish current verified behavior from this planned safeguard. Until the safeguard is implemented, a new top-level section requires a manual registry integration review.
+- `news.readInNorwegian` and `news.readInNepali`
+- `information.readInNorwegian` and `information.readInNepali`
 
-## 8. Language-parity checks
+The approval is narrow. Missing, duplicated, renamed, or structurally changed counterparts trigger warnings again.
 
-The Translation Module must detect and report structural differences between Nepali and Norwegian, including:
+## 8. Authentication and authorization
 
-- a key present in Nepali but missing in Norwegian
-- a key present in Norwegian but missing in Nepali
-- arrays with different lengths
-- a string in one language and an object in the other
-- an ordinary string in one language and a function in the other
-- unsupported or computed values
-- an unassigned top-level section
+Phase 1 is restricted to Pankaj.
 
-Missing counterparts must be shown as explicit warnings. They must not be silently hidden or invented.
+The portal uses:
 
-## 9. Hard-coded wording policy
-
-New public interface wording should be stored in approved i18n sources rather than hard-coded in Astro components or page templates.
-
-The Translation Module cannot automatically manage wording that remains embedded inside `.astro`, `.ts`, `.tsx`, or other application files.
-
-Before a new page or public feature is considered translation-complete, developers must:
-
-1. Centralize ordinary interface wording in the approved i18n source files.
-2. Keep Nepali and Norwegian structures aligned.
-3. Assign any new top-level section to the Translation Module registry.
-4. Verify every intended string in the protected web interface.
-5. Confirm that technical functions and contracts remain excluded.
-6. Run registry consistency checks.
-7. Test the Translation Editor on desktop and mobile.
-8. Update this architecture document when the module structure changes.
-
-Editor-authored Sanity content is outside this interface-translation workflow and must continue through the Sanity editorial process.
-
-## 10. Phase model
-
-### Phase 1: Pankaj-only Translation Editor
-
-Phase 1 includes:
-
-- private GitHub login
+- GitHub OAuth for identity verification
 - immutable numeric GitHub user-ID authorization
-- signed secure session
-- read-only Translation Browser
-- controlled editing of allowlisted values
-- server-side validation
-- review of exact changes
-- stale-source detection
-- controlled GitHub branch and pull request
-- no direct or automatic commit to `main`
+- OAuth state validation
+- discarded temporary GitHub user token
+- signed four-hour HTTP-only Secure SameSite=Lax session
+- logout that clears the session
+- `noindex, nofollow`
 
-No Supabase project is used in Phase 1.
+The user-login OAuth client and the repository-writing GitHub App installation are distinct security mechanisms.
 
-### Operational proofreading after Phase 1
-
-Actual proofreading starts only after Phase 1 is working and production-validated.
-
-Initial workflow:
-
-- proofreaders send suggestions to Pankaj through familiar channels
-- Pankaj enters approved wording through the protected portal
-- changes pass through validation and a controlled pull request
-
-### Phase 2: multi-user workflow after risk assessment
-
-Possible Phase 2 additions:
-
-- invited proofreader and editor accounts
-- language and module restrictions
-- user invitation, suspension and revocation
-- account recovery
-- saved drafts
-- moderation
-- review, approval and rejection
-- comments
-- self-approval restrictions
-- audit history
-- advanced batch workflows
-
-Direct proofreader access must not be enabled before a documented privacy, security and operational risk assessment.
-
-## 11. Authentication architecture
-
-The Phase 1 Translation Editor uses a private GitHub App for identity verification.
-
-Current verified boundary:
-
-- approved user: Pankaj only
-- authorization uses the immutable numeric GitHub user ID
-- GitHub username is display information only
-- OAuth state is validated
-- the temporary GitHub user token is discarded
-- a signed, HTTP-only, Secure, SameSite=Lax session is used
-- session lifetime is four hours
-- logout clears the session
-- portal pages use `noindex, nofollow`
-
-Current GitHub App state:
-
-- no repository installation
-- no private key
-- no repository permissions
-- no webhook
-- no event subscriptions
-
-Environment-variable names only:
+Production-only Sensitive Vercel variable names:
 
 - `GITHUB_TRANSLATION_APP_CLIENT_ID`
 - `GITHUB_TRANSLATION_APP_CLIENT_SECRET`
 - `TRANSLATION_ALLOWED_GITHUB_USER_ID`
 - `TRANSLATION_SESSION_SECRET`
+- `GITHUB_TRANSLATION_APP_ID`
+- `GITHUB_TRANSLATION_APP_INSTALLATION_ID`
+- `GITHUB_TRANSLATION_APP_PRIVATE_KEY`
 
-Values must never be committed, displayed in documentation, pasted into chat, exposed to browser JavaScript or stored in a `PUBLIC_` variable.
+Values must never enter Git, Markdown, chat, screenshots, browser JavaScript, public variables, GitHub Actions, or Codespaces.
 
-## 12. Editing and validation contract
+## 9. GitHub App installation boundary
 
-Before any proposal can be accepted, the server must verify:
+GitHub App:
 
-- a valid authenticated session
-- the approved user identity
-- a supported language
-- a recognized or deliberately reviewed module
-- an allowlisted key
-- a string value only
-- non-empty normalized wording
-- the expected current source value
-- preserved placeholders
-- preserved array structure and index
-- reasonable value length
-- no unknown fields
-- no arbitrary file path
-- no technical function or computed value
-- no changes outside approved translation files
-
-Browser-side validation is only a usability aid. Server-side validation remains authoritative.
-
-## 13. Stale-source protection
-
-Every proposed change must include the current source value or a strong source fingerprint.
-
-Before generating a repository change, the server must fetch or inspect the latest permitted source and verify that the original wording still matches.
-
-If the source changed after the editing session began, the operation must stop with a conflict. The system must not overwrite newer wording silently.
-
-## 14. GitHub write boundary
-
-Repository-writing capability remains deferred until editing and validation are production-tested.
-
-Later minimum GitHub App repository permissions are expected to be:
-
+- name: `nepali.no Translation Editor`
+- installed only on `pank-hub/nepaliNO`
+- repository selection: selected repository only
 - Contents: Read and write
 - Pull requests: Read and write
-- Metadata: Read-only
+- Metadata: Read
+- all unrelated permissions: No access
+- webhook: disabled
+- event subscriptions: none
+- ruleset bypass: none
 
-Because Contents write is technically powerful, application restrictions remain mandatory:
+The App cannot administer the repository, read secrets, modify workflows, manage deployments, or bypass protected `main`.
 
-- repository fixed server-side to `pank-hub/nepaliNO`
-- base branch fixed server-side to `main`
-- generated translation branch prefix
-- exact file allowlist
-- exact key allowlist
-- no arbitrary browser-supplied repository, branch or file
+## 10. Protected main branch
+
+Active ruleset: `Protect main branch`
+
+Target:
+
+- default branch, currently `main`
+
+Protections:
+
 - pull request required
-- no direct push to `main`
-- automated validation before merge
-- Pankaj retains final merge authority
+- required approvals: 0, appropriate for the current single-administrator model
+- conversation resolution required
+- Squash merge only
+- required status check: `Astro check and production build`
+- restrict deletions
+- block force pushes
+- Translation GitHub App is not a bypass actor
+- repository-administrator emergency bypass is limited to pull requests
 
-## 15. Public-site independence
+## 11. Pull-request validation workflow
 
-The public nepali.no website must not depend on Translation Editor availability.
+Workflow file:
 
-If GitHub authentication, the portal or future pull-request integration is unavailable:
+- `.github/workflows/validate-pull-request.yml`
 
-- the public site continues using committed translation files
-- existing public pages continue working
-- no public content is lost
-- no insecure authentication bypass is introduced
+The workflow runs on pull requests targeting `main` and uses:
 
-## 16. Current production proof
+- ordinary `pull_request`, never `pull_request_target`
+- `contents: read`
+- Node 24
+- `npm ci`
+- `npm ci --prefix sanity`
+- `npx astro check`
+- `npm run build`
+- public Sanity project ID and public production dataset only
+- no project secrets
+- no repository write permission
 
-Verified checkpoints:
+## 12. Editing and proposal validation
 
-- `191cdba` added the Translation Editor authentication foundation
-- `a57f071` corrected mutable redirect handling for session cookies
-- `8db73df` documented the authentication milestone
-- `764f316` added the read-only Translation Browser
+Editing is enabled only after an explicit action.
 
-Production verification includes:
+The interface supports:
 
-- unauthenticated redirect to login
-- approved GitHub login
-- controlled access denial
-- signed protected session
-- logout and session removal
-- nine modules per language
-- 568 unique visible strings per language
-- matching Nepali and Norwegian counts
-- immutable translation keys
-- generic detection of any number of unassigned top-level sections
-- Nepali-only and Norwegian-only section detection
-- array-length and structural mismatch detection
-- explicit handling of approved directional counterpart keys
-- controlled editing enabled only after an explicit user action
-- live changed-string counting
-- authenticated same-origin server validation
-- allowlisted language, module and key validation
-- duplicate-key, empty-value and outer-whitespace rejection
-- stale-source detection
-- placeholder preservation
+- proposed-wording fields for allowlisted strings
+- live changed-string count
+- cancellation and restoration of original values
 - exact current-versus-proposed review
-- cancel-and-restore behavior
-- no persistence of temporary proposals
-- no translation-file mutation
-- no repository API calls or GitHub write capability
-- disabled repository-update action
-- safe unknown-module 404 response
-- desktop visual verification
-- Devanagari and Norwegian rendering
-- large 130-string Community Directory module rendering
+- field-level errors and accessible error summary
 
-## 17. Required checks for future development
+Server validation verifies:
 
-After meaningful Translation Module changes:
+- valid authenticated session
+- same-origin JSON request
+- 128 KiB request limit
+- supported language
+- registered module
+- allowlisted key
+- maximum 200 changes
+- maximum 5,000 characters per value
+- string-only values
+- no duplicate keys
+- non-empty wording
+- no outer whitespace
+- no null characters
+- placeholder preservation
+- current source still equals the expected original wording
+- actual change exists
+- no unknown payload fields
+
+Browser validation is advisory. Server validation is authoritative.
+
+## 13. Deterministic TypeScript source updater
+
+Implementation:
+
+- `src/lib/translationGitHub/sourceUpdate.ts`
+
+The updater:
+
+- maps validated modules to the six fixed translation files
+- uses the TypeScript parser to locate exact exported object literals
+- unwraps `as const`, `satisfies`, parentheses, and type assertions
+- navigates nested objects and array indexes
+- rejects functions and non-string values
+- verifies stale source wording
+- preserves quote style
+- escapes quotes, backslashes, newlines, template markers, and Unicode line separators
+- replaces only exact string-literal byte ranges
+- applies multiple replacements from end to beginning
+- rejects duplicate and overlapping replacements
+- reparses the updated TypeScript
+- operates in memory and performs no local file write
+
+The updater was tested against all six source formats, including double quotes, single quotes, multiline formatting, nested values, arrays, escaping, stale wording, unknown keys, and function rejection. Reversing the synthetic updates restored every original byte.
+
+## 14. Read-only installation connectivity
+
+Read-only GitHub integration files:
+
+- `src/lib/translationGitHub/config.ts`
+- `src/lib/translationGitHub/token.ts`
+- `src/lib/translationGitHub/readRepository.ts`
+- `src/pages/translations/api/github-status.ts`
+
+Production proof confirmed that Vercel can:
+
+- parse the private key
+- create a short-lived GitHub App JWT
+- exchange it for a short-lived installation token
+- read only the fixed repository boundary
+- retrieve protected `main`
+- expose no token or secret
+
+Fixed values:
+
+- owner: `pank-hub`
+- repository: `nepaliNO`
+- base branch: `main`
+- translation branch prefix: `translation/`
+
+## 15. Protected branch and pull-request pipeline
+
+Implementation:
+
+- `src/lib/translationGitHub/createPullRequest.ts`
+- `src/pages/translations/api/create-pull-request.ts`
+- controlled UI integration in `src/pages/translations/[language]/[module].astro`
+
+Pipeline:
+
+1. Require valid Pankaj-only session.
+2. Require same-origin JSON request.
+3. Rerun the server proposal validator.
+4. Refuse pull-request creation while registry warnings exist.
+5. Fetch fresh protected `main` SHA.
+6. Fetch exactly one approved translation source file.
+7. Recheck original wording against fresh source.
+8. Update exact string literals in memory.
+9. Create a unique generated `translation/*` branch.
+10. Commit only the approved translation file to that branch.
+11. Open a pull request against `main`.
+12. Return only safe pull-request metadata and URL.
+13. Attempt best-effort deletion of the generated branch if a later operation fails.
+
+The browser cannot supply:
+
+- repository owner or name
+- base branch
+- target file
+- generated branch name
+- commit SHA
+- commit message
+- pull-request title or body
+- installation ID
+- token
+- private key
+- arbitrary GitHub API path
+- raw TypeScript source
+
+The App never merges a pull request and never updates `main` directly.
+
+## 16. End-to-end production proof
+
+Synthetic production proposal:
+
+- language: Nepali
+- module: Navigation
+- key: `navigation.home`
+- current: `गृहपृष्ठ`
+- proposed: `गृहपृष्ठ परीक्षण`
+
+Generated pull request:
+
+- PR #5
+- base: `main`
+- generated head: `translation/ne-navigation-20260805190924-c934d00857`
+- changed files: 1
+- additions: 1
+- deletions: 1
+- only changed file: `src/i18n/ne.ts`
+- exact change: one string literal
+
+All required GitHub Actions and Vercel checks passed.
+
+PR #5 was closed without merging. The generated branch was deleted. `main` retained the original wording, no `translation/*` branches remained, and the repository remained clean at `a46a7fb`.
+
+This proves the complete workflow without placing synthetic wording into production.
+
+## 17. Operational invariants
+
+Never weaken these rules:
+
+- Phase 1 remains Pankaj-only.
+- Translation files remain authoritative.
+- Browser clients never choose repositories, branches, files, or GitHub API paths.
+- Every proposal is validated server-side twice: before review and against fresh `main` before GitHub writing.
+- Only the six approved translation files may change.
+- One module proposal changes one file.
+- Every repository change uses a generated `translation/*` branch.
+- Every repository change requires a pull request.
+- `main` is never modified directly by the App.
+- The App has no ruleset bypass.
+- Pankaj remains final reviewer and merge authority.
+- Secrets never enter Git, chat, screenshots, logs, Markdown, browser JavaScript, or GitHub Actions.
+- Public nepali.no remains independent of Translation Editor availability.
+
+## 18. Normal operating workflow
+
+1. Sign in to `/translations/`.
+2. Check the registry safeguard status.
+3. Open a language and module.
+4. Enable editing.
+5. Change only reviewed wording.
+6. Validate and review exact differences.
+7. Create the protected pull request.
+8. Open the returned PR URL.
+9. Inspect Files changed.
+10. Wait for required checks.
+11. Resolve review conversations.
+12. Squash-merge only when satisfied.
+13. Confirm deployment and public wording.
+14. Close without merging and delete the branch if the proposal is abandoned.
+
+See `TRANSLATION_OPERATOR_GUIDE.md` for detailed procedures.
+
+## 19. Phase 2 boundary
+
+Possible later additions after a documented risk assessment:
+
+- invited proofreader and editor accounts
+- language and module restrictions
+- invitation, suspension, and revocation
+- saved drafts
+- moderation
+- comments
+- approval and rejection
+- self-approval restrictions
+- audit history
+- advanced batch workflows
+
+No Phase 2 access should be enabled merely because Phase 1 is complete.
+
+## 20. Required checks for future development
+
+After meaningful changes:
 
 1. Verify a clean Git starting point.
-2. Run `git diff --check`.
-3. Run Astro Check.
-4. Run the production build.
-5. Run registry string, uniqueness and exclusion tests.
-6. Run language-parity checks.
-7. Review the exact source diff.
-8. Review the staged file inventory.
-9. Confirm no secrets or repository-write capability entered unexpectedly.
-10. Test desktop and mobile layouts.
-11. Create a clean Git checkpoint.
-12. Append the milestone to `PROJECT_PROGRESS.md` at a natural stopping point.
+2. Review exact source checksums or protected anchors.
+3. Run targeted unit or in-memory tests.
+4. Run `git diff --check`.
+5. Run Astro Check.
+6. Run the production build.
+7. Run registry and language-parity checks.
+8. Confirm no translation source changed unexpectedly.
+9. Confirm no secret or App credential entered Git.
+10. Review staged inventory and exact diff.
+11. Use a feature branch and protected pull request.
+12. Wait for required checks.
+13. Squash-merge manually.
+14. Verify Production behavior.
+15. Update architecture and project progress at major checkpoints.
 
-## 18. Next planned work
+## 21. Immediate follow-up work
 
-The read-only Translation Browser, generic registry safeguard, controlled editing interface and server-side proposal validation are now production-proven.
+Translation Module Phase 1 is operational. Remaining polish:
 
-Before enabling repository writes:
+- replace outdated read-only wording on the Translation Browser dashboard
+- add the operator guide to the repository
+- complete documentation checkpoint after this continuity package
+- begin actual language proofreading through protected pull requests
+- monitor the first real translation pull requests carefully
 
-1. Preserve the current Pankaj-only authentication boundary.
-2. Keep temporary proposals in memory only until the GitHub integration is deliberately enabled.
-3. Review the GitHub App permission increase as a separate security milestone.
-4. Install the GitHub App only on `pank-hub/nepaliNO`.
-5. Generate and store the private key only in protected server configuration.
-6. Grant only the minimum repository permissions required for controlled branches and pull requests.
-7. Fix the repository, base branch, translation branch prefix and file allowlist server-side.
-8. Add deterministic TypeScript source updates that preserve keys, imports and application logic.
-9. Revalidate stale source wording immediately before creating a repository change.
-10. Create a translation branch and pull request only, never a direct commit to `main`.
-11. Run Astro Check, the production build and exact translation-file diff validation before a pull request is opened.
-12. Keep Pankaj as the final reviewer and merge authority.
-
-Actual proofreading should begin only after the controlled pull-request workflow is production-tested with harmless synthetic wording and confirmed not to modify `main` directly.
+The next major platform milestone is the forum requirements and platform-evaluation phase. Forum work must remain separate from the Translation Module and must not weaken News, Public Information, Event, Directory, privacy, or moderation boundaries.
