@@ -3409,3 +3409,197 @@ Before any permission is granted:
 - keep Pankaj as final reviewer and merge authority
 
 Actual proofreading should begin only after a harmless synthetic pull-request test proves the complete workflow.
+
+
+## Translation GitHub Pull-Request Pipeline Completed
+
+Completed and production-verified on 5 August 2026 through checkpoint `a46a7fb add protected Translation pull request pipeline (#4)`.
+
+### Pull-request validation guardrail
+
+Added `.github/workflows/validate-pull-request.yml` and proved it through test pull request #1.
+
+The workflow:
+
+- runs on every pull request targeting `main`
+- uses the ordinary `pull_request` event
+- has `contents: read` only
+- uses Node 24
+- installs locked root dependencies
+- installs locked Sanity Studio dependencies
+- runs Astro Check
+- runs the production build
+- uses only the public Sanity project ID and public production dataset
+- receives no project secret
+- performs no repository write
+
+The clean GitHub Actions runner exposed two environment gaps that were corrected before protection was activated:
+
+1. `sanity/node_modules` was absent, so the workflow now runs `npm ci --prefix sanity`.
+2. the production build required the public Sanity identifiers, so the workflow now provides `PUBLIC_SANITY_PROJECT_ID=f9johco4` and `PUBLIC_SANITY_DATASET=production`.
+
+PR #1 was squash-merged after all GitHub Actions and Vercel checks passed. The temporary bootstrap document was not merged.
+
+### Protected main branch
+
+Created the active `Protect main branch` ruleset.
+
+The ruleset targets the default branch, currently `main`, and enforces:
+
+- pull requests before merging
+- 0 required approvals for the current single-administrator model
+- conversation resolution
+- Squash merge only
+- required `Astro check and production build` status check from GitHub Actions
+- deletion protection
+- force-push protection
+- no Translation GitHub App bypass
+- repository-administrator emergency bypass limited to pull requests
+
+### GitHub App permissions and installation
+
+The `nepali.no Translation Editor` GitHub App now has only:
+
+- Metadata: Read
+- Contents: Read and write
+- Pull requests: Read and write
+
+Everything else remains No access. The App is installed only on `pank-hub/nepaliNO`, has no webhook or event subscriptions, and is not a ruleset bypass actor.
+
+Production-only Sensitive Vercel variables were added for:
+
+- App ID
+- installation ID
+- private key
+
+The existing OAuth and session variables remain unchanged. No secret value entered Git, Codespaces, chat, screenshots, Markdown, or GitHub Actions.
+
+### Read-only GitHub connectivity
+
+Checkpoint:
+
+- `1bcc4a5 add read-only Translation GitHub connectivity (#2)`
+
+Added short-lived GitHub App JWT and installation-token authentication with a fixed repository boundary.
+
+Production endpoint `/translations/api/github-status` successfully verified:
+
+- repository `pank-hub/nepaliNO`
+- visibility `public`
+- default branch `main`
+- protected branch state
+- current `main` SHA
+
+No token, private key, JWT, authorization header, or environment value was exposed.
+
+### Deterministic TypeScript source updater
+
+Checkpoint:
+
+- `e98d2da add deterministic Translation source updater (#3)`
+
+Added `src/lib/translationGitHub/sourceUpdate.ts`.
+
+The updater:
+
+- maps only to six fixed translation files
+- locates exact string literals through the TypeScript parser
+- supports nested objects and array indexes
+- preserves existing quote style and unrelated formatting
+- rejects stale wording, unknown keys, functions, duplicate keys, and overlapping replacements
+- reparses updated TypeScript
+- operates in memory
+- performs no local file or GitHub write
+
+Synthetic tests covered all six source formats, multiple replacements, strings split across source lines, array items, nested values, quote and backslash escaping, stale wording, unknown keys, module mismatch, and function rejection. Exact reverse operations restored every original byte. No translation file changed on disk.
+
+### Protected branch and pull-request pipeline
+
+Checkpoint:
+
+- `a46a7fb add protected Translation pull request pipeline (#4)`
+
+Added:
+
+- `src/lib/translationGitHub/createPullRequest.ts`
+- `src/pages/translations/api/create-pull-request.ts`
+- final editor-page integration
+
+The server now:
+
+1. requires the Pankaj-only session
+2. requires a same-origin JSON request
+3. reruns the proposal validator
+4. blocks repository writing while registry warnings exist
+5. fetches fresh protected `main`
+6. fetches exactly one approved translation source
+7. rechecks stale wording
+8. updates exact literals in memory
+9. creates a unique generated `translation/*` branch
+10. commits only the approved translation file
+11. opens a pull request against `main`
+12. returns the pull-request link
+13. attempts generated-branch cleanup if a later operation fails
+
+The browser cannot supply repository, owner, base branch, target file, generated branch, commit SHA, token, installation ID, raw TypeScript, PR title, PR body, or GitHub API path.
+
+The App cannot merge a pull request and never updates `main` directly.
+
+### End-to-end production proof
+
+The production editor created synthetic PR #5 for:
+
+- language: Nepali
+- module: Navigation
+- key: `navigation.home`
+- original: `गृहपृष्ठ`
+- proposed: `गृहपृष्ठ परीक्षण`
+
+PR #5 proof:
+
+- base: `main`
+- generated head: `translation/ne-navigation-20260805190924-c934d00857`
+- changed files: 1
+- additions: 1
+- deletions: 1
+- only file: `src/i18n/ne.ts`
+- only change: the exact intended string literal
+- mergeable: yes
+- all four GitHub Actions and Vercel checks passed
+
+PR #5 was closed without merging. `mergedAt` remained null. The generated branch was deleted. No `translation/*` branches remained. `main` still contained the original wording, and the repository remained clean at `a46a7fb`.
+
+This proves the complete protected workflow without publishing synthetic wording.
+
+### Translation Module Phase 1 status
+
+Phase 1 is functionally complete and operational.
+
+Real proofreading may now begin through the protected portal with Pankaj as final reviewer and merge authority.
+
+Remaining documentation and polish:
+
+- add `TRANSLATION_OPERATOR_GUIDE.md`
+- update `TRANSLATION_MODULE_ARCHITECTURE.md`
+- replace outdated read-only wording on the Translation Browser dashboard
+- monitor the first real translation pull requests
+- keep Phase 2 multi-user access deferred pending risk assessment
+
+### Exact next major milestone
+
+After the Translation continuity package is committed, begin the forum requirements and platform-evaluation milestone.
+
+Do not install a forum immediately. First document:
+
+- functional requirements
+- Nepali localization requirements
+- moderation and abuse reporting
+- account and recovery model
+- hosting and operating cost
+- privacy and retention
+- backups and incident response
+- authentication boundaries
+- controlled connections to News and Public Information Guides
+- homepage activation criteria
+
+The forum remains the final major Phase 1 platform feature and must stay technically, editorially, and operationally separate from verified News and official-source Public Information.
