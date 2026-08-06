@@ -1088,3 +1088,163 @@ Flarum:
 - real member data collected: no
 - homepage forum section activated: no
 - public launch authorized: no
+
+## 35. Discourse proof-of-concept implementation checkpoint
+
+**Checkpoint date:** 6 August 2026
+**Status:** Infrastructure installed and technically healthy; administrator registration and operational evaluation remain pending.
+
+### 35.1 Implementation summary
+
+A disposable self-hosted Discourse proof of concept is operational on Gigahost AS infrastructure in Sandefjord, Norway.
+
+VPS configuration:
+
+- Gigahost NO DC2
+- 2 vCPU
+- 4 GB RAM
+- 40 GB NVMe
+- Ubuntu 24.04 LTS x86-64
+- hourly billing
+- automatic Gigahost backup enabled
+- temporary hostname `forum-poc.nepali.no`
+
+The service remains separate from Sanity, private submissions, the Translation Module, and the nepali.no public application.
+
+### 35.2 Secured operating-system baseline
+
+Completed before Docker installation:
+
+- full Ubuntu update
+- controlled reboot into the current kernel
+- no pending package upgrades
+- no failed services
+- Europe/Oslo timezone and synchronized clock
+- dedicated Ed25519 SSH key
+- ordinary `pankaj` administrative account
+- verified `sudo`
+- direct root SSH disabled
+- SSH password authentication disabled
+- keyboard-interactive authentication disabled
+- SSH restricted to `pankaj`
+- `MaxAuthTries 3`
+- `LoginGraceTime 30`
+- UFW default incoming deny
+- only TCP 22, 80, and 443 allowed inbound
+
+Gigahost baseline snapshot:
+
+- `forum-poc-01-secured-baseline-2026-08-06`
+
+The snapshot predates Docker and Discourse. It is not a substitute for Discourse-native backups.
+
+### 35.3 Discourse installation provenance
+
+Discourse was installed through the officially supported Docker architecture.
+
+Recorded installer provenance:
+
+- repository: official `discourse/discourse_docker`
+- upstream commit: `e071c2c8ebf8a93c1fba4e16fbb7168a2a9201bd`
+- installer SHA-256: `77df1fba636b84d242e81e00c887af3f7754df84aa48680c49f69041528b14cb`
+- commit-pinned and initial downloads matched byte-for-byte
+- Bash syntax validation passed
+
+Important paths:
+
+- `/var/discourse`
+- `/var/discourse/containers/app.yml`
+- Docker container `app`
+
+`app.yml` is owned by root and restricted to mode `600`.
+
+### 35.4 Email configuration and security incident
+
+Non-secret SMTP configuration:
+
+- host `smtp.resend.com`
+- port 587
+- username `resend`
+- STARTTLS
+- sender `forum-test@notifications.nepali.no`
+
+A separate sending-only Resend credential is used for the proof of concept.
+
+During the first container build, installer output printed the SMTP credential in a generated Docker command. The credential was immediately treated as compromised.
+
+Containment completed:
+
+1. exposed credential revoked
+2. replacement restricted credential created and stored securely
+3. protected `app.yml` updated interactively
+4. YAML and required-setting checks passed without printing the secret
+5. container rebuilt with output redirected to a root-only log
+6. running container verified internally to use exactly one credential matching the rotated configuration
+7. sensitive rebuild log deleted
+
+No credential value may be recorded in Git, Markdown, screenshots, chat, shell history, or handover documents.
+
+### 35.5 Technical health proof
+
+Verified after rebuild:
+
+- Docker container `app` running
+- ports 80 and 443 published on IPv4 and IPv6
+- `https://forum-poc.nepali.no/` returns HTTP 200
+- TLS verification result 0
+- certificate subject `forum-poc.nepali.no`
+- Let's Encrypt certificate active
+- certificate validity 6 August through 4 November 2026
+- no failed systemd services
+- public page displays the initial Discourse administrator registration screen
+
+### 35.6 Current status
+
+Completed:
+
+- VPS provisioning
+- DNS
+- operating-system hardening
+- firewall
+- baseline snapshot
+- Docker and Discourse
+- HTTPS
+- SMTP transport validation
+- SMTP credential rotation and containment
+
+Pending:
+
+- first administrator account
+- setup wizard
+- public-registration restriction
+- private-messaging disablement
+- search-indexing controls
+- categories and language tags
+- synthetic moderator and member accounts
+- registration and password-recovery email tests
+- moderation and reporting tests
+- Discourse-native backup
+- clean restoration test
+- upgrade test
+- monitoring and incident procedures
+- production decision
+- homepage integration
+- real user onboarding
+
+### 35.7 Exact next action
+
+Register the first administrator account with a unique Discourse password, then stop at the setup wizard.
+
+Do not invite real users, enable public registration, add plugins, or connect nepali.no.
+
+### 35.8 Decision status
+
+- Discourse selected for production: no
+- Gigahost selected for production: no
+- disposable proof of concept installed: yes
+- HTTPS operational: yes
+- administrator account created: no, pending
+- synthetic test data only: required
+- real member data authorized: no
+- homepage forum section active: no
+- public launch authorized: no

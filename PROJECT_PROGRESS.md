@@ -3603,3 +3603,122 @@ Do not install a forum immediately. First document:
 - homepage activation criteria
 
 The forum remains the final major Phase 1 platform feature and must stay technically, editorially, and operationally separate from verified News and official-source Public Information.
+
+# PROJECT_PROGRESS.md Append: Gigahost Discourse Proof of Concept
+
+Append the section below to the existing `PROJECT_PROGRESS.md`. Do not replace the existing file.
+
+## Gigahost Discourse Proof of Concept Installed
+
+Infrastructure milestone reached on 6 August 2026 after repository checkpoint `1af36a1 document Forum requirements and platform evaluation (#7)`.
+
+### Decision and scope
+
+Pankaj approved a disposable self-hosted Discourse proof of concept. It is operational research only and does not authorize production use, real community accounts, homepage integration, or public promotion.
+
+Phase 1 language policy remains:
+
+- English forum and moderation interface permitted
+- Nepali, Norwegian, or English discussions permitted
+- topic-language designation planned
+- localized Nepali and Norwegian doorway, disclaimers, privacy summary, reporting guidance, and support route required before promotion
+- full interface localization deferred
+
+### Norwegian Gigahost infrastructure
+
+- Gigahost AS, NO DC2, Sandefjord
+- 2 vCPU
+- 4 GB RAM
+- 40 GB NVMe
+- Ubuntu 24.04 LTS x86-64
+- hourly billing
+- automatic Gigahost backup enabled
+- hostname `forum-poc.nepali.no`
+
+No real forum-user data has been entered.
+
+### Security baseline
+
+Completed before Docker:
+
+- Ubuntu fully updated and rebooted
+- no pending upgrades or failed services
+- dedicated Ed25519 SSH key
+- `pankaj` administrative account with verified `sudo`
+- direct root SSH disabled
+- SSH password and keyboard-interactive authentication disabled
+- SSH restricted to `pankaj`
+- UFW active with default incoming deny
+- only TCP 22, 80, and 443 allowed inbound
+- powered-off baseline snapshot created
+
+Snapshot:
+
+- `forum-poc-01-secured-baseline-2026-08-06`
+
+### Discourse installation
+
+Used the official Docker-based installation path.
+
+Provenance:
+
+- upstream commit `e071c2c8ebf8a93c1fba4e16fbb7168a2a9201bd`
+- installer SHA-256 `77df1fba636b84d242e81e00c887af3f7754df84aa48680c49f69041528b14cb`
+- commit-pinned and initial downloads matched
+- shell syntax check passed
+
+### DNS, HTTPS, and health
+
+Verified:
+
+- DNS from Windows and VPS
+- container `app` running
+- HTTP 200 over HTTPS
+- TLS verification result 0
+- active Let's Encrypt certificate for `forum-poc.nepali.no`
+- certificate validity 6 August to 4 November 2026
+- no failed systemd services
+
+### Email and credential incident
+
+Non-secret configuration:
+
+- `smtp.resend.com`
+- port 587 STARTTLS
+- username `resend`
+- sender `forum-test@notifications.nepali.no`
+
+The initial build printed the restricted proof-of-concept SMTP credential in a Docker command. The key was immediately revoked, replaced, applied through protected `app.yml`, verified in the running container, and removed from the temporary rebuild log. No credential value is recorded.
+
+### Current visible state
+
+The forum displays the initial Discourse administrator-registration screen.
+
+### Exact next step
+
+Register the first administrator account with a unique password and stop at the setup wizard.
+
+Then configure a private synthetic-data pilot:
+
+1. restrict registration
+2. disable private messaging
+3. disable indexing
+4. review English interface and email flows
+5. create categories and language tags
+6. create synthetic moderator and member accounts
+7. test reporting, moderation, suspension, recovery, and mobile use
+8. create a Discourse-native backup
+9. restore to a clean disposable VPS
+10. document findings before choosing production hosting
+
+### Still prohibited
+
+- real community accounts
+- real personal data
+- public promotion
+- homepage activation
+- plugins without review
+- social login
+- shared authentication
+- production commitment
+- silently converting the disposable VPS into production
