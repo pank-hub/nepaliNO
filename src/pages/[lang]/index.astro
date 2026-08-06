@@ -2,6 +2,7 @@
 import {sanityClient} from 'sanity:client'
 import SiteFooter from '../../components/SiteFooter.astro'
 import SiteHeader from '../../components/SiteHeader.astro'
+import {forumPilot} from '../../config/forum'
 import {getTranslations} from '../../i18n'
 import {
   supportedLanguages,
@@ -254,7 +255,13 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
         </div>
       </div>
 
-      <div class="home-hero__pathways" aria-label={labels.home.title}>
+      <div
+        class:list={[
+          "home-hero__pathways",
+          !forumPilot.enabled && "home-hero__pathways--without-forum",
+        ]}
+        aria-label={labels.home.title}
+      >
         <article class="pathway pathway--understand">
           <span aria-hidden="true">01</span>
           <h2>{labels.home.informationHeading}</h2>
@@ -265,11 +272,15 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
           <h2>{labels.home.newsHeading}</h2>
           <p>{labels.home.newsDescription}</p>
         </article>
-        <article class="pathway pathway--participate">
-          <span aria-hidden="true">03</span>
-          <h2>{labels.home.discussionsHeading}</h2>
-          <p>{labels.home.discussionsDescription}</p>
-        </article>
+        {
+          forumPilot.enabled && (
+            <article class="pathway pathway--participate">
+              <span aria-hidden="true">03</span>
+              <h2>{labels.home.discussionsHeading}</h2>
+              <p>{labels.home.discussionsDescription}</p>
+            </article>
+          )
+        }
       </div>
     </div>
   </section>
@@ -555,26 +566,31 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     )
   }
 
-  <section class="section discussions" aria-labelledby="home-discussions-heading">
-    <div class="container discussions__grid">
-      <div>
-        <p class="eyebrow">{labels.home.discussionsEyebrow}</p>
-        <h2 id="home-discussions-heading">{labels.home.discussionsHeading}</h2>
-        <p class="lead">{labels.home.discussionsDescription}</p>
-        <span class="badge badge-brand">{labels.home.forumComingSoon}</span>
-      </div>
+  {
+    forumPilot.enabled && (
+      <section class="section discussions" aria-labelledby="home-discussions-heading">
+        <div class="container discussions__grid">
+          <div>
+            <p class="eyebrow">{labels.home.discussionsEyebrow}</p>
+            <h2 id="home-discussions-heading">{labels.home.discussionsHeading}</h2>
+            <p class="lead">{labels.home.discussionsDescription}</p>
+            <span class="badge badge-brand">{labels.home.forumComingSoon}</span>
+          </div>
 
-      <div class="discussions__preview" aria-hidden="true">
-        <div class="discussion-line discussion-line--wide"></div>
-        <div class="discussion-line"></div>
-        <div class="discussion-line discussion-line--short"></div>
-        <div class="discussion-line discussion-line--wide"></div>
-      </div>
-    </div>
-    <div class="container discussions__notice">
-      <p>{labels.home.forumNotice}</p>
-    </div>
-  </section>
+          <aside class="discussions__pilot" aria-label={labels.home.forumComingSoon}>
+            <p>{labels.home.forumPilotAccess}</p>
+            <p>{labels.home.forumInterfaceNotice}</p>
+            <a class="button button-primary" href={forumPilot.url}>
+              {labels.home.forumVisit} <span aria-hidden="true">→</span>
+            </a>
+          </aside>
+        </div>
+        <div class="container discussions__notice">
+          <p>{labels.home.forumNotice}</p>
+        </div>
+      </section>
+    )
+  }
 
   {
     homepageDirectoryListings.length > 0 && (
@@ -1256,28 +1272,23 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     color: rgb(255 255 255 / 0.68);
   }
 
-  .discussions__preview {
+  .discussions__pilot {
     display: grid;
-    gap: 0.8rem;
-    padding: 1.5rem;
-    border: 1px solid rgb(255 255 255 / 0.12);
+    gap: 0.85rem;
+    padding: clamp(1.35rem, 4vw, 2rem);
+    border: 1px solid rgb(255 255 255 / 0.14);
     border-radius: var(--radius-xl);
-    background: rgb(255 255 255 / 0.05);
+    background: rgb(255 255 255 / 0.06);
   }
 
-  .discussion-line {
-    height: 3.2rem;
-    border: 1px solid rgb(255 255 255 / 0.09);
-    border-radius: var(--radius-md);
-    background: linear-gradient(90deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03));
+  .discussions__pilot p {
+    margin: 0;
+    color: rgb(255 255 255 / 0.76);
   }
 
-  .discussion-line--wide {
-    width: 100%;
-  }
-
-  .discussion-line--short {
-    width: 72%;
+  .discussions__pilot .button {
+    width: fit-content;
+    margin-block-start: 0.5rem;
   }
 
   .discussions__notice {
@@ -1436,6 +1447,10 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .home-hero__pathways--without-forum {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .content-grid,
     .home-event-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1566,8 +1581,8 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
       width: 100%;
     }
 
-    .discussions__preview {
-      display: none;
+    .discussions__pilot .button {
+      width: 100%;
     }
   }
 </style>

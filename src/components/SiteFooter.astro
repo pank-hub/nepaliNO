@@ -1,4 +1,5 @@
 ---
+import {forumPilot} from '../config/forum'
 import {getTranslations} from '../i18n'
 import type {SupportedLanguage} from '../i18n/config'
 
@@ -35,7 +36,13 @@ const year = new Date().getFullYear()
       <h2 id="footer-community-heading">{labels.footer.communityHeading}</h2>
       <ul>
         <li>
-          <span>{labels.footer.forum}</span>
+          {
+            forumPilot.enabled ? (
+              <a href={forumPilot.url}>{labels.footer.forum}</a>
+            ) : (
+              <span>{labels.footer.forum}</span>
+            )
+          }
           <span class="footer-status">{labels.footer.forumComingSoon}</span>
         </li>
         <li><span>{labels.navigation.events}</span></li>
