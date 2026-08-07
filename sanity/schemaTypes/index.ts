@@ -1,4 +1,5 @@
 import {directoryListing} from './directoryListing'
+import {forumTopicReference} from './forumTopicReference'
 import {communityEvent} from './communityEvent'
 import {newsArticle} from './newsArticle'
 import {norwegianTerm} from './norwegianTerm'
@@ -6,6 +7,7 @@ import {publicInformationGuide} from './publicInformationGuide'
 import {publicInformationTopic} from './publicInformationTopic'
 
 export const schemaTypes = [
+  forumTopicReference,
   newsArticle,
   communityEvent,
   directoryListing,
