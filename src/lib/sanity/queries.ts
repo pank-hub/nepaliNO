@@ -712,8 +712,17 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
       url
     },
     importantTerms[] {
-      term,
-      explanation
+      "term": select(
+        _type == "reference" => @->term + select(
+          defined(@->pronunciation) && @->pronunciation != "" => " (" + @->pronunciation + ")",
+          ""
+        ),
+        term
+      ),
+      "explanation": select(
+        _type == "reference" => @->explanation,
+        explanation
+      )
     },
     editorialReviewer,
     publishedAt,
