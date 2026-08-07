@@ -326,9 +326,25 @@ export const publicInformationGuide = defineType({
         'Explain official Norwegian terms that readers may encounter when contacting authorities.',
       of: [
         defineArrayMember({
+          type: 'reference',
+          name: 'reusableNorwegianTerm',
+          title: 'Select Reusable Norwegian Term',
+          to: [{type: 'norwegianTerm'}],
+          options: {
+            filter: ({document}) => {
+              if (!document?.language) return {filter: 'isActive == true'}
+
+              return {
+                filter: 'language == $language && isActive == true',
+                params: {language: document.language},
+              }
+            },
+          },
+        }),
+        defineArrayMember({
           type: 'object',
           name: 'importantTerm',
-          title: 'Important Term',
+          title: 'Legacy Inline Term',
           fields: [
             defineField({
               name: 'term',
