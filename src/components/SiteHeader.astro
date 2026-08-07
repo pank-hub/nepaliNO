@@ -1,4 +1,5 @@
 ---
+import {forumPilot} from '../config/forum'
 import {getTranslations} from '../i18n'
 import type {SupportedLanguage} from '../i18n/config'
 
@@ -18,6 +19,11 @@ const navigationItems = [
   {label: labels.navigation.home, href: `/${language}/`},
   {label: labels.navigation.news, href: `/${language}/news/`},
   {label: labels.navigation.information, href: `/${language}/info/`},
+  {label: labels.navigation.events, href: `/${language}/events/`},
+  ...(forumPilot.enabled
+    ? [{label: labels.navigation.forum, href: forumPilot.url}]
+    : []),
+  {label: labels.navigation.businesses, href: `/${language}/directory/`},
 ]
 
 const isActive = (href: string) => {
@@ -33,7 +39,7 @@ const isActive = (href: string) => {
   <div class="site-header__bar">
     <div class="container site-header__inner">
       <a class="brand" href={`/${language}/`} aria-label={`${labels.navigation.home} | nepali.no`}>
-        <span class="brand__symbol" aria-hidden="true">न</span>
+        <span class="brand__symbol" aria-hidden="true">ने</span>
         <span class="brand__name">nepali<span>.no</span></span>
       </a>
 
@@ -271,7 +277,7 @@ const isActive = (href: string) => {
     color: var(--civic-deep);
   }
 
-  @media (max-width: 52rem) {
+  @media (max-width: 74rem) {
     .desktop-navigation {
       display: none;
     }

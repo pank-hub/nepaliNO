@@ -9,6 +9,7 @@ export const nb = {
     news: "Nyheter",
     information: "Livet i Norge",
     events: "Arrangementer",
+    forum: "Forum",
     businesses: "Katalog",
     community: "Fellesskap",
     about: "Om oss",
