@@ -712,16 +712,18 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
       url
     },
     importantTerms[] {
-      "term": select(
-        _type == "reference" => @->term + select(
-          defined(@->pronunciation) && @->pronunciation != "" => " (" + @->pronunciation + ")",
-          ""
-        ),
-        term
-      ),
-      "explanation": select(
-        _type == "reference" => @->explanation,
-        explanation
+      ...select(
+        _type == "reusableNorwegianTerm" => @->{
+          "term": term + select(
+            defined(pronunciation) && pronunciation != "" => " (" + pronunciation + ")",
+            ""
+          ),
+          explanation
+        },
+        {
+          term,
+          explanation
+        }
       )
     },
     editorialReviewer,
