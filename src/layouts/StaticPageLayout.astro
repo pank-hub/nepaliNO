@@ -1,0 +1,148 @@
+---
+import SiteFooter from '../components/SiteFooter.astro'
+import SiteHeader from '../components/SiteHeader.astro'
+import {getTranslations} from '../i18n'
+import type {SupportedLanguage} from '../i18n/config'
+import BaseLayout from './BaseLayout.astro'
+
+interface Props {
+  language: SupportedLanguage
+  title: string
+  description: string
+  eyebrow: string
+  alternatePath: string
+  updatedLabel?: string
+  updatedDate?: string
+}
+
+const {
+  language,
+  title,
+  description,
+  eyebrow,
+  alternatePath,
+  updatedLabel,
+  updatedDate,
+} = Astro.props
+
+const labels = getTranslations(language)
+---
+
+<BaseLayout
+  language={language}
+  title={`${title} | nepali.no`}
+  description={description}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={alternatePath}
+  />
+
+  <header class="static-page-hero">
+    <div class="container">
+      <div class="reading-width">
+        <nav class="static-page-breadcrumb" aria-label={labels.navigation.home}>
+          <a href={`/${language}/`}>{labels.navigation.home}</a>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">{title}</span>
+        </nav>
+
+        <p class="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
+        <p class="lead">{description}</p>
+
+        {updatedLabel && updatedDate && (
+          <p class="static-page-updated">
+            <span>{updatedLabel}</span>
+            <time datetime={updatedDate}>{updatedDate}</time>
+          </p>
+        )}
+      </div>
+    </div>
+  </header>
+
+  <section class="static-page-content">
+    <div class="container">
+      <article class="reading-width prose">
+        <slot />
+      </article>
+    </div>
+  </section>
+
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<style>
+  .static-page-hero {
+    padding-block: clamp(2.75rem, 7vw, 5.5rem);
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at top right, rgb(198 42 31 / 0.08), transparent 34rem),
+      var(--surface-muted);
+  }
+
+  .static-page-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem;
+    margin-block-end: 2rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .static-page-breadcrumb a {
+    color: var(--civic);
+    font-weight: 700;
+  }
+
+  .static-page-breadcrumb span[aria-current='page'] {
+    overflow-wrap: anywhere;
+  }
+
+  .static-page-hero h1 {
+    max-width: 18ch;
+    margin-block-start: 0.75rem;
+  }
+
+  .static-page-hero .lead {
+    max-width: 62ch;
+    margin-block-start: 1.25rem;
+  }
+
+  .static-page-updated {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-block-start: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .static-page-updated span {
+    font-weight: 700;
+  }
+
+  .static-page-content {
+    padding-block: clamp(3rem, 7vw, 6rem);
+  }
+
+  :global(.static-page-content .prose > section:first-child > h2) {
+    margin-block-start: 0;
+  }
+
+  @media (max-width: 47.999rem) {
+    .static-page-hero {
+      padding-block: 2.5rem 3.25rem;
+    }
+
+    .static-page-breadcrumb {
+      margin-block-end: 1.5rem;
+    }
+
+    .static-page-content {
+      padding-block: 2.75rem 3.5rem;
+    }
+  }
+</style>

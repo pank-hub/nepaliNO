@@ -1,0 +1,65 @@
+---
+import {supportedLanguages, type SupportedLanguage} from '../../i18n/config'
+import StaticPageLayout from '../../layouts/StaticPageLayout.astro'
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+}
+
+type ContactItem = {heading: string; text: string; label?: string; href?: string}
+type PageCopy = {title: string; description: string; eyebrow: string; safetyHeading: string; safetyText: string; items: ContactItem[]}
+
+const copy: Record<SupportedLanguage, PageCopy> = {
+  ne: {
+    title: 'सम्पर्क',
+    description: 'सामान्य प्रश्न, सम्पादकीय सुधार, सहकार्य, कार्यक्रम, निर्देशिका वा फोरमसम्बन्धी सही सम्पर्क मार्ग छान्नुहोस्।',
+    eyebrow: 'हामीसँग सम्पर्क गर्नुहोस्',
+    safetyHeading: 'संवेदनशील जानकारी नपठाउनुहोस्',
+    safetyText: 'साधारण इमेलमा राष्ट्रिय परिचय नम्बर, बैंक विवरण, स्वास्थ्य जानकारी, पासवर्ड, आप्रवासन कागजात वा अन्य संवेदनशील व्यक्तिगत जानकारी नपठाउनुहोस्। nepali.no आपत्कालीन सेवा वा सार्वजनिक निकाय होइन। आपत्कालीन अवस्थामा सम्बन्धित नर्वेली सेवासँग सीधै सम्पर्क गर्नुहोस्।',
+    items: [
+      {heading: 'सामान्य सम्पर्क र सहकार्य', text: 'सामान्य प्रश्न, साझेदारी, स्वैच्छिक योगदान वा संस्थासँग सम्पर्कका लागि।', label: 'kontakt@nepali.no', href: 'mailto:kontakt@nepali.no'},
+      {heading: 'सम्पादकीय सुधार', text: 'समाचार वा जानकारीमूलक सामग्रीमा त्रुटि, पुरानो स्रोत, अस्पष्ट भाषा वा बिग्रिएको लिङ्क देखिएमा पृष्ठको ठेगाना र छोटो विवरण पठाउनुहोस्।', label: 'सम्पादकीय सुधार पठाउनुहोस्', href: 'mailto:kontakt@nepali.no?subject=सम्पादकीय%20सुधार'},
+      {heading: 'कार्यक्रम पठाउनुहोस्', text: 'समुदायका लागि उपयोगी कार्यक्रम निजी सम्पादकीय समीक्षाका लागि सुरक्षित फारममार्फत पठाउन सकिन्छ।', label: 'कार्यक्रम फारम खोल्नुहोस्', href: '/ne/events/submit/'},
+      {heading: 'निर्देशिका सूची सुझाउनुहोस्', text: 'उपयोगी व्यवसाय, संस्था, सेवा वा डिजिटल स्रोत निजी समीक्षाका लागि सुझाउन सकिन्छ।', label: 'निर्देशिका फारम खोल्नुहोस्', href: '/ne/directory/submit/'},
+      {heading: 'फोरमसम्बन्धी सम्पर्क', text: 'निजी फोरम परीक्षण, पहुँच, समुदाय नियम वा moderation सम्बन्धी प्रश्नका लागि।', label: 'forum@nepali.no', href: 'mailto:forum@nepali.no'},
+    ],
+  },
+  nb: {
+    title: 'Kontakt',
+    description: 'Velg riktig kontaktvei for generelle spørsmål, redaksjonelle rettelser, samarbeid, arrangementer, katalogen eller Forumet.',
+    eyebrow: 'Kontakt nepali.no',
+    safetyHeading: 'Ikke send sensitive opplysninger',
+    safetyText: 'Ikke send fødselsnummer, bankopplysninger, helseopplysninger, passord, utlendingsdokumenter eller andre sensitive personopplysninger i vanlig e-post. nepali.no er ikke en nødtjeneste eller offentlig myndighet. Kontakt den ansvarlige norske tjenesten direkte ved en nødssituasjon.',
+    items: [
+      {heading: 'Generelle spørsmål og samarbeid', text: 'For generelle spørsmål, samarbeid, frivillige bidrag eller kontakt med organisasjonen.', label: 'kontakt@nepali.no', href: 'mailto:kontakt@nepali.no'},
+      {heading: 'Redaksjonelle rettelser', text: 'Meld fra dersom du finner feil, utdaterte kilder, uklart språk eller ødelagte lenker i nyheter eller informasjonsinnhold. Ta med sidens adresse og en kort beskrivelse.', label: 'Send en redaksjonell rettelse', href: 'mailto:kontakt@nepali.no?subject=Redaksjonell%20rettelse'},
+      {heading: 'Send inn et arrangement', text: 'Et relevant arrangement kan sendes til privat redaksjonell gjennomgang gjennom det sikre skjemaet.', label: 'Åpne arrangementsskjemaet', href: '/nb/events/submit/'},
+      {heading: 'Foreslå en katalogoppføring', text: 'Foreslå en relevant virksomhet, organisasjon, tjeneste eller digital ressurs for privat gjennomgang.', label: 'Åpne katalogskjemaet', href: '/nb/directory/submit/'},
+      {heading: 'Kontakt om Forumet', text: 'For spørsmål om den private Forumtesten, tilgang, fellesskapsregler eller moderasjon.', label: 'forum@nepali.no', href: 'mailto:forum@nepali.no'},
+    ],
+  },
+}
+
+const {language} = Astro.props
+const page = copy[language]
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+---
+
+<StaticPageLayout language={language} title={page.title} description={page.description} eyebrow={page.eyebrow} alternatePath={`/${alternateLanguage}/contact/`}>
+  <div class="contact-grid">
+    {page.items.map((item) => <section class="contact-card"><h2>{item.heading}</h2><p>{item.text}</p>{item.href && item.label && <a href={item.href}>{item.label}<span aria-hidden="true"> →</span></a>}</section>)}
+  </div>
+  <aside class="contact-safety"><h2>{page.safetyHeading}</h2><p>{page.safetyText}</p></aside>
+</StaticPageLayout>
+
+<style>
+  .contact-grid { display: grid; gap: 1rem; }
+  .contact-card { padding: 1.35rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .contact-card h2 { margin-block-start: 0; font-size: clamp(1.25rem, 2vw, 1.55rem); }
+  .contact-card p { margin-block-start: 0.65rem; }
+  .contact-card a { display: inline-block; margin-block-start: 0.8rem; overflow-wrap: anywhere; }
+  .contact-safety { margin-block-start: 2rem; padding: 1.35rem; border-inline-start: 0.3rem solid var(--brand); background: var(--surface-muted); }
+  .contact-safety h2 { margin-block-start: 0; font-size: clamp(1.25rem, 2vw, 1.55rem); }
+  .contact-safety p { margin-block-start: 0.65rem; }
+  @media (min-width: 48rem) { .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .contact-card:last-child { grid-column: 1 / -1; } }
+</style>

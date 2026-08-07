@@ -1,0 +1,53 @@
+---
+import {supportedLanguages, type SupportedLanguage} from '../../i18n/config'
+import StaticPageLayout from '../../layouts/StaticPageLayout.astro'
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+}
+
+interface PageCopy {
+  title: string
+  description: string
+  eyebrow: string
+  sections: Array<{heading: string; paragraphs: string[]}>
+}
+
+const copy: Record<SupportedLanguage, PageCopy> = {
+  ne: {
+    title: 'हाम्रो बारेमा',
+    description: 'nepali.no नर्वेमा रहेका नेपाली समुदायका लागि भरपर्दो जानकारी, समाचार, कार्यक्रम र सहभागिताका अवसरहरू एकै ठाउँमा जोड्ने सार्वजनिक हितको डिजिटल मञ्च हो।',
+    eyebrow: 'nepali.no परिचय',
+    sections: [
+      {heading: 'हाम्रो उद्देश्य', paragraphs: ['नर्वेमा बसोबास गर्ने नेपालीभाषी व्यक्ति, परिवार, विद्यार्थी, कामदार, युवा तथा समुदायका संस्थाहरूलाई उपयोगी र बुझ्न सजिलो जानकारी उपलब्ध गराउनु nepali.no को मुख्य उद्देश्य हो।', 'हामी समाचार, सरकारी स्रोतमा आधारित सार्वजनिक जानकारी, कार्यक्रम, समुदाय निर्देशिका र जिम्मेवार सामुदायिक सहभागितालाई स्पष्ट र व्यवस्थित रूपमा प्रस्तुत गर्न चाहन्छौँ।']},
+      {heading: 'सम्पादकीय जिम्मेवारी', paragraphs: ['nepali.no कुनै नर्वेली सरकारी निकाय होइन। सार्वजनिक सेवा, आप्रवासन, कर, स्वास्थ्य, शिक्षा वा अन्य नियमसम्बन्धी सामग्री तयार गर्दा सम्बन्धित आधिकारिक स्रोतलाई आधार बनाइन्छ र पाठकलाई अन्तिम तथा अद्यावधिक जानकारीका लागि जिम्मेवार निकायको वेबसाइट हेर्न आग्रह गरिन्छ।', 'समाचार र जानकारीमूलक सामग्री सम्पादकीय रूपमा व्यवस्थापन गरिन्छ। कार्यक्रम, निर्देशिका र समुदायबाट प्राप्त सुझावहरू समीक्षा नगरी सार्वजनिक गरिँदैनन्। फोरममा व्यक्त विचार र अनुभवलाई प्रमाणित समाचार वा आधिकारिक मार्गदर्शनका रूपमा प्रस्तुत गरिँदैन।']},
+      {heading: 'भाषा र पहुँच', paragraphs: ['नेपाली र नर्वेजियन बोकमोल nepali.no का मुख्य सार्वजनिक भाषाहरू हुन्। सम्भव भएसम्म सामग्रीलाई मोबाइलमैत्री, स्पष्ट र पहुँचयोग्य बनाउने लक्ष्य राखिएको छ।', 'अंग्रेजी भाषा हाल चयनित सेवा र आवश्यक स्रोत जानकारीमा सीमित छ। यसलाई पूर्ण तेस्रो वेबसाइट भाषाका रूपमा प्रस्तुत गरिएको छैन।']},
+      {heading: 'समुदायका लागि विकसित', paragraphs: ['nepali.no नर्वेको नेपाली समुदायको दीर्घकालीन डिजिटल पूर्वाधार निर्माण गर्ने उद्देश्यले विकसित भइरहेको छ। प्लेटफर्मको संरचना, सुरक्षा, गोपनीयता, भाषा गुणस्तर र सम्पादकीय विश्वसनीयतालाई चरणबद्ध रूपमा परीक्षण र सुधार गरिन्छ।', 'सुझाव, सुधार वा सहकार्यसम्बन्धी प्रश्नका लागि सम्पर्क पृष्ठ प्रयोग गर्न सक्नुहुन्छ।']},
+    ],
+  },
+  nb: {
+    title: 'Om oss',
+    description: 'nepali.no er en digital plattform med et allmennyttig formål som samler pålitelig informasjon, nyheter, arrangementer og muligheter for deltakelse for det nepalske miljøet i Norge.',
+    eyebrow: 'Om nepali.no',
+    sections: [
+      {heading: 'Formålet vårt', paragraphs: ['Hovedformålet med nepali.no er å gjøre nyttig og forståelig informasjon lettere tilgjengelig for nepalisktalende personer, familier, studenter, arbeidstakere, unge og organisasjoner i Norge.', 'Vi ønsker å presentere nyheter, offentlig informasjon basert på myndighetskilder, arrangementer, en fellesskapskatalog og ansvarlig deltakelse på en tydelig og strukturert måte.']},
+      {heading: 'Redaksjonelt ansvar', paragraphs: ['nepali.no er ikke en norsk offentlig myndighet. Innhold om offentlige tjenester, innvandring, skatt, helse, utdanning og andre regelverk bygger på relevante offisielle kilder. Leserne oppfordres alltid til å kontrollere den ansvarlige myndighetens nettsted for gjeldende og endelig informasjon.', 'Nyheter og informasjonsinnhold forvaltes redaksjonelt. Arrangementer, katalogoppføringer og forslag fra fellesskapet publiseres ikke uten gjennomgang. Synspunkter og erfaringer i Forumet presenteres ikke som verifiserte nyheter eller offisiell veiledning.']},
+      {heading: 'Språk og tilgjengelighet', paragraphs: ['Nepali og norsk bokmål er de viktigste offentlige språkene på nepali.no. Plattformen utvikles med mål om at innhold og tjenester skal være mobilvennlige, tydelige og tilgjengelige.', 'Engelsk er foreløpig begrenset til utvalgte tjenester og nødvendig kildeinformasjon. Engelsk presenteres ikke som et fullstendig tredje nettstedsspråk.']},
+      {heading: 'Utviklet for fellesskapet', paragraphs: ['nepali.no utvikles som en langsiktig digital infrastruktur for det nepalske miljøet i Norge. Plattformens arkitektur, sikkerhet, personvern, språkkvalitet og redaksjonelle troverdighet testes og forbedres trinnvis.', 'Du kan bruke kontaktsiden dersom du har forslag, rettelser eller spørsmål om samarbeid.']},
+    ],
+  },
+}
+
+const {language} = Astro.props
+const page = copy[language]
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+---
+
+<StaticPageLayout language={language} title={page.title} description={page.description} eyebrow={page.eyebrow} alternatePath={`/${alternateLanguage}/about/`}>
+  {page.sections.map((section) => (
+    <section>
+      <h2>{section.heading}</h2>
+      {section.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+    </section>
+  ))}
+</StaticPageLayout>

@@ -1,0 +1,48 @@
+---
+import {supportedLanguages, type SupportedLanguage} from '../../i18n/config'
+import StaticPageLayout from '../../layouts/StaticPageLayout.astro'
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+}
+
+type Section = {heading: string; paragraphs?: string[]; items?: string[]}
+type PageCopy = {title: string; description: string; eyebrow: string; sections: Section[]}
+
+const copy: Record<SupportedLanguage, PageCopy> = {
+  ne: {
+    title: 'गोपनीयता नीति',
+    description: 'nepali.no ले सार्वजनिक वेबसाइट, कार्यक्रम तथा निर्देशिका सुझाव र छुट्टै फोरमसँग सम्बन्धित व्यक्तिगत जानकारी कसरी सम्हाल्छ भन्ने संक्षिप्त जानकारी।',
+    eyebrow: 'गोपनीयता र व्यक्तिगत जानकारी',
+    sections: [
+      {heading: 'सामान्य वेबसाइट प्रयोग', paragraphs: ['सार्वजनिक लेख, जानकारी, कार्यक्रम र निर्देशिका हेर्न nepali.no मा प्रयोगकर्ता खाता आवश्यक पर्दैन। हालको सार्वजनिक हितको चरणमा वेबसाइटले Facebook वा Google का विज्ञापन, सामाजिक ट्र्याकिङ वा तेस्रो-पक्षीय शेयरिङ स्क्रिप्ट प्रयोग गर्दैन।', 'होस्टिङ र सुरक्षा प्रदायकहरूले सेवा सञ्चालन, त्रुटि पत्ता लगाउन र दुरुपयोग रोक्न आवश्यक प्राविधिक लगहरू, जस्तै IP ठेगाना, अनुरोध समय र ब्राउजरसम्बन्धी सीमित जानकारी, छोटो अवधिका लागि प्रशोधन गर्न सक्छन्।']},
+      {heading: 'कार्यक्रम र निर्देशिका सुझाव', paragraphs: ['कार्यक्रम वा निर्देशिका सुझाव पठाउँदा फारममा स्पष्ट रूपमा मागिएको जानकारी मात्र दिनुहोस्। सम्पर्क विवरण, प्रस्तावको सामग्री, घोषणा र आन्तरिक समीक्षा जानकारी निजी moderation प्रणालीमा राखिन्छन्। सुझाव स्वतः सार्वजनिक हुँदैन।', 'निजी सम्पर्क विवरण र सार्वजनिक रूपमा प्रस्तावित सम्पर्क विवरण अलग राखिन्छन्। सार्वजनिक इमेल वा फोन प्रकाशित गर्न स्पष्ट अनुमति र सम्पादकीय समीक्षा आवश्यक हुन्छ। प्रशासनिक सूचना पठाउन सीमित परिचालन जानकारी इमेल सेवा प्रदायकमार्फत प्रशोधन हुन सक्छ।']},
+      {heading: 'फोरम', paragraphs: ['फोरम छुट्टै Discourse सेवामा सञ्चालन हुन्छ र यसको प्रयोगकर्ता खाता, पोस्ट, moderation, सुरक्षा लग र ब्याकअप सार्वजनिक वेबसाइट तथा Sanity सामग्रीबाट अलग रहन्छन्। हाल फोरम निजी परीक्षण चरणमा छ र सहभागिता आमन्त्रणमा आधारित छ।', 'फोरममा खाता वा सामग्री पठाउँदा संवेदनशील व्यक्तिगत जानकारी अनावश्यक रूपमा साझा नगर्नुहोस्। फोरम सार्वजनिक रूपमा सञ्चालन गर्नुअघि थप गोपनीयता, retention र समुदाय नियमहरू प्रकाशित गरिनेछन्।']},
+      {heading: 'कुकी र संरक्षित सेवाहरू', paragraphs: ['साधारण सार्वजनिक पृष्ठ हेर्न मार्केटिङ कुकी आवश्यक पर्दैन। संरक्षित प्रशासनिक सेवा, जस्तै Translation Editor, मा सुरक्षित लगइन र session सञ्चालन गर्न आवश्यक कुकी प्रयोग हुन सक्छ। फोरमले छुट्टै लगइन तथा सुरक्षा कुकी प्रयोग गर्न सक्छ।']},
+      {heading: 'भण्डारण, पहुँच र मेटाउने अनुरोध', paragraphs: ['व्यक्तिगत जानकारी सेवा सञ्चालन, सुरक्षा, समीक्षा, कानुनी दायित्व र उचित अभिलेख प्रयोजनका लागि आवश्यक समयसम्म मात्र राख्ने लक्ष्य छ। प्रत्येक सेवाको अन्तिम retention प्रक्रिया सञ्चालन पुस्तिका र moderation अभ्याससँगै औपचारिक बनाइँदैछ।', 'आफ्नो व्यक्तिगत जानकारीबारे पहुँच, सुधार वा मेटाउने अनुरोध गर्न सम्पर्क पृष्ठ प्रयोग गर्नुहोस्। पहिचान सुनिश्चित गर्न वा कानुनी तथा सुरक्षा दायित्व पूरा गर्न थप जानकारी आवश्यक पर्न सक्छ।']},
+      {heading: 'नीति परिवर्तन', paragraphs: ['सेवा, प्रदायक वा कानुनी दायित्व परिवर्तन हुँदा यो नीति अद्यावधिक हुन सक्छ। महत्त्वपूर्ण परिवर्तनहरू यसै पृष्ठमा प्रकाशित गरिनेछन्। व्यक्तिगत वा संवेदनशील जानकारी कहिल्यै साधारण इमेल वा फोरम पोस्टमार्फत नपठाउनुहोस्।']},
+    ],
+  },
+  nb: {
+    title: 'Personvern',
+    description: 'Kort informasjon om hvordan nepali.no håndterer personopplysninger knyttet til det offentlige nettstedet, forslag til arrangementer og katalogoppføringer og det separate Forumet.',
+    eyebrow: 'Personvern og personopplysninger',
+    sections: [
+      {heading: 'Vanlig bruk av nettstedet', paragraphs: ['Det kreves ingen brukerkonto for å lese offentlige artikler, veiledning, arrangementer eller katalogoppføringer på nepali.no. I den nåværende allmennyttige fasen bruker nettstedet ikke annonsering, sosial sporing eller delingsskript fra Facebook eller Google.', 'Leverandører av hosting og sikkerhet kan behandle nødvendige tekniske logger, som IP-adresse, tidspunkt for forespørselen og begrenset nettleserinformasjon, i en begrenset periode for å drive tjenesten, oppdage feil og motvirke misbruk.']},
+      {heading: 'Forslag til arrangementer og katalogoppføringer', paragraphs: ['Når du sender inn et forslag til arrangement eller katalogoppføring, bør du bare oppgi informasjon som etterspørres tydelig i skjemaet. Kontaktopplysninger, forslagsinnhold, erklæringer og intern gjennomgangsinformasjon lagres i et privat moderasjonssystem. Forslaget publiseres ikke automatisk.', 'Private kontaktopplysninger holdes adskilt fra kontaktopplysninger som foreslås offentliggjort. Offentlig e-postadresse eller telefonnummer krever uttrykkelig tillatelse og redaksjonell gjennomgang. Begrenset driftsinformasjon kan behandles av en e-postleverandør når det sendes administrative varsler.']},
+      {heading: 'Forumet', paragraphs: ['Forumet drives som en separat Discourse-tjeneste. Brukerkontoer, innlegg, moderasjon, sikkerhetslogger og sikkerhetskopier holdes adskilt fra det offentlige nettstedet og innholdet i Sanity. Forumet er for tiden i en privat testfase med deltakelse etter invitasjon.', 'Ikke del sensitive personopplysninger unødvendig i en Forumkonto eller et innlegg. Ytterligere informasjon om personvern, lagring og fellesskapsregler skal publiseres før Forumet åpnes for ordinær offentlig deltakelse.']},
+      {heading: 'Informasjonskapsler og beskyttede tjenester', paragraphs: ['Markedsføringskapsler er ikke nødvendige for å lese vanlige offentlige sider. Beskyttede administrative tjenester, som Translation Editor, kan bruke nødvendige informasjonskapsler for sikker innlogging og økter. Forumet kan bruke egne informasjonskapsler for innlogging og sikkerhet.']},
+      {heading: 'Lagring, innsyn og sletting', paragraphs: ['Målet er å oppbevare personopplysninger bare så lenge det er nødvendig for drift, sikkerhet, gjennomgang, rettslige forpliktelser og forsvarlig dokumentasjon. Endelige lagringsrutiner for hver tjeneste formaliseres sammen med drifts- og moderasjonsrutinene.', 'Bruk kontaktsiden dersom du vil be om innsyn, retting eller sletting av personopplysninger. Det kan være nødvendig å innhente mer informasjon for å bekrefte identitet eller oppfylle rettslige og sikkerhetsmessige forpliktelser.']},
+      {heading: 'Endringer i personvernerklæringen', paragraphs: ['Denne erklæringen kan oppdateres når tjenester, leverandører eller rettslige forpliktelser endres. Vesentlige endringer publiseres på denne siden. Ikke send personlige eller sensitive opplysninger gjennom vanlig e-post eller Foruminnlegg.']},
+    ],
+  },
+}
+
+const {language} = Astro.props
+const page = copy[language]
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+---
+
+<StaticPageLayout language={language} title={page.title} description={page.description} eyebrow={page.eyebrow} alternatePath={`/${alternateLanguage}/privacy/`}>
+  {page.sections.map((section) => <section><h2>{section.heading}</h2>{section.paragraphs?.map((paragraph) => <p>{paragraph}</p>)}{section.items && <ul>{section.items.map((item) => <li>{item}</li>)}</ul>}</section>)}
+</StaticPageLayout>
