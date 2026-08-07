@@ -1,0 +1,46 @@
+---
+import {supportedLanguages, type SupportedLanguage} from '../../i18n/config'
+import StaticPageLayout from '../../layouts/StaticPageLayout.astro'
+
+export function getStaticPaths() {
+  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+}
+
+type Section = {heading: string; paragraphs?: string[]; items?: string[]}
+type PageCopy = {title: string; description: string; eyebrow: string; sections: Section[]}
+
+const copy: Record<SupportedLanguage, PageCopy> = {
+  ne: {
+    title: 'विकासक्रम र पारदर्शिता',
+    description: 'nepali.no कसरी विकसित भइरहेको छ, सामग्री र सेवाहरू कसरी व्यवस्थापन गरिन्छन्, र सार्वजनिक विश्वास जोगाउन कुन सिद्धान्तहरू अपनाइन्छन् भन्ने जानकारी।',
+    eyebrow: 'खुलापन र उत्तरदायित्व',
+    sections: [
+      {heading: 'परियोजनाको उद्देश्य', paragraphs: ['nepali.no नर्वेको नेपाली समुदायका लागि सार्वजनिक हितमा विकसित डिजिटल मञ्च हो। यसको उद्देश्य भरपर्दो जानकारी, सम्पादकीय समाचार, कार्यक्रम, उपयोगी समुदाय निर्देशिका र जिम्मेवार सहभागिताका अवसरहरू एउटै ठाउँमा उपलब्ध गराउनु हो।', 'प्लेटफर्म चरणबद्ध रूपमा विकास भइरहेको छ। नयाँ सेवा सार्वजनिक गर्नुअघि संरचना, सुरक्षा, गोपनीयता, भाषा, मोबाइल प्रयोग र सम्पादकीय जिम्मेवारी परीक्षण गर्ने प्रयास गरिन्छ।']},
+      {heading: 'सामग्री र समुदायबीचको स्पष्ट सीमा', items: ['समाचार सम्पादकीय रूपमा तयार र समीक्षा गरिन्छ।', 'सार्वजनिक जानकारी जिम्मेवार नर्वेली निकायका आधिकारिक स्रोतमा आधारित हुन्छ।', 'कार्यक्रम र निर्देशिका सुझावहरू निजी समीक्षामा जान्छन् र स्वतः प्रकाशित हुँदैनन्।', 'फोरमका पोस्टहरू सहभागीका विचार र अनुभव हुन्; तिनलाई प्रमाणित समाचार वा आधिकारिक मार्गदर्शन मानिँदैन।']},
+      {heading: 'प्रविधि र सेवा संरचना', paragraphs: ['सार्वजनिक वेबसाइट Astro र Vercel प्रयोग गरेर सञ्चालन हुन्छ। सम्पादकीय सामग्री Sanity मा व्यवस्थापन गरिन्छ। निजी कार्यक्रम र निर्देशिका सुझावहरू सार्वजनिक सामग्रीबाट अलग निजी डेटासेटमा राखिन्छन्। फोरम छुट्टै Discourse सेवा र छुट्टै डाटाबेसमा सञ्चालन हुन्छ।', 'Translation Editor संरक्षित प्रशासनिक सेवा हो। अनुवाद परिवर्तनहरू सुरक्षित शाखा र GitHub pull request मार्फत समीक्षा भएपछि मात्र मुख्य वेबसाइटमा समावेश गरिन्छन्।']},
+      {heading: 'कृत्रिम बुद्धिमत्ता र मानवीय जिम्मेवारी', paragraphs: ['परियोजनाको योजना, लेखन, भाषा, प्रोग्रामिङ, परीक्षण र दस्तावेजीकरणमा कृत्रिम बुद्धिमत्ताबाट सहायता लिन सकिन्छ। अन्तिम वास्तुकला, सम्पादकीय निर्णय, प्रकाशन, पहुँच, सुरक्षा र प्रशासनिक जिम्मेवारी मानव परियोजना नेतृत्वमै रहन्छ।', 'कृत्रिम बुद्धिमत्ताबाट प्राप्त सामग्रीलाई स्वतः सत्य वा प्रकाशनयोग्य मानिँदैन। आवश्यक स्रोत जाँच, सम्पादन र मानवीय समीक्षा गरिन्छ।']},
+      {heading: 'सुधार र सम्पर्क', paragraphs: ['त्रुटि, पुरानो जानकारी, अस्पष्ट भाषा वा पहुँचसम्बन्धी समस्या देखिएमा सम्पर्क पृष्ठमार्फत जानकारी दिन सकिन्छ। उचित सुधारहरू पारदर्शी र जिम्मेवार ढङ्गले सम्हाल्ने लक्ष्य राखिएको छ।']},
+    ],
+  },
+  nb: {
+    title: 'Prosjektutvikling og åpenhet',
+    description: 'Informasjon om hvordan nepali.no utvikles, hvordan innhold og tjenester forvaltes, og hvilke prinsipper som brukes for å ivareta offentlig tillit.',
+    eyebrow: 'Åpenhet og ansvar',
+    sections: [
+      {heading: 'Prosjektets formål', paragraphs: ['nepali.no er en digital plattform som utvikles med et allmennyttig formål for det nepalske miljøet i Norge. Målet er å samle pålitelig informasjon, redaksjonelle nyheter, arrangementer, en nyttig fellesskapskatalog og muligheter for ansvarlig deltakelse.', 'Plattformen utvikles trinnvis. Før nye tjenester gjøres offentlig tilgjengelige, forsøker prosjektet å teste arkitektur, sikkerhet, personvern, språk, mobil bruk og redaksjonelt ansvar.']},
+      {heading: 'Tydelige grenser mellom innhold og fellesskap', items: ['Nyheter utarbeides og gjennomgås redaksjonelt.', 'Offentlig informasjon bygger på offisielle kilder fra ansvarlige norske myndigheter.', 'Forslag til arrangementer og katalogoppføringer går til privat gjennomgang og publiseres aldri automatisk.', 'Foruminnlegg uttrykker deltakernes synspunkter og erfaringer og skal ikke behandles som verifiserte nyheter eller offisiell veiledning.']},
+      {heading: 'Teknologi og tjenestestruktur', paragraphs: ['Det offentlige nettstedet drives med Astro og Vercel. Redaksjonelt innhold forvaltes i Sanity. Private forslag til arrangementer og katalogoppføringer lagres i et privat datasett som er adskilt fra offentlig innhold. Forumet drives som en separat Discourse-tjeneste med egen database.', 'Translation Editor er en beskyttet administrativ tjeneste. Oversettelsesendringer tas først inn på hovednettstedet etter gjennomgang gjennom en beskyttet gren og en GitHub pull request.']},
+      {heading: 'Kunstig intelligens og menneskelig ansvar', paragraphs: ['Kunstig intelligens kan brukes som støtte i planlegging, tekst, språk, programmering, testing og dokumentasjon. Det endelige ansvaret for arkitektur, redaksjonelle beslutninger, publisering, tilgang, sikkerhet og forvaltning ligger hos den menneskelige prosjektledelsen.', 'Innhold fra kunstig intelligens behandles ikke automatisk som korrekt eller publiseringsklart. Kildekontroll, redigering og menneskelig gjennomgang utføres der det er nødvendig.']},
+      {heading: 'Rettelser og kontakt', paragraphs: ['Feil, utdatert informasjon, uklart språk eller tilgjengelighetsproblemer kan meldes gjennom kontaktsiden. Målet er å håndtere relevante rettelser på en åpen og ansvarlig måte.']},
+    ],
+  },
+}
+
+const {language} = Astro.props
+const page = copy[language]
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+---
+
+<StaticPageLayout language={language} title={page.title} description={page.description} eyebrow={page.eyebrow} alternatePath={`/${alternateLanguage}/transparency/`}>
+  {page.sections.map((section) => <section><h2>{section.heading}</h2>{section.paragraphs?.map((paragraph) => <p>{paragraph}</p>)}{section.items && <ul>{section.items.map((item) => <li>{item}</li>)}</ul>}</section>)}
+</StaticPageLayout>
