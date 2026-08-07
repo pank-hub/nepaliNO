@@ -3722,3 +3722,307 @@ Then configure a private synthetic-data pilot:
 - shared authentication
 - production commitment
 - silently converting the disposable VPS into production
+
+# PROJECT_PROGRESS.md append
+
+## 2026-08-07 - Forum doorway, expanded navigation, reusable terminology, and production-domain cutover
+
+Append this section to the existing `PROJECT_PROGRESS.md`. Do not replace the existing file.
+
+### Private Forum pilot doorway merged
+
+Completed and verified:
+- Recovered from the GitHub Actions hosted-runner outage that had blocked PR #9.
+- Reran the protected validation after GitHub Actions recovered.
+- Merged PR #9 as checkpoint:
+  - `40155a7 add private Forum pilot doorway (#9)`
+- Added the private Forum pilot doorway to the public site without changing the Forum security boundary.
+- Added the shared developer-controlled Forum configuration:
+  - `src/config/forum.ts`
+  - `forumPilot.enabled`
+  - `forumPilot.url`
+- Connected the homepage and footer to:
+  - `https://forum-poc.nepali.no/`
+- Preserved the private invite-only Forum boundary.
+- Kept the Forum interface described as English during the pilot.
+- Used the natural Nepali term `फोरम` rather than the more formal `छलफल मञ्च`.
+- Exposed public Forum wording through the protected Translation Module.
+- Added no Discourse API, SSO, iframe, tracker, social script, credential, or browser-side integration.
+
+Validation completed:
+- Astro check passed.
+- Production build passed.
+- All protected GitHub and Vercel checks passed.
+- Desktop Nepali and Norwegian visual review passed.
+- Mobile Nepali visual review passed.
+- Translation registry exposure was verified.
+- Secret, privacy-boundary, obsolete-terminology, and whitespace checks passed.
+
+### Discourse private pilot operational checkpoint
+
+Completed before this checkpoint:
+- Discourse private pilot remains at:
+  - `https://forum-poc.nepali.no/`
+- Forum identity set to:
+  - `nepali.no Forum`
+- Default Forum interface retained as English by explicit decision.
+- User-specific locale selection enabled.
+- Forum participation remains invite-only.
+- Login is required.
+- Chat is disabled.
+- Ordinary members cannot initiate personal messages.
+- Anonymous reading is blocked.
+- Forum contact route established:
+  - `forum@nepali.no`
+  - forwards to the monitored `kontakt@nepali.no` inbox.
+- No real community users have been invited.
+- No real community discussion data has been entered.
+
+Backup and recovery:
+- Created the first native Discourse backup including uploads.
+- Stored the Discourse backup on the VPS.
+- Downloaded the actual `.tar.gz` archive through SCP after the browser download produced an HTML response from an expired one-time link.
+- Verified SHA-256 checksum match between the VPS archive and laptop copy.
+- Valid backup stored locally outside Git at:
+  - `C:\Users\pankaf\Documents\nepali.no-secure\discourse-backups\`
+- The backup must remain outside Git, Codespaces, chat, email, and ordinary shared folders.
+- Restore testing remains pending.
+
+### Forum category planning checkpoint
+
+Current category status must be inspected before further Forum work. Do not assume any incomplete category editor state was saved.
+
+Built-in categories observed:
+- `Staff`
+- `General`
+- `Site Feedback`
+
+Rules:
+- Keep `Staff` unchanged as a private staff-only category.
+- Keep `Site Feedback` unchanged. Discourse warned that it is a protected pre-seeded category and should not be repurposed.
+- Confirm whether `General` was actually renamed before continuing.
+
+Proposed category structure:
+- `Forum Information and Announcements`
+  - staff-created topics
+  - members can read and reply
+- `Site Feedback`
+  - keep unchanged for pilot feedback and usability suggestions
+- `Staff`
+  - staff only
+- `Questions and Mutual Help`
+- `Living in Norway`
+- `Work and Education`
+- `Family and Everyday Life`
+- `Community and Culture`
+
+Planned language tags, not yet created:
+- `nepali`
+- `norsk`
+- `english`
+- `multilingual`
+
+Do not create real users or public invitations before the private pilot is fully validated.
+
+### Expanded navigation and updated brand symbol
+
+Completed and verified through PR #10:
+- Merged checkpoint:
+  - `11616fc expand navigation and update brand symbol (#10)`
+- Added Events, Forum, and Directory to the shared header navigation.
+- Forum navigation item uses the existing developer-controlled `forumPilot` configuration.
+- The Forum item disappears automatically if `forumPilot.enabled` is false.
+- Added localized navigation labels:
+  - Nepali: `कार्यक्रम`, `फोरम`, `डाइरेक्टरी`
+  - Norwegian: `Arrangementer`, `Forum`, `Katalog`
+- Preserved the full Nepali Directory page title as:
+  - `समुदाय निर्देशिका`
+- Used the compact Nepali navigation label:
+  - `डाइरेक्टरी`
+- Changed visible nepali.no brand marks from `न` to `ने` in:
+  - main header
+  - main footer
+  - Translation Portal
+  - English Event submission page
+  - English Directory submission page
+- Moved desktop-to-mobile navigation breakpoint to `74rem` to avoid crowding.
+
+Validation completed:
+- Astro check passed with 0 errors and 0 warnings.
+- Production build passed.
+- Protected GitHub and Vercel checks passed.
+- Mobile navigation was visually tested successfully.
+- All six Nepali mobile menu links worked:
+  - `गृहपृष्ठ`
+  - `समाचार`
+  - `नर्वेमा जीवन`
+  - `कार्यक्रम`
+  - `फोरम`
+  - `डाइरेक्टरी`
+- `ने` rendered cleanly without clipping.
+- No tracking, iframe, Forum API, or credential was introduced.
+
+### Public Information Topic Hubs added through Sanity content
+
+Created or updated controlled Nepali Topic Hubs in Sanity:
+- `Family and Children`
+  - public title: `परिवार र बालबालिका`
+  - slug corrected to `family-children` after an accidental trailing space was detected in the build output
+- `Work and Employment`
+  - public title: `काम र रोजगारी`
+  - slug: `work-employment`
+- `Moving and Population Register`
+  - public title: `बसाइँसराइ र जनसंख्या दर्ता`
+  - slug: `moving-population-register`
+
+Content-entry note:
+- The build log successfully exposed and helped correct a trailing-space slug issue for `family-children`.
+- Continue entering Topic Hub slugs manually in stable English where appropriate.
+- Avoid generating Nepali Unicode slugs unless deliberately intended.
+
+### Reusable Norwegian terminology foundation
+
+Completed and verified through PR #11:
+- Merged checkpoint:
+  - `66bf920 add reusable Norwegian terminology foundation (#11)`
+- Added a new reusable Sanity document type:
+  - `norwegianTerm`
+- Registered it in the public-content schema.
+- Public Information Guides can now use reusable Norwegian Term references while retaining the existing inline `importantTerms` format during migration.
+- Existing legacy inline terms remain supported.
+- New reusable terminology records support:
+  - official Norwegian term
+  - stable slug
+  - explanation language
+  - optional translated counterpart
+  - optional Nepali pronunciation guidance
+  - reusable explanation
+  - optional responsible authority
+  - optional official source URL
+  - alternative search terms
+  - last reviewed date
+  - active status
+- The public `Important Norwegian Terms` panel was intentionally not redesigned.
+- No changes were made to the public guide component or CSS.
+- The public rendering contract remains:
+  - `term`
+  - `explanation`
+
+Important visual rule:
+- The reusable terminology database is editorial infrastructure only.
+- Readers must not see any visual change in the article panel.
+- The beige panel, red `Norsk` eyebrow, heading, dividers, spacing, typography, order, and mobile behavior must remain unchanged unless there is a separate deliberate design milestone.
+
+### First reusable terminology migration proof and query correction
+
+Created the first reusable Norwegian Term record in Sanity:
+- term: `Engangsstønad`
+- slug: `engangsstonad`
+- language: Nepali
+- pronunciation: `एन्गाङ्ग-स्टोनाड`
+- responsible authority: `NAV`
+- official source: `https://www.nav.no/engangsstonad`
+- active: true
+
+Controlled guide migration:
+- In the guide `/ne/info/one-time-benefit-childbirth/`, replaced only the legacy inline `Engangsstønad` item with the reusable reference.
+- Kept the surrounding terms untouched:
+  - `NAV (नाभ)`
+  - `Foreldrepenger (फोरेल्ड्रे-पेङ्गेर)`
+  - reusable `Engangsstønad (एन्गाङ्ग-स्टोनाड)`
+  - `Folketrygden (फोल्के-त्रिग्देन)`
+
+Issue discovered:
+- Sanity stores the named array reference item as `_type == "reusableNorwegianTerm"`, not `_type == "reference"`.
+- The first GROQ normalization therefore failed to resolve the reusable term.
+- The guide temporarily omitted the reusable `Engangsstønad` item until the query was corrected.
+
+Resolution completed through PR #12:
+- Merged checkpoint:
+  - `84d95ef fix reusable Norwegian term resolution (#12)`
+- Updated GROQ normalization to detect `_type == "reusableNorwegianTerm"`.
+- Verified generated guide output:
+  - `NAV (नाभ)` present
+  - `Foreldrepenger (फोरेल्ड्रे-पेङ्गेर)` present
+  - `Engangsstønad (एन्गाङ्ग-स्टोनाड)` present exactly once
+  - `Folketrygden (फोल्के-त्रिग्देन)` present
+  - original order preserved
+  - reusable explanation matched the approved stored text exactly
+- Protected GitHub and Vercel checks passed.
+- No Public Information Guide component or CSS file changed.
+
+Future terminology migration rule:
+- Migrate one term at a time.
+- Confirm the reusable record exactly matches the existing public wording before replacing the inline entry.
+- Rebuild and compare the public panel after every early migration.
+- Do not bulk-migrate terminology until a small set of repeated terms has been proven safely.
+
+Suggested next reusable terms:
+- `NAV`
+- `Folketrygden`
+- `Foreldrepenger`
+- `Barnehage`
+- `Kontantstøtte`
+- `D-nummer`
+- `Fødselsnummer`
+- `Skattekort`
+
+### Production domain cutover initiated
+
+Completed:
+- Organization has taken control of the `nepali.no` domain.
+- Added `nepali.no` to the public Vercel project `nepali-no`.
+- Vercel reported `nepali.no` as `Valid Configuration`.
+- Kept Domeneshop nameservers:
+  - `ns1.hyp.net`
+  - `ns2.hyp.net`
+  - `ns3.hyp.net`
+- Kept DNSSEC enabled.
+- Removed Domeneshop webhosting bindings for:
+  - `nepali.no`
+  - `www.nepali.no`
+- Added apex website record in Domeneshop DNS:
+  - `nepali.no A 216.198.79.1`
+- Preserved existing DNS records for:
+  - `forum-poc.nepali.no`
+  - `notifications.nepali.no`
+  - SPF
+  - DKIM
+  - DMARC
+  - MX and mail/autoconfiguration records
+  - CalDAV/CardDAV/autodiscovery records
+
+Current observation:
+- Vercel says `nepali.no` is valid.
+- Plain `http://nepali.no` may still show a Domeneshop page during propagation or local DNS caching.
+- `https://nepali.no` may temporarily show a certificate common-name error while Vercel/Let's Encrypt certificate issuance and local DNS caches settle.
+- Do not bypass a browser certificate warning.
+- Do not change nameservers.
+- Do not make further DNS edits unless post-propagation diagnostics prove a genuine issue.
+
+Next domain steps:
+- Wait for DNS and TLS propagation.
+- Test from a fresh InPrivate window and from mobile data.
+- Once `https://nepali.no/` works without certificate warning, add `www.nepali.no` to Vercel.
+- Configure `www.nepali.no` as a permanent redirect to `nepali.no`.
+- Add only the DNS record Vercel requests for `www`.
+- After production domain is stable, update GitHub OAuth callback and relevant production-domain references carefully.
+
+### Current repository checkpoint
+
+Latest known merged code checkpoint at the time of this append:
+- `84d95ef fix reusable Norwegian term resolution (#12)`
+
+Recent checkpoints:
+- `84d95ef fix reusable Norwegian term resolution (#12)`
+- `66bf920 add reusable Norwegian terminology foundation (#11)`
+- `11616fc expand navigation and update brand symbol (#10)`
+- `40155a7 add private Forum pilot doorway (#9)`
+- `fa61ab4 document Gigahost Discourse proof of concept (#8)`
+
+At the time of this documentation package:
+- PR #12 had been merged.
+- `nepali.no` was attached to Vercel and marked valid.
+- DNS/TLS propagation was still being observed.
+- `www.nepali.no` had not yet been configured.
+- No further Forum category work should continue until the current saved category state is inspected.
