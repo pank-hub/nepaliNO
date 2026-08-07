@@ -135,6 +135,34 @@ export const publicInformationGuide = defineType({
       ],
       validation: (rule) => rule.unique().max(8),
     }),
+
+    defineField({
+      name: 'forumQuestionsTopic',
+      title: 'Forum Questions and Experiences Topic',
+      type: 'forumTopicReference',
+      description:
+        'Optional editorial connection to the long-lived Discourse topic for follow-up questions and practical community experiences related to this Guide. This topic should normally remain open.',
+    }),
+
+    defineField({
+      name: 'relatedForumTopics',
+      title: 'Related Forum Topics',
+      type: 'array',
+      description:
+        'Optional manually curated Forum topics related to this Guide. Select no more than three. Community discussion never replaces verified guidance.',
+      of: [{type: 'forumTopicReference'}],
+      validation: (rule) =>
+        rule.max(3).custom((items) => {
+          if (!items) return true
+          const topicIds = items
+            .map((item) => (item as {topicId?: number})?.topicId)
+            .filter((topicId): topicId is number => typeof topicId === 'number')
+          return new Set(topicIds).size === topicIds.length
+            ? true
+            : 'Each related Forum topic ID must be unique.'
+        }),
+    }),
+
     defineField({
       name: 'guideFormat',
       title: 'Guide Format',
