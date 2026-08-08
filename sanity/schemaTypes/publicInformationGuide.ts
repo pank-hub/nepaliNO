@@ -137,6 +137,27 @@ export const publicInformationGuide = defineType({
     }),
 
     defineField({
+      name: 'forumCompanionAutomation',
+      title: 'Forum Companion Workflow',
+      type: 'forumCompanionAutomation',
+      description:
+        'Optional workflow choice for Guide questions and experiences. Automatic mode will later create a topic in Questions about Guides only after the Guide is active.',
+      validation: (rule) =>
+        rule.custom((automation, context) => {
+          const mode = (automation as {mode?: string} | undefined)?.mode
+          const topicId = (
+            context.document?.forumQuestionsTopic as {topicId?: number} | undefined
+          )?.topicId
+
+          if (mode === 'manual' && !topicId) {
+            return 'Manual mode requires a Forum Questions and Experiences topic ID.'
+          }
+
+          return true
+        }),
+    }),
+
+    defineField({
       name: 'forumQuestionsTopic',
       title: 'Forum Questions and Experiences Topic',
       type: 'forumTopicReference',

@@ -142,3 +142,14 @@ When a new category is proposed:
 8. Update this document with the decision, rationale, approval date, and any special moderation requirements.
 
 If a category is renamed, its numeric ID remains authoritative. If a category is deleted, repurposed, made private, or becomes unsuitable, remove it from all applicable policies through the same reviewed process. An emergency exclusion may be deployed immediately by removing the ID, while preserving the audit trail in Git.
+
+
+## Automatic companion-topic governance
+
+Automatic companion-topic creation is opt-in. Publishing or updating content does not create a Forum topic unless the editor selected automatic mode and the content is eligible.
+
+News must be published and not future-dated. Guides must be active. Existing companion relationships always prevent duplicate creation. Manual mode requires an editor-approved existing topic relationship.
+
+The future automation must use a separate least-privileged Forum publisher identity, signed Sanity webhook delivery, authoritative server-side document re-fetching, idempotent creation claims, server-owned category mapping, controlled retries, and non-sensitive failure codes. The existing read-only metadata credential must not be reused for topic creation.
+
+Unpublishing, archiving, title changes, or mode changes must never automatically delete community contributions. Any closing, unlisting, renaming, or archival action in Discourse requires a separately governed operational decision.
