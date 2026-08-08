@@ -1,5 +1,9 @@
 import type {APIRoute} from 'astro'
 import {forumPilot} from '../../config/forum'
+import {
+  InvalidForumContentRequestError,
+  parseForumContentRequest,
+} from '../../lib/forum/parseForumContentRequest'
 
 export const prerender = false
 
@@ -13,13 +17,26 @@ const jsonResponse = (status: number, body: Record<string, unknown>) =>
     },
   })
 
-export const GET: APIRoute = async () => {
+const notFoundResponse = () =>
+  jsonResponse(404, {
+    ok: false,
+    code: 'not_found',
+    message: 'Not found.',
+  })
+
+export const GET: APIRoute = async ({request}) => {
   if (!forumPilot.contentIntegrationEnabled) {
-    return jsonResponse(404, {
-      ok: false,
-      code: 'not_found',
-      message: 'Not found.',
-    })
+    return notFoundResponse()
+  }
+
+  try {
+    parseForumContentRequest(new URL(request.url).searchParams)
+  } catch (error) {
+    if (error instanceof InvalidForumContentRequestError) {
+      return notFoundResponse()
+    }
+
+    throw error
   }
 
   return jsonResponse(503, {
