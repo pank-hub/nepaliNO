@@ -7,6 +7,7 @@ import {
 import {
   ForumContentRelationshipUnavailableError,
   resolveContentForumRelationships,
+  type ForumContentIdentity,
 } from '../../../lib/forum/resolveContentForumRelationships'
 import {readTranslationSession} from '../../../lib/translationAuth/session'
 
@@ -19,6 +20,11 @@ const SYNTHETIC_CONTENT_IDENTITY = {
 } as const
 const EXPECTED_SYNTHETIC_TOPIC_ID = 13
 
+interface ResolverDiagnosticResult {
+  name: string
+  passed: boolean
+}
+
 const jsonResponse = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), {
     status,
@@ -28,6 +34,52 @@ const jsonResponse = (status: number, body: Record<string, unknown>) =>
       'x-content-type-options': 'nosniff',
     },
   })
+
+const expectRelationshipUnavailable = async (
+  name: string,
+  identity: ForumContentIdentity,
+): Promise<ResolverDiagnosticResult> => {
+  try {
+    await resolveContentForumRelationships(identity)
+    return {name, passed: false}
+  } catch (error) {
+    return {
+      name,
+      passed: error instanceof ForumContentRelationshipUnavailableError,
+    }
+  }
+}
+
+const runResolverDiagnostics = async () => {
+  const results = await Promise.all([
+    expectRelationshipUnavailable(
+      'future_dated_news_rejected_in_production_mode',
+      SYNTHETIC_CONTENT_IDENTITY,
+    ),
+    expectRelationshipUnavailable('published_news_without_relationship_rejected', {
+      contentType: 'newsArticle',
+      language: 'nb',
+      slug: 'den-nye-digitale-plattformen-nepali-no-er-i-testfasen',
+    }),
+    expectRelationshipUnavailable('active_guide_without_relationship_rejected', {
+      contentType: 'publicInformationGuide',
+      language: 'ne',
+      slug: 'udi-oppholdstillatelse-offisiell-informasjon',
+    }),
+    expectRelationshipUnavailable('nonexistent_news_slug_rejected', {
+      contentType: 'newsArticle',
+      language: 'nb',
+      slug: 'synthetic-nonexistent-forum-diagnostic',
+    }),
+    expectRelationshipUnavailable('wrong_language_identity_rejected', {
+      contentType: 'newsArticle',
+      language: 'ne',
+      slug: 'den-nye-digitale-plattformen-nepali-no-er-i-testfasen',
+    }),
+  ])
+
+  return results
+}
 
 export const GET: APIRoute = async ({cookies}) => {
   const session = await readTranslationSession(cookies)
@@ -41,6 +93,18 @@ export const GET: APIRoute = async ({cookies}) => {
   }
 
   try {
+    const diagnostics = await runResolverDiagnostics()
+    const failedDiagnostics = diagnostics.filter(({passed}) => !passed)
+
+    if (failedDiagnostics.length > 0) {
+      return jsonResponse(503, {
+        ok: false,
+        code: 'forum_resolver_diagnostics_failed',
+        message: 'One or more protected Forum resolver diagnostics failed.',
+        diagnostics,
+      })
+    }
+
     const resolved = await resolveContentForumRelationships(
       SYNTHETIC_CONTENT_IDENTITY,
       {
@@ -60,15 +124,16 @@ export const GET: APIRoute = async ({cookies}) => {
 
     return jsonResponse(200, {
       ok: true,
-      code: 'forum_metadata_connected',
+      code: 'forum_resolver_diagnostics_passed',
       message:
-        'The protected Sanity-allowlisted Forum metadata connection is operational.',
+        'The protected Forum resolver diagnostics and metadata connection are operational.',
+      diagnostics,
       source: resolved.identity,
       relationshipRole: relationship.role,
       metadata,
     })
   } catch (error) {
-    console.error('Protected Forum metadata connectivity check failed', {
+    console.error('Protected Forum resolver diagnostics failed', {
       errorName: error instanceof Error ? error.name : 'UnknownError',
       topicId: EXPECTED_SYNTHETIC_TOPIC_ID,
     })
@@ -99,8 +164,8 @@ export const GET: APIRoute = async ({cookies}) => {
 
     return jsonResponse(500, {
       ok: false,
-      code: 'forum_metadata_check_failed',
-      message: 'The Forum metadata connectivity check failed.',
+      code: 'forum_resolver_diagnostics_failed',
+      message: 'The protected Forum resolver diagnostics failed.',
     })
   }
 }
