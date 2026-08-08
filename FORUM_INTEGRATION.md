@@ -238,3 +238,14 @@ Category eligibility is server-controlled and relationship-role specific:
 A News companion in the Guide category is rejected. A Guide companion in the News category is rejected. Dedicated companion categories are not used as generic related-topic sources. Closed topics remain eligible when the category and relationship role are valid; archived topics and topics without a valid category are rejected.
 
 Homepage eligibility will remain separate from content-panel eligibility. A topic in category 10 or 11 must also be reverse-verified as linked from eligible Sanity content before homepage presentation. Discourse category placement alone never authorizes homepage promotion.
+
+
+## Companion topic automation model
+
+News Articles and Public Information Guides may optionally store a `forumCompanionAutomation` object. Editors choose one mode: no Forum discussion, automatic creation when eligible, or manual linking of an existing topic.
+
+The durable topic relationship remains in `forumDiscussion` for News and `forumQuestionsTopic` for Guides. Automation status, attempt timestamps, completion timestamps, and safe failure codes are server-managed and read-only in Studio.
+
+Missing automation configuration is treated as no automatic request. Existing documents and existing topic references require no migration. Manual mode requires an existing companion topic ID. Automatic mode may coexist with a topic ID after successful creation or when an existing relationship prevents duplicate creation.
+
+The future publishing service will choose category 10 for News and category 11 for Guides. Editors and webhook payloads never choose category IDs. No webhook, write credential, or automatic Discourse mutation is enabled by this schema milestone.

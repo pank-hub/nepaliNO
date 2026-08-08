@@ -198,6 +198,27 @@ export const newsArticle = defineType({
     }),
 
     defineField({
+      name: 'forumCompanionAutomation',
+      title: 'Forum Companion Workflow',
+      type: 'forumCompanionAutomation',
+      description:
+        'Optional workflow choice for a News discussion. Automatic mode will later create a topic in News Discussions only after the article is eligible for publication.',
+      validation: (rule) =>
+        rule.custom((automation, context) => {
+          const mode = (automation as {mode?: string} | undefined)?.mode
+          const topicId = (
+            context.document?.forumDiscussion as {topicId?: number} | undefined
+          )?.topicId
+
+          if (mode === 'manual' && !topicId) {
+            return 'Manual mode requires a Companion Forum Discussion topic ID.'
+          }
+
+          return true
+        }),
+    }),
+
+    defineField({
       name: 'forumDiscussion',
       title: 'Companion Forum Discussion',
       type: 'forumTopicReference',
