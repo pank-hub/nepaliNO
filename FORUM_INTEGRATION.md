@@ -224,3 +224,17 @@ The test suites are dependency-free Node tests and do not contact Sanity or Disc
 - broaden or replace the topic-13-only API key only after private endpoint proof
 - build shared presentation components only after the endpoint contract is proven
 - preserve the public disable switch and emergency rollback
+
+
+## Role-aware category policy
+
+Category eligibility is server-controlled and relationship-role specific:
+
+- `newsDiscussion`: category 10, News Discussions
+- `guideQuestions`: category 11, Questions about Guides
+- `related`: categories 5, 6, 7, 8, or 9
+- future homepage feed: categories 10 and 11 only
+
+A News companion in the Guide category is rejected. A Guide companion in the News category is rejected. Dedicated companion categories are not used as generic related-topic sources. Closed topics remain eligible when the category and relationship role are valid; archived topics and topics without a valid category are rejected.
+
+Homepage eligibility will remain separate from content-panel eligibility. A topic in category 10 or 11 must also be reverse-verified as linked from eligible Sanity content before homepage presentation. Discourse category placement alone never authorizes homepage promotion.

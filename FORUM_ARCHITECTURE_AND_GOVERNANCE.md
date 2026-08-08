@@ -116,3 +116,29 @@ Public launch requires at minimum:
 - public activation decision
 - email template tone and language polishing
 - transition from pilot hostname/status to approved production presentation
+
+
+## Category approval and future-owner routine
+
+Creating a category in Discourse never makes the category eligible for nepali.no automatically. Future owners must classify every new category explicitly as Forum-only, News companion, Guide companion, related-topic eligible, homepage-feed eligible, or excluded.
+
+Current role policy:
+
+- News companion topics: category 10, News Discussions
+- Guide companion topics: category 11, Questions about Guides
+- Curated related topics: categories 5 to 9
+- Future homepage discussion feed: categories 10 and 11 only, subject to reverse verification against eligible Sanity content
+- Administrative and excluded categories: Site Feedback (2), Staff (3), and Forum Information and Announcements (4)
+
+When a new category is proposed:
+
+1. Record its numeric ID, name, slug, visibility, purpose, and moderator responsibility.
+2. Review privacy, safeguarding, moderation capacity, and whether homepage promotion is appropriate.
+3. Decide separately whether the category is eligible for content-linked topics and for the homepage feed.
+4. Update only the relevant server-controlled policy. Category creation or public visibility in Discourse is never sufficient approval.
+5. Add tests proving the new category is accepted only for its intended role and that administrative categories remain excluded.
+6. Deploy through the protected pull-request workflow and verify the exact policy diff, Forum tests, Astro Check, and production build.
+7. Verify production behavior without exposing credentials or enabling unrelated categories.
+8. Update this document with the decision, rationale, approval date, and any special moderation requirements.
+
+If a category is renamed, its numeric ID remains authoritative. If a category is deleted, repurposed, made private, or becomes unsuitable, remove it from all applicable policies through the same reviewed process. An emergency exclusion may be deployed immediately by removing the ID, while preserving the audit trail in Git.
