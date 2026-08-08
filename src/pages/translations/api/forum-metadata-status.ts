@@ -5,6 +5,10 @@ import {
   getDiscourseTopicMetadata,
 } from '../../../lib/forum/discourseMetadata'
 import {
+  ForumContentMetadataUnavailableError,
+  loadForumContentMetadata,
+} from '../../../lib/forum/loadForumContentMetadata'
+import {
   ForumContentRelationshipUnavailableError,
   resolveContentForumRelationships,
   type ForumContentIdentity,
@@ -120,17 +124,20 @@ export const GET: APIRoute = async ({cookies}) => {
       )
     }
 
-    const metadata = await getDiscourseTopicMetadata(relationship.topicId)
+    const contentMetadata = await loadForumContentMetadata(
+      resolved.relationships,
+      getDiscourseTopicMetadata,
+    )
 
     return jsonResponse(200, {
       ok: true,
-      code: 'forum_resolver_diagnostics_passed',
+      code: 'forum_response_shape_proven',
       message:
-        'The protected Forum resolver diagnostics and metadata connection are operational.',
+        'The protected Forum resolver diagnostics and final response shape are operational.',
       diagnostics,
-      source: resolved.identity,
-      relationshipRole: relationship.role,
-      metadata,
+      content: resolved.identity,
+      companion: contentMetadata.companion,
+      related: contentMetadata.related,
     })
   } catch (error) {
     console.error('Protected Forum resolver diagnostics failed', {
@@ -146,7 +153,10 @@ export const GET: APIRoute = async ({cookies}) => {
       })
     }
 
-    if (error instanceof DiscourseMetadataRequestError) {
+    if (
+      error instanceof DiscourseMetadataRequestError ||
+      error instanceof ForumContentMetadataUnavailableError
+    ) {
       return jsonResponse(503, {
         ok: false,
         code: 'forum_metadata_unavailable',
