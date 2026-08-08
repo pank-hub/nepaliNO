@@ -37,6 +37,9 @@ jobs:
       - name: Install Sanity Studio dependencies
         run: npm ci --prefix sanity
 
+      - name: Test Forum relationship normalization
+        run: npm run test:forum-relationships
+
       - name: Run Astro Check
         run: npx astro check
 
