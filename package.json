@@ -11,7 +11,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "test:forum-relationships": "node --experimental-strip-types --test tests/forum/normalizeForumRelationships.test.mjs",
-    "test:forum-content-request": "node --experimental-strip-types --test tests/forum/parseForumContentRequest.test.mjs"
+    "test:forum-content-request": "node --experimental-strip-types --test tests/forum/parseForumContentRequest.test.mjs",
+    "test:forum-content-metadata": "node --experimental-strip-types --test tests/forum/loadForumContentMetadata.test.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.4",
