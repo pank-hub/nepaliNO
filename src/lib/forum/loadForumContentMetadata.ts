@@ -27,7 +27,7 @@ const loadRelationship = async (
   try {
     const metadata = await loadTopicMetadata(relationship.topicId)
 
-    if (!isForumTopicEligible(metadata)) return null
+    if (!isForumTopicEligible(metadata, relationship.role)) return null
 
     return {role: relationship.role, ...metadata}
   } catch {

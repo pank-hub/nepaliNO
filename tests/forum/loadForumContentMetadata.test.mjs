@@ -6,6 +6,12 @@ import {
   loadForumContentMetadata,
 } from '../../src/lib/forum/loadForumContentMetadata.ts'
 
+const categoryForTopicId = (topicId) => {
+  if (topicId === 13) return 10
+  if (topicId === 21) return 11
+  return 5
+}
+
 const metadata = (topicId) => ({
   topicId,
   title: `Topic ${topicId}`,
@@ -13,7 +19,7 @@ const metadata = (topicId) => ({
   replyCount: 0,
   closed: false,
   archived: false,
-  categoryId: 5,
+  categoryId: categoryForTopicId(topicId),
   tags: [],
   url: `https://forum.example/t/${topicId}`,
 })
@@ -204,11 +210,10 @@ test('omits archived and administrative related topics', async () => {
   )
 })
 
-test('allows closed topics in approved community categories', async () => {
+test('allows a closed Guide topic in the dedicated Guide category', async () => {
   const loader = async (topicId) => ({
     ...metadata(topicId),
     closed: true,
-    categoryId: 6,
   })
 
   assert.deepEqual(
@@ -221,14 +226,13 @@ test('allows closed topics in approved community categories', async () => {
         role: 'guideQuestions',
         ...metadata(21),
         closed: true,
-        categoryId: 6,
       },
       related: [],
     },
   )
 })
 
-test('allows every approved community category', async () => {
+test('allows every approved community category for related topics', async () => {
   for (const categoryId of [5, 6, 7, 8, 9]) {
     const loader = async (topicId) => ({...metadata(topicId), categoryId})
     const result = await loadForumContentMetadata(
@@ -237,5 +241,44 @@ test('allows every approved community category', async () => {
     )
 
     assert.equal(result.related[0].categoryId, categoryId)
+  }
+})
+
+
+test('rejects a News companion in the Guide category', async () => {
+  const loader = async (topicId) => ({...metadata(topicId), categoryId: 11})
+
+  await assert.rejects(
+    loadForumContentMetadata(
+      [{role: 'newsDiscussion', topicId: 13}],
+      loader,
+    ),
+    ForumContentMetadataUnavailableError,
+  )
+})
+
+test('rejects a Guide companion in the News category', async () => {
+  const loader = async (topicId) => ({...metadata(topicId), categoryId: 10})
+
+  await assert.rejects(
+    loadForumContentMetadata(
+      [{role: 'guideQuestions', topicId: 21}],
+      loader,
+    ),
+    ForumContentMetadataUnavailableError,
+  )
+})
+
+test('rejects dedicated companion categories for related topics', async () => {
+  for (const categoryId of [10, 11]) {
+    const loader = async (topicId) => ({...metadata(topicId), categoryId})
+
+    await assert.rejects(
+      loadForumContentMetadata(
+        [{role: 'related', topicId: categoryId}],
+        loader,
+      ),
+      ForumContentMetadataUnavailableError,
+    )
   }
 })
