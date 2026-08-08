@@ -40,6 +40,9 @@ jobs:
       - name: Test Forum relationship normalization
         run: npm run test:forum-relationships
 
+      - name: Test Forum content request contract
+        run: npm run test:forum-content-request
+
       - name: Run Astro Check
         run: npx astro check
 
