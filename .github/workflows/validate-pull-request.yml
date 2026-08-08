@@ -43,6 +43,9 @@ jobs:
       - name: Test Forum content request contract
         run: npm run test:forum-content-request
 
+      - name: Test Forum content metadata orchestration
+        run: npm run test:forum-content-metadata
+
       - name: Run Astro Check
         run: npx astro check
 
