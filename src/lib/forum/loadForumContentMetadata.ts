@@ -1,4 +1,5 @@
 import type {DiscourseTopicMetadata} from './discourseMetadata'
+import {isForumTopicEligible} from './forumTopicEligibility.ts'
 import type {
   ApprovedForumRelationship,
   ApprovedForumRelationshipRole,
@@ -25,6 +26,9 @@ const loadRelationship = async (
 ): Promise<PublicForumTopicMetadata | null> => {
   try {
     const metadata = await loadTopicMetadata(relationship.topicId)
+
+    if (!isForumTopicEligible(metadata)) return null
+
     return {role: relationship.role, ...metadata}
   } catch {
     return null

@@ -13,6 +13,7 @@ const metadata = (topicId) => ({
   replyCount: 0,
   closed: false,
   archived: false,
+  categoryId: 5,
   tags: [],
   url: `https://forum.example/t/${topicId}`,
 })
@@ -135,4 +136,106 @@ test('fails when no approved relationship is provided', async () => {
     loadForumContentMetadata([], successfulLoader),
     ForumContentMetadataUnavailableError,
   )
+})
+
+test('rejects an archived companion topic', async () => {
+  const loader = async (topicId) => ({...metadata(topicId), archived: true})
+
+  await assert.rejects(
+    loadForumContentMetadata(
+      [{role: 'newsDiscussion', topicId: 13}],
+      loader,
+    ),
+    ForumContentMetadataUnavailableError,
+  )
+})
+
+test('rejects a companion topic without a category', async () => {
+  const loader = async (topicId) => {
+    const {categoryId: _categoryId, ...withoutCategory} = metadata(topicId)
+    return withoutCategory
+  }
+
+  await assert.rejects(
+    loadForumContentMetadata(
+      [{role: 'guideQuestions', topicId: 21}],
+      loader,
+    ),
+    ForumContentMetadataUnavailableError,
+  )
+})
+
+test('rejects a companion topic in an administrative category', async () => {
+  const loader = async (topicId) => ({...metadata(topicId), categoryId: 4})
+
+  await assert.rejects(
+    loadForumContentMetadata(
+      [{role: 'newsDiscussion', topicId: 13}],
+      loader,
+    ),
+    ForumContentMetadataUnavailableError,
+  )
+})
+
+test('omits archived and administrative related topics', async () => {
+  const loader = async (topicId) => {
+    if (topicId === 31) return {...metadata(topicId), archived: true}
+    if (topicId === 32) return {...metadata(topicId), categoryId: 2}
+    if (topicId === 33) return {...metadata(topicId), categoryId: 9}
+    return metadata(topicId)
+  }
+
+  assert.deepEqual(
+    await loadForumContentMetadata(
+      [
+        {role: 'newsDiscussion', topicId: 13},
+        {role: 'related', topicId: 31},
+        {role: 'related', topicId: 32},
+        {role: 'related', topicId: 33},
+      ],
+      loader,
+    ),
+    {
+      companion: {role: 'newsDiscussion', ...metadata(13)},
+      related: [
+        {role: 'related', ...metadata(33), categoryId: 9},
+      ],
+    },
+  )
+})
+
+test('allows closed topics in approved community categories', async () => {
+  const loader = async (topicId) => ({
+    ...metadata(topicId),
+    closed: true,
+    categoryId: 6,
+  })
+
+  assert.deepEqual(
+    await loadForumContentMetadata(
+      [{role: 'guideQuestions', topicId: 21}],
+      loader,
+    ),
+    {
+      companion: {
+        role: 'guideQuestions',
+        ...metadata(21),
+        closed: true,
+        categoryId: 6,
+      },
+      related: [],
+    },
+  )
+})
+
+test('allows every approved community category', async () => {
+  for (const categoryId of [5, 6, 7, 8, 9]) {
+    const loader = async (topicId) => ({...metadata(topicId), categoryId})
+    const result = await loadForumContentMetadata(
+      [{role: 'related', topicId: categoryId}],
+      loader,
+    )
+
+    assert.equal(result.related[0].categoryId, categoryId)
+  }
 })
