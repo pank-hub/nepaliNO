@@ -1,7 +1,7 @@
 # nepali.no Project Progress
 
 **Status date:** 8 August 2026
-**Current protected checkpoint:** `b9f62a0 allowlist Forum metadata through Sanity (#22)`
+**Current protected checkpoint:** `ac20866 validate Forum content requests in CI (#29)`
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
 
@@ -123,32 +123,28 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 - Public Information Guides: the companion topic supports continuing questions and practical experience sharing and should normally remain open.
 - Both content types may show up to three related Forum topics, initially curated editorially.
 
-### Metadata bridge proof
+### Metadata bridge and endpoint boundary
 
-Completed through PRs #18 to #22:
+Completed through PRs #18 to #29:
 
 - reusable Sanity Forum topic-reference schema
-- disabled public metadata endpoint at `/api/forum-content`
 - server-only Discourse metadata client
-- protected Pankaj-only connectivity probe
-- Sanity-controlled synthetic topic allowlisting
+- Sanity-controlled News and Guide relationship resolver
 - defensive reply-count normalization
+- duplicate removal, companion-topic exclusion, and three-related-topic limit
+- protected production diagnostics for eligible and ineligible content
+- strict public content-identity request contract
+- automated CI enforcement for relationship normalization and request parsing
 
 Verified production chain:
 
-`published future-dated Sanity News document -> approved topic ID -> Vercel server -> restricted Discourse API on Gigahost -> normalized metadata`
+`approved Sanity content identity -> eligible relationship -> approved topic ID -> Vercel server -> restricted Discourse API on Gigahost -> normalized metadata`
 
-Synthetic fixtures:
+Protected production diagnostics prove that future-dated News, unrelated published News, unrelated active Guides, nonexistent slugs, and wrong-language identities are rejected before Discourse. The fixed synthetic fixture still resolves topic ID `13`, where raw `postsCount: 1` becomes public `replyCount: 0`.
 
-- Sanity News slug: `syntetisk-test-forum-integrasjon`
-- future publication date: 13 August 2099
-- Discourse topic ID: `13`
-- raw `postsCount`: `1`
-- normalized `replyCount`: `0`
+The disabled public endpoint accepts no observable contract while the feature flag is false. Requests with no parameters, a valid-looking content identity, or malformed values including a caller-supplied topic ID all return the same generic HTTP 404 with `Cache-Control: no-store`.
 
-Discourse `posts_count` includes the opening topic post. Public replies must therefore use `Math.max(0, postsCount - 1)`.
-
-The public endpoint remains deliberately disabled and returns generic HTTP 404 with `Cache-Control: no-store`.
+Twenty dependency-free Forum tests now run on every pull request: nine relationship-normalization tests and eleven public request-contract tests.
 
 ## 6. Security and privacy invariants
 
@@ -164,18 +160,19 @@ The public endpoint remains deliberately disabled and returns generic HTTP 404 w
 
 ## 7. Active next milestone
 
-Convert the successful synthetic allowlist proof into a general server-owned lookup for published News articles and active Public Information Guides while keeping public presentation disabled.
+Implement the enabled-state `/api/forum-content` pipeline behind the still-false `contentIntegrationEnabled` feature flag.
 
 Required design work:
 
-1. resolve the requested public Sanity content identity server-side
-2. obtain only topic IDs attached to eligible published content
-3. reject arbitrary caller-supplied topic IDs
-4. filter hidden, deleted, inaccessible, staff, or otherwise ineligible topics
-5. define caching, timeout, and safe-failure behavior
-6. preserve News and Guide lifecycle differences
+1. parse only the validated public content identity and resolve eligible Sanity relationships server-side
+2. obtain metadata only for topic IDs attached to published News or active Guides
+3. define companion and related-topic response structure without exposing editorial labels or internal errors
+4. define partial-success behavior when one approved topic is unavailable
+5. filter hidden, deleted, inaccessible, staff, or otherwise ineligible topics
+6. define safe short caching, timeout, and failure behavior
 7. test open, closed, archived, missing, and replied-to synthetic topics
-8. replace the synthetic-only API-key topic restriction only after an approved production scope design
+8. broaden or replace the synthetic topic-13 API-key restriction only after the enabled-state boundary is proven privately
+9. keep public rendering and both Forum feature flags disabled until the complete endpoint behavior is approved
 
 ## 8. Deferred but approved work
 
