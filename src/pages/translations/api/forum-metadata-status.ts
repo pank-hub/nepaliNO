@@ -1,37 +1,23 @@
 import type {APIRoute} from 'astro'
-import {sanityClient} from 'sanity:client'
 import {
   DiscourseMetadataConfigurationError,
   DiscourseMetadataRequestError,
   getDiscourseTopicMetadata,
 } from '../../../lib/forum/discourseMetadata'
+import {
+  ForumContentRelationshipUnavailableError,
+  resolveContentForumRelationships,
+} from '../../../lib/forum/resolveContentForumRelationships'
 import {readTranslationSession} from '../../../lib/translationAuth/session'
 
 export const prerender = false
 
-const SYNTHETIC_NEWS_SLUG = 'syntetisk-test-forum-integrasjon'
-const SYNTHETIC_NEWS_LANGUAGE = 'nb'
+const SYNTHETIC_CONTENT_IDENTITY = {
+  contentType: 'newsArticle',
+  language: 'nb',
+  slug: 'syntetisk-test-forum-integrasjon',
+} as const
 const EXPECTED_SYNTHETIC_TOPIC_ID = 13
-
-interface SyntheticNewsForumRelationship {
-  documentId: string
-  publishedAt: string
-  topicId: number
-}
-
-const SYNTHETIC_NEWS_FORUM_RELATIONSHIP_QUERY = `
-  *[
-    _type == "newsArticle" &&
-    slug.current == $slug &&
-    language == $language &&
-    defined(publishedAt) &&
-    publishedAt > now()
-  ][0] {
-    "documentId": _id,
-    publishedAt,
-    "topicId": forumDiscussion.topicId
-  }
-`
 
 const jsonResponse = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), {
@@ -42,29 +28,6 @@ const jsonResponse = (status: number, body: Record<string, unknown>) =>
       'x-content-type-options': 'nosniff',
     },
   })
-
-const readAllowlistedRelationship = async () => {
-  const relationship =
-    await sanityClient.fetch<SyntheticNewsForumRelationship | null>(
-      SYNTHETIC_NEWS_FORUM_RELATIONSHIP_QUERY,
-      {
-        slug: SYNTHETIC_NEWS_SLUG,
-        language: SYNTHETIC_NEWS_LANGUAGE,
-      },
-    )
-
-  if (
-    !relationship ||
-    !relationship.documentId ||
-    !relationship.publishedAt ||
-    !Number.isInteger(relationship.topicId) ||
-    relationship.topicId !== EXPECTED_SYNTHETIC_TOPIC_ID
-  ) {
-    throw new Error('Synthetic Sanity Forum relationship is unavailable.')
-  }
-
-  return relationship
-}
 
 export const GET: APIRoute = async ({cookies}) => {
   const session = await readTranslationSession(cookies)
@@ -78,7 +41,21 @@ export const GET: APIRoute = async ({cookies}) => {
   }
 
   try {
-    const relationship = await readAllowlistedRelationship()
+    const resolved = await resolveContentForumRelationships(
+      SYNTHETIC_CONTENT_IDENTITY,
+      {
+        mode: 'syntheticProbe',
+        expectedTopicId: EXPECTED_SYNTHETIC_TOPIC_ID,
+      },
+    )
+    const relationship = resolved.relationships[0]
+
+    if (!relationship) {
+      throw new ForumContentRelationshipUnavailableError(
+        'The synthetic Forum relationship was not resolved.',
+      )
+    }
+
     const metadata = await getDiscourseTopicMetadata(relationship.topicId)
 
     return jsonResponse(200, {
@@ -86,11 +63,8 @@ export const GET: APIRoute = async ({cookies}) => {
       code: 'forum_metadata_connected',
       message:
         'The protected Sanity-allowlisted Forum metadata connection is operational.',
-      source: {
-        contentType: 'newsArticle',
-        language: SYNTHETIC_NEWS_LANGUAGE,
-        slug: SYNTHETIC_NEWS_SLUG,
-      },
+      source: resolved.identity,
+      relationshipRole: relationship.role,
       metadata,
     })
   } catch (error) {
@@ -115,10 +89,18 @@ export const GET: APIRoute = async ({cookies}) => {
       })
     }
 
-    return jsonResponse(503, {
+    if (error instanceof ForumContentRelationshipUnavailableError) {
+      return jsonResponse(503, {
+        ok: false,
+        code: 'forum_relationship_unavailable',
+        message: 'The approved Sanity Forum relationship could not be verified.',
+      })
+    }
+
+    return jsonResponse(500, {
       ok: false,
-      code: 'forum_relationship_unavailable',
-      message: 'The approved Sanity Forum relationship could not be verified.',
+      code: 'forum_metadata_check_failed',
+      message: 'The Forum metadata connectivity check failed.',
     })
   }
 }
