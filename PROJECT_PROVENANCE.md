@@ -1,194 +1,116 @@
 # nepali.no Project Provenance
 
+**Last reviewed:** 8 August 2026
+
 ## Purpose
 
-nepali.no is a purpose-built, nonprofit and public-benefit digital community platform for the Nepali community in Norway.
+nepali.no is a purpose-built, nonprofit and public-benefit digital community platform for the Nepali community in Norway. It provides governed News, official-source-based Public Information, Events, a Community Directory, multilingual services, and a separately operated community Forum.
 
-The platform is designed to:
+The organization behind nepali.no is formally registered in Norway. The exact registered legal name and organization number should be inserted in this document and public trust surfaces after the organization confirms the approved presentation format.
 
-- provide community news from Norway and Nepal
-- improve access to reliable information about Norwegian public services
-- support young Nepali Norwegians as well as Nepali-speaking residents
-- promote cultural participation, volunteering, integration, and digital inclusion
-- provide community events, discussions, and a directory of Nepali-owned businesses
-- create a credible bridge between the community, Norwegian public agencies, NGOs, partners, and potential funders
+## Ownership and stewardship
 
-## Custom Development Statement
+Project owner, principal architect, developer, editor, and current administrator: **Pankaj Kafley**.
 
-The application architecture, Sanity content models, multilingual structure, public-information review workflow, GROQ queries, Astro routes, and future user experience are being designed and implemented specifically for nepali.no.
+The project owner retains final responsibility for mission, architecture, security, publication, editorial standards, infrastructure decisions, moderation governance, partnerships, funding, and deployment.
 
-nepali.no is not based on a purchased website template, cloned community portal, or prebuilt news theme.
+## Custom development statement
 
-The project uses established open-source frameworks, libraries, and hosted services as technical foundations. Custom development in this repository integrates and extends those technologies for the specific mission, audience, editorial requirements, and public-benefit goals of nepali.no.
+nepali.no is not a purchased template, cloned portal, or prebuilt news theme. The repository contains project-specific architecture, schemas, queries, validation, multilingual behavior, submission workflows, protected administrative tooling, server integrations, and editorial safeguards.
 
-## Project Ownership and Stewardship
+Open-source frameworks and hosted services provide foundations. Their use does not transfer ownership of third-party software or make the custom application generic.
 
-Project owner and principal developer:
+## Current technology and hosting
 
-Pankaj Kafley
+- Astro and TypeScript: public application, routing, static generation, and server endpoints
+- Tailwind CSS 4 and project-specific CSS: visual foundation
+- Sanity Content Lake: structured public editorial content and private submissions
+- Sanity Studio: editorial and moderation interfaces
+- Vercel: public Astro application and separate Studio deployment
+- GitHub: private source repository, protected main branch, pull requests, and audit history
+- Resend: transactional sending from the verified `notifications.nepali.no` domain
+- Domeneshop: domain, DNS, and email infrastructure
+- Discourse: private community Forum
+- Gigahost: Norwegian VPS hosting for Discourse
 
-The project owner is responsible for:
+Production website: `https://nepali.no`
+Private Forum pilot: `https://forum-poc.nepali.no`
 
-- defining the platform mission and target audiences
-- making product and architectural decisions
-- reviewing and testing implementation work
-- maintaining the source repository and Git history
-- managing content governance, partnerships, and future funding
-- ensuring that the platform remains aligned with its nonprofit and public-benefit purpose
+## Data and service boundaries
 
-## Technology Foundations
+- Sanity `production` contains approved public editorial content.
+- Sanity `submissions` contains private Event and Directory submissions and moderation records.
+- Discourse retains its own database, accounts, posts, moderation, backups, and operational model.
+- Vercel server functions may read narrowly approved Discourse metadata using server-only credentials.
+- Forum posts are never copied automatically into Sanity and never become verified guidance automatically.
 
-The platform currently uses:
+## Verified publishing and contribution workflows
 
-- Astro for the public website, routing, rendering, and SEO
-- Tailwind CSS for the visual design foundation
-- Sanity for structured content, editorial workflows, and hosted content data
-- Sanity Studio as the deployed graphical content-management interface at https://nepali-no-studio.sanity.studio/
-- GROQ for querying Sanity content
-- Vercel as the planned frontend hosting platform
-- NodeBB as the planned community discussion platform on a separate VPS
-- Domeneshop for domain and DNS management
-- GitHub for source control, development history, and recovery checkpoints
+The platform has production-proven workflows for:
 
-Additional open-source packages are recorded in package.json and the relevant lockfiles.
+- bilingual News and article routes
+- Public Information Guides and Topic Hubs
+- reusable Norwegian terminology
+- Event archives, Event pages, and private organizer submissions
+- Community Directory presentation and private suggestions
+- protected interface-translation pull requests
+- localized trust and transparency pages
+- controlled Sanity-to-Discourse topic relationships and protected metadata lookup
 
-Use of open-source software does not imply that nepali.no is a generic template. The repository contains project-specific architecture, schemas, queries, validation rules, multilingual behavior, routes, and editorial safeguards.
+Sanity publications trigger public Vercel builds for configured editorial types. Private Event and Directory submissions remain drafts in the private dataset until human review and deliberate conversion.
 
-## Verified CMS and Publishing Workflow
+## Forum platform decision
 
-Sanity Studio has been deployed successfully at:
+Discourse is the Phase 1 Forum platform, hosted separately on Gigahost in Norway. NodeBB and Flarum were evaluated historically but are not active implementation candidates.
 
-https://nepali-no-studio.sanity.studio/
+The Forum remains private and invite-only during the pilot. Its database, accounts, moderation, email, backups, and operational procedures remain separate from the public Vercel application and Sanity.
 
-The deployed Studio provides the graphical editorial interface for:
+## AI-assisted development
 
-- News Articles
-- Community Events
-- Business Listings
-- Public Information Guides
+Microsoft Copilot and other AI-assisted methods may support planning, drafting, troubleshooting, review, and documentation. The project is not dependent on one AI vendor or tool.
 
-A controlled Nepali Public Information Guide was created and published through the deployed Studio. The Astro production build retrieved the published guide from the Sanity production dataset and generated the following static route:
+Human responsibility remains with the project owner. AI output is reviewed, tested, validated, and accepted through ordinary source-control and deployment controls. AI assistance does not replace editorial judgment, technical accountability, privacy obligations, moderation, or governance.
 
-/ne/info/udi-oppholdstillatelse-offisiell-informasjon/
+## Public Information safeguards
 
-This verifies the complete content workflow from the hosted CMS through Sanity Content Lake, GROQ, Astro static path generation, Portable Text rendering, and production output.
+Public Information must identify responsible authorities, link to current official sources, show review metadata, and state that nepali.no does not replace authorities or individualized professional advice.
 
-## AI-Assisted Development
+Community Forum contributions are personal discussion and experience. They must remain clearly separated from verified News and official-source-based Guides.
 
-Microsoft Copilot has been used as an AI-assisted development partner for:
+## Privacy and security approach
 
-- architectural planning
-- code drafting
-- troubleshooting
-- documentation
-- validation guidance
-- project continuity and recovery prompts
+The project applies least privilege, server-side secret handling, public/private dataset separation, controlled submission fields, protected pull requests, and safe failure behavior.
 
-The project owner makes the product decisions, reviews the implementation, runs the development commands, verifies results, and controls all Git commits and deployments.
+No Facebook or Google advertising or tracking scripts are used in the current public-benefit phase. A future commercial, advertising, or expanded analytics model requires a separate decision.
 
-AI assistance is treated as a development tool. It does not replace project ownership, human review, editorial responsibility, testing, governance, or accountability.
+The Privacy page is a working foundation, not the final complete GDPR operating package. Remaining work includes controller identity, organization number, processing records, legal-basis mapping, retention schedules, processor review, rights handling, and incident procedures.
 
-## Public Information Safeguards
+## Multilingual and inclusive design
 
-A major platform pillar is understandable guidance based on official information from Norwegian public bodies such as UDI, Skatteetaten, NAV, Helsenorge, municipalities, and other agencies.
+The principle is **Nepali-first, but never Nepali-only**. Nepali and Norwegian Bokmal are complete public interface languages. English is deliberately limited.
 
-The custom Public Information Guide model includes:
+Mobile-first design, readable Devanagari, semantic HTML, keyboard access, alternative text, safe language fallback, and understandable public wording are core requirements.
 
-- responsible public agency
-- primary and additional official source links
-- last-reviewed and next-review dates
-- editorial reviewer
-- important Norwegian terminology and explanations
-- multilingual content and optional linked translations
-- active, needs-review, and archived workflow states
-- urgent and featured information controls
-- optional funding or partner acknowledgement
+## Development evidence
 
-nepali.no does not present itself as a government agency and does not replace official legal, tax, immigration, health, welfare, or administrative guidance.
+Git commits, protected pull requests, GitHub Actions, Vercel deployments, Sanity publications, production smoke tests, and maintained documentation provide evidence of development and operational validation.
 
-## Multilingual and Inclusive Design
+Current protected checkpoint at this review: `b9f62a0 allowlist Forum metadata through Sanity (#22)`.
 
-The language principle is:
+## Effort statement
 
-> Nepali-first, but never Nepali-only.
+The project represents substantial multidisciplinary in-kind effort spanning product design, architecture, frontend and backend development, multilingual editorial work, CMS engineering, DevOps, server operation, security, privacy, testing, and documentation.
 
-The initial interface languages are Nepali and Norwegian Bokmal. The multilingual architecture is designed to serve both Nepali-speaking residents and young Nepali Norwegians who may prefer Norwegian.
+The current conventional-equivalent estimate is approximately **875 hours**, with a defensible range of **800 to 950 hours** to the 8 August 2026 checkpoint. This is retrospective and indicative, not an audited timesheet. Approximately **55 to 80 hours** of that estimate relates to Gigahost and Discourse infrastructure and operations completed so far.
 
-Accessibility, semantic HTML, understandable navigation, image alternative text, mobile usability, and transparent editorial labeling are core project requirements.
+## Rights and third-party material
 
-## Development Evidence
+Custom editorial content, branding, code, and project-specific documentation remain subject to the project owner's ownership and licensing decisions. Third-party software, images, trademarks, official materials, and services retain their own rights and terms.
 
-Development is preserved through incremental Git commits. Each stable milestone is validated, committed, and pushed to the main branch.
+## Funding and partner transparency
 
-The Git history provides evidence of the project's step-by-step development, including:
-
-- Astro, Tailwind CSS, and Sanity initialization
-- custom News Article, Community Event, Business Listing, and Public Information Guide schemas
-- project-specific GROQ queries
-- multilingual News routing
-- multilingual Public Information archive routing
-- dynamic Public Information guide rendering
-- Portable Text and Sanity image integration
-- deployment of the hosted Sanity Studio
-- publication and successful static generation of the first controlled Public Information Guide
-
-Git commit hashes and dates are the authoritative technical record of when each milestone was added.
-
-## Content and Third-Party Rights
-
-Custom editorial content, original branding, and project-specific materials created for nepali.no remain subject to the ownership and licensing decisions of the project owner.
-
-Third-party frameworks, libraries, services, images, trademarks, public-agency materials, and externally sourced content retain their respective licenses, terms, and rights.
-
-Official public information should be explained and linked responsibly. It should not be copied in a way that misrepresents ownership, authority, currency, or legal meaning.
-
-## Funding and Partner Transparency
-
-Future financial support, grants, sponsorships, and partnerships should be disclosed clearly where relevant.
-
-Funding acknowledgement must not obscure editorial responsibility. Sponsored or promoted content must be distinguishable from independent editorial content and public-information guidance.
+Future grants, sponsorships, partnerships, and in-kind contributions should be disclosed appropriately. Funding must not obscure editorial responsibility. Sponsored or promoted content must remain distinguishable from independent News, public guidance, and community discussion.
 
 ## Maintenance
 
-This document should be updated when there are material changes to:
-
-- ownership or project stewardship
-- core architecture
-- production hosting or deployment status
-- licensing
-- development methods
-- funding arrangements
-- major partners
-- editorial governance
-- public-information safeguards
-
-## Verified Vercel Deployment
-
-The Astro frontend has been deployed successfully to Vercel at:
-
-https://nepali-no.vercel.app
-
-The Vercel project is connected to the private GitHub repository pank-hub/nepaliNO. The main branch is used for production deployments.
-
-The deployment uses the Astro framework preset and the following public Sanity configuration values in Vercel:
-
-- PUBLIC_SANITY_PROJECT_ID=f9johco4
-- PUBLIC_SANITY_DATASET=production
-
-The following production routes have been manually verified:
-
-- /ne/news/
-- /ne/info/
-- /ne/info/udi-oppholdstillatelse-offisiell-informasjon/
-
-This verifies the production delivery chain from GitHub through Vercel and Sanity Content Lake to the public Astro website.
-
-The custom domain nepali.no has not yet been connected. Domeneshop DNS remains unchanged. The domain will be connected only after the first presentable visual design is deployed and the exact DNS values shown by the Vercel project have been reviewed. Existing email-related DNS records must be preserved.
-
-## Forum Platform Evaluation
-
-The community forum implementation is not yet deployed. NodeBB was the original provisional choice, but Discourse, NodeBB, and Flarum are now being evaluated.
-
-Self-hosted Discourse is the current leading recommendation because of its mature moderation, governance, searchable discussions, trust system, public API, and suitability for community support. The final choice must follow a structured evaluation of moderation, privacy, backups, transactional email, hosting region, operating costs, API integration, and long-term maintenance.
-
-The public website will use a platform-neutral Community Discussions component so the homepage does not become tightly coupled to one forum product.
+Review this document after material changes to legal identity, ownership, hosting, architecture, licensing, funding, key partners, editorial governance, privacy responsibility, or Forum production status.

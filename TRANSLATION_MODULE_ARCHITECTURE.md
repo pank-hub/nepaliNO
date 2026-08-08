@@ -1,8 +1,8 @@
 # nepali.no Translation Module Architecture
 
-**Status:** Phase 1 operational and production-proven
-**Last updated:** 5 August 2026
-**Current checkpoint:** `a46a7fb add protected Translation pull request pipeline (#4)`
+**Status:** Phase 1 operational; production-domain OAuth callback correction pending
+**Last updated:** 8 August 2026
+**Current project checkpoint:** `b9f62a0 allowlist Forum metadata through Sanity (#22)`
 
 ## 1. Purpose
 
@@ -489,3 +489,14 @@ Translation Module Phase 1 is operational. Remaining polish:
 - monitor the first real translation pull requests carefully
 
 The next major platform milestone is the forum requirements and platform-evaluation phase. Forum work must remain separate from the Translation Module and must not weaken News, Public Information, Event, Directory, privacy, or moderation boundaries.
+
+
+## 22. August 2026 continuity update
+
+- Phase 1 remains Pankaj-only and operational through the working `nepali-no.vercel.app` route.
+- `https://nepali.no/translations/` displays the login page, but GitHub login fails with `The redirect_uri is not associated with this application`.
+- Correct the production-domain OAuth callback through a controlled change and test it before removing the Vercel route.
+- Do not remove or disable the working Vercel route until production-domain sign-in, callback, session creation, logout, and protected API access are proven.
+- Discourse is now the selected Forum platform and Gigahost is the continuing host. Forum integration is separate from Translation Editor architecture.
+- Forum email wording and interface wording may later be polished, but Forum messages and content must not be folded into the Translation Editor without a separate architecture decision.
+- Real Nepali and Norwegian proofreading can proceed through protected pull requests. Phase 2 multi-user access remains deferred.
