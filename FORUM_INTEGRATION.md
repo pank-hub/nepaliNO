@@ -1,7 +1,7 @@
 # Forum Integration Contract
 
-**Status:** Protected synthetic proof successful; public presentation disabled
-**Current checkpoint:** `b9f62a0`
+**Status:** Resolver and disabled public request contract production-proven; public presentation disabled
+**Current checkpoint:** `ac20866`
 **Last reviewed:** 8 August 2026
 
 ## 1. Purpose
@@ -103,11 +103,36 @@ Math.max(0, postsCount - 1)
 
 Do not display raw `postsCount` as replies.
 
-## 9. Sanity allowlisting proof
+## 9. Relationship resolver and protected diagnostics
 
-Protected route: `/translations/api/forum-metadata-status`
+Implementations:
 
-The route requires the existing Pankaj-only Translation Editor session. It resolves fixed synthetic News content in Sanity, reads its approved topic relationship, and only then calls Discourse.
+- `src/lib/forum/normalizeForumRelationships.ts`
+- `src/lib/forum/resolveContentForumRelationships.ts`
+- protected route `/translations/api/forum-metadata-status`
+
+Normal News resolution requires a matching language and slug, defined `publishedAt`, and `publishedAt <= now()`. Normal Guide resolution requires a matching language and slug and `status == "active"`.
+
+The resolver:
+
+- accepts only `ne` and `nb`
+- validates bounded ASCII slugs
+- validates positive integer topic IDs
+- preserves editorial related-topic order
+- removes duplicate topic IDs
+- excludes a companion topic duplicated among related topics
+- limits related topics to three
+- distinguishes `newsDiscussion`, `guideQuestions`, and `related` roles
+
+Protected production diagnostics prove that the resolver rejects:
+
+- the future-dated synthetic News article in ordinary production mode
+- a published News article without a Forum relationship
+- an active Guide without a Forum relationship
+- a nonexistent News slug
+- an existing News slug with the wrong language
+
+Only after all rejection diagnostics pass does the protected route use the isolated synthetic mode and contact Discourse for topic ID 13.
 
 Synthetic Sanity fixture:
 
@@ -117,10 +142,9 @@ Synthetic Sanity fixture:
 - future publication date: 13 August 2099
 - companion topic ID: 13
 
-The future date keeps the synthetic article out of public News queries and static paths.
-
 Verified normalized metadata:
 
+- relationship role `newsDiscussion`
 - topic ID 13
 - `postsCount` 1
 - `replyCount` 0
@@ -128,16 +152,27 @@ Verified normalized metadata:
 - category ID 5
 - no tags
 
-## 10. Public endpoint state
+## 10. Public endpoint request contract and disabled state
 
 Public route: `/api/forum-content`
 
-Current behavior:
+Future enabled-state identity parameters:
 
-- deliberately disabled
+- `contentType`: exactly one of `newsArticle` or `publicInformationGuide`
+- `language`: exactly one of `ne` or `nb`
+- `slug`: one bounded ASCII slug
+
+The request parser rejects missing, empty, duplicate, unknown, unsupported, path-like, and Unicode parameters. A caller cannot supply a topic ID, relationship role, Forum URL, category, or synthetic-mode switch.
+
+Current disabled behavior:
+
+- the feature flag is checked before the request URL is parsed
 - generic HTTP 404
 - `Cache-Control: no-store`
-- no article identity or Forum metadata
+- no article identity, validation detail, Sanity lookup, or Forum metadata
+- no query parameters, valid-looking identities, and malformed requests all receive the same response
+
+Production verification included a malformed request containing `topicId=13`; the response remained the same generic 404.
 
 Configuration flags remain false:
 
@@ -165,13 +200,27 @@ This scope is suitable for the synthetic proof but not yet a scalable production
 - Unexpected response: reject metadata.
 - Closed Guide topic: controlled state or editorial review, not a false invitation to reply.
 
-## 13. Next implementation stage
+## 13. Automated verification
 
-- replace fixed synthetic lookup with server-owned published-content lookup
-- return metadata only for eligible News or active Guides
-- prevent general topic enumeration
+Every pull request targeting `main` now runs:
+
+- 9 relationship-normalization tests
+- 11 public request-contract tests
+- Astro Check
+- the production build
+
+The test suites are dependency-free Node tests and do not contact Sanity or Discourse.
+
+## 14. Next implementation stage
+
+- connect the enabled-state endpoint path to the server-owned relationship resolver while keeping `contentIntegrationEnabled` false
+- return metadata only for eligible published News or active Guides
+- prevent general topic enumeration and caller-supplied topic IDs
+- define companion and related-topic response structure
+- define partial-success behavior for unavailable approved topics
 - define allowed categories and public visibility
 - test one reply, closed, archived, missing, and unavailable states
 - define safe short caching and stale behavior
-- build shared presentation components only after the server contract is proven
-- preserve public disable switch and emergency rollback
+- broaden or replace the topic-13-only API key only after private endpoint proof
+- build shared presentation components only after the endpoint contract is proven
+- preserve the public disable switch and emergency rollback
