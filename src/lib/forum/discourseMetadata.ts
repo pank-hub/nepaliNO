@@ -9,6 +9,7 @@ export interface DiscourseTopicMetadata {
   topicId: number
   title: string
   postsCount: number
+  replyCount: number
   closed: boolean
   archived: boolean
   lastPostedAt?: string
@@ -121,6 +122,7 @@ export const getDiscourseTopicMetadata = async (
     topicId: returnedTopicId,
     title,
     postsCount,
+    replyCount: Math.max(0, postsCount - 1),
     closed: topic.closed === true,
     archived: topic.archived === true,
     lastPostedAt: readString(topic.last_posted_at),
