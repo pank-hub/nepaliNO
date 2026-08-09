@@ -49,6 +49,9 @@ jobs:
       - name: Test Forum companion topic publisher
         run: npm run test:forum-publisher
 
+      - name: Test Sanity Forum publishing workflow
+        run: npm run test:forum-publishing-workflow
+
       - name: Run Astro Check
         run: npx astro check
 

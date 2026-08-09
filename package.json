@@ -13,7 +13,8 @@
     "test:forum-relationships": "node --experimental-strip-types --test tests/forum/normalizeForumRelationships.test.mjs",
     "test:forum-content-request": "node --experimental-strip-types --test tests/forum/parseForumContentRequest.test.mjs",
     "test:forum-content-metadata": "node --experimental-strip-types --test tests/forum/loadForumContentMetadata.test.mjs",
-    "test:forum-publisher": "node --experimental-strip-types --test tests/forum/discourseCompanionPublisher.test.mjs"
+    "test:forum-publisher": "node --experimental-strip-types --test tests/forum/discourseCompanionPublisher.test.mjs",
+    "test:forum-publishing-workflow": "node --experimental-strip-types --test tests/forum/sanityForumPublishingWorkflow.test.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.4",
@@ -22,6 +23,7 @@
     "@sanity/astro": "^3.5.0",
     "@sanity/client": "^7.25.0",
     "@sanity/image-url": "^2.1.1",
+    "@sanity/webhook": "^4.0.4",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.1.3",
     "astro-portabletext": "^0.13.0",

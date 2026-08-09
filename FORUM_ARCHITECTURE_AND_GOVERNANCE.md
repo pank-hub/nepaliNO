@@ -153,3 +153,8 @@ News must be published and not future-dated. Guides must be active. Existing com
 The future automation must use a separate least-privileged Forum publisher identity, signed Sanity webhook delivery, authoritative server-side document re-fetching, idempotent creation claims, server-owned category mapping, controlled retries, and non-sensitive failure codes. The existing read-only metadata credential must not be reused for topic creation.
 
 Unpublishing, archiving, title changes, or mode changes must never automatically delete community contributions. Any closing, unlisting, renaming, or archival action in Discourse requires a separately governed operational decision.
+
+
+## Webhook recovery and reconciliation
+
+Sanity webhook delivery may be repeated, delayed, or received out of order. The publishing workflow therefore re-fetches authoritative content, uses revision-guarded claims, records a bounded attempt identifier, and treats an uncertain post-publication write-back as a manual reconciliation case. Operators must inspect Sanity and Discourse before retrying any document marked as creating, created without a relationship, or failed after an uncertain provider response.
