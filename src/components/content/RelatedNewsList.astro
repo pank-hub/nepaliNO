@@ -1,0 +1,116 @@
+---
+import type {SupportedLanguage} from '../../i18n/config'
+
+interface RelatedNewsItem {
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  publishedAt: string
+}
+
+interface Props {
+  articles: RelatedNewsItem[]
+  heading: string
+  actionLabel: string
+}
+
+const {articles, heading, actionLabel} = Astro.props
+const dateLocale = articles[0]?.language === 'ne' ? 'ne-NP' : 'nb-NO'
+const formatDate = (value: string) =>
+  new Date(value).toLocaleDateString(dateLocale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+---
+
+<section class="related-news-list" aria-labelledby="related-news-heading">
+  <h2 id="related-news-heading">{heading}</h2>
+  <ol>
+    {articles.map((article) => (
+      <li>
+        <article>
+          <time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
+          <h3>
+            <a href={`/${article.language}/news/${article.slug}/`}>{article.title}</a>
+          </h3>
+          <p>{article.summary}</p>
+          <a class="related-news-list__action" href={`/${article.language}/news/${article.slug}/`}>
+            {actionLabel} <span aria-hidden="true">→</span>
+          </a>
+        </article>
+      </li>
+    ))}
+  </ol>
+</section>
+
+<style>
+  .related-news-list {
+    padding: 1.35rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface-warm);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .related-news-list h2 {
+    margin-block-start: 0.45rem;
+    color: var(--civic-deep);
+    font-size: 1.35rem;
+  }
+
+  .related-news-list ol {
+    display: grid;
+    gap: 1rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .related-news-list li {
+    padding-block-start: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-news-list time {
+    color: var(--text-soft);
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .related-news-list h3 {
+    margin-block-start: 0.35rem;
+    font-size: 1.05rem;
+    line-height: 1.28;
+  }
+
+  .related-news-list h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .related-news-list h3 a:hover {
+    color: var(--brand);
+  }
+
+  .related-news-list article > p {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-block-start: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .related-news-list__action {
+    display: inline-flex;
+    gap: 0.35rem;
+    margin-block-start: 0.65rem;
+    color: var(--brand);
+    font-size: 0.84rem;
+    font-weight: 760;
+    text-decoration: none;
+  }
+</style>

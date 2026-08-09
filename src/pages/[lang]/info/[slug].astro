@@ -2,12 +2,16 @@
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
 import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
-import {PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
+import {
+  PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY,
+  RECENT_NEWS_FOR_GUIDE_QUERY,
+} from '../../../lib/sanity/queries'
 
 interface TranslationSummary {
   _id: string
@@ -25,6 +29,17 @@ interface OfficialLink {
 interface ImportantTerm {
   term: string
   explanation: string
+}
+
+interface RelatedNewsSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  newsRegion: string
+  category: string
+  publishedAt: string
 }
 
 interface GuideDocument {
@@ -92,6 +107,11 @@ const guide = await sanityClient.fetch<GuideDocument | null>(
 if (!guide) {
   return Astro.redirect(`/${language}/info/`)
 }
+
+const relatedNews = await sanityClient.fetch<RelatedNewsSummary[]>(
+  RECENT_NEWS_FOR_GUIDE_QUERY,
+  {guideId: guide._id, language},
+)
 
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
@@ -271,6 +291,14 @@ const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audie
             <span aria-hidden="true">↗</span>
           </a>
         </section>
+
+        {relatedNews.length > 0 && (
+          <RelatedNewsList
+            articles={relatedNews}
+            heading={labels.information.relatedNews}
+            actionLabel={labels.information.readRelatedNews}
+          />
+        )}
 
         <section class="review-card">
           <h2>{labels.information.lastReviewed}</h2>

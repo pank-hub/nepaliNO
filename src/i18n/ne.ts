@@ -370,6 +370,8 @@ export const ne = {
     urgentLabel: "अत्यावश्यक जानकारी",
     featuredLabel: "विशेष जानकारी",
     fundingAcknowledgement: "सहयोग तथा साझेदारी",
+    relatedNews: "यस गाइडसँग सम्बन्धित समाचार",
+    readRelatedNews: "समाचार पढ्नुहोस्",
     audiences: {
       "newly-arrived": "नयाँ आएका व्यक्तिहरू",
       "workers-job-seekers": "कामदार र रोजगारी खोज्नेहरू",

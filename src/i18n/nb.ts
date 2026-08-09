@@ -378,6 +378,8 @@ export const nb = {
     urgentLabel: "Haster",
     featuredLabel: "Fremhevet informasjon",
     fundingAcknowledgement: "Støtte og samarbeid",
+    relatedNews: "Nyheter knyttet til denne veiledningen",
+    readRelatedNews: "Les nyhetssaken",
     audiences: {
       "newly-arrived": "Nyankomne",
       "workers-job-seekers": "Arbeidstakere og jobbsøkere",
