@@ -113,15 +113,29 @@ Required properties:
 - not moderator
 - not Staff
 - no posting purpose
+- read-only metadata credential kept separate from publishing
 
-Current pilot API key:
+Dedicated publisher account: `forum-publisher`
 
-- Single user
+Required properties:
+
+- active service user
+- not administrator
+- not moderator
+- locked at Trust Level 0
+- member of `forum-publishers`
+- may create topics only in News Discussions (10) and Questions about Guides (11)
+
+Publisher API key:
+
+- Single User
+- user `forum-publisher`
 - Granular scope
-- only `topics -> read`
-- allowed topic ID 13
+- `topics -> write`
 
-Credential values live only in Discourse, the password manager, and Production-only Vercel configuration. If a key appears in chat, output, screenshot, or history, revoke and rotate immediately.
+General categories 5 to 9 require Trust Level 1 for topic creation. The locked publisher remains read/reply only there. Categories 10 and 11 grant Create through `forum-publishers` while `everyone` retains See and Reply only.
+
+Credential values live only in Discourse, the password manager, and Production-only Vercel configuration. Metadata, publishing, Sanity automation, and webhook-signing credentials remain separate. If a key appears in chat, output, screenshot, or history, revoke and rotate immediately.
 
 ## 8. Backups
 
@@ -161,7 +175,9 @@ Before upgrades or high-risk changes:
 - invite-only registration
 - anonymous reading disabled
 - public signup disabled
-- English interface
+- Norwegian Bokmal interface by default
+- signed-in users and guests can choose English
+- full Nepali interface translation is deferred
 - Nepali, Norwegian, and English discussion permitted
 - Chat disabled
 - ordinary member personal-message initiation disabled
@@ -173,7 +189,7 @@ If the integration behaves unexpectedly:
 
 - keep or set `contentIntegrationEnabled` to false
 - keep or set `relatedTopicsEnabled` to false
-- revoke the metadata API key if misuse is suspected
+- revoke the affected metadata, publishing, Sanity, or webhook credential if misuse is suspected
 - keep the public site operating independently
 
 If the Forum itself is at risk:
@@ -196,3 +212,71 @@ Powering off may not stop hourly billing. Deleting the VPS ends the resource and
 - 7 August 2026: a newly created metadata mailbox initially bounced; Resend suppressed later messages. The mailbox was verified, suppression removed, and one fresh activation succeeded.
 
 Do not record credential values.
+
+
+## 14. Final hostname transition to forum.nepali.no
+
+Approved final hostname:
+
+```text
+https://forum.nepali.no
+```
+
+Current pilot hostname:
+
+```text
+https://forum-poc.nepali.no
+```
+
+Do not retire or redirect the pilot hostname until the final hostname is fully proven.
+
+Prerequisites:
+
+1. create a current native Discourse backup including database and uploads
+2. copy the backup off-server and verify its checksum
+3. complete a clean restore to a disposable VPS and record recovery time and missing steps
+4. preserve the current `app.yml` configuration securely without exposing secrets
+5. document rollback DNS values and the exact canonical-hostname reversal procedure
+6. verify the current publisher, metadata, email, moderator, and administrator identities
+
+Controlled transition sequence:
+
+1. configure DNS for `forum.nepali.no`
+2. obtain and verify TLS
+3. change the Discourse hostname and canonical URL using the supported configuration and rebuild process
+4. verify asset URLs, login, logout, invitations, activations, password recovery, and outbound email links
+5. verify category permissions, topic 13, Guide topic 17, and News topic 18
+6. verify metadata reads and one controlled automatic publication against the final hostname
+7. update the Astro server-owned Forum base URL only after Discourse is operational at the final hostname
+8. redeploy the public application and rerun protected diagnostics
+9. keep public News and Guide panels disabled until a separate frontend milestone is approved
+10. preserve rollback ability until DNS, email, APIs, backups, and mobile behavior remain stable
+
+Avoid two competing canonical Forum identities. If the pilot hostname remains reachable temporarily, it must redirect deliberately only after the final hostname is verified.
+
+## 15. Theme and language readiness
+
+After hostname and recovery readiness are proven, align Discourse visually with nepali.no using upgrade-safe theme work:
+
+- logo and favicon
+- principal colors
+- compatible typography
+- restrained cards, borders, buttons, and links
+- clear return link to nepali.no
+- mobile-first spacing and accessible contrast
+- a visible `Norsk | English` selector for guests and signed-in users
+
+Do not attempt a pixel-identical Astro clone or depend on obsolete locale-switcher components. Preserve familiar Discourse usability and upgrade safety.
+
+## 16. Automatic publishing operational checks
+
+The signed Sanity workflow is production-proven:
+
+- Guide topic 17 in category 11
+- News topic 18 in category 10
+- both authored by `forum-publisher`
+- topic relationships and completed automation state written back to Sanity
+
+If automation is marked `creating`, `created` without a confirmed relationship, or contains `forum-publishing-result-unconfirmed`, do not republish or clear fields. Inspect the Sanity document, Discourse categories, publisher-account activity, and Vercel function logs before deciding whether reconciliation is safe.
+
+Archiving or unpublishing source content must not delete the Forum topic. Topic closure, archival, unlisting, renaming, or deletion requires a separate moderation decision.
