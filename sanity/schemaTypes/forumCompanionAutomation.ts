@@ -43,6 +43,14 @@ export const forumCompanionAutomation = defineType({
       initialValue: 'not-requested',
     }),
     defineField({
+      name: 'attemptId',
+      title: 'Automation Attempt ID',
+      type: 'string',
+      description: 'Server-managed identifier used for idempotency and operational reconciliation.',
+      readOnly: true,
+      validation: (rule) => rule.max(160),
+    }),
+    defineField({
       name: 'lastAttemptAt',
       title: 'Last Attempt At',
       type: 'datetime',

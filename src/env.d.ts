@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly DISCOURSE_FORUM_METADATA_API_USERNAME?: string;
   readonly DISCOURSE_FORUM_PUBLISHER_API_KEY?: string;
   readonly DISCOURSE_FORUM_PUBLISHER_API_USERNAME?: string;
+  readonly SANITY_FORUM_WEBHOOK_SECRET?: string;
+  readonly SANITY_FORUM_AUTOMATION_TOKEN?: string;
 }
 
 interface ImportMeta {

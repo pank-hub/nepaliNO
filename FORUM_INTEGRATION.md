@@ -258,3 +258,10 @@ The application contains a dormant server-only Discourse publisher for companion
 The publisher validates content type, language, title, and an HTTPS `nepali.no` content URL. It creates a short localized opening post that links to the complete News article or Guide. It sends credentials only in server-side headers, uses a five-second timeout, and accepts only a positive returned topic ID.
 
 The publishing credential is separate from the read-only metadata credential. No credential value is stored in Git. The client remains dormant until Production-only Sensitive environment variables are added for a controlled proof. No Sanity webhook or document write-back is included in this milestone.
+
+
+## Signed Sanity publishing workflow
+
+The dormant server endpoint `/api/sanity-forum-publishing` accepts only signed Sanity document webhooks. It verifies the raw body before parsing, accepts only a minimal document ID and type, re-fetches authoritative production content, and uses Sanity's idempotency key as a server-managed attempt identifier.
+
+Eligible automatic News and Guides are revision-claimed before Discourse publication. Existing topic relationships, future News, inactive Guides, manual mode, and in-progress claims do not create topics. A successful Discourse publication is written back to the durable Sanity relationship. An uncertain final write-back requires manual reconciliation and must never trigger automatic duplicate creation.
