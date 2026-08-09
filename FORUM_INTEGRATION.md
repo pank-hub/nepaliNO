@@ -1,7 +1,7 @@
 # Forum Integration Contract
 
 **Status:** Resolver and disabled public request contract production-proven; public presentation disabled
-**Current checkpoint:** `ac20866`
+**Current checkpoint:** `194deec`
 **Last reviewed:** 8 August 2026
 
 ## 1. Purpose
@@ -149,7 +149,7 @@ Verified normalized metadata:
 - `postsCount` 1
 - `replyCount` 0
 - open and not archived
-- category ID 5
+- category ID 10
 - no tags
 
 ## 10. Public endpoint request contract and disabled state
@@ -181,15 +181,14 @@ Configuration flags remain false:
 
 ## 11. Production key boundary
 
-Current pilot key:
+Metadata and publishing credentials remain separate:
 
-- dedicated `forum-metadata` account
-- non-admin and non-moderator
-- granular `topics -> read`
-- restricted to synthetic topic ID 13
-- stored as a Production-only Sensitive variable in the public Vercel project
+- `forum-metadata`: dedicated non-admin, non-moderator metadata identity with the restricted pilot read credential used by protected diagnostics
+- `forum-publisher`: dedicated non-admin, non-moderator account, locked at Trust Level 0, with a Single User granular `topics -> write` key
+- Sanity automation uses a separate Editor robot token for authoritative production-document updates
+- Sanity webhook signatures use a separate shared secret
 
-This scope is suitable for the synthetic proof but not yet a scalable production scheme. Do not broaden the key until the general allowlist and visibility design is approved.
+All values are stored only in the password manager and Production-only Sensitive Vercel variables. No browser receives any credential or write capability.
 
 ## 12. Failure behavior
 
@@ -202,28 +201,27 @@ This scope is suitable for the synthetic proof but not yet a scalable production
 
 ## 13. Automated verification
 
-Every pull request targeting `main` now runs:
+Every pull request targeting `main` now runs dependency-free Node suites covering:
 
-- 9 relationship-normalization tests
-- 11 public request-contract tests
-- Astro Check
-- the production build
+- relationship normalization
+- public request-contract parsing
+- metadata orchestration and role-aware category eligibility
+- companion-topic draft construction and publisher validation
+- signed Sanity publishing workflow and reconciliation behavior
+- the Sanity slug-object regression
 
-The test suites are dependency-free Node tests and do not contact Sanity or Discourse.
+The expected full Forum total after PR #39 is 54 passing tests, followed by Astro Check and the production build. CI does not contact live Sanity or Discourse services.
 
 ## 14. Next implementation stage
 
-- connect the enabled-state endpoint path to the server-owned relationship resolver while keeping `contentIntegrationEnabled` false
-- return metadata only for eligible published News or active Guides
-- prevent general topic enumeration and caller-supplied topic IDs
-- define companion and related-topic response structure
-- define partial-success behavior for unavailable approved topics
-- define allowed categories and public visibility
-- test one reply, closed, archived, missing, and unavailable states
-- define safe short caching and stale behavior
-- broaden or replace the topic-13-only API key only after private endpoint proof
-- build shared presentation components only after the endpoint contract is proven
-- preserve the public disable switch and emergency rollback
+- complete backup restoration and rollback proof before hostname changes
+- establish `forum.nepali.no` as the sole final canonical Forum identity
+- update the server-owned Forum base URL only after DNS, TLS, Discourse, and email are verified
+- repeat protected metadata and automatic publishing proofs on the final hostname
+- apply upgrade-safe visual alignment and a visible `Norsk | English` selector
+- build shared News and Guide presentation components only after the final hostname is stable
+- preserve the public disable switch, safe empty states, and independent site operation
+- add the controlled homepage discussion feed as a separate later milestone
 
 
 ## Role-aware category policy
@@ -248,20 +246,53 @@ The durable topic relationship remains in `forumDiscussion` for News and `forumQ
 
 Missing automation configuration is treated as no automatic request. Existing documents and existing topic references require no migration. Manual mode requires an existing companion topic ID. Automatic mode may coexist with a topic ID after successful creation or when an existing relationship prevents duplicate creation.
 
-The future publishing service will choose category 10 for News and category 11 for Guides. Editors and webhook payloads never choose category IDs. No webhook, write credential, or automatic Discourse mutation is enabled by this schema milestone.
+The publishing service chooses category 10 for News and category 11 for Guides. Editors and webhook payloads never choose category IDs. The schema remains backward-compatible; automatic creation occurs only when an editor selects automatic mode and the published content is eligible.
 
 
 ## Server-only companion topic publisher
 
-The application contains a dormant server-only Discourse publisher for companion topics. News is always mapped to category 10 and Guides are always mapped to category 11. Callers cannot supply or override category IDs.
+The application contains an operational server-only Discourse publisher for companion topics. News is always mapped to category 10 and Guides are always mapped to category 11. Callers cannot supply or override category IDs.
 
 The publisher validates content type, language, title, and an HTTPS `nepali.no` content URL. It creates a short localized opening post that links to the complete News article or Guide. It sends credentials only in server-side headers, uses a five-second timeout, and accepts only a positive returned topic ID.
 
-The publishing credential is separate from the read-only metadata credential. No credential value is stored in Git. The client remains dormant until Production-only Sensitive environment variables are added for a controlled proof. No Sanity webhook or document write-back is included in this milestone.
+The publishing credential is separate from the read-only metadata credential. No credential value is stored in Git. The publisher credential is configured as a Production-only Sensitive Vercel variable. Publishing is reached only through the signed Sanity workflow; callers cannot choose category IDs or raw topic payloads.
 
 
 ## Signed Sanity publishing workflow
 
-The dormant server endpoint `/api/sanity-forum-publishing` accepts only signed Sanity document webhooks. It verifies the raw body before parsing, accepts only a minimal document ID and type, re-fetches authoritative production content, and uses Sanity's idempotency key as a server-managed attempt identifier.
+The operational server endpoint `/api/sanity-forum-publishing` accepts only signed Sanity document webhooks. It verifies the raw body before parsing, accepts only a minimal document ID and type, re-fetches authoritative production content, and uses Sanity's idempotency key as a server-managed attempt identifier.
 
 Eligible automatic News and Guides are revision-claimed before Discourse publication. Existing topic relationships, future News, inactive Guides, manual mode, and in-progress claims do not create topics. A successful Discourse publication is written back to the durable Sanity relationship. An uncertain final write-back requires manual reconciliation and must never trigger automatic duplicate creation.
+
+
+## 15. Production automation proof and content lifecycle
+
+The signed workflow is proven in production for both supported content types.
+
+Guide proof:
+
+- `Synthetic Guide Companion Automation Test`
+- Sanity language `nb`
+- topic 17 created by `forum-publisher`
+- category 11, Questions about Guides
+- Norwegian Guide template
+- topic ID, editorial label, attempt state, and completion timestamps written back to Sanity
+- Guide subsequently published as archived; the public Guide route now returns 404 while the Forum topic remains preserved
+
+News proof:
+
+- `Synthetic News Companion Automation Test`
+- Sanity language `nb`
+- topic 18 created by `forum-publisher`
+- category 10, News Discussions
+- Norwegian News template
+- topic ID, editorial label, attempt state, and completion timestamps written back to Sanity
+- the synthetic article must remain future-dated after verification so it is not publicly eligible
+
+Companion opening text follows the Sanity content language, not the Discourse interface locale. Current templates support `nb` and `ne` for both News and Guides.
+
+The first Guide proof exposed a malformed `[object Object]` URL because a post-claim Sanity document contained the full slug object. Topic 17 was corrected manually. PR #39 now constructs publication input from the normalized pre-claim document, and a regression test proves that a claimed slug object cannot corrupt the public URL.
+
+Archiving a Guide, future-dating News, unpublishing content, or changing editorial mode never automatically deletes or closes community discussion. Topic lifecycle actions require a separate governed moderation decision.
+
+Public News and Guide pages still show no Forum panel because `contentIntegrationEnabled` and `relatedTopicsEnabled` remain false. The frontend connection is intentionally deferred until `forum.nepali.no` is operational and verified.

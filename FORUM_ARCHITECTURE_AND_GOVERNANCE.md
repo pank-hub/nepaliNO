@@ -2,7 +2,7 @@
 
 **Status:** Discourse selected; private pilot operational
 **Host:** Gigahost, Norway
-**Last reviewed:** 8 August 2026
+**Last reviewed:** 9 August 2026
 
 ## 1. Settled platform decision
 
@@ -22,8 +22,9 @@ The Forum is not verified News, an official authority, emergency support, privat
 - login required
 - anonymous reading disabled
 - public signup disabled
-- English application interface during pilot
-- topics and replies may use Nepali, Norwegian, or English
+- Norwegian Bokmal is the default application interface
+- signed-in users and guests can choose English explicitly
+- full Nepali interface translation is deferred; topics and replies may use Nepali, Norwegian, or English
 - Chat disabled
 - ordinary members cannot initiate personal messages
 - synthetic or controlled data only during technical validation
@@ -31,19 +32,24 @@ The Forum is not verified News, an official authority, emergency support, privat
 
 ## 4. Current categories
 
-Administrative:
+Administrative or excluded:
 
-- Staff
-- Forum Information and Announcements
-- Site Feedback
+- Site Feedback (2)
+- Staff (3)
+- Forum Information and Announcements (4)
 
-Member discussion:
+General member discussion and curated related-topic sources:
 
-- Questions and Mutual Help
-- Living in Norway
-- Work and Education
-- Family and Everyday Life
-- Community and Culture
+- Questions and Mutual Help (5)
+- Living in Norway (6)
+- Work and Education (7)
+- Family and Everyday Life (8)
+- Community and Culture (9)
+
+Controlled editorial companion categories:
+
+- News Discussions (10)
+- Questions about Guides (11)
 
 Do not create additional categories merely to make the Forum appear populated. Use tags and merge inactive categories when appropriate.
 
@@ -61,9 +67,13 @@ Moderators should receive only the permissions required to review flags, move an
 
 Members may create and reply according to category and trust permissions. Members must not be encouraged to disclose sensitive immigration, health, financial, identity, or safeguarding information.
 
-### Integration identity
+### Integration identities
 
 `forum-metadata` is a dedicated non-human, non-staff account used only for restricted metadata reading. It must not post or represent a real person.
+
+`forum-publisher` is a separate non-human account used only for controlled companion-topic creation. It is non-admin, non-moderator, locked at Trust Level 0, and belongs to `forum-publishers`.
+
+The `forum-publishers` group may create topics in categories 10 and 11. General categories require Trust Level 1 for creation, so the publisher cannot create topics there. Metadata and publisher credentials must never be combined.
 
 ## 6. Editorial separation
 
@@ -150,7 +160,7 @@ Automatic companion-topic creation is opt-in. Publishing or updating content doe
 
 News must be published and not future-dated. Guides must be active. Existing companion relationships always prevent duplicate creation. Manual mode requires an editor-approved existing topic relationship.
 
-The future automation must use a separate least-privileged Forum publisher identity, signed Sanity webhook delivery, authoritative server-side document re-fetching, idempotent creation claims, server-owned category mapping, controlled retries, and non-sensitive failure codes. The existing read-only metadata credential must not be reused for topic creation.
+The operational automation uses a separate least-privileged Forum publisher identity, signed Sanity webhook delivery, authoritative server-side document re-fetching, idempotent revision-guarded claims, server-owned category mapping, controlled recovery, and non-sensitive failure codes. The existing read-only metadata credential must not be reused for topic creation.
 
 Unpublishing, archiving, title changes, or mode changes must never automatically delete community contributions. Any closing, unlisting, renaming, or archival action in Discourse requires a separately governed operational decision.
 
@@ -158,3 +168,19 @@ Unpublishing, archiving, title changes, or mode changes must never automatically
 ## Webhook recovery and reconciliation
 
 Sanity webhook delivery may be repeated, delayed, or received out of order. The publishing workflow therefore re-fetches authoritative content, uses revision-guarded claims, records a bounded attempt identifier, and treats an uncertain post-publication write-back as a manual reconciliation case. Operators must inspect Sanity and Discourse before retrying any document marked as creating, created without a relationship, or failed after an uncertain provider response.
+
+
+## Verified automation and preservation rules
+
+Production synthetic proofs created Guide topic 17 in category 11 and News topic 18 in category 10. Both were authored by `forum-publisher`, used Norwegian templates because the source language was `nb`, and wrote durable topic relationships and completed workflow state back to Sanity.
+
+Completed attempt IDs, timestamps, and topic relationships are operational audit evidence. Future owners must not clear them casually. A document with an uncertain publishing result, an in-progress claim, or a created topic without confirmed write-back requires inspection of both systems before any retry.
+
+Editorial retirement and community preservation are separate decisions:
+
+- archived Guides may disappear from public Guide routes while their Forum topics remain
+- future-dated or unpublished News may disappear from public News routes while their Forum topics remain
+- automatic deletion, closing, unlisting, or renaming of community discussion is prohibited
+- moderation or lifecycle actions in Discourse require a separately authorized operational decision
+
+The browser never controls category IDs, publisher identity, automation status, attempt IDs, or provider credentials. Public Forum panels remain disabled until the final hostname and presentation contract are separately approved.

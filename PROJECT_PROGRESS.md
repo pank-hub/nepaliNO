@@ -1,7 +1,7 @@
 # nepali.no Project Progress
 
-**Status date:** 8 August 2026
-**Current protected checkpoint:** `ac20866 validate Forum content requests in CI (#29)`
+**Status date:** 9 August 2026
+**Current protected checkpoint:** `194deec fix Forum publishing slug normalization (#39)`
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
 
@@ -97,54 +97,65 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 ## 5. Discourse and Forum integration status
 
-### Settled decisions
+### Settled platform and language decisions
 
-- Discourse is the Forum platform for Phase 1.
-- Gigahost remains the Forum hosting provider.
-- NodeBB and Flarum are historical alternatives, not active implementation candidates.
-- The Forum remains separate from Sanity and Vercel hosting.
-- The private pilot is login-required and invite-only; anonymous reading and public signup are disabled.
-- Chat is disabled and ordinary members cannot initiate personal messages.
+- Discourse is the Phase 1 Forum platform and Gigahost remains the hosting provider.
+- The current pilot hostname is `forum-poc.nepali.no`; the approved final hostname is `forum.nepali.no`.
+- The Forum remains operationally separate from Sanity and Vercel.
+- Norwegian Bokmal is the default Discourse interface language. Signed-in users and guests can choose English. Full Nepali interface translation is deferred.
+- The pilot remains login-required and invite-only; Chat is disabled and ordinary members cannot initiate personal messages.
 
-### Current Forum structure
+### Governed category model
 
-- Staff
-- Forum Information and Announcements
-- Site Feedback
-- Questions and Mutual Help
-- Living in Norway
-- Work and Education
-- Family and Everyday Life
-- Community and Culture
+- Administrative or excluded: Site Feedback (2), Staff (3), Forum Information and Announcements (4).
+- Curated related-topic categories: Questions and Mutual Help (5), Living in Norway (6), Work and Education (7), Family and Everyday Life (8), and Community and Culture (9).
+- News companion topics: News Discussions (10) only.
+- Guide companion topics: Questions about Guides (11) only.
+- The future homepage discussion feed may use categories 10 and 11 only, with reverse verification against eligible Sanity content.
 
-### Content lifecycle
+Creating a category in Discourse never grants automatic eligibility for content panels or the homepage feed. New categories require explicit review, code policy, tests, and documentation.
 
-- News: the companion topic acts as comments and discussion for one article. A visible promotional panel is planned. The topic may later close while remaining readable.
-- Public Information Guides: the companion topic supports continuing questions and practical experience sharing and should normally remain open.
-- Both content types may show up to three related Forum topics, initially curated editorially.
+### Service identities and permissions
 
-### Metadata bridge and endpoint boundary
+- `forum-metadata` remains the separate read-only metadata identity.
+- `forum-publisher` is a non-admin, non-moderator service account, locked at Trust Level 0.
+- The `forum-publishers` group grants topic creation only in categories 10 and 11.
+- General community categories require Trust Level 1 for topic creation, preventing the publisher account from posting there.
+- Metadata, Discourse publishing, Sanity automation, and webhook-signing credentials remain separate and server-only.
 
-Completed through PRs #18 to #29:
+### Verified metadata and automatic publishing
 
-- reusable Sanity Forum topic-reference schema
-- server-only Discourse metadata client
-- Sanity-controlled News and Guide relationship resolver
-- defensive reply-count normalization
-- duplicate removal, companion-topic exclusion, and three-related-topic limit
-- protected production diagnostics for eligible and ineligible content
-- strict public content-identity request contract
-- automated CI enforcement for relationship normalization and request parsing
+Completed through PRs #18 to #39:
 
-Verified production chain:
+- Sanity Forum relationship schemas and role-aware category eligibility
+- server-only Discourse metadata and publishing clients
+- strict public identity parsing and protected production diagnostics
+- opt-in Sanity companion automation model
+- signed Sanity webhook verification using a minimal document identity
+- authoritative production-document re-fetching
+- revision-guarded creation claims and bounded attempt identifiers
+- fixed News-to-category-10 and Guide-to-category-11 mapping
+- safe topic-ID write-back to Sanity
+- manual reconciliation for uncertain provider or final write-back outcomes
+- CI coverage for relationships, request parsing, metadata, publishing, workflow state, and slug normalization
 
-`approved Sanity content identity -> eligible relationship -> approved topic ID -> Vercel server -> restricted Discourse API on Gigahost -> normalized metadata`
+Verified production chains:
 
-Protected production diagnostics prove that future-dated News, unrelated published News, unrelated active Guides, nonexistent slugs, and wrong-language identities are rejected before Discourse. The fixed synthetic fixture still resolves topic ID `13`, where raw `postsCount: 1` becomes public `replyCount: 0`.
+`approved Sanity content identity -> eligible relationship -> restricted metadata reader -> normalized Forum metadata`
 
-The disabled public endpoint accepts no observable contract while the feature flag is false. Requests with no parameters, a valid-looking content identity, or malformed values including a caller-supplied topic ID all return the same generic HTTP 404 with `Cache-Control: no-store`.
+`eligible automatic Sanity publication -> signed webhook -> authoritative re-fetch -> revision claim -> restricted forum-publisher -> Discourse companion topic -> durable Sanity topic relationship`
 
-Twenty dependency-free Forum tests now run on every pull request: nine relationship-normalization tests and eleven public request-contract tests.
+Live synthetic evidence:
+
+- Protected future-dated News fixture remains linked to topic 13 for metadata and resolver diagnostics.
+- Automatic Guide proof created topic 17 in category 11 and wrote the relationship and completed state back to Sanity. The Guide is now archived.
+- Automatic News proof created topic 18 in category 10 and wrote the relationship and completed state back to Sanity. The article must remain future-dated after verification.
+- The first Guide proof exposed a Sanity slug-object URL defect. Topic 17 was corrected manually and PR #39 added a regression-tested permanent fix.
+- Norwegian opening templates were correctly selected from `language: nb` for both live proofs.
+
+The public `/api/forum-content` endpoint and News/Guide presentation remain intentionally disabled. Generic HTTP 404 with `Cache-Control: no-store` remains the public boundary while both Forum presentation flags are false.
+
+Fifty-four dependency-free Forum tests now form the expected full suite on every pull request, followed by Astro Check and the production build.
 
 ## 6. Security and privacy invariants
 
@@ -160,19 +171,19 @@ Twenty dependency-free Forum tests now run on every pull request: nine relations
 
 ## 7. Active next milestone
 
-Implement the enabled-state `/api/forum-content` pipeline behind the still-false `contentIntegrationEnabled` feature flag.
+Promote the proven Forum pilot toward its approved production identity at `forum.nepali.no`, without enabling public News or Guide panels prematurely.
 
-Required design work:
+Required sequence:
 
-1. parse only the validated public content identity and resolve eligible Sanity relationships server-side
-2. obtain metadata only for topic IDs attached to published News or active Guides
-3. define companion and related-topic response structure without exposing editorial labels or internal errors
-4. define partial-success behavior when one approved topic is unavailable
-5. filter hidden, deleted, inaccessible, staff, or otherwise ineligible topics
-6. define safe short caching, timeout, and failure behavior
-7. test open, closed, archived, missing, and replied-to synthetic topics
-8. broaden or replace the synthetic topic-13 API-key restriction only after the enabled-state boundary is proven privately
-9. keep public rendering and both Forum feature flags disabled until the complete endpoint behavior is approved
+1. verify a current native Discourse backup and complete a clean disposable restoration test
+2. record rollback steps, recovery time, missing dependencies, and credential-rotation responsibilities
+3. preserve `forum-poc.nepali.no` until the final hostname, TLS, email links, APIs, and redirects are proven
+4. configure DNS, TLS, Discourse canonical hostname, allowed origins, and transactional email for `forum.nepali.no`
+5. update the server-owned Forum base URL only after the final hostname is operational
+6. re-prove metadata reads, automatic News and Guide publishing, Sanity write-back, login, invitation, activation, and password recovery
+7. align the Discourse appearance with nepali.no using upgrade-safe theme work
+8. add a clear `Norsk | English` selector for guests and signed-in users
+9. keep `contentIntegrationEnabled` and `relatedTopicsEnabled` false until the final hostname is stable and public presentation receives a separate reviewed milestone
 
 ## 8. Deferred but approved work
 
@@ -195,7 +206,7 @@ Required design work:
 - Forum restoration test not completed.
 - Forum moderation policy, privacy notice, incident process, and full launch governance not finalized.
 - At least two trusted moderators are not yet operationally established.
-- Public Forum metadata presentation remains disabled.
+- Public News and Guide Forum presentation remains disabled pending final-hostname verification.
 - Translation Editor production callback remains broken.
 - Static trust-page wording and GDPR notice need final review.
 - Organization identity and number are not yet presented consistently.
