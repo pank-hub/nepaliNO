@@ -78,17 +78,18 @@ export const runSanityForumPublishingWorkflow = async (
       : {code: 'manual_reconciliation_required'}
   }
 
+  const publicationInput: CompanionPublicationInput = {
+    contentType: document._type,
+    language: document.language,
+    title: document.title,
+    url: buildUrl(document),
+  }
   const nowIso = now.toISOString()
   const claimed = await dependencies.claimDocument(document, identity.attemptId, nowIso)
   let topic: PublishedCompanionTopic
 
   try {
-    topic = await dependencies.publishTopic({
-      contentType: claimed._type,
-      language: claimed.language,
-      title: claimed.title,
-      url: buildUrl(claimed),
-    })
+    topic = await dependencies.publishTopic(publicationInput)
   } catch {
     await dependencies.failDocument(
       claimed,

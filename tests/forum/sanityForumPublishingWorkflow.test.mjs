@@ -52,6 +52,57 @@ test('accepts active Guides and maps the public URL', async () => {
   assert.equal(d.calls[1][1].url, 'https://nepali.no/nb/info/guide/')
 })
 
+test('preserves the normalized Guide URL when the claim returns a Sanity slug object', async () => {
+  const guide = {
+    ...base,
+    _id: 'guide-1',
+    _type: 'publicInformationGuide',
+    slug: 'synthetic-guide-companion-automation-test',
+    status: 'active',
+    publishedAt: undefined,
+  }
+  const d = deps(guide)
+  d.value.claimDocument = async (document, attemptId) => {
+    d.calls.push(['claim', attemptId])
+    return {
+      ...document,
+      _rev: 'rev-2',
+      slug: {
+        _type: 'slug',
+        current: 'synthetic-guide-companion-automation-test',
+      },
+      forumCompanionAutomation: {
+        mode: 'automatic',
+        status: 'creating',
+        attemptId,
+      },
+    }
+  }
+  d.value.publishTopic = async (input) => {
+    d.calls.push(['publish', input])
+    return {
+      topicId: 43,
+      topicUrl: 'https://forum-poc.nepali.no/t/43',
+      categoryId: 11,
+    }
+  }
+
+  const result = await runSanityForumPublishingWorkflow(
+    {
+      documentId: 'guide-1',
+      documentType: 'publicInformationGuide',
+      attemptId: 'delivery-2',
+    },
+    d.value,
+  )
+
+  assert.equal(result.code, 'published')
+  assert.equal(
+    d.calls[1][1].url,
+    'https://nepali.no/nb/info/synthetic-guide-companion-automation-test/',
+  )
+})
+
 test('does not retry an existing creation claim', async () => {
   const d = deps({...base, forumCompanionAutomation: {mode: 'automatic', status: 'creating', attemptId: 'delivery-1'}})
   assert.deepEqual(await runSanityForumPublishingWorkflow({documentId: 'news-1', documentType: 'newsArticle', attemptId: 'delivery-1'}, d.value), {code: 'creation_in_progress'})
