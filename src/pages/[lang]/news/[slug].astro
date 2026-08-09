@@ -393,6 +393,7 @@ const translationLabel = newsLabels.translation
     display: grid;
     grid-template-columns: minmax(0, 46rem) minmax(16rem, 20rem);
     justify-content: space-between;
+    align-items: start;
     gap: clamp(2.5rem, 8vw, 7rem);
     padding-block: clamp(2.5rem, 8vw, 6.5rem);
   }
@@ -432,6 +433,8 @@ const translationLabel = newsLabels.translation
 
   .article-sidebar {
     display: grid;
+    align-content: start;
+    align-self: start;
     gap: 1rem;
     position: sticky;
     inset-block-start: 1.5rem;
@@ -440,8 +443,10 @@ const translationLabel = newsLabels.translation
   .article-facts,
   .translation-card {
     padding: 1.25rem;
-    border-top: 0.25rem solid var(--brand);
-    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
   }
 
   .article-facts h2 {
@@ -482,7 +487,6 @@ const translationLabel = newsLabels.translation
   .translation-card {
     display: grid;
     gap: 0.35rem;
-    border-top-color: var(--civic);
     color: var(--civic-deep);
     text-decoration: none;
   }
@@ -494,7 +498,8 @@ const translationLabel = newsLabels.translation
   }
 
   .translation-card:hover {
-    background: #e8eef5;
+    border-color: var(--civic);
+    background: var(--surface-muted);
     color: var(--civic-deep);
   }
 
