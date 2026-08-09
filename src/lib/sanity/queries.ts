@@ -120,6 +120,20 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
       publishedAt
     },
     summary,
+    "supportingGuide": select(
+      supportingGuide->status == "active" &&
+      supportingGuide->language == language &&
+      defined(supportingGuide->slug.current) => supportingGuide->{
+        _id,
+        title,
+        "slug": slug.current,
+        language,
+        summary,
+        topic,
+        responsibleAgency,
+        lastReviewedAt
+      }
+    ),
     newsRegion,
     category,
     featuredImage {
@@ -834,6 +848,26 @@ export const HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY = `
       crop
     },
     authorName,
+    publishedAt
+  }
+`;
+
+export const RECENT_NEWS_FOR_GUIDE_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    supportingGuide._ref == $guideId &&
+    language == $language &&
+    defined(slug.current) &&
+    defined(publishedAt) &&
+    publishedAt <= now()
+  ] | order(publishedAt desc) [0...3] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    newsRegion,
+    category,
     publishedAt
   }
 `;

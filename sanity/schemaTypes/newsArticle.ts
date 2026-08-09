@@ -90,6 +90,29 @@ export const newsArticle = defineType({
     }),
 
     defineField({
+      name: 'supportingGuide',
+      title: 'Primary Supporting Guide',
+      type: 'reference',
+      description:
+        'Optional active Guide that gives readers durable background, practical steps, and official sources related to this News Article. Leave empty when no Guide is genuinely relevant.',
+      to: [{type: 'publicInformationGuide'}],
+      options: {
+        filter: ({document}) => {
+          const language = document?.language
+
+          if (language === 'ne' || language === 'nb') {
+            return {
+              filter: 'language == $language && status == "active"',
+              params: {language},
+            }
+          }
+
+          return {filter: 'status == "active"'}
+        },
+      },
+    }),
+
+    defineField({
       name: 'summary',
       title: 'Summary',
       type: 'text',
