@@ -46,6 +46,9 @@ jobs:
       - name: Test Forum content metadata orchestration
         run: npm run test:forum-content-metadata
 
+      - name: Test Forum companion topic publisher
+        run: npm run test:forum-publisher
+
       - name: Run Astro Check
         run: npx astro check
 

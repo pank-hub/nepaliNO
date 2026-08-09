@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly TRANSLATION_SESSION_SECRET?: string;
   readonly DISCOURSE_FORUM_METADATA_API_KEY?: string;
   readonly DISCOURSE_FORUM_METADATA_API_USERNAME?: string;
+  readonly DISCOURSE_FORUM_PUBLISHER_API_KEY?: string;
+  readonly DISCOURSE_FORUM_PUBLISHER_API_USERNAME?: string;
 }
 
 interface ImportMeta {

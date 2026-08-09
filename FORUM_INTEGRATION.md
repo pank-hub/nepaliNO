@@ -249,3 +249,12 @@ The durable topic relationship remains in `forumDiscussion` for News and `forumQ
 Missing automation configuration is treated as no automatic request. Existing documents and existing topic references require no migration. Manual mode requires an existing companion topic ID. Automatic mode may coexist with a topic ID after successful creation or when an existing relationship prevents duplicate creation.
 
 The future publishing service will choose category 10 for News and category 11 for Guides. Editors and webhook payloads never choose category IDs. No webhook, write credential, or automatic Discourse mutation is enabled by this schema milestone.
+
+
+## Server-only companion topic publisher
+
+The application contains a dormant server-only Discourse publisher for companion topics. News is always mapped to category 10 and Guides are always mapped to category 11. Callers cannot supply or override category IDs.
+
+The publisher validates content type, language, title, and an HTTPS `nepali.no` content URL. It creates a short localized opening post that links to the complete News article or Guide. It sends credentials only in server-side headers, uses a five-second timeout, and accepts only a positive returned topic ID.
+
+The publishing credential is separate from the read-only metadata credential. No credential value is stored in Git. The client remains dormant until Production-only Sensitive environment variables are added for a controlled proof. No Sanity webhook or document write-back is included in this milestone.
