@@ -15,7 +15,8 @@
     "test:forum-content-metadata": "node --experimental-strip-types --test tests/forum/loadForumContentMetadata.test.mjs",
     "test:forum-publisher": "node --experimental-strip-types --test tests/forum/discourseCompanionPublisher.test.mjs",
     "test:forum-publishing-workflow": "node --experimental-strip-types --test tests/forum/sanityForumPublishingWorkflow.test.mjs",
-    "test:content-relationships": "node --experimental-strip-types --test tests/content/newsSupportingGuideContract.test.mjs"
+    "test:content-relationships": "node --experimental-strip-types --test tests/content/newsSupportingGuideContract.test.mjs",
+    "test:connected-content-presentation": "node --experimental-strip-types --test tests/content/connectedContentPresentation.test.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.4",

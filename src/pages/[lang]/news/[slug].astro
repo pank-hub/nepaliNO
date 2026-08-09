@@ -2,6 +2,7 @@
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import SupportingGuideCard from '../../../components/content/SupportingGuideCard.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
@@ -27,6 +28,17 @@ interface NewsImage {
   crop?: unknown
 }
 
+interface SupportingGuideSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  topic: string
+  responsibleAgency: string
+  lastReviewedAt: string
+}
+
 interface NewsArticle {
   _id: string
   title: string
@@ -34,6 +46,7 @@ interface NewsArticle {
   language: SupportedLanguage
   translation?: TranslationSummary
   summary: string
+  supportingGuide?: SupportingGuideSummary
   newsRegion: string
   category: string
   featuredImage?: NewsImage
@@ -222,7 +235,18 @@ const translationLabel = newsLabels.translation
         )}
       </div>
 
-      <aside class="article-sidebar">
+      <aside class="article-sidebar" aria-label={newsLabels.usefulInformation}>
+        {article.supportingGuide && (
+          <SupportingGuideCard
+            guide={article.supportingGuide}
+            eyebrow={newsLabels.usefulInformation}
+            description={newsLabels.usefulInformationDescription}
+            actionLabel={newsLabels.readGuide}
+            reviewedLabel={newsLabels.reviewed}
+            agencyLabel={labels.information.responsibleAgency}
+          />
+        )}
+
         <section class="article-facts">
           <h2>{labels.navigation.news}</h2>
           <dl>

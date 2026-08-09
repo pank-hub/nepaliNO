@@ -40,6 +40,9 @@ jobs:
       - name: Test connected-content relationship contract
         run: npm run test:content-relationships
 
+      - name: Test connected-content presentation contract
+        run: npm run test:connected-content-presentation
+
       - name: Test Forum relationship normalization
         run: npm run test:forum-relationships
 
