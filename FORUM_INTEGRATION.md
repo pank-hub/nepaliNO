@@ -296,3 +296,12 @@ The first Guide proof exposed a malformed `[object Object]` URL because a post-c
 Archiving a Guide, future-dating News, unpublishing content, or changing editorial mode never automatically deletes or closes community discussion. Topic lifecycle actions require a separate governed moderation decision.
 
 Public News and Guide pages still show no Forum panel because `contentIntegrationEnabled` and `relatedTopicsEnabled` remain false. The frontend connection is intentionally deferred until `forum.nepali.no` is operational and verified.
+
+
+## Connected News and Guide relationship
+
+News Articles may optionally select one active same-language Public Information Guide as their Primary Supporting Guide. The relationship is editorially curated and should be left empty when no Guide genuinely helps readers understand or act on the News.
+
+The individual News query projects the Guide only when it remains active, matches the News language, and has a valid slug. Guide pages will later use the reverse relationship to find at most three eligible same-language News articles, ordered newest first and excluding future-dated content.
+
+This relationship milestone adds no public card, context rail, homepage feed, or Forum presentation. The public Forum flags remain disabled. Presentation and activation require separate reviewed milestones with safe empty states.
