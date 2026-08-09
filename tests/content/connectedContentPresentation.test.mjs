@@ -28,9 +28,11 @@ test('Guide loads bounded reverse-related News and omits an empty module', () =>
   assert.match(guidePage, /<RelatedNewsList/)
 })
 
-test('connected-content cards use internal localized content routes', () => {
-  assert.match(supportingCard, /\/info\/\$\{guide\.slug\}\//)
-  assert.match(relatedNews, /\/news\/\$\{article\.slug\}\//)
+test('connected-content titles are the compact internal links', () => {
+  assert.match(supportingCard, /<h2>[\s\S]*<a href=\{`\/\$\{guide\.language\}\/info\/\$\{guide\.slug\}\/`\}>/)
+  assert.match(relatedNews, /<a href=\{`\/\$\{article\.language\}\/news\/\$\{article\.slug\}\/`\}>\{article\.title\}<\/a>/)
+  assert.doesNotMatch(supportingCard, /guide\.summary|reviewedDate|actionLabel/)
+  assert.doesNotMatch(relatedNews, /article\.summary|publishedAt|actionLabel/)
   assert.doesNotMatch(supportingCard + relatedNews, /target="_blank"/)
 })
 

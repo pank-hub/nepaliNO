@@ -5,58 +5,32 @@ interface SupportingGuide {
   title: string
   slug: string
   language: SupportedLanguage
-  summary: string
   responsibleAgency: string
-  lastReviewedAt: string
 }
 
 interface Props {
   guide: SupportingGuide
   eyebrow: string
-  description: string
-  actionLabel: string
-  reviewedLabel: string
   agencyLabel: string
 }
 
-const {
-  guide,
-  eyebrow,
-  description,
-  actionLabel,
-  reviewedLabel,
-  agencyLabel,
-} = Astro.props
-const dateLocale = guide.language === 'ne' ? 'ne-NP' : 'nb-NO'
-const reviewedDate = new Date(`${guide.lastReviewedAt}T00:00:00`).toLocaleDateString(
-  dateLocale,
-  {year: 'numeric', month: 'long', day: 'numeric'},
-)
+const {guide, eyebrow, agencyLabel} = Astro.props
 ---
 
 <article class="supporting-guide-card">
   <p class="eyebrow">{eyebrow}</p>
-  <h2>{guide.title}</h2>
-  <p class="supporting-guide-card__description">{description}</p>
-  <p class="supporting-guide-card__summary">{guide.summary}</p>
-  <dl>
-    <div>
-      <dt>{reviewedLabel}</dt>
-      <dd>{reviewedDate}</dd>
-    </div>
-    <div>
-      <dt>{agencyLabel}</dt>
-      <dd>{guide.responsibleAgency}</dd>
-    </div>
-  </dl>
-  <a href={`/${guide.language}/info/${guide.slug}/`}>
-    {actionLabel} <span aria-hidden="true">→</span>
-  </a>
+  <h2>
+    <a href={`/${guide.language}/info/${guide.slug}/`}>{guide.title}</a>
+  </h2>
+  <p class="supporting-guide-card__agency">
+    <span>{agencyLabel}</span>
+    <strong>{guide.responsibleAgency}</strong>
+  </p>
 </article>
 
 <style>
   .supporting-guide-card {
-    padding: 1.35rem;
+    padding: 1.2rem;
     border: 1px solid #a5bdd4;
     border-radius: var(--radius-lg);
     background: linear-gradient(145deg, #f5f8fb 0%, #ffffff 100%);
@@ -64,71 +38,39 @@ const reviewedDate = new Date(`${guide.lastReviewedAt}T00:00:00`).toLocaleDateSt
   }
 
   .supporting-guide-card h2 {
-    margin-block-start: 0.45rem;
+    margin-block-start: 0.4rem;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    line-height: 1.3;
+  }
+
+  .supporting-guide-card h2 a {
     color: var(--civic-deep);
-    font-size: clamp(1.3rem, 2.5vw, 1.65rem);
-    line-height: 1.2;
-  }
-
-  .supporting-guide-card__description {
-    margin-block-start: 0.65rem;
-    color: var(--civic);
-    font-size: 0.85rem;
-    font-weight: 700;
-  }
-
-  .supporting-guide-card__summary {
-    display: -webkit-box;
-    overflow: hidden;
-    margin-block-start: 0.75rem;
-    color: var(--text-muted);
-    font-size: 0.92rem;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-  }
-
-  .supporting-guide-card dl {
-    display: grid;
-    gap: 0.65rem;
-    margin-block-start: 1rem;
-    padding-block-start: 1rem;
-    border-top: 1px solid var(--border);
-  }
-
-  .supporting-guide-card dt {
-    color: var(--text-soft);
-    font-size: 0.72rem;
-    font-weight: 760;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  :global(html[lang="ne"]) .supporting-guide-card dt {
-    font-size: 0.82rem;
-    letter-spacing: 0;
-    text-transform: none;
-  }
-
-  .supporting-guide-card dd {
-    margin: 0.22rem 0 0;
-    color: var(--civic-deep);
-    font-size: 0.88rem;
-    font-weight: 650;
-  }
-
-  .supporting-guide-card a {
-    display: inline-flex;
-    gap: 0.45rem;
-    align-items: center;
-    margin-block-start: 1.15rem;
-    color: var(--brand);
-    font-weight: 780;
     text-decoration: none;
   }
 
-  .supporting-guide-card a:hover {
-    color: var(--brand-deep);
+  .supporting-guide-card h2 a:hover {
+    color: var(--brand);
     text-decoration: underline;
     text-underline-offset: 0.2em;
+  }
+
+  .supporting-guide-card__agency {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.45rem;
+    margin-block-start: 0.75rem;
+    padding-block-start: 0.75rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+
+  .supporting-guide-card__agency span {
+    color: var(--text-soft);
+  }
+
+  .supporting-guide-card__agency strong {
+    color: var(--civic-deep);
+    font-weight: 700;
   }
 </style>
