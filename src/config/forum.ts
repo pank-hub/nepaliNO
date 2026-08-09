@@ -2,5 +2,5 @@ export const forumPilot = {
   enabled: true,
   contentIntegrationEnabled: false,
   relatedTopicsEnabled: false,
-  url: "https://forum-poc.nepali.no/",
+  url: "https://forum.nepali.no/",
 } as const
