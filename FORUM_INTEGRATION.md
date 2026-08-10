@@ -1,7 +1,7 @@
 # Forum Integration Contract
 
 **Status:** Resolver and disabled public request contract production-proven; public presentation disabled
-**Current checkpoint:** `194deec`
+**Current checkpoint:** `c95dda2`
 **Last reviewed:** 8 August 2026
 
 ## 1. Purpose
@@ -305,3 +305,21 @@ News Articles may optionally select one active same-language Public Information 
 The individual News query projects the Guide only when it remains active, matches the News language, and has a valid slug. Guide pages will later use the reverse relationship to find at most three eligible same-language News articles, ordered newest first and excluding future-dated content.
 
 This relationship milestone adds no public card, context rail, homepage feed, or Forum presentation. The public Forum flags remain disabled. Presentation and activation require separate reviewed milestones with safe empty states.
+
+## Confirmed provider rejection versus uncertain outcome
+
+The Discourse publisher now distinguishes a confirmed provider-side validation rejection from an outcome in which topic creation may be uncertain.
+
+For an HTTP 422 response with readable JSON, the publisher examines the response only in memory and maps it to one bounded non-sensitive code:
+
+- `forum-publishing-rejected-title`
+- `forum-publishing-rejected-post`
+- `forum-publishing-rejected-category`
+- `forum-publishing-rejected-tags`
+- `forum-publishing-rejected-validation`
+
+Raw provider messages, request bodies, titles, URLs, headers, credentials, and arbitrary response fields are never written to Sanity. A confirmed rejection returns `publishing_rejected` and writes only the safe failure code.
+
+Timeouts, transport failures, unreadable unsuccessful responses, malformed success responses, and other outcomes where topic creation cannot be excluded continue to use `forum-publishing-result-unconfirmed` and `manual_reconciliation_required`. A successful Discourse creation followed by uncertain or failed final Sanity write-back also remains a manual reconciliation case.
+
+A real Nepali News attempt on 10 August 2026 reached `forum.nepali.no`, authenticated as `forum-publisher`, targeted category 10, and received HTTP 422 without creating a topic. The earlier workflow version stored the conservative `forum-publishing-result-unconfirmed` code. That attempt remains preserved pending a controlled post-deployment diagnostic or recovery procedure.

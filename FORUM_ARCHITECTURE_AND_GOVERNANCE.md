@@ -184,3 +184,16 @@ Editorial retirement and community preservation are separate decisions:
 - moderation or lifecycle actions in Discourse require a separately authorized operational decision
 
 The browser never controls category IDs, publisher identity, automation status, attempt IDs, or provider credentials. Public Forum panels remain disabled until the final hostname and presentation contract are separately approved.
+
+## Publishing failure classification and controlled retry governance
+
+A confirmed provider rejection and an uncertain publication outcome require different recovery decisions.
+
+- A confirmed HTTP 422 validation rejection means Discourse rejected the submitted topic and the application received a readable rejection response. Only a bounded safe code may be retained.
+- An uncertain result means topic creation cannot be excluded because of timeout, transport failure, unreadable response, malformed success response, or failed final relationship write-back. Operators must inspect both Sanity and Discourse before any retry.
+- Attempt IDs, timestamps, failure codes, and topic relationships are audit evidence and must not be cleared casually.
+- Raw Discourse validation messages must not be copied into Sanity editorial fields, repository documentation, public logs, screenshots, or chat.
+- Real editorial content must not be repeatedly republished as a diagnostic mechanism. Prefer a clearly labelled synthetic fixture for controlled end-to-end tests.
+- A failed real document may be reset only after an authorized operator confirms that no topic exists, records the previous attempt evidence, verifies the corrected production code, and uses a single controlled retry.
+
+The unresolved 10 August 2026 Nepali News incident is the first production evidence covered by this distinction. No matching topic exists, but the original attempt remains preserved because it was recorded before confirmed rejection classification was deployed.

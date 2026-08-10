@@ -1,7 +1,7 @@
 # nepali.no Project Progress
 
-**Status date:** 9 August 2026
-**Current protected checkpoint:** `194deec fix Forum publishing slug normalization (#39)`
+**Status date:** 10 August 2026
+**Current protected checkpoint:** `c95dda2 classify Forum publishing validation errors (#46)`
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
 
@@ -39,7 +39,7 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 - Delivery governance: protected `main`, pull requests, Squash merge, required Astro Check and production build
 - Transactional email: Resend sending from `notifications.nepali.no`
 - DNS and email infrastructure: Domeneshop
-- Forum: Discourse hosted separately on Gigahost in Norway at `forum-poc.nepali.no`
+- Forum: Discourse hosted separately on Gigahost in Norway at the canonical hostname `forum.nepali.no`; `forum-poc.nepali.no` is a TLS-covered alias that redirects to the canonical hostname
 
 ### Data ownership boundaries
 
@@ -100,7 +100,7 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 ### Settled platform and language decisions
 
 - Discourse is the Phase 1 Forum platform and Gigahost remains the hosting provider.
-- The current pilot hostname is `forum-poc.nepali.no`; the approved final hostname is `forum.nepali.no`.
+- `forum.nepali.no` is now the operational canonical Forum hostname. `forum-poc.nepali.no` remains a TLS-covered alias that redirects to the canonical hostname during the preservation period.
 - The Forum remains operationally separate from Sanity and Vercel.
 - Norwegian Bokmal is the default Discourse interface language. Signed-in users and guests can choose English. Full Nepali interface translation is deferred.
 - The pilot remains login-required and invite-only; Chat is disabled and ordinary members cannot initiate personal messages.
@@ -235,3 +235,38 @@ Required sequence:
 - Use Squash merge after required checks pass.
 - Verify production behavior and update current-state documentation only at meaningful checkpoints.
 - Preserve historical rationale in archives rather than repeating it in current-state documents.
+
+## 12. Checkpoint: final Forum hostname and publishing diagnostics
+
+The existing Gigahost Discourse installation was promoted in place from the pilot identity to the canonical production identity at `https://forum.nepali.no`. No fresh production installation or database migration was performed. DNS, TLS, canonical URLs, administrator access, existing categories, permissions, users, groups, and topics 13, 17, and 18 were verified after the transition. `https://forum-poc.nepali.no` has valid TLS and redirects to the canonical hostname.
+
+The public application now uses `https://forum.nepali.no/` as its server-owned Forum base URL. Protected metadata diagnostics resolved topic 13 through the final hostname and returned a canonical `forum.nepali.no` topic URL. Public News and Guide Forum presentation remains disabled.
+
+Connected-content work also completed through PRs #42 to #45:
+
+- News may select one optional active same-language Primary Supporting Guide.
+- Guide pages discover at most three recent eligible News articles through the reverse relationship.
+- News and Guide context-rail links use compact clickable titles with safe empty states.
+- The News desktop context rail no longer stretches to article height.
+
+### Unresolved Nepali News publishing incident
+
+A real Nepali News publication on 10 August 2026 entered the signed automatic workflow but did not create a Forum topic. Verified evidence:
+
+- automatic mode was selected and the Sanity workflow claim completed
+- the request reached `POST /posts.json` at `forum.nepali.no`
+- Discourse authenticated `forum-publisher`
+- category 10 was supplied
+- Discourse returned HTTP 422
+- no matching topic was created and no topic ID was written to Sanity
+- title length, direct title validation, minimum post length, publisher suspension or silencing, category visibility, category topic-creation permission, and required-tag configuration were ruled out
+
+PR #46 now distinguishes confirmed Discourse HTTP 422 validation rejections from genuinely uncertain publication outcomes. It records only bounded non-sensitive failure codes and never stores raw provider messages. The original failed document retains its earlier `forum-publishing-result-unconfirmed` evidence and must not be casually reset or republished.
+
+### Immediate operational priorities
+
+1. Create, export, and checksum-verify a post-promotion native Discourse backup including uploads.
+2. Preserve the existing failed Nepali News attempt as audit evidence.
+3. After the post-promotion backup, use one controlled synthetic Nepali News fixture or an explicitly approved recovery procedure to obtain the new safe rejection classification.
+4. Confirm no topic exists before any reset or retry.
+5. Keep public Forum presentation disabled until the publishing issue and final presentation milestone are separately verified.
