@@ -1,4 +1,8 @@
-import type {CompanionPublicationInput, PublishedCompanionTopic} from './discourseCompanionPublisher.ts'
+import {
+  DiscoursePublisherRejectedError,
+  type CompanionPublicationInput,
+  type PublishedCompanionTopic,
+} from './discourseCompanionPublisher.ts'
 
 export type ForumPublishingDocument = {
   _id: string
@@ -25,6 +29,7 @@ export type ForumPublishingOutcome =
   | {code: 'not_eligible'}
   | {code: 'creation_in_progress'}
   | {code: 'manual_reconciliation_required'}
+  | {code: 'publishing_rejected'; safeFailureCode: string}
 
 export interface ForumPublishingDependencies {
   loadDocument: (documentId: string, documentType: ForumPublishingDocument['_type']) => Promise<ForumPublishingDocument | null>
@@ -90,7 +95,15 @@ export const runSanityForumPublishingWorkflow = async (
 
   try {
     topic = await dependencies.publishTopic(publicationInput)
-  } catch {
+  } catch (error) {
+    if (error instanceof DiscoursePublisherRejectedError) {
+      await dependencies.failDocument(claimed, error.safeFailureCode, nowIso)
+      return {
+        code: 'publishing_rejected',
+        safeFailureCode: error.safeFailureCode,
+      }
+    }
+
     await dependencies.failDocument(
       claimed,
       'forum-publishing-result-unconfirmed',
