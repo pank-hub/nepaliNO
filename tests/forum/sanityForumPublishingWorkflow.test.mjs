@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import {DiscoursePublisherRejectedError} from '../../src/lib/forum/discourseCompanionPublisher.ts'
 import {runSanityForumPublishingWorkflow} from '../../src/lib/forum/sanityForumPublishingWorkflow.ts'
 
 const base = {
@@ -114,6 +115,28 @@ test('requires reconciliation for another or completed claim', async () => {
     const d = deps({...base, forumCompanionAutomation: {mode: 'automatic', status, attemptId: 'older'}})
     assert.deepEqual(await runSanityForumPublishingWorkflow({documentId: 'news-1', documentType: 'newsArticle', attemptId: 'new'}, d.value), {code: 'manual_reconciliation_required'})
   }
+})
+
+test('records a confirmed safe rejection without requiring ambiguous reconciliation', async () => {
+  const d = deps()
+  d.value.publishTopic = async () => {
+    throw new DiscoursePublisherRejectedError('forum-publishing-rejected-validation')
+  }
+
+  assert.deepEqual(
+    await runSanityForumPublishingWorkflow(
+      {documentId: 'news-1', documentType: 'newsArticle', attemptId: 'delivery-1'},
+      d.value,
+    ),
+    {
+      code: 'publishing_rejected',
+      safeFailureCode: 'forum-publishing-rejected-validation',
+    },
+  )
+  assert.deepEqual(d.calls.at(-1), [
+    'fail',
+    'forum-publishing-rejected-validation',
+  ])
 })
 
 test('requires reconciliation and records a safe code when publishing is unconfirmed', async () => {

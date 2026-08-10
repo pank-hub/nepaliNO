@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   buildCompanionTopicDraft,
+  classifyDiscoursePublisherRejection,
 } from '../../src/lib/forum/discourseCompanionPublisher.ts'
 
 test('maps Norwegian News to category 10', () => {
@@ -127,4 +128,29 @@ test('rejects unsupported content types at runtime', () => {
       }),
     TypeError,
   )
+})
+
+
+test('classifies confirmed Discourse 422 validation responses without retaining provider text', () => {
+  assert.equal(
+    classifyDiscoursePublisherRejection(422, {errors: ['Title contains an invalid value']}),
+    'forum-publishing-rejected-title',
+  )
+  assert.equal(
+    classifyDiscoursePublisherRejection(422, {errors: ['Body is invalid']}),
+    'forum-publishing-rejected-post',
+  )
+  assert.equal(
+    classifyDiscoursePublisherRejection(422, {errors: ['Category is invalid']}),
+    'forum-publishing-rejected-category',
+  )
+  assert.equal(
+    classifyDiscoursePublisherRejection(422, {errors: ['A tag is required']}),
+    'forum-publishing-rejected-tags',
+  )
+  assert.equal(
+    classifyDiscoursePublisherRejection(422, {errors: ['Unrecognized validation']}),
+    'forum-publishing-rejected-validation',
+  )
+  assert.equal(classifyDiscoursePublisherRejection(503, {}), undefined)
 })

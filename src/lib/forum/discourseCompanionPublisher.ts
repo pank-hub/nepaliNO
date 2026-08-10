@@ -34,6 +34,22 @@ export interface PublishedCompanionTopic {
 
 export class DiscoursePublisherConfigurationError extends Error {}
 export class DiscoursePublisherRequestError extends Error {}
+export class DiscoursePublisherRejectedError extends Error {
+  readonly safeFailureCode: DiscoursePublisherRejectionCode
+
+  constructor(safeFailureCode: DiscoursePublisherRejectionCode) {
+    super('The Forum rejected the publishing request.')
+    this.name = 'DiscoursePublisherRejectedError'
+    this.safeFailureCode = safeFailureCode
+  }
+}
+
+export type DiscoursePublisherRejectionCode =
+  | 'forum-publishing-rejected-title'
+  | 'forum-publishing-rejected-post'
+  | 'forum-publishing-rejected-category'
+  | 'forum-publishing-rejected-tags'
+  | 'forum-publishing-rejected-validation'
 
 export type DiscoursePublisherFetch = typeof fetch
 
@@ -118,6 +134,33 @@ const readPositiveInteger = (value: unknown) =>
     ? value
     : undefined
 
+const collectSafeValidationText = (payload: unknown) => {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return ''
+
+  const result = payload as Record<string, unknown>
+  const values = [result.error_type, result.message]
+  if (Array.isArray(result.errors)) values.push(...result.errors)
+
+  return values
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ')
+    .toLocaleLowerCase('en')
+}
+
+export const classifyDiscoursePublisherRejection = (
+  status: number,
+  payload: unknown,
+): DiscoursePublisherRejectionCode | undefined => {
+  if (status !== 422) return undefined
+
+  const text = collectSafeValidationText(payload)
+  if (/title|topic title/.test(text)) return 'forum-publishing-rejected-title'
+  if (/post|body|raw|content/.test(text)) return 'forum-publishing-rejected-post'
+  if (/categor/.test(text)) return 'forum-publishing-rejected-category'
+  if (/tag/.test(text)) return 'forum-publishing-rejected-tags'
+  return 'forum-publishing-rejected-validation'
+}
+
 export const publishDiscourseCompanionTopic = async (
   input: CompanionPublicationInput,
   publisherFetch: DiscoursePublisherFetch = fetch,
@@ -153,19 +196,30 @@ export const publishDiscourseCompanionTopic = async (
     )
   }
 
-  if (!response.ok) {
-    throw new DiscoursePublisherRequestError(
-      `The Forum publishing request returned HTTP ${response.status}.`,
-    )
-  }
-
   let payload: unknown
 
   try {
     payload = await response.json()
   } catch {
+    if (!response.ok) {
+      throw new DiscoursePublisherRequestError(
+        `The Forum publishing request returned HTTP ${response.status}.`,
+      )
+    }
     throw new DiscoursePublisherRequestError(
       'The Forum returned an invalid publishing response.',
+    )
+  }
+
+  if (!response.ok) {
+    const safeFailureCode = classifyDiscoursePublisherRejection(
+      response.status,
+      payload,
+    )
+    if (safeFailureCode) throw new DiscoursePublisherRejectedError(safeFailureCode)
+
+    throw new DiscoursePublisherRequestError(
+      `The Forum publishing request returned HTTP ${response.status}.`,
     )
   }
 
