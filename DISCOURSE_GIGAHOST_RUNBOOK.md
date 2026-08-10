@@ -280,3 +280,35 @@ The signed Sanity workflow is production-proven:
 If automation is marked `creating`, `created` without a confirmed relationship, or contains `forum-publishing-result-unconfirmed`, do not republish or clear fields. Inspect the Sanity document, Discourse categories, publisher-account activity, and Vercel function logs before deciding whether reconciliation is safe.
 
 Archiving or unpublishing source content must not delete the Forum topic. Topic closure, archival, unlisting, renaming, or deletion requires a separate moderation decision.
+
+## Final-hostname state and HTTP 422 publishing diagnostics
+
+Current hostname state:
+
+- canonical Forum: `https://forum.nepali.no`
+- preserved alias: `https://forum-poc.nepali.no`
+- both hostnames have valid TLS
+- the alias redirects to the canonical hostname
+- the existing Discourse installation, database, uploads, users, categories, permissions, and topic IDs were preserved
+- the active `app.yml` uses `forum.nepali.no` as `DISCOURSE_HOSTNAME` and `forum-poc.nepali.no` as `DISCOURSE_HOSTNAME_ALIASES`
+- a root-only pre-transition `app.yml` rollback copy exists
+
+Backup state:
+
+- a fresh pre-transition native backup including uploads was exported off-server and its SHA-256 checksum matched
+- a post-promotion backup including uploads remains a top operational priority and must be exported and checksum-verified before substantial additional Forum changes
+
+### Checklist for an automatic publication returning HTTP 422
+
+1. Do not republish, clear workflow fields, enter a topic ID, or create a replacement topic manually.
+2. Check the Sanity automation status, Attempt ID, timestamps, safe failure code, and companion topic relationship.
+3. Search the intended Discourse category and `forum-publisher` activity for a matching topic.
+4. Inspect the Discourse access log for `POST /posts.json`, confirming the HTTP status and authenticated publisher identity without exposing credentials or request headers.
+5. Verify category visibility and topic-creation permissions for `forum-publisher`.
+6. Check title limits, minimum post length, account suspension or silencing, and category tag requirements only as read-only diagnostics.
+7. If no topic exists and the deployed publisher records a `forum-publishing-rejected-*` code, treat the outcome as a confirmed rejection and correct the validated condition before one authorized retry.
+8. If the result remains `forum-publishing-result-unconfirmed`, inspect both systems and require manual reconciliation before any retry.
+9. Prefer a clearly labelled synthetic fixture when proving a corrected publishing path.
+10. Record the outcome and create a new backup at the next meaningful operational checkpoint.
+
+Never run `db:create`, modify `database.yml`, change Git safe-directory settings, or alter category permissions merely to diagnose an API validation response.
