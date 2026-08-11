@@ -371,7 +371,9 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
                 class:list={['latest-stories', !featuredStory && 'latest-stories--full']}
                 aria-labelledby="latest-news-heading"
               >
-                <h3 id="latest-news-heading">{labels.home.latestNews}</h3>
+                <h3 id="latest-news-heading">
+                  <a href={`/${language}/news/`}>{labels.home.latestNews}</a>
+                </h3>
                 <ol>
                   {latestStories.map((article) => (
                     <li>
@@ -610,8 +612,18 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
           <ol class="directory-rail">
             {homepageDirectoryListings.map((listing) => (
               <li>
-                <article class="directory-rail__item">
+                <article
+                  class:list={[
+                    'directory-rail__item',
+                    `directory-rail__item--${listing.listingType}`,
+                  ]}
+                >
                   <div class="directory-rail__topline">
+                    <span class="directory-rail__type-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M4 21V7l8-4 8 4v14M8 10h2M14 10h2M8 14h2M14 14h2M9 21v-3h6v3" />
+                      </svg>
+                    </span>
                     {directoryLogoUrl(listing.logo) && (
                       <div class="directory-rail__logo">
                         <img
@@ -1435,6 +1447,146 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     padding-block-start: 1rem;
     font-weight: 760;
   }
+
+    /* Homepage desktop visual refinement */
+    .latest-stories > h3 a {
+      color: var(--civic-deep);
+      text-decoration: none;
+      text-underline-offset: 0.22em;
+    }
+
+    .latest-stories > h3 a:hover {
+      color: var(--brand);
+      text-decoration: underline;
+    }
+
+    .latest-stories > h3 a:focus-visible {
+      border-radius: 0.2rem;
+      outline: 0.18rem solid rgb(198 42 31 / 0.25);
+      outline-offset: 0.2rem;
+    }
+
+    .directory-rail {
+      gap: 1rem;
+    }
+
+    .directory-rail > li,
+    .directory-rail > li:first-child,
+    .directory-rail > li:last-child {
+      padding: 0;
+      border-inline-start: 0;
+    }
+
+    .directory-rail__item {
+      --directory-accent: #315f88;
+      --directory-tint: #eef5fb;
+      padding: clamp(1.35rem, 3vw, 1.9rem);
+      border: 1px solid rgb(48 70 92 / 0.14);
+      border-block-start: 0.3rem solid var(--directory-accent);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(155deg, var(--directory-tint), #fff 44%);
+      box-shadow: 0 0.75rem 2rem rgb(23 37 52 / 0.06);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .directory-rail__item:hover {
+      transform: translateY(-0.15rem);
+      box-shadow: 0 1rem 2.4rem rgb(23 37 52 / 0.1);
+    }
+
+    .directory-rail__item--business,
+    .directory-rail__item--professional-service {
+      --directory-accent: #b9382b;
+      --directory-tint: #fff3f1;
+    }
+
+    .directory-rail__item--organization-association,
+    .directory-rail__item--ngo-charity,
+    .directory-rail__item--community-group {
+      --directory-accent: #287a5b;
+      --directory-tint: #eff9f4;
+    }
+
+    .directory-rail__item--public-interest-service {
+      --directory-accent: #24758a;
+      --directory-tint: #eff8fa;
+    }
+
+    .directory-rail__item--website-digital-resource {
+      --directory-accent: #5d5598;
+      --directory-tint: #f4f2fb;
+    }
+
+    .directory-rail__type-icon {
+      display: grid;
+      width: 3rem;
+      flex: 0 0 3rem;
+      aspect-ratio: 1;
+      place-items: center;
+      border-radius: var(--radius-md);
+      background: var(--directory-accent);
+      color: #fff;
+    }
+
+    .directory-rail__type-icon svg {
+      width: 1.45rem;
+      height: 1.45rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .home-directory__submit {
+      margin-block-start: 1.25rem;
+      padding: 1.25rem 1.4rem;
+      border: 1px solid rgb(48 70 92 / 0.14);
+      border-inline-start: 0.3rem solid var(--civic);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, #f5f8fb, #fff);
+    }
+
+    @media (min-width: 63.001rem) {
+      .home-hero__grid {
+        gap: clamp(2.5rem, 6vw, 5.5rem);
+        padding-block: clamp(3.5rem, 6vw, 5.75rem);
+      }
+
+      .home-news {
+        padding-block-start: clamp(3.75rem, 6vw, 5.5rem);
+        padding-block-end: clamp(2.25rem, 3.5vw, 3.25rem);
+      }
+
+      .home-news + .home-section {
+        padding-block-start: clamp(2.25rem, 3.5vw, 3.25rem);
+        padding-block-end: clamp(2.25rem, 3.5vw, 3.25rem);
+      }
+
+      .home-section + .home-events {
+        padding-block-start: clamp(2.25rem, 3.5vw, 3.25rem);
+      }
+
+      .lead-story {
+        align-items: stretch;
+      }
+
+      .lead-story__image,
+      .lead-story__placeholder {
+        height: 100%;
+        min-height: 31rem;
+        aspect-ratio: auto;
+      }
+
+      .directory-rail:has(> li:only-child) {
+        grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+      }
+
+      .directory-rail:has(> li:only-child) > li {
+        grid-column: 1;
+      }
+    }
+
 
   @media (max-width: 63rem) {
     .home-hero__grid,
