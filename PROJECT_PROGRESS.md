@@ -1,7 +1,7 @@
 # nepali.no Project Progress
 
-**Status date:** 10 August 2026
-**Current protected checkpoint:** `c95dda2 classify Forum publishing validation errors (#46)`
+**Status date:** 11 August 2026
+**Current protected checkpoint:** `2f94c2c refine desktop homepage composition (#48)`
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
 
@@ -155,7 +155,7 @@ Live synthetic evidence:
 
 The public `/api/forum-content` endpoint and News/Guide presentation remain intentionally disabled. Generic HTTP 404 with `Cache-Control: no-store` remains the public boundary while both Forum presentation flags are false.
 
-Fifty-four dependency-free Forum tests now form the expected full suite on every pull request, followed by Astro Check and the production build.
+Fifty-six dependency-free Forum tests and ten connected-content tests now form the expected focused suites, for 66 passing tests in total, followed by Astro Check and the production build.
 
 ## 6. Security and privacy invariants
 
@@ -171,19 +171,17 @@ Fifty-four dependency-free Forum tests now form the expected full suite on every
 
 ## 7. Active next milestone
 
-Promote the proven Forum pilot toward its approved production identity at `forum.nepali.no`, without enabling public News or Guide panels prematurely.
+The public homepage desktop composition was refined through PR #48. The next active presentation milestone is upgrade-safe visual harmonization of `forum.nepali.no` with the public site, while the Forum remains private and invite-only.
 
 Required sequence:
 
-1. verify a current native Discourse backup and complete a clean disposable restoration test
-2. record rollback steps, recovery time, missing dependencies, and credential-rotation responsibilities
-3. preserve `forum-poc.nepali.no` until the final hostname, TLS, email links, APIs, and redirects are proven
-4. configure DNS, TLS, Discourse canonical hostname, allowed origins, and transactional email for `forum.nepali.no`
-5. update the server-owned Forum base URL only after the final hostname is operational
-6. re-prove metadata reads, automatic News and Guide publishing, Sanity write-back, login, invitation, activation, and password recovery
-7. align the Discourse appearance with nepali.no using upgrade-safe theme work
-8. add a clear `Norsk | English` selector for guests and signed-in users
-9. keep `contentIntegrationEnabled` and `relatedTopicsEnabled` false until the final hostname is stable and public presentation receives a separate reviewed milestone
+1. align the Discourse logo, favicon, principal colors, typography, cards, borders, buttons, links, spacing, and return path with nepali.no without attempting a pixel-identical Astro clone
+2. provide a clear `Norsk | English` selector and restore Norwegian Bokmal as the intended public default after development convenience
+3. verify mobile behavior, accessibility, login, invitation, activation, recovery, email links, categories, and protected API behavior after theme work
+4. preserve the verified post-promotion backup and complete a clean disposable restoration test as the next recovery-readiness checkpoint
+5. record recovery time, missing dependencies, retention, periodic restore testing, and credential-rotation responsibilities
+6. preserve `forum-poc.nepali.no` as the TLS-covered redirect and rollback asset until explicit retirement approval
+7. keep `contentIntegrationEnabled` and `relatedTopicsEnabled` false until public Forum presentation receives a separate reviewed milestone
 
 ## 8. Deferred but approved work
 
@@ -249,24 +247,24 @@ Connected-content work also completed through PRs #42 to #45:
 - News and Guide context-rail links use compact clickable titles with safe empty states.
 - The News desktop context rail no longer stretches to article height.
 
-### Unresolved Nepali News publishing incident
+### Nepali News publishing incident resolved and evidence preserved
 
-A real Nepali News publication on 10 August 2026 entered the signed automatic workflow but did not create a Forum topic. Verified evidence:
+A real Nepali News publication on 10 August 2026 entered the signed automatic workflow but did not create a Forum topic. The request reached `POST /posts.json` at `forum.nepali.no`, authenticated `forum-publisher`, targeted category 10, and received HTTP 422. No matching topic was created and no topic ID was written to Sanity.
 
-- automatic mode was selected and the Sanity workflow claim completed
-- the request reached `POST /posts.json` at `forum.nepali.no`
-- Discourse authenticated `forum-publisher`
-- category 10 was supplied
-- Discourse returned HTTP 422
-- no matching topic was created and no topic ID was written to Sanity
-- title length, direct title validation, minimum post length, publisher suspension or silencing, category visibility, category topic-creation permission, and required-tag configuration were ruled out
+The original document remains preserved with its historical `forum-publishing-result-unconfirmed` state, bounded attempt evidence, timestamps, failure code, and empty relationship. It must not be casually reset, republished, manually linked, or replaced with a hand-created topic.
 
-PR #46 now distinguishes confirmed Discourse HTTP 422 validation rejections from genuinely uncertain publication outcomes. It records only bounded non-sensitive failure codes and never stores raw provider messages. The original failed document retains its earlier `forum-publishing-result-unconfirmed` evidence and must not be casually reset or republished.
+Controlled investigation after the post-promotion backup established that Nepali text was not the cause. Norwegian and Nepali representative opening posts both passed the same in-memory Discourse text and post validators. The actual cause was Discourse host-spam protection for the deliberately Trust Level 0 publisher account: two existing links to `nepali.no` plus the proposed companion link reached the configured threshold of three. The organization-controlled domain was added narrowly to `allowed_spam_host_domains`; the global threshold remained unchanged, and `forum-publisher` remained Trust Level 0, non-staff, non-admin, and category-limited.
 
-### Immediate operational priorities
+A fresh synthetic Nepali News fixture then published exactly once through the signed automatic workflow. Discourse created topic 27 in category 10, authored by `forum-publisher`, and Sanity stored the durable relationship with `Created` status, completion time, and no failure code. A later ordinary editorial republication to enable homepage featuring preserved topic 27 and created no duplicate.
 
-1. Create, export, and checksum-verify a post-promotion native Discourse backup including uploads.
-2. Preserve the existing failed Nepali News attempt as audit evidence.
-3. After the post-promotion backup, use one controlled synthetic Nepali News fixture or an explicitly approved recovery procedure to obtain the new safe rejection classification.
-4. Confirm no topic exists before any reset or retry.
-5. Keep public Forum presentation disabled until the publishing issue and final presentation milestone are separately verified.
+### Current operational priorities
+
+1. Complete a clean disposable restoration test from a native backup and record recovery time and missing steps.
+2. Preserve the original incident, the failed synthetic classifier fixture, the successful topic 27 proof, and topics 13, 17, and 18 as operational evidence.
+3. Begin upgrade-safe visual harmonization of Discourse with nepali.no and verify mobile, accessibility, language selection, and account flows.
+4. Keep public Forum presentation disabled until a separate frontend milestone is reviewed and approved.
+5. Define backup retention, periodic restore testing, monitoring, upgrade, incident, and moderator-readiness procedures.
+
+### Homepage visual checkpoint
+
+PR #48 refined the desktop homepage composition by tightening hero and section spacing, aligning featured News media, linking the localized latest-News heading to the News archive, and giving the Community Directory a more professional card presentation. The responsive mobile-first structure was preserved. This checkpoint does not enable public Forum panels or alter Sanity publishing workflows.

@@ -1,8 +1,8 @@
 # Forum Integration Contract
 
 **Status:** Resolver and disabled public request contract production-proven; public presentation disabled
-**Current checkpoint:** `c95dda2`
-**Last reviewed:** 8 August 2026
+**Current checkpoint:** `2f94c2c`
+**Last reviewed:** 11 August 2026
 
 ## 1. Purpose
 
@@ -210,18 +210,17 @@ Every pull request targeting `main` now runs dependency-free Node suites coverin
 - signed Sanity publishing workflow and reconciliation behavior
 - the Sanity slug-object regression
 
-The expected full Forum total after PR #39 is 54 passing tests, followed by Astro Check and the production build. CI does not contact live Sanity or Discourse services.
+The expected focused suites after PR #46 are 56 passing Forum tests and 10 passing connected-content tests, for 66 tests in total, followed by Astro Check and the production build. CI does not contact live Sanity or Discourse services.
 
 ## 14. Next implementation stage
 
-- complete backup restoration and rollback proof before hostname changes
-- establish `forum.nepali.no` as the sole final canonical Forum identity
-- update the server-owned Forum base URL only after DNS, TLS, Discourse, and email are verified
-- repeat protected metadata and automatic publishing proofs on the final hostname
-- apply upgrade-safe visual alignment and a visible `Norsk | English` selector
-- build shared News and Guide presentation components only after the final hostname is stable
-- preserve the public disable switch, safe empty states, and independent site operation
-- add the controlled homepage discussion feed as a separate later milestone
+- apply upgrade-safe visual alignment between Discourse and nepali.no
+- complete a clean disposable restoration test and record recovery time, missing steps, retention, and periodic restore testing as the next recovery-readiness checkpoint
+- provide a visible `Norsk | English` selector and restore Norwegian Bokmal as the intended public default after development convenience
+- verify mobile, accessibility, account, email-link, category-permission, metadata, and publishing behavior after theme work
+- preserve the public disable switch, safe empty states, and independent public-site operation
+- build shared News and Guide Forum presentation only as a separate reviewed milestone
+- add the controlled homepage discussion feed as a later milestone with reverse verification against eligible Sanity content
 
 
 ## Role-aware category policy
@@ -289,6 +288,14 @@ News proof:
 - topic ID, editorial label, attempt state, and completion timestamps written back to Sanity
 - the synthetic article must remain future-dated after verification so it is not publicly eligible
 
+Final-hostname Nepali News proof:
+
+- a fresh synthetic Nepali News fixture created topic 27 in category 10
+- topic 27 was authored by `forum-publisher` and rendered the Nepali opening template correctly
+- Sanity stored the durable topic relationship, `Created` status, attempt state, and completion timestamp
+- the safe failure code remained empty
+- a later ordinary editorial republication preserved topic 27 and created no duplicate
+
 Companion opening text follows the Sanity content language, not the Discourse interface locale. Current templates support `nb` and `ne` for both News and Guides.
 
 The first Guide proof exposed a malformed `[object Object]` URL because a post-claim Sanity document contained the full slug object. Topic 17 was corrected manually. PR #39 now constructs publication input from the normalized pre-claim document, and a regression test proves that a claimed slug object cannot corrupt the public URL.
@@ -322,4 +329,8 @@ Raw provider messages, request bodies, titles, URLs, headers, credentials, and a
 
 Timeouts, transport failures, unreadable unsuccessful responses, malformed success responses, and other outcomes where topic creation cannot be excluded continue to use `forum-publishing-result-unconfirmed` and `manual_reconciliation_required`. A successful Discourse creation followed by uncertain or failed final Sanity write-back also remains a manual reconciliation case.
 
-A real Nepali News attempt on 10 August 2026 reached `forum.nepali.no`, authenticated as `forum-publisher`, targeted category 10, and received HTTP 422 without creating a topic. The earlier workflow version stored the conservative `forum-publishing-result-unconfirmed` code. That attempt remains preserved pending a controlled post-deployment diagnostic or recovery procedure.
+A real Nepali News attempt on 10 August 2026 reached `forum.nepali.no`, authenticated as `forum-publisher`, targeted category 10, and received HTTP 422 without creating a topic. The earlier workflow version stored the conservative `forum-publishing-result-unconfirmed` code, which remains preserved as historical evidence.
+
+A separate controlled synthetic Nepali fixture exercised the deployed classifier and returned `forum-publishing-rejected-post` without creating a topic. Read-only Discourse inspection then confirmed that the rejection was not language-specific: Norwegian and Nepali representative posts passed the same text and post validators. The failure was caused by Trust Level 0 host-spam protection reaching its threshold when the proposed companion post added another link to `nepali.no`.
+
+The narrow production correction added only the organization-controlled `nepali.no` domain to `allowed_spam_host_domains`. The global spam threshold, publisher trust level, staff status, API scope, and category permissions were not weakened. Topic 27 subsequently proved successful Nepali automatic publishing and Sanity write-back on the final hostname. The original real document and both synthetic diagnostic records remain preserved and must not be casually reset or republished.

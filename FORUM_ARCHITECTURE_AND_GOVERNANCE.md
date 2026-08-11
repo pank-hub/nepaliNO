@@ -2,7 +2,7 @@
 
 **Status:** Discourse selected; private pilot operational
 **Host:** Gigahost, Norway
-**Last reviewed:** 9 August 2026
+**Last reviewed:** 11 August 2026
 
 ## 1. Settled platform decision
 
@@ -125,7 +125,7 @@ Public launch requires at minimum:
 - language-tag design
 - public activation decision
 - email template tone and language polishing
-- transition from pilot hostname/status to approved production presentation
+- upgrade-safe visual harmonization with nepali.no and approved production presentation
 
 
 ## Category approval and future-owner routine
@@ -172,7 +172,7 @@ Sanity webhook delivery may be repeated, delayed, or received out of order. The 
 
 ## Verified automation and preservation rules
 
-Production synthetic proofs created Guide topic 17 in category 11 and News topic 18 in category 10. Both were authored by `forum-publisher`, used Norwegian templates because the source language was `nb`, and wrote durable topic relationships and completed workflow state back to Sanity.
+Production synthetic proofs created Guide topic 17 in category 11 and News topic 18 in category 10 using Norwegian templates. After resolution of the 10 August incident, a fresh Nepali News proof created topic 27 in category 10 using the Nepali template. All three were authored by `forum-publisher` and wrote durable topic relationships and completed workflow state back to Sanity. Republishing the already-linked topic 27 fixture for an ordinary editorial homepage change created no duplicate.
 
 Completed attempt IDs, timestamps, and topic relationships are operational audit evidence. Future owners must not clear them casually. A document with an uncertain publishing result, an in-progress claim, or a created topic without confirmed write-back requires inspection of both systems before any retry.
 
@@ -196,4 +196,6 @@ A confirmed provider rejection and an uncertain publication outcome require diff
 - Real editorial content must not be repeatedly republished as a diagnostic mechanism. Prefer a clearly labelled synthetic fixture for controlled end-to-end tests.
 - A failed real document may be reset only after an authorized operator confirms that no topic exists, records the previous attempt evidence, verifies the corrected production code, and uses a single controlled retry.
 
-The unresolved 10 August 2026 Nepali News incident is the first production evidence covered by this distinction. No matching topic exists, but the original attempt remains preserved because it was recorded before confirmed rejection classification was deployed.
+The 10 August 2026 Nepali News incident remains the first production evidence covered by this distinction. No matching topic exists, and the original attempt remains preserved because it was recorded before confirmed rejection classification was deployed.
+
+The incident's technical cause is resolved. A controlled synthetic rejection proved the safe `forum-publishing-rejected-post` classification, and read-only Discourse comparison showed that Nepali content itself was valid. Trust Level 0 host-spam protection rejected the next `nepali.no` link when accumulated use reached the configured threshold. The narrow correction allowlisted only the organization-controlled `nepali.no` domain while preserving the global threshold and all least-privilege properties of `forum-publisher`. A new synthetic Nepali publication then created topic 27 successfully and wrote the relationship back to Sanity. The original real attempt, the failed synthetic classifier fixture, topic 27, and topics 13, 17, and 18 are operational evidence and must not be casually cleared, republished, or deleted.

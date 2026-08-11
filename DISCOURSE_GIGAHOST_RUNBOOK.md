@@ -1,7 +1,7 @@
 # Discourse on Gigahost Operations Runbook
 
 **Status:** Private pilot
-**Last reviewed:** 8 August 2026
+**Last reviewed:** 11 August 2026
 **Audience:** Authorized infrastructure operators
 
 ## 1. Secret boundary
@@ -141,16 +141,18 @@ Credential values live only in Discourse, the password manager, and Production-o
 
 Current proof:
 
-- native Discourse backup created with database and uploads
-- server copy retained
-- archive copied by SCP to an encrypted laptop
-- SHA-256 checksum matched
+- pre-promotion and post-promotion native Discourse backups were created with database and uploads
+- the Discourse-managed server originals were retained
+- the post-promotion archive was copied by SCP to an encrypted laptop through the named-key workflow
+- server and local byte sizes matched
+- server and local SHA-256 checksums matched exactly
+- only the restricted temporary home-directory transfer copy was removed after verification
 
 Still required:
 
-- restore that native backup to a clean disposable VPS
-- record recovery time and missing steps
-- define retention and periodic test schedule
+- restore a native backup to a clean disposable VPS
+- record recovery time, missing steps, and credential-rotation responsibilities
+- define retention and a periodic restore-test schedule
 
 Before upgrades or high-risk changes:
 
@@ -272,10 +274,12 @@ Do not attempt a pixel-identical Astro clone or depend on obsolete locale-switch
 
 The signed Sanity workflow is production-proven:
 
-- Guide topic 17 in category 11
-- News topic 18 in category 10
-- both authored by `forum-publisher`
-- topic relationships and completed automation state written back to Sanity
+- Guide topic 17 in category 11 using the Norwegian template
+- News topic 18 in category 10 using the Norwegian template
+- Nepali News topic 27 in category 10 using the Nepali template on the final hostname
+- all were authored by `forum-publisher`
+- topic relationships and completed automation state were written back to Sanity
+- a later ordinary republication of the topic 27 fixture preserved the relationship and created no duplicate
 
 If automation is marked `creating`, `created` without a confirmed relationship, or contains `forum-publishing-result-unconfirmed`, do not republish or clear fields. Inspect the Sanity document, Discourse categories, publisher-account activity, and Vercel function logs before deciding whether reconciliation is safe.
 
@@ -296,7 +300,21 @@ Current hostname state:
 Backup state:
 
 - a fresh pre-transition native backup including uploads was exported off-server and its SHA-256 checksum matched
-- a post-promotion backup including uploads remains a top operational priority and must be exported and checksum-verified before substantial additional Forum changes
+- a fresh post-promotion native backup including uploads was also exported off-server
+- server and local byte sizes and SHA-256 checksums matched exactly
+- the temporary transfer copy was removed and the Discourse-managed original was preserved
+- a clean disposable restore test, recovery-time record, retention policy, and periodic restore schedule remain outstanding
+
+Publishing incident resolution:
+
+- the 10 August real Nepali News attempt remains preserved with its historical uncertain code and empty relationship
+- a controlled synthetic fixture returned the bounded `forum-publishing-rejected-post` code without creating a topic
+- Norwegian and Nepali representative posts both passed in-memory text and post validation
+- `forum-publisher` had two existing links to `nepali.no`; the proposed third link reached `newuser_spam_host_threshold`, causing host-spam rejection
+- `nepali.no` was added narrowly to `allowed_spam_host_domains`
+- the global threshold remained unchanged, and `forum-publisher` remained Trust Level 0, non-staff, non-admin, and category-limited
+- a fresh synthetic Nepali publication created topic 27 and wrote the durable Sanity relationship successfully
+- ordinary republication of the already-linked fixture created no duplicate
 
 ### Checklist for an automatic publication returning HTTP 422
 
