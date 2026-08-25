@@ -1,0 +1,87 @@
+---
+interface Props {
+  title: string
+  eyebrow?: string
+  accent?: 'brand' | 'civic' | 'success'
+}
+
+const {title, eyebrow, accent = 'brand'} = Astro.props
+---
+
+<section class:list={['context-rail-panel', `context-rail-panel--${accent}`]}>
+  {eyebrow && <p class="context-rail-panel__eyebrow">{eyebrow}</p>}
+  <h2>{title}</h2>
+  <div class="context-rail-panel__content"><slot /></div>
+</section>
+
+<style>
+  .context-rail-panel {
+    min-width: 0;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .context-rail-panel--brand { border-block-start: 0.22rem solid var(--brand); }
+  .context-rail-panel--civic { border-block-start: 0.22rem solid var(--civic); }
+  .context-rail-panel--success { border-block-start: 0.22rem solid var(--success); }
+
+  .context-rail-panel__eyebrow {
+    margin-block-end: 0.4rem;
+    color: var(--brand);
+    font-size: 0.76rem;
+    font-weight: 760;
+  }
+
+  h2 { font-size: 1.1rem; }
+
+  .context-rail-panel__content {
+    min-width: 0;
+    margin-block-start: 1rem;
+  }
+
+  .context-rail-panel :global(dl) {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+  }
+
+  .context-rail-panel :global(dl > div) {
+    padding-block-start: 0.8rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .context-rail-panel :global(dt) {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 760;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  :global(html[lang='ne']) .context-rail-panel :global(dt) {
+    font-size: 0.82rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .context-rail-panel :global(dd) {
+    margin: 0.22rem 0 0;
+    color: var(--civic-deep);
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+
+  .context-rail-panel :global(ul) {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .context-rail-panel :global(a) { overflow-wrap: anywhere; }
+  .context-rail-panel :global(.button) { width: 100%; margin-block-start: 1rem; }
+</style>
