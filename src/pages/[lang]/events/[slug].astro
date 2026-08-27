@@ -74,28 +74,63 @@ const spokenLanguages = [...(event.eventLanguages || []).map((value) => language
 const address = [event.address, event.postalCode, event.city].filter(Boolean).join(', ')
 const priceLabel = event.isFree ? eventLabels.freeEvent : event.priceDescription || (typeof event.priceNok === 'number' ? `${event.priceNok} NOK` : eventLabels.price)
 const actionLabel = event.registrationRequirement === 'tickets-required' ? eventLabels.buyTickets : eventLabels.registerExternally
+const startDate = new Date(event.startDateTime)
+const dateCardDay = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, day: '2-digit'}).format(startDate)
+const dateCardMonth = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, month: 'short'}).format(startDate)
+const dateCardYear = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, year: 'numeric'}).format(startDate)
+const heroVenue = event.venueName || event.city || formats[event.eventFormat] || event.eventFormat
+const heroTime = event.isAllDay
+  ? eventLabels.allDay
+  : `${formatTime(event.startDateTime)}${event.endDateTime ? ` – ${formatTime(event.endDateTime)}` : ''}`
 ---
 <BaseLayout language={language} title={`${event.title} | nepali.no`} description={event.summary}>
   <SiteHeader slot="header" language={language} alternatePath={alternatePath} />
   <article class="event-page">
-    <header class="event-header"><div class="container">
-      <nav class="breadcrumbs" aria-label={eventLabels.pageTitle}><a href={`/${language}/`}>{labels.navigation.home}</a><span aria-hidden="true">/</span><a href={`/${language}/events/`}>{eventLabels.pageTitle}</a></nav>
-      <div class="event-statuses">
-        {isOngoing && <strong class="status status-live">{eventLabels.ongoing}</strong>}
-        {isPast && <strong class="status">{eventLabels.completed}</strong>}
-        {event.eventStatus !== 'scheduled' && <strong class={`status status-${event.eventStatus}`}>{statuses[event.eventStatus] ?? event.eventStatus}</strong>}
-        <span>{categories[event.eventType] ?? event.eventType}</span><span>{formats[event.eventFormat] ?? event.eventFormat}</span>
-      </div>
-      <h1>{event.title}</h1><p class="lead">{event.summary}</p>
-    </div></header>
+    <header class="event-header">
+      <div class="container event-header__inner">
+        <nav class="breadcrumbs" aria-label={eventLabels.pageTitle}><a href={`/${language}/`}>{labels.navigation.home}</a><span aria-hidden="true">/</span><a href={`/${language}/events/`}>{eventLabels.pageTitle}</a></nav>
 
-    {heroUrl && <figure class="event-hero container"><img src={heroUrl} alt={event.featuredImage?.alt ?? ''} width="1600" height="960" decoding="async" />{(event.featuredImage?.caption || event.featuredImage?.credit) && <figcaption>{event.featuredImage?.caption && <span>{event.featuredImage.caption}</span>}{event.featuredImage?.credit && <span>{event.featuredImage.credit}</span>}</figcaption>}</figure>}
+        <div class="event-statuses">
+          {isOngoing && <strong class="status status-live">{eventLabels.ongoing}</strong>}
+          {isPast && <strong class="status">{eventLabels.completed}</strong>}
+          {event.eventStatus !== 'scheduled' && <strong class={`status status-${event.eventStatus}`}>{statuses[event.eventStatus] ?? event.eventStatus}</strong>}
+          <span>{categories[event.eventType] ?? event.eventType}</span>
+          <span>{formats[event.eventFormat] ?? event.eventFormat}</span>
+        </div>
+
+        <div class="event-hero-grid">
+          <time class="event-date-card" datetime={event.startDateTime}>
+            <span class="event-date-card__month">{dateCardMonth}</span>
+            <strong>{dateCardDay}</strong>
+            <span class="event-date-card__year">{dateCardYear}</span>
+          </time>
+
+          <div class="event-hero-copy">
+            <h1>{event.title}</h1>
+            <p class="lead">{event.summary}</p>
+
+            <dl class="event-hero-facts">
+              <div><dt>{eventLabels.dateAndTime}</dt><dd>{formatDateRange(event.startDateTime, event.endDateTime)} · {heroTime}</dd></div>
+              <div><dt>{eventLabels.venue}</dt><dd>{heroVenue}</dd></div>
+              <div><dt>{eventLabels.price}</dt><dd>{priceLabel}</dd></div>
+            </dl>
+
+            <div class="event-hero-actions">
+              {canRegister && <a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{actionLabel} <span aria-hidden="true">↗</span></a>}
+              {event.mapUrl && <a class="button button-secondary" href={event.mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} <span aria-hidden="true">↗</span></a>}
+            </div>
+
+            {!canRegister && event.registrationRequirement !== 'not-required' && <p class="event-hero-registration-state">{isPast || event.eventStatus === 'cancelled' ? eventLabels.registrationUnavailable : registrationStatuses[event.registrationStatus] ?? eventLabels.registrationUnavailable}</p>}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {heroUrl && <figure class="event-hero container"><img src={heroUrl} alt={event.featuredImage?.alt ?? ''} width="1600" height="900" decoding="async" />{(event.featuredImage?.caption || event.featuredImage?.credit) && <figcaption>{event.featuredImage?.caption && <span>{event.featuredImage.caption}</span>}{event.featuredImage?.credit && <span>{event.featuredImage.credit}</span>}</figcaption>}</figure>}
 
     <div class="container event-layout">
       <main class="event-content">
         {event.description && event.description.length > 0 && <section class="prose"><PortableText value={event.description} components={portableTextComponents} /></section>}
-        {canRegister && <section class="registration-panel"><div><h2>{eventLabels.registration}</h2><p>{eventLabels.externalRegistrationNotice}</p></div><a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{actionLabel} <span aria-hidden="true">↗</span></a></section>}
-        {!canRegister && event.registrationRequirement !== 'not-required' && <p class="registration-unavailable">{isPast || event.eventStatus === 'cancelled' ? eventLabels.registrationUnavailable : registrationStatuses[event.registrationStatus] ?? eventLabels.registrationUnavailable}</p>}
         {event.sourceUrl && <aside class="source-note"><div><strong>{eventLabels.originalSource}</strong><p>{eventLabels.lastVerified}: <time datetime={event.lastVerifiedAt}>{formatDate(event.lastVerifiedAt)}</time></p></div><a class="button button-secondary" href={event.sourceUrl} target="_blank" rel="noopener noreferrer">{eventLabels.originalSource} <span aria-hidden="true">↗</span></a></aside>}
       </main>
 
@@ -146,26 +181,39 @@ const actionLabel = event.registrationRequirement === 'tickets-required' ? event
 </BaseLayout>
 <style>
   .event-page { min-width: 0; background: #fff; }
-  .event-header { border-bottom: 1px solid var(--border); background: radial-gradient(circle at 88% 0%, rgb(198 42 31 / .08), transparent 20rem), var(--page-bg); }
-  .event-header .container { padding-block: clamp(2.5rem, 7vw, 5.5rem); }
+  .event-header { border-bottom: 1px solid var(--border); background: radial-gradient(circle at 88% 0%, rgb(198 42 31 / .08), transparent 20rem), linear-gradient(135deg, var(--surface-muted), var(--page-bg) 64%, #fff5f4); }
+  .event-header__inner { padding-block: clamp(2.25rem, 5vw, 4rem); }
   .breadcrumbs { display: flex; flex-wrap: wrap; gap: .5rem; color: var(--text-soft); font-size: .85rem; }
   .breadcrumbs a { color: var(--civic); font-weight: 650; }
-  .event-statuses { display: flex; flex-wrap: wrap; gap: .45rem; margin-block-start: 1.75rem; }
-  .event-statuses > * { padding: .3rem .55rem; border-radius: 999px; background: var(--surface-muted); color: var(--civic-deep); font-size: .76rem; font-weight: 760; }
+  .event-statuses { display: flex; flex-wrap: wrap; gap: .45rem; margin-block-start: 1.5rem; }
+  .event-statuses > * { padding: .3rem .55rem; border-radius: 999px; background: var(--surface); color: var(--civic-deep); font-size: .76rem; font-weight: 760; box-shadow: inset 0 0 0 1px var(--border); }
   .event-statuses .status-live { background: #e3f5ea; color: #15603a; }
   .event-statuses .status-cancelled { background: #fde8e6; color: #9e281f; }
   .event-statuses .status-postponed, .event-statuses .status-rescheduled { background: #fff2cc; color: #6f5200; }
-  .event-header h1 { max-width: 20ch; margin-block-start: 1rem; font-size: clamp(2.25rem, 6vw, 4.75rem); }
-  .event-header .lead { max-width: 52rem; margin-block-start: 1.1rem; }
-  .event-hero { margin-block-start: clamp(1.25rem, 4vw, 3rem); }
-  .event-hero img { width: 100%; max-height: 46rem; object-fit: cover; }
+  .event-hero-grid { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; margin-block-start: 1.5rem; }
+  .event-date-card { display: grid; place-items: center; align-content: center; min-height: 8.5rem; padding: 1rem .75rem; border: 1px solid var(--border); border-block-start: .35rem solid var(--brand); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-soft); color: var(--civic-deep); text-decoration: none; }
+  .event-date-card__month { color: var(--brand); font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  html[lang='ne'] .event-date-card__month { letter-spacing: 0; text-transform: none; }
+  .event-date-card strong { margin-block: .15rem; font-size: 2.7rem; line-height: 1; }
+  .event-date-card__year { color: var(--text-muted); font-size: .85rem; font-weight: 700; }
+  .event-hero-copy { min-width: 0; }
+  .event-header h1 { max-width: 24ch; margin: 0; font-size: clamp(2.2rem, 4.8vw, 4.25rem); line-height: 1.06; text-wrap: balance; }
+  .event-header .lead { max-width: 54rem; margin-block-start: 1rem; }
+  .event-hero-facts { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-block-start: 1.4rem; }
+  .event-hero-facts div { min-width: min(100%, 11rem); }
+  .event-hero-facts dt { color: var(--text-soft); font-size: .72rem; font-weight: 760; letter-spacing: .05em; text-transform: uppercase; }
+  html[lang='ne'] .event-hero-facts dt { font-size: .82rem; letter-spacing: 0; text-transform: none; }
+  .event-hero-facts dd { margin: .2rem 0 0; color: var(--civic-deep); font-weight: 700; }
+  .event-hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: 1.5rem; }
+  .event-hero-registration-state { margin-block-start: 1.25rem; padding: .8rem 1rem; border-inline-start: .25rem solid var(--brand); background: var(--surface); color: var(--civic-deep); font-weight: 700; }
+  .event-hero { margin-block-start: clamp(1rem, 3vw, 2rem); }
+  .event-hero img { width: 100%; aspect-ratio: 16 / 9; max-height: 36rem; border-radius: var(--radius-lg); object-fit: cover; box-shadow: var(--shadow-soft); }
   .event-hero figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding-block: .65rem; border-bottom: 1px solid var(--border); color: var(--text-soft); font-size: .8rem; }
   .event-layout { display: grid; grid-template-columns: minmax(0, 46rem) minmax(17rem, 21rem); justify-content: space-between; gap: clamp(2.5rem, 8vw, 7rem); padding-block: clamp(2.5rem, 8vw, 6rem); }
   .event-content { min-width: 0; }
   .event-content .prose { font-size: 1.08rem; }
-  .registration-panel, .source-note { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-block-start: 2.5rem; padding: 1.25rem; border-block: 1px solid var(--border-strong); }
-  .registration-panel p, .source-note p { margin-block-start: .35rem; color: var(--text-muted); font-size: .9rem; }
-  .registration-unavailable { margin-block-start: 2rem; padding: 1rem; border-inline-start: .3rem solid var(--brand); background: var(--surface-muted); font-weight: 700; }
+  .source-note { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-block-start: 2.5rem; padding: 1.25rem; border-block: 1px solid var(--border-strong); }
+  .source-note p { margin-block-start: .35rem; color: var(--text-muted); font-size: .9rem; }
   @media (max-width: 58rem) { .event-layout { grid-template-columns: 1fr; } }
-  @media (max-width: 38rem) { .event-header .container { padding-block: 2.25rem 3rem; } .event-header h1 { font-size: clamp(2rem, 11vw, 3.3rem); } .event-hero { width: 100%; margin-block-start: 0; } .event-hero img { aspect-ratio: 4 / 3; } .event-hero figcaption { padding-inline: var(--page-gutter); } .event-layout { padding-block: 2.25rem 4rem; } .registration-panel, .source-note { align-items: stretch; flex-direction: column; } .registration-panel .button, .source-note .button { width: 100%; } }
+  @media (max-width: 38rem) { .event-header__inner { padding-block: 2rem 2.5rem; } .event-statuses { margin-block-start: 1.2rem; } .event-hero-grid { grid-template-columns: 4.75rem minmax(0, 1fr); gap: 1rem; margin-block-start: 1.25rem; } .event-date-card { min-height: 6.1rem; padding: .75rem .4rem; border-radius: var(--radius-md); } .event-date-card strong { font-size: 2rem; } .event-date-card__month, .event-date-card__year { font-size: .7rem; } .event-header h1 { font-size: clamp(1.85rem, 9vw, 3rem); } .event-header .lead { margin-block-start: .8rem; } .event-hero-facts { display: grid; grid-template-columns: 1fr; gap: .7rem; margin-block-start: 1.1rem; } .event-hero-actions { align-items: stretch; flex-direction: column; margin-block-start: 1.25rem; } .event-hero-actions .button { width: 100%; } .event-hero { width: 100%; margin-block-start: 0; } .event-hero img { aspect-ratio: 4 / 3; border-radius: 0; } .event-hero figcaption { padding-inline: var(--page-gutter); } .event-layout { padding-block: 2.25rem 4rem; } .source-note { align-items: stretch; flex-direction: column; } .source-note .button { width: 100%; } }
 </style>
