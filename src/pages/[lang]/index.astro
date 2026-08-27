@@ -129,6 +129,8 @@ const latestStories = await sanityClient.fetch<HomeArticle[]>(
   HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY,
   {language, excludeId: featuredStory?._id ?? null},
 )
+const supportingStories = latestStories.slice(0, 2)
+const compactStories = latestStories.slice(2, 5)
 
 const imageUrl = (image?: HomeArticleImage, width = 1200) =>
   image?.asset ? urlFor(image as any).width(width).fit('crop').auto('format').url() : null
@@ -359,51 +361,93 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
             )}
 
             {latestStories.length > 0 && (
-              <section
-                class:list={['latest-stories', !featuredStory && 'latest-stories--full']}
-                aria-labelledby="latest-news-heading"
-              >
+              <section class="homepage-news-stream" aria-labelledby="latest-news-heading">
                 <h3 id="latest-news-heading">
                   <a href={`/${language}/news/`}>{labels.home.latestNews}</a>
                 </h3>
-                <ol>
-                  {latestStories.map((article) => (
-                    <li>
-                      <article class="latest-story">
-                        <div class="latest-story__text">
-                          <p class="story-kicker">
-                            {getRegionLabel(article.newsRegion)} · {getCategoryLabel(article.category)}
-                          </p>
-                          <h4>
-                            <a href={`/${language}/news/${article.slug}/`}>
-                              {article.title}
+
+                {supportingStories.length > 0 && (
+                  <ol class="supporting-stories">
+                    {supportingStories.map((article) => (
+                      <li>
+                        <article class="supporting-story">
+                          {imageUrl(article.featuredImage, 720) ? (
+                            <a
+                              class="supporting-story__image"
+                              href={`/${language}/news/${article.slug}/`}
+                              tabindex="-1"
+                              aria-hidden="true"
+                            >
+                              <img
+                                src={imageUrl(article.featuredImage, 720) ?? ''}
+                                alt=""
+                                width="720"
+                                height="450"
+                                loading="lazy"
+                                decoding="async"
+                              />
                             </a>
-                          </h4>
-                          <time datetime={article.publishedAt}>
-                            {formatDate(article.publishedAt)}
-                          </time>
-                        </div>
-                        {imageUrl(article.featuredImage, 360) && (
-                          <a
-                            class="latest-story__image"
-                            href={`/${language}/news/${article.slug}/`}
-                            tabindex="-1"
-                            aria-hidden="true"
-                          >
-                            <img
-                              src={imageUrl(article.featuredImage, 360) ?? ''}
-                              alt=""
-                              width="360"
-                              height="240"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </a>
-                        )}
-                      </article>
-                    </li>
-                  ))}
-                </ol>
+                          ) : (
+                            <div class="supporting-story__placeholder" aria-hidden="true"></div>
+                          )}
+                          <div class="supporting-story__content">
+                            <p class="story-kicker">
+                              {getRegionLabel(article.newsRegion)} · {getCategoryLabel(article.category)}
+                            </p>
+                            <h4>
+                              <a href={`/${language}/news/${article.slug}/`}>{article.title}</a>
+                            </h4>
+                            <p>{article.summary}</p>
+                            <time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
+                          </div>
+                        </article>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+
+                {compactStories.length > 0 && (
+                  <ol class="compact-stories">
+                    {compactStories.map((article) => (
+                      <li>
+                        <article class="latest-story">
+                          <div class="latest-story__text">
+                            <p class="story-kicker">
+                              {getRegionLabel(article.newsRegion)} · {getCategoryLabel(article.category)}
+                            </p>
+                            <h4>
+                              <a href={`/${language}/news/${article.slug}/`}>{article.title}</a>
+                            </h4>
+                            <time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
+                          </div>
+                          {imageUrl(article.featuredImage, 360) && (
+                            <a
+                              class="latest-story__image"
+                              href={`/${language}/news/${article.slug}/`}
+                              tabindex="-1"
+                              aria-hidden="true"
+                            >
+                              <img
+                                src={imageUrl(article.featuredImage, 360) ?? ''}
+                                alt=""
+                                width="360"
+                                height="240"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            </a>
+                          )}
+                        </article>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+
+                <div class="homepage-news-footer">
+                  <a class="section-link" href={`/${language}/news/`}>
+                    {labels.home.viewAllNews} <span aria-hidden="true">→</span>
+                  </a>
+                </div>
               </section>
             )}
           </div>
@@ -1102,6 +1146,149 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     object-fit: cover;
   }
 
+  .homepage-news-stream {
+    border-top: 0.3rem solid var(--brand);
+  }
+
+  .homepage-news-stream > h3 {
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--civic-deep);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .homepage-news-stream > h3 {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .homepage-news-stream > h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+    text-underline-offset: 0.22em;
+  }
+
+  .homepage-news-stream > h3 a:hover {
+    color: var(--brand);
+    text-decoration: underline;
+  }
+
+  .homepage-news-stream > h3 a:focus-visible {
+    border-radius: 0.2rem;
+    outline: 0.18rem solid rgb(198 42 31 / 0.25);
+    outline-offset: 0.2rem;
+  }
+
+  .supporting-stories,
+  .compact-stories {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .supporting-stories {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    padding-block: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .supporting-story {
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .supporting-story__image,
+  .supporting-story__placeholder {
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 8 / 5;
+    background: linear-gradient(135deg, var(--civic), var(--civic-deep));
+  }
+
+  .supporting-story__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 250ms ease;
+  }
+
+  .supporting-story__image:hover img {
+    transform: scale(1.015);
+  }
+
+  .supporting-story__content {
+    padding: 1.15rem;
+  }
+
+  .supporting-story h4 {
+    margin-block-start: 0.4rem;
+    font-size: clamp(1.25rem, 2.4vw, 1.65rem);
+    line-height: 1.25;
+  }
+
+  .supporting-story h4 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .supporting-story h4 a:hover {
+    color: var(--brand);
+  }
+
+  .supporting-story__content > p:not(.story-kicker) {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-block-start: 0.7rem;
+    color: var(--text-muted);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .supporting-story time {
+    display: block;
+    margin-block-start: 0.9rem;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+  }
+
+  .compact-stories {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .compact-stories > li {
+    padding-inline: 1.25rem;
+    border-inline-start: 1px solid var(--border);
+  }
+
+  .compact-stories > li:first-child {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .compact-stories > li:last-child {
+    padding-inline-end: 0;
+  }
+
+  .homepage-news-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-block-start: 1.25rem;
+    padding-block-start: 1rem;
+    border-top: 2px solid var(--civic-deep);
+  }
+
+  .homepage-news-footer .section-link {
+    margin: 0;
+  }
+
   .editorial-empty {
     position: relative;
     overflow: hidden;
@@ -1595,6 +1782,25 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     }
 
 
+  /* homepage-news-transition-tightening */
+  .home-news {
+    padding-block-end: clamp(1.5rem, 2.5vw, 2.25rem);
+  }
+
+  .home-news + .home-section {
+    padding-block-start: clamp(2rem, 3.5vw, 2.75rem);
+  }
+
+  @media (max-width: 47.999rem) {
+    .home-news {
+      padding-block-end: 1.25rem;
+    }
+
+    .home-news + .home-section {
+      padding-block-start: 1.75rem;
+    }
+  }
+
   @media (max-width: 63rem) {
     .home-hero__grid,
     .discussions__grid,
@@ -1681,8 +1887,31 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
       aspect-ratio: 4 / 3;
     }
 
-    .latest-stories ol {
+    .latest-stories ol,
+    .supporting-stories,
+    .compact-stories {
       grid-template-columns: 1fr;
+    }
+
+    .supporting-stories {
+      gap: 1rem;
+    }
+
+    .compact-stories > li,
+    .compact-stories > li:first-child,
+    .compact-stories > li:last-child {
+      padding-inline: 0;
+      border-inline-start: 0;
+    }
+
+    .homepage-news-footer {
+      margin-block-start: 1rem;
+      padding-block-start: 0.9rem;
+    }
+
+    .homepage-news-footer .section-link {
+      width: 100%;
+      justify-content: flex-end;
     }
 
     .latest-stories ol > li,
