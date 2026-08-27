@@ -295,23 +295,15 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
               <strong id="important-now-heading">{labels.home.importantNow}</strong>
             </div>
             <a href={`/${language}/news/${importantNow.slug}/`}>
-              {importantNow.title}
+              <span>{importantNow.title}</span>
+              <span aria-hidden="true">→</span>
             </a>
-            {importantNow.importantUntil && (
-              <p>
-                {labels.home.importantUntil}: {' '}
-                <time datetime={importantNow.importantUntil}>
-                  {formatDate(importantNow.importantUntil)}
-                </time>
-              </p>
-            )}
           </aside>
         )
       }
 
       <div class="section-heading news-heading">
         <div>
-          <p class="eyebrow">{labels.home.newsEyebrow}</p>
           <h2 id="home-news-heading">{labels.home.newsHeading}</h2>
           <p>{labels.home.newsDescription}</p>
         </div>
@@ -857,10 +849,10 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
 
   .important-now {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     gap: 1rem;
     align-items: center;
-    margin-block-end: clamp(2rem, 5vw, 3.5rem);
+    margin-block-end: clamp(0.9rem, 2vw, 1.4rem);
     padding: 0.85rem 1rem;
     border-block: 1px solid #f0b4ae;
     background: #fff8f7;
@@ -892,6 +884,10 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
   }
 
   .important-now > a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     color: var(--civic-deep);
     font-weight: 760;
     text-decoration: none;
@@ -901,10 +897,17 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     color: var(--brand);
   }
 
-  .important-now > p {
-    color: var(--text-soft);
-    font-size: 0.78rem;
-    white-space: nowrap;
+  .important-now__label span {
+    animation: important-now-pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes important-now-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.82); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .important-now__label span { animation: none; }
   }
 
   .news-heading {
@@ -1558,6 +1561,10 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
         padding-block-end: clamp(2.25rem, 3.5vw, 3.25rem);
       }
 
+      .home-news:has(.important-now) {
+        padding-block-start: clamp(1.5rem, 2.5vw, 2.25rem);
+      }
+
       .home-news + .home-section {
         padding-block-start: clamp(2.25rem, 3.5vw, 3.25rem);
         padding-block-end: clamp(2.25rem, 3.5vw, 3.25rem);
@@ -1635,15 +1642,20 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
       text-align: center;
     }
 
+    .home-news:has(.important-now) {
+      padding-block-start: 1.25rem;
+    }
+
     .important-now {
       grid-template-columns: 1fr;
       gap: 0.45rem;
-      padding-inline: 0;
+      margin-block-end: 0.9rem;
+      padding: 0.8rem 0;
       background: transparent;
     }
 
-    .important-now > p {
-      white-space: normal;
+    .important-now > a {
+      align-items: flex-start;
     }
 
     .news-heading {

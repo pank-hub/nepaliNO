@@ -30,7 +30,7 @@ export const ne = {
     informationDescription: "सरकारी स्रोतमा आधारित सरल जानकारी।",
     viewAllInformation: "सबै जानकारी हेर्नुहोस्",
     newsEyebrow: "समुदायसँग जोडिनुहोस्",
-    newsHeading: "पछिल्ला समाचार",
+    newsHeading: "ताजा समाचार",
     newsDescription:
       "नर्वे, नेपाल र नर्वेको नेपाली समुदायसँग सम्बन्धित समाचार र अपडेटहरू।",
     viewAllNews: "सबै समाचार हेर्नुहोस्",
