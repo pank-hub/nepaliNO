@@ -207,6 +207,12 @@ const heroUrl = listing.coverImage?.asset
 const logoUrl = listing.logo?.asset
   ? urlFor(listing.logo as any).width(360).height(360).fit('max').auto('format').url()
   : null
+const socialImageUrl = listing.coverImage?.asset
+  ? urlFor(listing.coverImage as any).width(1200).height(630).fit('crop').auto('format').url()
+  : listing.logo?.asset
+    ? urlFor(listing.logo as any).width(1200).height(630).fit('max').auto('format').url()
+    : undefined
+const socialImageAlt = listing.coverImage?.alt || listing.logo?.alt || listing.name
 const portableTextComponents = {}
 const socialLinks = [
   listing.facebookUrl ? {label: 'Facebook', url: listing.facebookUrl} : null,
@@ -215,7 +221,7 @@ const socialLinks = [
 ].filter((item): item is {label: string; url: string} => Boolean(item))
 ---
 
-<BaseLayout language={language} title={`${listing.name} | nepali.no`} description={listing.summary}>
+<BaseLayout language={language} title={`${listing.name} | nepali.no`} description={listing.summary} socialImage={socialImageUrl} socialImageAlt={socialImageAlt}>
   <SiteHeader slot="header" language={language} alternatePath={alternatePath} />
 
   <article class="listing-page">

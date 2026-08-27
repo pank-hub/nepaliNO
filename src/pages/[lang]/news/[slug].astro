@@ -124,6 +124,14 @@ const featuredImageUrl = article.featuredImage?.asset
       .auto('format')
       .url()
   : null
+const socialImageUrl = article.featuredImage?.asset
+  ? urlFor(article.featuredImage as any)
+      .width(1200)
+      .height(630)
+      .fit('crop')
+      .auto('format')
+      .url()
+  : undefined
 
 const portableTextComponents = {
   type: {
@@ -145,6 +153,10 @@ const translationLabel = newsLabels.translation
   language={language}
   title={`${article.title} | nepali.no`}
   description={article.summary}
+  socialImage={socialImageUrl}
+  socialImageAlt={article.featuredImage?.alt || article.title}
+  contentType="article"
+  publishedAt={article.publishedAt}
 >
   <SiteHeader
     slot="header"

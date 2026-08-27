@@ -69,6 +69,7 @@ const languages = eventLabels.languages as Record<string, string>
 const registrationRequirements = eventLabels.registrationRequirements as Record<string, string>
 const registrationStatuses = eventLabels.registrationStatuses as Record<string, string>
 const heroUrl = event.featuredImage?.asset ? urlFor(event.featuredImage as any).width(1600).height(960).fit('crop').auto('format').url() : null
+const socialImageUrl = event.featuredImage?.asset ? urlFor(event.featuredImage as any).width(1200).height(630).fit('crop').auto('format').url() : undefined
 const portableTextComponents = {type: {image: SanityPortableImage}}
 const spokenLanguages = [...(event.eventLanguages || []).map((value) => languages[value] ?? value), ...(event.otherEventLanguage ? [event.otherEventLanguage] : [])].join(', ')
 const address = [event.address, event.postalCode, event.city].filter(Boolean).join(', ')
@@ -83,7 +84,7 @@ const heroTime = event.isAllDay
   ? eventLabels.allDay
   : `${formatTime(event.startDateTime)}${event.endDateTime ? ` – ${formatTime(event.endDateTime)}` : ''}`
 ---
-<BaseLayout language={language} title={`${event.title} | nepali.no`} description={event.summary}>
+<BaseLayout language={language} title={`${event.title} | nepali.no`} description={event.summary} socialImage={socialImageUrl} socialImageAlt={event.featuredImage?.alt || event.title}>
   <SiteHeader slot="header" language={language} alternatePath={alternatePath} />
   <article class="event-page">
     <header class="event-header">
