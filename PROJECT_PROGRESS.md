@@ -1,7 +1,8 @@
 # nepali.no Project Progress
 
-**Status date:** 11 August 2026
-**Current protected checkpoint:** `2f94c2c refine desktop homepage composition (#48)`
+**Status date:** 1 September 2026
+**Current local feature checkpoint:** `913e850 redesign News archive presentation`
+**Current protected production checkpoint:** `ec9651a document Forum recovery and homepage checkpoint (#49)`
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
 
@@ -55,7 +56,8 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 - Bilingual archives and article routes are operational.
 - Future-dated News is excluded from public queries and static paths until publication time.
-- Homepage News supports Important Now, one featured article, and recent stories.
+- Homepage News supports a compact Important Now band, one featured article, two supporting visual stories, and three compact stories. `importantUntil` remains internal lifecycle metadata and is not shown publicly.
+- The News archive uses one featured article, two supporting visual stories, six medium cards, and a compact list for all remaining articles. Three Public Information Guides remain an independent closing section.
 - News articles can now store one companion Forum discussion and up to three curated related Forum topics in Sanity.
 - Public Forum panels are still disabled.
 
@@ -68,7 +70,7 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 ### Events
 
-- Bilingual upcoming and past archives and individual Event pages are operational.
+- Bilingual upcoming and past archives and individual Event pages are operational. The detail page uses a modern date-led hero, practical information above the fold, controlled responsive imagery, and the shared context-rail card system.
 - Event lifecycle, Oslo timezone, date ranges, external registration safety, and status presentation are implemented.
 - Public Nepali, Norwegian, and limited-English submission forms are operational.
 - Valid submissions are stored as private drafts in the `submissions` dataset and notify administrators best-effort.
@@ -76,7 +78,7 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 ### Community Directory
 
-- Public multilingual directory experiences and a complete public suggestion service are operational.
+- Public multilingual directory experiences and a complete public suggestion service are operational. Individual listing pages use the shared context-rail card system for facts, public contact, verification, and translation.
 - Suggestions from owners, representatives, or ordinary visitors enter private moderation and never publish automatically.
 - Private and proposed public contact details remain separate.
 
@@ -171,7 +173,7 @@ Fifty-six dependency-free Forum tests and ten connected-content tests now form t
 
 ## 7. Active next milestone
 
-The public homepage desktop composition was refined through PR #48. The next active presentation milestone is upgrade-safe visual harmonization of `forum.nepali.no` with the public site, while the Forum remains private and invite-only.
+The presentation branch is complete locally through `913e850` but has not yet been pushed, merged, or deployed. The immediate sequence is documentation review, whole-branch validation, protected pull request, production deployment verification, social-preview cache testing, and then upgrade-safe visual harmonization of `forum.nepali.no` while the Forum remains private and invite-only.
 
 Required sequence:
 
@@ -197,7 +199,8 @@ Required sequence:
 - Perform a clean Discourse backup restoration test.
 - Complete upgrade testing, monitoring, incident procedures, and launch gates.
 - Create `EDITORIAL_USER_MANUAL.md` and the broader platform `OPERATIONS_RUNBOOK.md`.
-- Complete homepage Events integration and remaining launch polish.
+- Complete remaining launch polish, including a branded 1200 x 630 fallback social image and replacement of the default Astro favicon.
+- Verify deployed Open Graph and X Card previews, and request a fresh Facebook scrape when cached metadata is stale.
 
 ## 9. Launch blockers
 
@@ -268,3 +271,34 @@ A fresh synthetic Nepali News fixture then published exactly once through the si
 ### Homepage visual checkpoint
 
 PR #48 refined the desktop homepage composition by tightening hero and section spacing, aligning featured News media, linking the localized latest-News heading to the News archive, and giving the Community Directory a more professional card presentation. The responsive mobile-first structure was preserved. This checkpoint does not enable public Forum panels or alter Sanity publishing workflows.
+
+## 13. 2026-09-01 presentation and social-sharing continuity update
+
+The local branch `feature/news-and-events-presentation` now contains six reviewed presentation and metadata checkpoints after protected production checkpoint `ec9651a`:
+
+- `a291ca8` unified Event and Directory context rails
+- `defb9d3` modernized the Event detail presentation
+- `11a2a86` refined the homepage Important News presentation
+- `a2540d3` expanded the homepage News presentation
+- `6f38d8f` added social-sharing metadata
+- `913e850` redesigned the News archive presentation
+
+Presentation decisions:
+
+- Event and Directory detail pages share reusable, responsive context-rail and panel components.
+- Event details place date, time, venue, price, registration, and map access above the fold and use controlled 16:9 desktop and 4:3 mobile imagery.
+- The homepage shows one featured News story, two supporting visual stories, and three compact stories, with consistent archive links above and below.
+- The Important News band retains its pale-red treatment and accessible pulsing indicator. `importantUntil` controls automatic expiry but is never rendered publicly.
+- The Nepali homepage News heading is `ताजा समाचार`; the former News eyebrow is not rendered.
+- The News archive shows one featured article, two supporting visual stories, six medium cards, and every remaining article in a compact list. The three Guides at the end remain independent general information.
+
+Social-sharing decisions:
+
+- Astro now uses `https://nepali.no` as the production site origin.
+- `BaseLayout.astro` emits canonical, Open Graph, and X Card metadata without loading third-party scripts.
+- News uses `article` metadata, publication time, and a 1200 x 630 Sanity image crop.
+- Events and Directory listings use suitable Sanity images when available.
+- No Facebook or X script, pixel, widget, cookie, advertising SDK, or tracking integration was added.
+- A branded global 1200 x 630 fallback image remains deferred for Guides, archives, static pages, and content without suitable imagery.
+
+Validation completed after each implementation checkpoint: `git diff --check`, Astro Check with zero errors and zero warnings, production build, and desktop/mobile visual review. The branch remains local and production still serves protected checkpoint `ec9651a` until the branch is pushed, reviewed, merged, and deployed.

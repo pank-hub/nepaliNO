@@ -500,3 +500,9 @@ The next major platform milestone is the forum requirements and platform-evaluat
 - Discourse is now the selected Forum platform and Gigahost is the continuing host. Forum integration is separate from Translation Editor architecture.
 - Forum email wording and interface wording may later be polished, but Forum messages and content must not be folded into the Translation Editor without a separate architecture decision.
 - Real Nepali and Norwegian proofreading can proceed through protected pull requests. Phase 2 multi-user access remains deferred.
+
+## 2026-09-01 presentation and social-sharing continuity update
+
+Phase 1 remains Pankaj-only. `https://nepali.no/translations/` displays the login page, but GitHub sign-in on the production domain still fails with `The redirect_uri is not associated with this application`. Correct the OAuth callback association through a controlled change and verify sign-in, callback, session creation, logout, and protected API access before removing or disabling the working Vercel route.
+
+The recent Nepali homepage wording change from `पछिल्ला समाचार` to `ताजा समाचार` followed the ordinary protected source workflow. The Translation Editor architecture remains responsible only for interface translation source, not Sanity content, Forum posts, layout code, or general contribution workflows.

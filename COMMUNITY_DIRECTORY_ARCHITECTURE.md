@@ -719,3 +719,9 @@ Future developers and AI assistants must not weaken these rules:
 - no paid placement disguised as verification or editorial recommendation
 - no public application launch without validation, privacy wording, abuse controls, and retention rules
 - no forced physical city or address for online-only or nationwide listings
+
+## 2026-09-01 presentation and social-sharing continuity update
+
+Individual Directory listing pages now use the shared `ContentContextRail` and `ContextRailPanel` components. Listing details, public contact, verification and review, and translation remain separate responsive cards. This is a presentation-only change and does not alter eligibility, verification meaning, moderation, public/private contact separation, or submission conversion.
+
+Directory social previews now prefer a 1200 x 630 cover-image crop, then a contained logo, with canonical Open Graph and X Card metadata supplied by `BaseLayout.astro`. A branded global fallback image remains deferred. No social-media scripts or tracking were added.

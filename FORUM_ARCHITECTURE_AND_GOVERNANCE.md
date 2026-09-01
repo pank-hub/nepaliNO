@@ -199,3 +199,9 @@ A confirmed provider rejection and an uncertain publication outcome require diff
 The 10 August 2026 Nepali News incident remains the first production evidence covered by this distinction. No matching topic exists, and the original attempt remains preserved because it was recorded before confirmed rejection classification was deployed.
 
 The incident's technical cause is resolved. A controlled synthetic rejection proved the safe `forum-publishing-rejected-post` classification, and read-only Discourse comparison showed that Nepali content itself was valid. Trust Level 0 host-spam protection rejected the next `nepali.no` link when accumulated use reached the configured threshold. The narrow correction allowlisted only the organization-controlled `nepali.no` domain while preserving the global threshold and all least-privilege properties of `forum-publisher`. A new synthetic Nepali publication then created topic 27 successfully and wrote the relationship back to Sanity. The original real attempt, the failed synthetic classifier fixture, topic 27, and topics 13, 17, and 18 are operational evidence and must not be casually cleared, republished, or deleted.
+
+## 2026-09-01 presentation and social-sharing continuity update
+
+The public-site presentation branch does not enable Forum panels or change Forum governance. `forum.nepali.no` remains the canonical Discourse service, Norwegian Bokmal remains the intended default interface language, and English remains an accessible option. Full Nepali Discourse localization remains deferred.
+
+The next Forum visual milestone must be upgrade-safe and light-first, harmonize principal colors, typography, cards, borders, buttons, and spacing with nepali.no, and include a restrained mobile-safe return link to `https://nepali.no`. Homepage Forum-feed eligibility and content-linked Forum-panel eligibility remain separate explicit policies. A new Discourse category is never eligible merely because it exists.
