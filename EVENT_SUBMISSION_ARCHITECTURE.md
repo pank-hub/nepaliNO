@@ -684,3 +684,9 @@ production-form test: 8cbf7d16-6838-4fac-98cc-671079b0d69d
 ```
 
 Both test submissions are private and must never be converted to public listings. Archive or delete them later under the approved retention procedure.
+
+## 2026-09-01 presentation and social-sharing continuity update
+
+The public Event detail page now uses a modern date-led hero and the shared context-rail system. Date, time, venue, price, registration state, registration action, and map access are visible before the main image when eligible. The main image uses a controlled 16:9 desktop crop and 4:3 mobile presentation. The duplicate registration panel was removed from the article body, while registration remains available in the hero and dedicated context card.
+
+These presentation changes do not alter Event submission validation, private storage, lifecycle calculations, public-contact permission, or external registration safety. Event social previews use a 1200 x 630 Sanity image crop when available. No third-party social script or tracking was introduced.

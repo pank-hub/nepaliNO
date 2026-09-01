@@ -274,3 +274,7 @@ For the first real pull requests:
 Do not create proofreader accounts or share Pankaj's access.
 
 Invited users, role restrictions, drafts, moderation, comments, approvals, audit history, suspension, and revocation belong to Phase 2 after a documented risk assessment.
+
+## 2026-09-01 presentation and social-sharing continuity update
+
+Production-domain warning: the login page at `https://nepali.no/translations/` is reachable, but GitHub OAuth currently rejects the production callback with `The redirect_uri is not associated with this application`. Until the callback is corrected and proven, use the working Vercel route and do not remove it. Do not regenerate credentials or alter callback settings without recording the exact current and proposed URLs and completing the full authentication smoke test.

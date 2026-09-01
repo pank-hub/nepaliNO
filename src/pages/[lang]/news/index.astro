@@ -92,7 +92,10 @@ const featuredArticle =
   articles.find((article) => article.isFeatured) ?? articles[0] ?? null
 const latestArticles = featuredArticle
   ? articles.filter((article) => article._id !== featuredArticle._id)
-  : []
+  : articles
+const supportingArticles = latestArticles.slice(0, 2)
+const cardArticles = latestArticles.slice(2, 8)
+const compactArticles = latestArticles.slice(8)
 
 const usefulInformationTitle = newsLabels.usefulInformation
 const usefulInformationDescription = newsLabels.usefulInformationDescription
@@ -131,127 +134,114 @@ const reviewedLabel = newsLabels.reviewed
           )}
         </div>
 
-        {articles.length === 0 ? (
-          <div class="empty-state">
-            <span aria-hidden="true"></span>
-            <h3>{labels.news.emptyHeading}</h3>
-            <p>{labels.news.emptyMessage}</p>
-          </div>
-        ) : (
-          <>
-            {featuredArticle && (
-              <article class="archive-lead">
-                <div class="archive-lead__content">
-                  <p class="story-kicker">
-                    {featuredArticle.isFeatured && (
-                      <>{labels.home.featuredStory} · </>
-                    )}
-                    {getRegionLabel(featuredArticle.newsRegion)} ·{' '}
-                    {getCategoryLabel(featuredArticle.category)}
-                  </p>
-
-                  <h3>
-                    <a href={`/${language}/news/${featuredArticle.slug}/`}>
-                      {featuredArticle.title}
+          {articles.length === 0 ? (
+            <div class="empty-state">
+              <span aria-hidden="true"></span>
+              <h3>{labels.news.emptyHeading}</h3>
+              <p>{labels.news.emptyMessage}</p>
+            </div>
+          ) : (
+            <>
+              {featuredArticle && (
+                <article class="archive-lead">
+                  <div class="archive-lead__content">
+                    <p class="story-kicker">
+                      {featuredArticle.isFeatured && <>{labels.home.featuredStory} · </>}
+                      {getRegionLabel(featuredArticle.newsRegion)} · {getCategoryLabel(featuredArticle.category)}
+                    </p>
+                    <h3><a href={`/${language}/news/${featuredArticle.slug}/`}>{featuredArticle.title}</a></h3>
+                    <p class="archive-lead__summary">{featuredArticle.summary}</p>
+                    <div class="story-meta">
+                      <time datetime={featuredArticle.publishedAt}>{formatDate(featuredArticle.publishedAt)}</time>
+                      {featuredArticle.authorName && <span>{featuredArticle.authorName}</span>}
+                    </div>
+                    <a class="story-link" href={`/${language}/news/${featuredArticle.slug}/`}>
+                      {labels.news.readMore} <span aria-hidden="true">→</span>
                     </a>
-                  </h3>
-
-                  <p class="archive-lead__summary">{featuredArticle.summary}</p>
-
-                  <div class="story-meta">
-                    <time datetime={featuredArticle.publishedAt}>
-                      {formatDate(featuredArticle.publishedAt)}
-                    </time>
-                    {featuredArticle.authorName && (
-                      <span>{featuredArticle.authorName}</span>
-                    )}
                   </div>
+                  {imageUrl(featuredArticle.featuredImage) ? (
+                    <a class="archive-lead__image" href={`/${language}/news/${featuredArticle.slug}/`} tabindex="-1" aria-hidden="true">
+                      <img src={imageUrl(featuredArticle.featuredImage) ?? ''} alt="" width="1200" height="800" loading="eager" decoding="async" />
+                    </a>
+                  ) : (
+                    <div class="archive-lead__placeholder" aria-hidden="true"></div>
+                  )}
+                </article>
+              )}
 
-                  <a
-                    class="story-link"
-                    href={`/${language}/news/${featuredArticle.slug}/`}
-                  >
-                    {labels.news.readMore}
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-
-                {imageUrl(featuredArticle.featuredImage) ? (
-                  <a
-                    class="archive-lead__image"
-                    href={`/${language}/news/${featuredArticle.slug}/`}
-                    tabindex="-1"
-                    aria-hidden="true"
-                  >
-                    <img
-                      src={imageUrl(featuredArticle.featuredImage) ?? ''}
-                      alt=""
-                      width="1200"
-                      height="800"
-                      loading="eager"
-                      decoding="async"
-                    />
-                  </a>
-                ) : (
-                  <div class="archive-lead__placeholder" aria-hidden="true"></div>
-                )}
-              </article>
-            )}
-
-            {latestArticles.length > 0 && (
-              <section class="archive-list" aria-labelledby="more-news-heading">
-                <h3 id="more-news-heading">
-                  {newsLabels.moreNews}
-                </h3>
-
-                <ol>
-                  {latestArticles.map((article) => (
-                    <li>
-                      <article class="archive-row">
-                        <div class="archive-row__content">
-                          <p class="story-kicker">
-                            {getRegionLabel(article.newsRegion)} ·{' '}
-                            {getCategoryLabel(article.category)}
-                          </p>
-                          <h4>
-                            <a href={`/${language}/news/${article.slug}/`}>
-                              {article.title}
+              {supportingArticles.length > 0 && (
+                <section class="archive-supporting" aria-labelledby="more-news-heading">
+                  <h3 id="more-news-heading">{newsLabels.moreNews}</h3>
+                  <ol>
+                    {supportingArticles.map((article) => (
+                      <li>
+                        <article class="archive-supporting-card">
+                          {imageUrl(article.featuredImage, 760) ? (
+                            <a class="archive-supporting-card__image" href={`/${language}/news/${article.slug}/`} tabindex="-1" aria-hidden="true">
+                              <img src={imageUrl(article.featuredImage, 760) ?? ''} alt="" width="760" height="475" loading="lazy" decoding="async" />
                             </a>
-                          </h4>
-                          <p>{article.summary}</p>
-                          <div class="story-meta">
-                            <time datetime={article.publishedAt}>
-                              {formatDate(article.publishedAt)}
-                            </time>
-                            {article.authorName && <span>{article.authorName}</span>}
+                          ) : (
+                            <div class="archive-supporting-card__placeholder" aria-hidden="true"></div>
+                          )}
+                          <div class="archive-supporting-card__content">
+                            <p class="story-kicker">{getRegionLabel(article.newsRegion)} · {getCategoryLabel(article.category)}</p>
+                            <h4><a href={`/${language}/news/${article.slug}/`}>{article.title}</a></h4>
+                            <p>{article.summary}</p>
+                            <div class="story-meta"><time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time></div>
                           </div>
-                        </div>
+                        </article>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
 
-                        {imageUrl(article.featuredImage, 520) && (
-                          <a
-                            class="archive-row__image"
-                            href={`/${language}/news/${article.slug}/`}
-                            tabindex="-1"
-                            aria-hidden="true"
-                          >
-                            <img
-                              src={imageUrl(article.featuredImage, 520) ?? ''}
-                              alt=""
-                              width="520"
-                              height="340"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </a>
-                        )}
-                      </article>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            )}
-          </>
-        )}
+              {cardArticles.length > 0 && (
+                <section class="archive-card-section" aria-label={newsLabels.moreNews}>
+                  <ol class="archive-card-grid">
+                    {cardArticles.map((article) => (
+                      <li>
+                        <article class="archive-card">
+                          {imageUrl(article.featuredImage, 620) ? (
+                            <a class="archive-card__image" href={`/${language}/news/${article.slug}/`} tabindex="-1" aria-hidden="true">
+                              <img src={imageUrl(article.featuredImage, 620) ?? ''} alt="" width="620" height="390" loading="lazy" decoding="async" />
+                            </a>
+                          ) : (
+                            <div class="archive-card__placeholder" aria-hidden="true"></div>
+                          )}
+                          <div class="archive-card__content">
+                            <p class="story-kicker">{getRegionLabel(article.newsRegion)} · {getCategoryLabel(article.category)}</p>
+                            <h4><a href={`/${language}/news/${article.slug}/`}>{article.title}</a></h4>
+                            <p>{article.summary}</p>
+                            <time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
+                          </div>
+                        </article>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
+
+              {compactArticles.length > 0 && (
+                <section class="archive-compact" aria-labelledby="archive-older-heading">
+                  <h3 id="archive-older-heading">{newsLabels.moreNews}</h3>
+                  <ol>
+                    {compactArticles.map((article) => (
+                      <li>
+                        <article class="archive-compact-row">
+                          <div>
+                            <p class="story-kicker">{getRegionLabel(article.newsRegion)} · {getCategoryLabel(article.category)}</p>
+                            <h4><a href={`/${language}/news/${article.slug}/`}>{article.title}</a></h4>
+                          </div>
+                          <time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
+                        </article>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
+            </>
+          )}
       </div>
     </section>
 
@@ -459,11 +449,14 @@ const reviewedLabel = newsLabels.reviewed
     transform: scale(1.015);
   }
 
-  .archive-list {
-    margin-block-start: clamp(3rem, 7vw, 5rem);
+  .archive-supporting,
+  .archive-card-section,
+  .archive-compact {
+    margin-block-start: clamp(2.5rem, 6vw, 4.5rem);
   }
 
-  .archive-list > h3 {
+  .archive-supporting > h3,
+  .archive-compact > h3 {
     padding-block-end: 0.8rem;
     border-bottom: 0.25rem solid var(--brand);
     font-size: 1rem;
@@ -471,53 +464,124 @@ const reviewedLabel = newsLabels.reviewed
     text-transform: uppercase;
   }
 
-  html[lang='ne'] .archive-list > h3 {
+  html[lang='ne'] .archive-supporting > h3,
+  html[lang='ne'] .archive-compact > h3 {
     font-size: 1.1rem;
     letter-spacing: 0;
     text-transform: none;
   }
 
-  .archive-list ol {
+  .archive-supporting ol,
+  .archive-card-grid,
+  .archive-compact ol {
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .archive-list li {
-    border-bottom: 1px solid var(--border);
-  }
-
-  .archive-row {
+  .archive-supporting ol {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(11rem, 17rem);
-    gap: clamp(1.25rem, 4vw, 3rem);
-    align-items: center;
-    padding-block: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    padding-block-start: 1.25rem;
   }
 
-  .archive-row h4 {
-    margin-block-start: 0.45rem;
-    font-size: clamp(1.3rem, 2.8vw, 2rem);
-    line-height: 1.22;
+  .archive-supporting-card,
+  .archive-card {
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
   }
 
-  .archive-row__content > p:not(.story-kicker) {
-    max-width: 48rem;
-    margin-block-start: 0.65rem;
-    color: var(--text-muted);
-  }
-
-  .archive-row__image {
+  .archive-supporting-card__image,
+  .archive-supporting-card__placeholder,
+  .archive-card__image,
+  .archive-card__placeholder {
     display: block;
     overflow: hidden;
-    aspect-ratio: 3 / 2;
-    background: var(--surface-muted);
+    aspect-ratio: 8 / 5;
+    background: linear-gradient(135deg, var(--civic), var(--civic-deep));
   }
 
-  .archive-row__image img {
+  .archive-supporting-card__image img,
+  .archive-card__image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 250ms ease;
+  }
+
+  .archive-supporting-card__image:hover img,
+  .archive-card__image:hover img {
+    transform: scale(1.015);
+  }
+
+  .archive-supporting-card__content,
+  .archive-card__content {
+    padding: 1.2rem;
+  }
+
+  .archive-supporting-card h4,
+  .archive-card h4,
+  .archive-compact-row h4 {
+    margin-block-start: 0.45rem;
+    line-height: 1.25;
+  }
+
+  .archive-supporting-card h4 { font-size: clamp(1.35rem, 2.6vw, 1.85rem); }
+  .archive-card h4 { font-size: clamp(1.15rem, 2vw, 1.45rem); }
+  .archive-compact-row h4 { font-size: clamp(1.05rem, 1.8vw, 1.3rem); }
+
+  .archive-supporting-card h4 a,
+  .archive-card h4 a,
+  .archive-compact-row h4 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .archive-supporting-card h4 a:hover,
+  .archive-card h4 a:hover,
+  .archive-compact-row h4 a:hover {
+    color: var(--brand);
+  }
+
+  .archive-supporting-card__content > p:not(.story-kicker),
+  .archive-card__content > p:not(.story-kicker) {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-block-start: 0.7rem;
+    color: var(--text-muted);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .archive-supporting-card time,
+  .archive-card time,
+  .archive-compact-row time {
+    color: var(--text-soft);
+    font-size: 0.84rem;
+  }
+
+  .archive-card time { display: block; margin-block-start: 0.9rem; }
+
+  .archive-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+
+  .archive-compact ol { border-top: 1px solid var(--border); }
+  .archive-compact li { border-bottom: 1px solid var(--border); }
+
+  .archive-compact-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.5rem;
+    align-items: center;
+    padding-block: 1rem;
   }
 
   .empty-state {
@@ -645,6 +709,10 @@ const reviewedLabel = newsLabels.reviewed
   }
 
   @media (max-width: 52rem) {
+      .archive-card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
     .archive-lead {
       grid-template-columns: 1fr;
       grid-template-areas:
@@ -665,6 +733,23 @@ const reviewedLabel = newsLabels.reviewed
   }
 
   @media (max-width: 38rem) {
+      .archive-supporting ol,
+      .archive-card-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .archive-supporting-card__image,
+      .archive-supporting-card__placeholder,
+      .archive-card__image,
+      .archive-card__placeholder {
+        aspect-ratio: 4 / 3;
+      }
+
+      .archive-compact-row {
+        grid-template-columns: 1fr;
+        gap: 0.45rem;
+      }
+
     .useful-information__heading,
     .guide-link {
       grid-template-columns: 1fr;

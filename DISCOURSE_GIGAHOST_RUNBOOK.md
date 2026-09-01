@@ -330,3 +330,9 @@ Publishing incident resolution:
 10. Record the outcome and create a new backup at the next meaningful operational checkpoint.
 
 Never run `db:create`, modify `database.yml`, change Git safe-directory settings, or alter category permissions merely to diagnose an API validation response.
+
+## 17. 2026-09-01 presentation and social-sharing continuity update
+
+The next Discourse presentation pass must remain upgrade-safe and light-first. Verify the canonical hostname `forum.nepali.no`, the TLS-covered redirect alias, login, invitation, activation, password recovery, outbound email links, Norwegian default locale, accessible English selection, mobile layout, contrast, keyboard focus, and a restrained return link to `https://nepali.no` after every theme deployment.
+
+Do not add Meta, Facebook, X, or other social tracking scripts merely to support link previews. The public Astro application now supplies canonical Open Graph and X Card metadata independently. Forum theme work must not weaken cookie, privacy, backup, least-privilege, moderation, or category-governance controls.

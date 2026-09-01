@@ -114,3 +114,9 @@ Future grants, sponsorships, partnerships, and in-kind contributions should be d
 ## Maintenance
 
 Review this document after material changes to legal identity, ownership, hosting, architecture, licensing, funding, key partners, editorial governance, privacy responsibility, or Forum production status.
+
+## 2026-09-01 presentation and social-sharing continuity update
+
+The September presentation milestone added reusable detail-page context rails, a modern Event presentation, a six-story homepage News hierarchy, a structured News archive, and privacy-friendly canonical, Open Graph, and X Card metadata. Social previews use public Sanity images where suitable and do not require Facebook or X scripts, tracking pixels, advertising SDKs, or additional cookies.
+
+The implementation remains evidenced by ordinary Git commits, zero-error Astro Check runs, production builds, localized route generation, generated-HTML inspection, and desktop/mobile review. A branded fallback social image and replacement of the default Astro favicon remain future branding work.

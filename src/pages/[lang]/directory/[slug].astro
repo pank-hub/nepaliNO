@@ -3,6 +3,8 @@ import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
+import ContentContextRail from '../../../components/content/ContentContextRail.astro'
+import ContextRailPanel from '../../../components/content/ContextRailPanel.astro'
 import {getTranslations} from '../../../i18n'
 import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
@@ -205,6 +207,12 @@ const heroUrl = listing.coverImage?.asset
 const logoUrl = listing.logo?.asset
   ? urlFor(listing.logo as any).width(360).height(360).fit('max').auto('format').url()
   : null
+const socialImageUrl = listing.coverImage?.asset
+  ? urlFor(listing.coverImage as any).width(1200).height(630).fit('crop').auto('format').url()
+  : listing.logo?.asset
+    ? urlFor(listing.logo as any).width(1200).height(630).fit('max').auto('format').url()
+    : undefined
+const socialImageAlt = listing.coverImage?.alt || listing.logo?.alt || listing.name
 const portableTextComponents = {}
 const socialLinks = [
   listing.facebookUrl ? {label: 'Facebook', url: listing.facebookUrl} : null,
@@ -213,7 +221,7 @@ const socialLinks = [
 ].filter((item): item is {label: string; url: string} => Boolean(item))
 ---
 
-<BaseLayout language={language} title={`${listing.name} | nepali.no`} description={listing.summary}>
+<BaseLayout language={language} title={`${listing.name} | nepali.no`} description={listing.summary} socialImage={socialImageUrl} socialImageAlt={socialImageAlt}>
   <SiteHeader slot="header" language={language} alternatePath={alternatePath} />
 
   <article class="listing-page">
@@ -324,9 +332,8 @@ const socialLinks = [
         )}
       </main>
 
-      <aside class="listing-sidebar">
-        <section class="listing-facts">
-          <h2>{directoryLabels.viewDetails}</h2>
+      <ContentContextRail label={directoryLabels.viewDetails}>
+        <ContextRailPanel title={directoryLabels.viewDetails} accent="brand">
           <dl>
             <div>
               <dt>{directoryLabels.listingType}</dt>
@@ -365,15 +372,14 @@ const socialLinks = [
               </div>
             )}
           </dl>
-        </section>
+        </ContextRailPanel>
 
         {(listing.website ||
           listing.publicEmail ||
           listing.publicPhone ||
           listing.publicContactRole ||
           socialLinks.length > 0) && (
-          <section class="contact-card">
-            <h2>{directoryLabels.contact}</h2>
+          <ContextRailPanel title={directoryLabels.contact} accent="civic">
             <ul>
               {listing.publicContactRole && <li>{listing.publicContactRole}</li>}
               {listing.website && (
@@ -397,14 +403,13 @@ const socialLinks = [
                 </li>
               ))}
             </ul>
-          </section>
+          </ContextRailPanel>
         )}
 
         {listing.isVerified && (
-          <section class="review-card">
-            <h2>{directoryLabels.verificationScope}</h2>
+          <ContextRailPanel title={directoryLabels.verificationScope} accent="success">
             {listing.verificationScopes && listing.verificationScopes.length > 0 && (
-              <ul>
+              <ul class="verification-scopes">
                 {listing.verificationScopes.map((scope) => (
                   <li>{verificationScopes[scope] || scope}</li>
                 ))}
@@ -424,7 +429,7 @@ const socialLinks = [
                 </div>
               )}
             </dl>
-          </section>
+          </ContextRailPanel>
         )}
 
         {activeTranslation && (
@@ -433,7 +438,7 @@ const socialLinks = [
             <strong>{activeTranslation.name}</strong>
           </a>
         )}
-      </aside>
+      </ContentContextRail>
     </div>
   </article>
 
@@ -654,111 +659,11 @@ const socialLinks = [
     color: var(--text-muted);
   }
 
-  .listing-sidebar {
-    display: grid;
-    align-content: start;
-    gap: 1rem;
-    position: sticky;
-    inset-block-start: 1.5rem;
-  }
-
-  .listing-facts,
-  .contact-card,
-  .review-card,
-  .translation-card {
-    padding: 1.25rem;
-    border-top: 0.25rem solid var(--brand);
-    background: var(--surface-muted);
-  }
-
-  .listing-facts h2,
-  .contact-card h2,
-  .review-card h2 {
-    font-size: 1.1rem;
-  }
-
-  .listing-facts dl,
-  .review-card dl {
-    display: grid;
-    gap: 1rem;
-    margin-block-start: 1rem;
-  }
-
-  .listing-facts dl > div,
-  .review-card dl > div {
-    padding-block-start: 0.75rem;
-    border-top: 1px solid var(--border);
-  }
-
-  .listing-facts dt,
-  .review-card dt {
-    color: var(--text-soft);
-    font-size: 0.72rem;
-    font-weight: 760;
-    text-transform: uppercase;
-  }
-
-  html[lang='ne'] .listing-facts dt,
-  html[lang='ne'] .review-card dt {
-    font-size: 0.82rem;
-    text-transform: none;
-  }
-
-  .listing-facts dd,
-  .review-card dd {
-    margin: 0.22rem 0 0;
-    color: var(--civic-deep);
-    font-weight: 650;
-    overflow-wrap: anywhere;
-  }
-
-  .contact-card ul,
-  .review-card ul {
-    display: grid;
-    gap: 0.65rem;
-    margin: 0.9rem 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .review-card li {
-    padding-inline-start: 1rem;
-    position: relative;
-    color: var(--civic-deep);
-    font-size: 0.9rem;
-  }
-
-  .review-card li::before {
-    content: '✓';
-    position: absolute;
-    inset-inline-start: 0;
-    color: #15603a;
-    font-weight: 800;
-  }
-
-  .translation-card {
-    display: grid;
-    gap: 0.35rem;
-    border-top-color: var(--civic);
-    color: var(--civic-deep);
-    text-decoration: none;
-  }
-
-  .translation-card span {
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    font-weight: 700;
-  }
-
   @media (max-width: 58rem) {
     .listing-layout {
       grid-template-columns: 1fr;
     }
 
-    .listing-sidebar {
-      position: static;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
   }
 
   @media (max-width: 38rem) {
@@ -801,8 +706,5 @@ const socialLinks = [
       padding-block: 2.25rem 4rem;
     }
 
-    .listing-sidebar {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

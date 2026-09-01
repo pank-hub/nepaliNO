@@ -334,3 +334,9 @@ A real Nepali News attempt on 10 August 2026 reached `forum.nepali.no`, authenti
 A separate controlled synthetic Nepali fixture exercised the deployed classifier and returned `forum-publishing-rejected-post` without creating a topic. Read-only Discourse inspection then confirmed that the rejection was not language-specific: Norwegian and Nepali representative posts passed the same text and post validators. The failure was caused by Trust Level 0 host-spam protection reaching its threshold when the proposed companion post added another link to `nepali.no`.
 
 The narrow production correction added only the organization-controlled `nepali.no` domain to `allowed_spam_host_domains`. The global spam threshold, publisher trust level, staff status, API scope, and category permissions were not weakened. Topic 27 subsequently proved successful Nepali automatic publishing and Sanity write-back on the final hostname. The original real document and both synthetic diagnostic records remain preserved and must not be casually reset or republished.
+
+## 2026-09-01 presentation and social-sharing continuity update
+
+The public presentation branch leaves `contentIntegrationEnabled` and `relatedTopicsEnabled` disabled. News, Event, Directory, homepage, archive, and social-preview changes do not expose Discourse credentials or alter the Sanity-to-Discourse relationship contract.
+
+Future public Forum presentation must preserve separate eligibility rules for homepage activity and content-linked panels, safe empty states, server-owned category policy, and reverse verification against eligible Sanity content. Social Open Graph and X metadata are static page metadata only and are unrelated to Discourse API integration.
