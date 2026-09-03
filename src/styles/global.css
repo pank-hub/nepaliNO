@@ -439,6 +439,167 @@ html[lang="ne"] .prose {
   line-height: 1.5;
 }
 
+
+/* Shared Portable Text typography for News and Guides */
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--civic-deep);
+  text-wrap: balance;
+}
+
+.prose h2 {
+  margin-block: 2.2em 0.7em;
+  padding-block-end: 0.45rem;
+  border-bottom: 1px solid var(--border-strong);
+  line-height: 1.25;
+}
+
+.prose h3 {
+  margin-block: 1.8em 0.55em;
+  line-height: 1.3;
+}
+
+.prose h4 {
+  margin-block: 1.5em 0.5em;
+  font-size: 1.08em;
+  line-height: 1.35;
+}
+
+.prose ul,
+.prose ol {
+  display: block;
+  margin-block: 1.2rem;
+  padding-inline-start: 1.75rem;
+}
+
+.prose ul {
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+
+.prose ul ul {
+  list-style-type: circle;
+}
+
+.prose ul ul ul {
+  list-style-type: square;
+}
+
+.prose ol ol {
+  list-style-type: lower-alpha;
+}
+
+.prose li {
+  display: list-item;
+  margin-block: 0.45rem;
+  padding-inline-start: 0.25rem;
+}
+
+.prose li::marker {
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin-block: 0.5rem 0.1rem;
+}
+
+.prose blockquote {
+  position: relative;
+  margin-block: 2rem;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid var(--border);
+  border-inline-start: 0.32rem solid var(--brand);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  background: linear-gradient(135deg, #fff8f7, var(--surface-warm));
+  color: var(--civic-deep);
+  font-size: 1.08em;
+  line-height: 1.75;
+}
+
+.prose blockquote::before {
+  content: "\201C";
+  position: absolute;
+  inset-block-start: 0.15rem;
+  inset-inline-end: 0.8rem;
+  color: rgb(198 42 31 / 0.14);
+  font-family: Georgia, serif;
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.prose blockquote > :first-child {
+  margin-block-start: 0;
+}
+
+.prose blockquote > :last-child {
+  margin-block-end: 0;
+}
+
+.prose strong {
+  color: var(--civic-deep);
+  font-weight: 780;
+}
+
+.prose em {
+  color: var(--civic-deep);
+  font-style: italic;
+}
+
+html[lang="ne"] .prose em {
+  font-weight: 580;
+}
+
+.prose a {
+  color: var(--brand);
+  font-weight: 680;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.prose a:hover {
+  color: var(--civic-deep);
+  text-decoration-thickness: 0.12em;
+}
+
+.prose a:focus-visible {
+  border-radius: 0.15rem;
+  outline: 0.18rem solid rgb(198 42 31 / 0.28);
+  outline-offset: 0.2rem;
+}
+
+.prose code {
+  padding: 0.12em 0.35em;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--surface-muted);
+  color: var(--civic-deep);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 47.999rem) {
+  .prose ul,
+  .prose ol {
+    padding-inline-start: 1.4rem;
+  }
+
+  .prose blockquote {
+    margin-block: 1.5rem;
+    padding: 1rem 1.05rem;
+  }
+}
+
 @media (max-width: 47.999rem) {
   :root {
     --page-gutter: 1rem;
