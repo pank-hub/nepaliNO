@@ -97,7 +97,13 @@ export const trustPage = defineType({
           },
         }),
       ],
-      validation: (rule) => rule.required().min(1),
+      validation: (rule) =>
+        rule.custom((sections, context) => {
+          if (context.document?.pageKey === 'contact') return true
+          return sections && sections.length > 0
+            ? true
+            : 'Add at least one content section.'
+        }),
     }),
     defineField({
       name: 'contactItems',
@@ -116,9 +122,35 @@ export const trustPage = defineType({
           ],
         }),
       ],
+      validation: (rule) =>
+        rule.custom((items, context) =>
+          context.document?.pageKey === 'contact' && (!items || items.length === 0)
+            ? 'Contact pages require at least one contact item.'
+            : true,
+        ),
     }),
-    defineField({name: 'safetyHeading', title: 'Safety Heading', type: 'string'}),
-    defineField({name: 'safetyText', title: 'Safety Text', type: 'text'}),
+    defineField({
+      name: 'safetyHeading',
+      title: 'Safety Heading',
+      type: 'string',
+      validation: (rule) =>
+        rule.custom((value, context) =>
+          context.document?.pageKey === 'contact' && !value
+            ? 'Contact pages require a safety heading.'
+            : true,
+        ),
+    }),
+    defineField({
+      name: 'safetyText',
+      title: 'Safety Text',
+      type: 'text',
+      validation: (rule) =>
+        rule.custom((value, context) =>
+          context.document?.pageKey === 'contact' && !value
+            ? 'Contact pages require safety text.'
+            : true,
+        ),
+    }),
   ],
   preview: {
     select: {title: 'title', pageKey: 'pageKey', language: 'language'},
