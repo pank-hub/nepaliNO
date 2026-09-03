@@ -6,6 +6,7 @@ import {newsArticle} from './newsArticle'
 import {norwegianTerm} from './norwegianTerm'
 import {publicInformationGuide} from './publicInformationGuide'
 import {publicInformationTopic} from './publicInformationTopic'
+import {trustPage} from './trustPage'
 
 export const schemaTypes = [
   forumCompanionAutomation,
@@ -16,4 +17,5 @@ export const schemaTypes = [
   publicInformationGuide,
   publicInformationTopic,
   norwegianTerm,
+  trustPage,
 ]
