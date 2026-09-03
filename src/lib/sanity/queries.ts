@@ -31,6 +31,34 @@ export const NEWS_ARTICLES_QUERY = `
     isFeatured
   }
 `;
+
+export const TRUST_PAGE_QUERY = `
+  *[
+    _type == "trustPage" &&
+    pageKey == $pageKey &&
+    language == $language
+  ][0] {
+    _id,
+    pageKey,
+    language,
+    title,
+    description,
+    eyebrow,
+    sections[] {
+      heading,
+      paragraphs,
+      items
+    },
+    "items": contactItems[] {
+      heading,
+      text,
+      label,
+      href
+    },
+    safetyHeading,
+    safetyText
+  }
+`;
 export const NEWS_ARTICLES_BY_LANGUAGE_QUERY = `
   *[
     _type == "newsArticle" &&
