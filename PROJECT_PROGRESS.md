@@ -1,8 +1,8 @@
 # nepali.no Project Progress
 
-**Status date:** 1 September 2026
-**Current local feature checkpoint:** `913e850 redesign News archive presentation`
-**Current protected production checkpoint:** `ec9651a document Forum recovery and homepage checkpoint (#49)`
+**Status date:** 3 September 2026
+**Current documentation branch:** `docs/update-progress-after-typography` at `812abf7`
+**Current protected production checkpoint:** `812abf7 improve shared rich text typography (#51)`
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
 
@@ -173,17 +173,19 @@ Fifty-six dependency-free Forum tests and ten connected-content tests now form t
 
 ## 7. Active next milestone
 
-The presentation branch is complete locally through `913e850` but has not yet been pushed, merged, or deployed. The immediate sequence is documentation review, whole-branch validation, protected pull request, production deployment verification, social-preview cache testing, and then upgrade-safe visual harmonization of `forum.nepali.no` while the Forum remains private and invite-only.
+PR #50 and PR #51 are merged and deployed. The immediate editorial-platform milestone is to reorganize the Sanity News Article workspace into a clearer writing-oriented form and improve the Portable Text editing experience without changing existing document fields or published content. The default Astro favicon remains a separate small branding task. Forum visual harmonization remains approved but is not the active task.
 
 Required sequence:
 
-1. align the Discourse logo, favicon, principal colors, typography, cards, borders, buttons, links, spacing, and return path with nepali.no without attempting a pixel-identical Astro clone
-2. provide a clear `Norsk | English` selector and restore Norwegian Bokmal as the intended public default after development convenience
-3. verify mobile behavior, accessibility, login, invitation, activation, recovery, email links, categories, and protected API behavior after theme work
-4. preserve the verified post-promotion backup and complete a clean disposable restoration test as the next recovery-readiness checkpoint
-5. record recovery time, missing dependencies, retention, periodic restore testing, and credential-rotation responsibilities
-6. preserve `forum-poc.nepali.no` as the TLS-covered redirect and rollback asset until explicit retirement approval
-7. keep `contentIntegrationEnabled` and `relatedTopicsEnabled` false until public Forum presentation receives a separate reviewed milestone
+1. audit the current News Article schema, field groups, previews, Structure configuration, and Portable Text toolbar
+2. design a writing-first default tab for title, summary, featured image, and article content
+3. separate Classification, Translation, Publishing, Sources and trust, and Forum settings without renaming fields or migrating documents
+4. collapse technical Forum and automation status fields and show Important Now lifecycle fields only when relevant
+5. add task-oriented News lists such as drafts, scheduled, Important Now, featured, language views, and missing translation
+6. explicitly configure the Portable Text toolbar for approved headings, quotation, lists, strong text, emphasis, links, and images
+7. evaluate a separate Form and Preview document view after the reorganized form is validated
+8. verify existing News documents, publishing, translation links, Forum automation, Studio deployment, and editor usability before merging
+9. keep Event and Directory tab organization unchanged unless a separate audit demonstrates a specific problem
 
 ## 8. Deferred but approved work
 
@@ -191,7 +193,7 @@ Required sequence:
 - Build News Forum panel and related-topic sidebar.
 - Build Guide questions-and-experiences panel and related-topic sidebar.
 - Correct the Translation Editor production-domain OAuth callback.
-- Move four trust pages into Sanity.
+- Move all four localized trust pages into Sanity: About, Project development and transparency, Privacy, and Contact. Preserve existing localized URLs, footer links, language switching, responsive presentation, and safe fallback behavior.
 - Add registered organization identity and organization number to public trust surfaces.
 - Complete GDPR processing inventory, retention schedule, processor review, and final privacy notice.
 - Polish Discourse activation, invitation, password-recovery, and system email tone.
@@ -302,3 +304,50 @@ Social-sharing decisions:
 - A branded global 1200 x 630 fallback image remains deferred for Guides, archives, static pages, and content without suitable imagery.
 
 Validation completed after each implementation checkpoint: `git diff --check`, Astro Check with zero errors and zero warnings, production build, and desktop/mobile visual review. The branch remains local and production still serves protected checkpoint `ec9651a` until the branch is pushed, reviewed, merged, and deployed.
+
+## 14. 2026-09-03 rich typography and editorial workspace continuity update
+
+PR #50 and PR #51 are merged into protected `main` and deployed to production.
+
+### Shared rich typography
+
+PR #51, production checkpoint `812abf7`, added one shared `.prose` typography system for all current public long-form Portable Text surfaces:
+
+- News article bodies
+- Public Information Guide bodies
+- Community Event descriptions
+- Community Directory listing descriptions
+- Public Information Topic Hub introductions
+
+The shared system restores and improves visible bullet markers, numbered lists, nested-list indentation, multiline alignment, `h2` to `h4` hierarchy, blockquotes, strong and emphasized text, links, keyboard focus, inline code, and responsive spacing. The Family Reunification Guide was visually verified in production. No Sanity schema, query, document, or content migration was required.
+
+### Sanity News editorial workspace
+
+The News Article editor is functionally complete but visually and operationally cluttered. The next Studio-focused design discussion should evaluate:
+
+- a writing-first default tab containing title, summary, featured image, and article content
+- separate Classification, Translation, Publishing, Sources and trust, and Forum groups
+- collapsed technical Forum and automation fields
+- conditional visibility for Important Now lifecycle fields
+- clearer News document lists and task-oriented filters
+- an explicitly configured Portable Text toolbar for headings, quotation, bullet list, numbered list, bold, emphasis, links, and images
+- a future Form and Preview document view
+
+Existing document field names and published data must be preserved. Events and Directory already use tab-oriented form organization and should be treated as references rather than redesigned automatically.
+
+### Confirmed small branding and routing work
+
+The public site still uses Astro's default favicon. Replace it later with approved nepali.no branding based on the compact `ने` symbol and verify browser, mobile, and cache behavior.
+
+The root route intentionally sends `/` to `/ne/`. The `nepali-no.vercel.app` route must remain available until the Translation Editor production-domain GitHub OAuth callback is corrected and fully tested. Do not introduce a blanket Vercel-domain redirect before that dependency is removed.
+
+### Four Sanity-managed trust pages
+
+All four localized footer trust pages should later move from hardcoded Astro content into Sanity-managed editorial content:
+
+1. About
+2. Project development and transparency
+3. Privacy
+4. Contact
+
+The migration must preserve existing localized URLs, footer links, Nepali and Norwegian language switching, current responsive presentation, publication controls, and safe fallback behavior. This is a separate future milestone and must not be folded casually into the News editor reorganization.
