@@ -597,23 +597,32 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
   }
 
   {
-    forumPilot.enabled && (
+    forumPilot.enabled &&
+      forumPilot.homepageDiscussionFeedEnabled && (
       <section class="section discussions" aria-labelledby="home-discussions-heading">
-        <div class="container discussions__grid">
-          <div>
-            <p class="eyebrow">{labels.home.discussionsEyebrow}</p>
-            <h2 id="home-discussions-heading">{labels.home.discussionsHeading}</h2>
-            <p class="lead">{labels.home.discussionsDescription}</p>
-            <span class="badge badge-brand">{labels.home.forumComingSoon}</span>
-          </div>
-
-          <aside class="discussions__pilot" aria-label={labels.home.forumComingSoon}>
-            <p>{labels.home.forumPilotAccess}</p>
-            <p>{labels.home.forumInterfaceNotice}</p>
+        <div class="container">
+          <div class="discussions__heading">
+            <div>
+              <p class="eyebrow">{labels.home.discussionsEyebrow}</p>
+              <h2 id="home-discussions-heading">{labels.home.discussionsHeading}</h2>
+              <p>{labels.home.discussionsDescription}</p>
+            </div>
             <a class="button button-primary" href={forumPilot.url}>
               {labels.home.forumVisit} <span aria-hidden="true">→</span>
             </a>
-          </aside>
+          </div>
+
+          <ol
+            class="discussions__topics"
+            data-forum-topics
+            data-language={language}
+            data-locale={dateLocale}
+            data-replies={labels.home.forumReplies}
+            data-updated={labels.home.forumUpdated}
+            data-news-label={labels.home.forumNewsDiscussion}
+            data-guide-label={labels.home.forumGuideDiscussion}
+            hidden
+          ></ol>
         </div>
         <div class="container discussions__notice">
           <p>{labels.home.forumNotice}</p>
@@ -713,6 +722,92 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
 
   <SiteFooter slot="footer" language={language} />
 </BaseLayout>
+
+<script>
+  interface ForumTopic {
+    title: string
+    replyCount: number
+    lastPostedAt?: string
+    role: 'newsDiscussion' | 'guideQuestions'
+    url: string
+  }
+
+  const isForumTopic = (value: unknown): value is ForumTopic => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+    const topic = value as Record<string, unknown>
+    return (
+      typeof topic.title === 'string' &&
+      typeof topic.replyCount === 'number' &&
+      (topic.role === 'newsDiscussion' || topic.role === 'guideQuestions') &&
+      typeof topic.url === 'string'
+    )
+  }
+
+  document.querySelectorAll<HTMLOListElement>('[data-forum-topics]').forEach(
+    async (list) => {
+      const language = list.dataset.language
+      if (language !== 'ne' && language !== 'nb') return
+
+      try {
+        const response = await fetch(
+          `/api/forum-homepage-discussions?language=${encodeURIComponent(language)}`,
+        )
+        const payload: unknown = await response.json()
+        const topics =
+          response.ok &&
+          payload &&
+          typeof payload === 'object' &&
+          Array.isArray((payload as {topics?: unknown}).topics)
+            ? (payload as {topics: unknown[]}).topics.filter(isForumTopic)
+            : []
+
+        if (topics.length === 0) return
+
+        const locale = list.dataset.locale || 'nb-NO'
+        const replies = list.dataset.replies || ''
+        const updated = list.dataset.updated || ''
+        const newsLabel = list.dataset.newsLabel || ''
+        const guideLabel = list.dataset.guideLabel || ''
+
+        for (const topic of topics) {
+          const item = document.createElement('li')
+          const link = document.createElement('a')
+          const label = document.createElement('span')
+          const title = document.createElement('strong')
+          const meta = document.createElement('span')
+
+          link.href = topic.url
+          link.target = '_blank'
+          link.rel = 'noopener noreferrer'
+          label.textContent =
+            topic.role === 'newsDiscussion' ? newsLabel : guideLabel
+          title.textContent = topic.title
+          meta.textContent = `${topic.replyCount} ${replies}`
+
+          if (topic.lastPostedAt) {
+            const date = new Date(topic.lastPostedAt)
+            if (!Number.isNaN(date.getTime())) {
+              meta.textContent += ` · ${updated} ${date.toLocaleDateString(locale, {
+                day: 'numeric',
+                month: 'short',
+              })}`
+            }
+          }
+
+          link.append(label, title, meta)
+          item.append(link)
+          list.append(item)
+        }
+
+        list.hidden = false
+      } catch (error) {
+        console.warn('Homepage Forum discussion feed is unavailable.', {
+          errorName: error instanceof Error ? error.name : 'UnknownError',
+        })
+      }
+    },
+  )
+</script>
 
 <style>
   .home-hero {
@@ -1455,42 +1550,81 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     color: rgb(255 255 255 / 0.78);
   }
 
-  .discussions__grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
-    gap: clamp(3rem, 9vw, 7rem);
-    align-items: center;
+  .discussions__heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-block-end: 2rem;
   }
 
   .discussions h2 {
-    max-width: 18ch;
     margin-block-start: 0.65rem;
     color: #ffffff;
   }
 
-  .discussions .lead {
-    max-width: 42rem;
-    margin-block: 1rem 1.5rem;
+  .discussions__heading p:not(.eyebrow) {
+    max-width: 46rem;
+    margin-block-start: 0.7rem;
     color: rgb(255 255 255 / 0.68);
   }
 
-  .discussions__pilot {
+  .discussions__heading .button {
+    flex: 0 0 auto;
+  }
+
+  .discussions__topics {
     display: grid;
-    gap: 0.85rem;
-    padding: clamp(1.35rem, 4vw, 2rem);
-    border: 1px solid rgb(255 255 255 / 0.14);
-    border-radius: var(--radius-xl);
-    background: rgb(255 255 255 / 0.06);
-  }
-
-  .discussions__pilot p {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
     margin: 0;
-    color: rgb(255 255 255 / 0.76);
+    padding: 0;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    background: rgb(255 255 255 / 0.18);
+    list-style: none;
   }
 
-  .discussions__pilot .button {
-    width: fit-content;
-    margin-block-start: 0.5rem;
+  .discussions__topics a {
+    display: grid;
+    min-height: 11rem;
+    align-content: start;
+    gap: 0.65rem;
+    padding: clamp(1.15rem, 3vw, 1.6rem);
+    background: rgb(255 255 255 / 0.04);
+    color: #ffffff;
+    text-decoration: none;
+    transition: background-color 160ms ease;
+  }
+
+  .discussions__topics a:hover {
+    background: rgb(255 255 255 / 0.1);
+    color: #ffffff;
+  }
+
+  .discussions__topics a > span:first-child {
+    color: #ff9a91;
+    font-size: 0.74rem;
+    font-weight: 780;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .discussions__topics a > span:first-child {
+    font-size: 0.84rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .discussions__topics strong {
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    line-height: 1.28;
+  }
+
+  .discussions__topics a > span:last-child {
+    align-self: end;
+    margin-block-start: auto;
+    color: rgb(255 255 255 / 0.6);
+    font-size: 0.8rem;
   }
 
   .discussions__notice {
@@ -1803,9 +1937,12 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
 
   @media (max-width: 63rem) {
     .home-hero__grid,
-    .discussions__grid,
     .news-layout {
       grid-template-columns: 1fr;
+    }
+
+    .discussions__topics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .home-hero__pathways {
@@ -1974,8 +2111,17 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
       width: 100%;
     }
 
-    .discussions__pilot .button {
+    .discussions__heading {
+      align-items: start;
+      flex-direction: column;
+    }
+
+    .discussions__heading .button {
       width: 100%;
+    }
+
+    .discussions__topics {
+      grid-template-columns: 1fr;
     }
   }
 </style>

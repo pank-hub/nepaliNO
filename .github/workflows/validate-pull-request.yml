@@ -52,6 +52,9 @@ jobs:
       - name: Test Forum content metadata orchestration
         run: npm run test:forum-content-metadata
 
+      - name: Test Forum homepage discussion feed
+        run: npm run test:forum-homepage-feed
+
       - name: Test Forum companion topic publisher
         run: npm run test:forum-publisher
 

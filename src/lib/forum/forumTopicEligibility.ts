@@ -24,3 +24,10 @@ export const isForumTopicEligible = (
   metadata.archived === false &&
   Number.isInteger(metadata.categoryId) &&
   isCategoryEligibleForRole(metadata.categoryId as number, role)
+
+export const isHomepageDiscussionEligible = (
+  metadata: DiscourseTopicMetadata,
+  role: Exclude<ApprovedForumRelationshipRole, 'related'>,
+): boolean =>
+  isForumTopicEligible(metadata, role) &&
+  homepageDiscussionCategoryIds.includes(metadata.categoryId as 10 | 11)
