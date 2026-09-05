@@ -1,9 +1,14 @@
-import type {DiscourseTopicMetadata} from './discourseMetadata'
+import {
+  DiscourseMetadataConfigurationError,
+  DiscourseMetadataRequestError,
+  DiscourseMetadataResponseError,
+  type DiscourseTopicMetadata,
+} from './discourseMetadata.ts'
 import {isForumTopicEligible} from './forumTopicEligibility.ts'
 import type {
   ApprovedForumRelationship,
   ApprovedForumRelationshipRole,
-} from './resolveContentForumRelationships'
+} from './resolveContentForumRelationships.ts'
 
 export interface PublicForumTopicMetadata extends DiscourseTopicMetadata {
   role: ApprovedForumRelationshipRole
@@ -20,6 +25,10 @@ export type ForumTopicMetadataLoader = (
   topicId: number,
 ) => Promise<DiscourseTopicMetadata>
 
+export interface LoadForumContentMetadataOptions {
+  includeRelated?: boolean
+}
+
 const loadRelationship = async (
   relationship: ApprovedForumRelationship,
   loadTopicMetadata: ForumTopicMetadataLoader,
@@ -30,7 +39,15 @@ const loadRelationship = async (
     if (!isForumTopicEligible(metadata, relationship.role)) return null
 
     return {role: relationship.role, ...metadata}
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof DiscourseMetadataConfigurationError ||
+      error instanceof DiscourseMetadataRequestError ||
+      error instanceof DiscourseMetadataResponseError
+    ) {
+      throw error
+    }
+
     return null
   }
 }
@@ -38,13 +55,14 @@ const loadRelationship = async (
 export const loadForumContentMetadata = async (
   relationships: ApprovedForumRelationship[],
   loadTopicMetadata: ForumTopicMetadataLoader,
+  {includeRelated = true}: LoadForumContentMetadataOptions = {},
 ): Promise<PublicForumContentMetadata> => {
   const companionRelationship = relationships.find(
     ({role}) => role !== 'related',
   )
-  const relatedRelationships = relationships.filter(
-    ({role}) => role === 'related',
-  )
+  const relatedRelationships = includeRelated
+    ? relationships.filter(({role}) => role === 'related')
+    : []
 
   const [companion, relatedResults] = await Promise.all([
     companionRelationship

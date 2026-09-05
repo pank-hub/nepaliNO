@@ -4,6 +4,8 @@ const REQUEST_TIMEOUT_MS = 5_000
 
 export class DiscourseMetadataConfigurationError extends Error {}
 export class DiscourseMetadataRequestError extends Error {}
+export class DiscourseMetadataTopicUnavailableError extends Error {}
+export class DiscourseMetadataResponseError extends Error {}
 
 export interface DiscourseTopicMetadata {
   topicId: number
@@ -16,18 +18,6 @@ export interface DiscourseTopicMetadata {
   categoryId?: number
   tags: string[]
   url: string
-}
-
-const getRequiredEnvironmentVariable = (name: keyof ImportMetaEnv) => {
-  const value = import.meta.env[name]?.trim()
-
-  if (!value) {
-    throw new DiscourseMetadataConfigurationError(
-      `Missing required Forum metadata configuration: ${name}`,
-    )
-  }
-
-  return value
 }
 
 const readNumber = (value: unknown) =>
@@ -44,6 +34,16 @@ const readStringArray = (value: unknown) =>
 const buildTopicUrl = (topicId: number) =>
   new URL(`/t/${topicId}`, forumPilot.url).toString()
 
+const buildTopicEndpoint = (topicId: number) => {
+  try {
+    return new URL(`/t/${topicId}.json`, forumPilot.url)
+  } catch {
+    throw new DiscourseMetadataConfigurationError(
+      'The Forum metadata endpoint configuration is invalid.',
+    )
+  }
+}
+
 export const getDiscourseTopicMetadata = async (
   topicId: number,
 ): Promise<DiscourseTopicMetadata> => {
@@ -51,24 +51,15 @@ export const getDiscourseTopicMetadata = async (
     throw new TypeError('Discourse topic ID must be a positive integer.')
   }
 
-  const apiKey = getRequiredEnvironmentVariable(
-    'DISCOURSE_FORUM_METADATA_API_KEY',
-  )
-  const apiUsername = getRequiredEnvironmentVariable(
-    'DISCOURSE_FORUM_METADATA_API_USERNAME',
-  )
-  const endpoint = new URL(`/t/${topicId}.json`, forumPilot.url)
+  const endpoint = buildTopicEndpoint(topicId)
 
   let response: Response
 
   try {
     response = await fetch(endpoint, {
       method: 'GET',
-      headers: {
-        accept: 'application/json',
-        'api-key': apiKey,
-        'api-username': apiUsername,
-      },
+      headers: {accept: 'application/json'},
+      redirect: 'error',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
   } catch (error) {
@@ -80,6 +71,12 @@ export const getDiscourseTopicMetadata = async (
   }
 
   if (!response.ok) {
+    if ([401, 403, 404, 410].includes(response.status)) {
+      throw new DiscourseMetadataTopicUnavailableError(
+        `The Forum topic is unavailable (HTTP ${response.status}).`,
+      )
+    }
+
     throw new DiscourseMetadataRequestError(
       `The Forum metadata request returned HTTP ${response.status}.`,
     )
@@ -90,13 +87,13 @@ export const getDiscourseTopicMetadata = async (
   try {
     payload = await response.json()
   } catch {
-    throw new DiscourseMetadataRequestError(
+    throw new DiscourseMetadataResponseError(
       'The Forum returned an invalid metadata response.',
     )
   }
 
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    throw new DiscourseMetadataRequestError(
+    throw new DiscourseMetadataResponseError(
       'The Forum returned an invalid metadata object.',
     )
   }
@@ -113,7 +110,7 @@ export const getDiscourseTopicMetadata = async (
     !Number.isInteger(postsCount) ||
     postsCount < 1
   ) {
-    throw new DiscourseMetadataRequestError(
+    throw new DiscourseMetadataResponseError(
       'The Forum response did not contain the required topic metadata.',
     )
   }

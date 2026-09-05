@@ -1,6 +1,6 @@
 export const forumPilot = {
   enabled: true,
-  contentIntegrationEnabled: false,
+  contentIntegrationEnabled: true,
   relatedTopicsEnabled: false,
   homepageDiscussionFeedEnabled: true,
   url: "https://forum.nepali.no/",

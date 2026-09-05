@@ -14,6 +14,8 @@ const [
   homepage,
   homepageFeed,
   homepageEndpoint,
+  forumContentEndpoint,
+  forumCard,
 ] =
   await Promise.all([
     read('../../src/pages/[lang]/news/[slug].astro'),
@@ -26,6 +28,8 @@ const [
     read('../../src/pages/[lang]/index.astro'),
     read('../../src/lib/forum/loadHomepageForumTopics.ts'),
     read('../../src/pages/api/forum-homepage-discussions.ts'),
+    read('../../src/pages/api/forum-content.ts'),
+    read('../../src/components/content/ForumDiscussionCard.astro'),
   ])
 
 test('News renders the supporting Guide only when the safe projection exists', () => {
@@ -56,11 +60,13 @@ test('both languages contain focused connected-content labels', () => {
   }
 })
 
-test('homepage Forum feed is bounded and content-page Forum panels remain disabled', () => {
-  assert.match(forumConfig, /contentIntegrationEnabled: false/)
+test('homepage Forum feed and companion cards have separate feature controls', () => {
+  assert.match(forumConfig, /contentIntegrationEnabled: true/)
   assert.match(forumConfig, /relatedTopicsEnabled: false/)
   assert.match(forumConfig, /homepageDiscussionFeedEnabled: true/)
-  assert.doesNotMatch(newsPage + guidePage, /ForumDiscussionCard/)
+  assert.match(newsPage + guidePage, /<ForumDiscussionCard/)
+  assert.match(newsPage, /contentType="newsArticle"/)
+  assert.match(guidePage, /contentType="publicInformationGuide"/)
   assert.match(homepage, /data-forum-topics/)
   assert.match(homepage, /api\/forum-homepage-discussions/)
   assert.doesNotMatch(homepage, /forumPilotAccess|forumInterfaceNotice/)
@@ -68,4 +74,11 @@ test('homepage Forum feed is bounded and content-page Forum panels remain disabl
   assert.match(homepageFeed, /isHomepageDiscussionEligible/)
   assert.match(homepageEndpoint, /forumDiscussion\.topicId/)
   assert.match(homepageEndpoint, /forumQuestionsTopic\.topicId/)
+  assert.match(
+    forumContentEndpoint,
+    /includeRelated: forumPilot\.relatedTopicsEnabled/,
+  )
+  assert.doesNotMatch(forumContentEndpoint, /related: metadata\.related/)
+  assert.match(forumCard, /textContent/)
+  assert.doesNotMatch(forumCard, /innerHTML|related/)
 })

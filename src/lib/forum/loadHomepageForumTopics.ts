@@ -1,5 +1,7 @@
 import {
   DiscourseMetadataConfigurationError,
+  DiscourseMetadataRequestError,
+  DiscourseMetadataResponseError,
   type DiscourseTopicMetadata,
 } from './discourseMetadata.ts'
 import {isHomepageDiscussionEligible} from './forumTopicEligibility.ts'
@@ -62,7 +64,9 @@ export const loadHomepageForumTopics = async (
   const configurationFailure = results.find(
     (result) =>
       result.status === 'rejected' &&
-      result.reason instanceof DiscourseMetadataConfigurationError,
+      (result.reason instanceof DiscourseMetadataConfigurationError ||
+        result.reason instanceof DiscourseMetadataRequestError ||
+        result.reason instanceof DiscourseMetadataResponseError),
   )
   if (configurationFailure?.status === 'rejected') {
     throw configurationFailure.reason
