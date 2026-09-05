@@ -186,7 +186,7 @@ html[lang="ne"] h3,
 html[lang="ne"] h4,
 html[lang="ne"] h5,
 html[lang="ne"] h6 {
-  font-weight: 680;
+  font-weight: 600;
   line-height: 1.35;
   letter-spacing: 0;
 }
@@ -548,6 +548,10 @@ html[lang="ne"] .prose {
 .prose strong {
   color: var(--civic-deep);
   font-weight: 780;
+}
+
+html[lang="ne"] .prose strong {
+  font-weight: 700;
 }
 
 .prose em {
