@@ -82,3 +82,15 @@ test('homepage Forum feed and companion cards have separate feature controls', (
   assert.match(forumCard, /textContent/)
   assert.doesNotMatch(forumCard, /innerHTML|related/)
 })
+
+test('homepage Forum topics render as separate readable cards', () => {
+  assert.match(homepage, /const card = document\.createElement\('article'\)/)
+  assert.match(homepage, /card\.className = 'discussions__topic-card'/)
+  assert.match(homepage, /title = document\.createElement\('h3'\)/)
+  assert.match(homepage, /meta = document\.createElement\('dl'\)/)
+  assert.match(homepage, /discussions__topic-type/)
+  assert.match(homepage, /discussions__topic-meta/)
+  assert.match(homepage, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)
+  assert.match(homepage, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/)
+  assert.match(homepage, /discussions__topic-link:focus-visible/)
+})
