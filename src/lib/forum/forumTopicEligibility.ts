@@ -1,5 +1,5 @@
-import type {DiscourseTopicMetadata} from './discourseMetadata'
-import type {ApprovedForumRelationshipRole} from './resolveContentForumRelationships'
+import type {DiscourseTopicMetadata} from './discourseMetadata.ts'
+import type {ApprovedForumRelationshipRole} from './resolveContentForumRelationships.ts'
 
 export const newsDiscussionCategoryId = 10
 export const guideQuestionsCategoryId = 11

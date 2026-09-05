@@ -3,12 +3,12 @@ import {
   DiscourseMetadataRequestError,
   DiscourseMetadataResponseError,
   type DiscourseTopicMetadata,
-} from './discourseMetadata'
+} from './discourseMetadata.ts'
 import {isForumTopicEligible} from './forumTopicEligibility.ts'
 import type {
   ApprovedForumRelationship,
   ApprovedForumRelationshipRole,
-} from './resolveContentForumRelationships'
+} from './resolveContentForumRelationships.ts'
 
 export interface PublicForumTopicMetadata extends DiscourseTopicMetadata {
   role: ApprovedForumRelationshipRole

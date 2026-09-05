@@ -8,7 +8,7 @@ import {
   type ApprovedForumRelationshipRole,
   type ForumContentLanguage,
   type ForumRelationshipsInput,
-} from './normalizeForumRelationships'
+} from './normalizeForumRelationships.ts'
 
 export {
   forumContentLanguages,
