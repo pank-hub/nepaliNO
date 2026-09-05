@@ -120,14 +120,13 @@ const copy =
     <header class="info-hero">
       <div class="container info-hero__inner">
         <div class="reading-width">
-          <p class="eyebrow">{labels.navigation.information}</p>
           <h1>{labels.information.pageTitle}</h1>
           <p class="lead">{labels.information.pageDescription}</p>
         </div>
       </div>
     </header>
 
-    <section class="section-sm">
+    <section class="info-trust-strip">
       <div class="container">
         <aside class="trust-notice" aria-labelledby="information-disclaimer-title">
           <div class="trust-notice__symbol" aria-hidden="true">i</div>
@@ -313,33 +312,35 @@ const copy =
   .info-hero__inner {
     position: relative;
     z-index: 1;
-    padding-block: clamp(3rem, 7vw, 5.5rem);
+    padding-block: clamp(2.5rem, 5vw, 4rem);
   }
 
   .info-hero h1 {
-    max-width: 15ch;
-    margin-block-start: 0.7rem;
+    max-width: 18ch;
   }
 
   .info-hero .lead {
     max-width: 48rem;
-    margin-block-start: 1.25rem;
+    margin-block-start: 0.85rem;
+  }
+
+  .info-trust-strip {
+    padding-block: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-muted);
   }
 
   .trust-notice {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 1rem;
-    padding: clamp(1.25rem, 3vw, 1.75rem);
-    border: 1px solid #a5bdd4;
-    border-radius: var(--radius-lg);
-    background: #f5f8fb;
+    max-width: 62rem;
   }
 
   .trust-notice__symbol {
     display: grid;
-    width: 2rem;
-    height: 2rem;
+    width: 1.75rem;
+    height: 1.75rem;
     place-items: center;
     border-radius: 50%;
     background: var(--civic);
@@ -349,7 +350,7 @@ const copy =
   }
 
   .trust-notice h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .trust-notice p {
@@ -380,7 +381,7 @@ const copy =
   }
 
   .topics-section {
-    background: var(--surface-muted);
+    background: #f3f6f9;
     border-block: 1px solid var(--border);
   }
 
@@ -399,6 +400,10 @@ const copy =
     grid-column: 1 / -1;
   }
 
+  .topic-grid > li:first-child {
+    grid-column: 1 / -1;
+  }
+
   .topic-grid > li:only-child .topic-card {
     min-height: 16rem;
   }
@@ -410,13 +415,17 @@ const copy =
       'number content'
       'footer footer';
     gap: 1.25rem;
-    min-height: 20rem;
+    min-height: 17rem;
     padding: clamp(1.5rem, 4vw, 2.5rem);
     background: #fff;
   }
 
   .topic-card--primary {
-    background: var(--surface-warm);
+    grid-template-columns: auto minmax(0, 1fr) minmax(12rem, 0.55fr);
+    grid-template-areas: 'number content footer';
+    align-items: center;
+    min-height: 18rem;
+    background: var(--civic-deep);
   }
 
   .topic-card__number {
@@ -439,6 +448,31 @@ const copy =
   .topic-card h3 a {
     color: var(--civic-deep);
     text-decoration: none;
+  }
+
+  .topic-card--primary h3 {
+    font-size: clamp(2rem, 4vw, 3.2rem);
+  }
+
+  .topic-card--primary h3 a,
+  .topic-card--primary .topic-card__footer a {
+    color: #fff;
+  }
+
+  .topic-card--primary .topic-card__content p,
+  .topic-card--primary .topic-card__footer > span {
+    color: rgb(255 255 255 / 0.72);
+  }
+
+  .topic-card--primary .topic-card__footer {
+    align-items: start;
+    flex-direction: column;
+    justify-content: center;
+    margin-block-start: 0;
+    padding-block-start: 0;
+    padding-inline-start: clamp(1rem, 3vw, 2rem);
+    border-block: 0;
+    border-inline-start: 1px solid rgb(255 255 255 / 0.2);
   }
 
   .topic-card h3 a:hover {
@@ -586,6 +620,24 @@ const copy =
       min-height: 0;
     }
 
+    .topic-card--primary {
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas:
+        'number content'
+        'footer footer';
+    }
+
+    .topic-card--primary .topic-card__footer {
+      align-items: end;
+      flex-direction: row;
+      justify-content: space-between;
+      margin-block-start: auto;
+      padding-block-start: 1.25rem;
+      padding-inline-start: 0;
+      border-block-start: 1px solid rgb(255 255 255 / 0.2);
+      border-inline-start: 0;
+    }
+
     .guide-card__actions {
       align-items: stretch;
       flex-direction: column;
@@ -609,6 +661,14 @@ const copy =
         'content'
         'footer';
       gap: 0.75rem;
+    }
+
+    .topic-card--primary {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'number'
+        'content'
+        'footer';
     }
 
     .guide-card__meta {

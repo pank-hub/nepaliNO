@@ -72,6 +72,13 @@ export const nb = {
     readMore: "Les mer",
     readInNepali: "Les på nepali",
     moreNews: "Flere nyheter",
+    olderNews: "Eldre nyheter",
+    browseArchive: "Se alle nyheter",
+    viewOlderNews: "Se resten av nyhetene",
+    archiveDescription: "Utforsk tidligere publiserte saker.",
+    previousPage: "Forrige side",
+    nextPage: "Neste side",
+    pageLabel: (page: number) => `Side ${page}`,
     articleCount: (count: number) =>
       `${count} ${count === 1 ? "sak" : "saker"}`,
     author: "Av",
@@ -79,6 +86,7 @@ export const nb = {
     sourceDescription:
       "Se den opprinnelige saken eller den offisielle informasjonen.",
     translation: "Les på et annet språk",
+    relatedNews: "Relaterte nyheter",
     region: "Område",
     category: "Kategori",
     usefulInformation: "Nyttig informasjon",

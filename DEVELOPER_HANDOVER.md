@@ -39,7 +39,9 @@ This document is the durable repository handover for a future developer, operato
 
 ### News
 
-Bilingual archives, article pages, homepage presentation, publication scheduling, featured stories, social metadata, and Portable Text rendering are operational. News can store controlled relationships to Public Information Guides and Forum topics.
+Bilingual archives, article pages, homepage presentation, publication scheduling, featured stories, social metadata, and Portable Text rendering are operational. News can store controlled relationships to Public Information Guides and Forum topics. Editors can also curate up to three same-language Related News links on an article; these render on its public article page.
+
+The News archive uses a magazine-style curated landing page and a paginated older-news archive. Preserve this distinction when changing News presentation.
 
 Nepali typography was recently adjusted to reduce heavy Devanagari weights in headings and rich-text bold content. Avoid reintroducing very heavy weights for large Nepali display text without visual review.
 

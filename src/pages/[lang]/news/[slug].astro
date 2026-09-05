@@ -2,6 +2,7 @@
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
 import SupportingGuideCard from '../../../components/content/SupportingGuideCard.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
@@ -39,6 +40,17 @@ interface SupportingGuideSummary {
   lastReviewedAt: string
 }
 
+interface RelatedNewsSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  newsRegion: string
+  category: string
+  publishedAt: string
+}
+
 interface NewsArticle {
   _id: string
   title: string
@@ -47,6 +59,7 @@ interface NewsArticle {
   translation?: TranslationSummary
   summary: string
   supportingGuide?: SupportingGuideSummary
+  relatedNews?: RelatedNewsSummary[]
   newsRegion: string
   category: string
   featuredImage?: NewsImage
@@ -248,14 +261,6 @@ const translationLabel = newsLabels.translation
       </div>
 
       <aside class="article-sidebar" aria-label={newsLabels.usefulInformation}>
-        {article.supportingGuide && (
-          <SupportingGuideCard
-            guide={article.supportingGuide}
-            eyebrow={newsLabels.usefulInformation}
-            agencyLabel={labels.information.responsibleAgency}
-          />
-        )}
-
         <section class="article-facts">
           <h2>{labels.navigation.news}</h2>
           <dl>
@@ -277,6 +282,21 @@ const translationLabel = newsLabels.translation
             </div>
           </dl>
         </section>
+
+        {article.relatedNews && article.relatedNews.length > 0 && (
+          <RelatedNewsList
+            articles={article.relatedNews}
+            heading={newsLabels.relatedNews}
+          />
+        )}
+
+        {article.supportingGuide && (
+          <SupportingGuideCard
+            guide={article.supportingGuide}
+            eyebrow={newsLabels.usefulInformation}
+            agencyLabel={labels.information.responsibleAgency}
+          />
+        )}
 
         {activeTranslation && (
           <a

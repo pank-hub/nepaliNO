@@ -1,6 +1,6 @@
 # nepali.no Project Progress
 
-**Status date:** 3 September 2026
+**Status date:** 5 September 2026
 **Repository:** `pank-hub/nepaliNO`
 **Protected production checkpoint:** PR #54, Sanity-managed trust pages
 **Project owner:** Pankaj Kafley
@@ -26,6 +26,8 @@ This is the current handoff document for developers, operators, editors, and mai
 
 - Bilingual archives, article pages, homepage presentation, publication scheduling, featured stories, and social metadata are operational.
 - News articles can store controlled relationships to Public Information Guides and Forum topics.
+- News Articles can also store up to three editor-curated, same-language Related News links, which render on the individual article page.
+- The News archive now presents a curated magazine-style front page with a paginated older-news archive.
 
 ### Public Information
 
