@@ -22,9 +22,10 @@ This is the current handoff document for developers, operators, editors, and mai
 
 ### Forum
 
-- The homepage presents up to six recent, reverse-verified News and Guide companion discussions.
-- The feed exposes only safe topic metadata and remains independent from the public site when Forum metadata is unavailable.
-- Content-linked Forum panels on individual News and Guide pages remain disabled.
+- The homepage presents up to six eligible, linked News and Guide companion discussions as distinct, readable topic cards, with a compact mobile-only card treatment.
+- Individual News and Guide pages show a companion-discussion card only when the editor-managed Sanity relationship is valid.
+- Public server-side topic metadata uses safe public JSON and fails safely when Forum metadata is unavailable.
+- Related Forum topics remain disabled. No Forum posts, users, or moderation data are exposed publicly.
 
 ## Operational features
 
@@ -75,7 +76,7 @@ Events and Directory form organization should remain unchanged unless a separate
 
 - Complete a clean disposable Forum backup restoration test.
 - Finalize Forum moderation, privacy, incident, monitoring, upgrade, and moderator-readiness procedures.
-- Keep public Forum panels disabled until their frontend milestone is reviewed and approved.
+- Keep related Forum topics disabled until their frontend milestone is reviewed and approved.
 - Correct and test the Translation Editor production OAuth callback.
 - Add the registered organization name and organization number after exact wording is approved.
 - Complete the GDPR processing inventory, retention schedule, processor review, and final privacy notice.
