@@ -113,6 +113,40 @@ export const newsArticle = defineType({
     }),
 
     defineField({
+      name: 'relatedNews',
+      title: 'Related News',
+      type: 'array',
+      description:
+        'Optional editorial links to up to three related News Articles in the same language. Do not use this field for translations.',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{type: 'newsArticle'}],
+          options: {
+            filter: ({document}) => {
+              const currentId = document?._id?.replace(/^drafts\./, '')
+              const draftId = currentId ? `drafts.${currentId}` : ''
+              const language = document?.language
+
+              if (currentId && language) {
+                return {
+                  filter:
+                    'language == $language && _id != $currentId && _id != $draftId',
+                  params: {language, currentId, draftId},
+                }
+              }
+
+              return language
+                ? {filter: 'language == $language', params: {language}}
+                : {}
+            },
+          },
+        }),
+      ],
+      validation: (rule) => rule.unique().max(3),
+    }),
+
+    defineField({
       name: 'summary',
       title: 'Summary',
       type: 'text',

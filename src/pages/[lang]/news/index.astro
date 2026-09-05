@@ -11,7 +11,9 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {
   NEWS_ARCHIVE_USEFUL_GUIDES_QUERY,
-  NEWS_ARTICLES_BY_LANGUAGE_QUERY,
+  NEWS_ARCHIVE_PAGE_BY_LANGUAGE_QUERY,
+  NEWS_ARCHIVE_FEATURED_ARTICLES_BY_LANGUAGE_QUERY,
+  NEWS_ARTICLE_COUNT_BY_LANGUAGE_QUERY,
 } from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
@@ -52,21 +54,34 @@ interface UsefulGuide {
   summary: string
   topic: string
   responsibleAgency: string
-  lastReviewedAt: string
   isFeatured?: boolean
   isUrgent?: boolean
+}
+
+interface ArchiveLink {
+  _id: string
+  title: string
+  slug: string
+  featuredImage?: ArchiveImage
+  publishedAt: string
 }
 
 const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 
-const [articles, usefulGuides] = await Promise.all([
-  sanityClient.fetch<ArchiveArticle[]>(NEWS_ARTICLES_BY_LANGUAGE_QUERY, {
+const [articles, articleCount, usefulGuides, archiveLinks] = await Promise.all([
+  sanityClient.fetch<ArchiveArticle[]>(NEWS_ARCHIVE_FEATURED_ARTICLES_BY_LANGUAGE_QUERY, {
     language,
   }),
+  sanityClient.fetch<number>(NEWS_ARTICLE_COUNT_BY_LANGUAGE_QUERY, {language}),
   sanityClient.fetch<UsefulGuide[]>(NEWS_ARCHIVE_USEFUL_GUIDES_QUERY, {
     language,
+  }),
+  sanityClient.fetch<ArchiveLink[]>(NEWS_ARCHIVE_PAGE_BY_LANGUAGE_QUERY, {
+    language,
+    start: 9,
+    end: 12,
   }),
 ])
 
@@ -94,13 +109,11 @@ const latestArticles = featuredArticle
   ? articles.filter((article) => article._id !== featuredArticle._id)
   : articles
 const supportingArticles = latestArticles.slice(0, 2)
-const cardArticles = latestArticles.slice(2, 8)
-const compactArticles = latestArticles.slice(8)
+const cardArticles = latestArticles.slice(2)
 
 const usefulInformationTitle = newsLabels.usefulInformation
 const usefulInformationDescription = newsLabels.usefulInformationDescription
 const readGuideLabel = newsLabels.readGuide
-const reviewedLabel = newsLabels.reviewed
 ---
 
 <BaseLayout
@@ -116,7 +129,6 @@ const reviewedLabel = newsLabels.reviewed
 
   <header class="news-hero">
     <div class="container news-hero__inner">
-      <p class="eyebrow">nepali.no</p>
       <h1>{labels.news.pageTitle}</h1>
       <p class="lead">{labels.news.pageDescription}</p>
     </div>
@@ -127,10 +139,10 @@ const reviewedLabel = newsLabels.reviewed
       <div class="container">
         <div class="archive-heading">
           <h2 id="latest-news-heading">{labels.news.latestHeading}</h2>
-          {articles.length > 0 && (
-            <p>
-              {newsLabels.articleCount(articles.length)}
-            </p>
+          {articleCount > articles.length && (
+            <a class="archive-heading__link" href={`/${language}/news/page/2/`}>
+              {newsLabels.browseArchive} <span aria-hidden="true">→</span>
+            </a>
           )}
         </div>
 
@@ -196,6 +208,46 @@ const reviewedLabel = newsLabels.reviewed
                 </section>
               )}
 
+              {usefulGuides.length > 0 && (
+                <section class="useful-information" aria-labelledby="useful-information-heading">
+                  <div class="useful-information__heading">
+                    <div>
+                      <p class="eyebrow">{labels.navigation.information}</p>
+                      <h2 id="useful-information-heading">{usefulInformationTitle}</h2>
+                    </div>
+                    <div class="useful-information__introduction">
+                      <p>{usefulInformationDescription}</p>
+                      <a href={`/${language}/info/`}>{labels.navigation.information} <span aria-hidden="true">→</span></a>
+                    </div>
+                  </div>
+
+                  <ol class="guide-links">
+                    {usefulGuides.map((guide) => (
+                      <li>
+                        <article class="guide-link">
+                          <div class="guide-link__agency">
+                            <span>{guide.responsibleAgency}</span>
+                            {guide.isUrgent && <strong>{labels.information.urgentLabel}</strong>}
+                          </div>
+
+                          <div class="guide-link__content">
+                            <h3>
+                              <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
+                            </h3>
+                            <p>{guide.summary}</p>
+                          </div>
+
+                          <a class="guide-link__action" href={`/${language}/info/${guide.slug}/`} aria-label={`${readGuideLabel}: ${guide.title}`}>
+                            <span>{readGuideLabel}</span>
+                            <span aria-hidden="true">→</span>
+                          </a>
+                        </article>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
+
               {cardArticles.length > 0 && (
                 <section class="archive-card-section" aria-label={newsLabels.moreNews}>
                   <ol class="archive-card-grid">
@@ -222,79 +274,43 @@ const reviewedLabel = newsLabels.reviewed
                 </section>
               )}
 
-              {compactArticles.length > 0 && (
-                <section class="archive-compact" aria-labelledby="archive-older-heading">
-                  <h3 id="archive-older-heading">{newsLabels.moreNews}</h3>
-                  <ol>
-                    {compactArticles.map((article) => (
-                      <li>
-                        <article class="archive-compact-row">
-                          <div>
-                            <p class="story-kicker">{getRegionLabel(article.newsRegion)} · {getCategoryLabel(article.category)}</p>
-                            <h4><a href={`/${language}/news/${article.slug}/`}>{article.title}</a></h4>
-                          </div>
-                          <time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
-                        </article>
-                      </li>
-                    ))}
-                  </ol>
-                </section>
+              {articleCount > articles.length && (
+                archiveLinks.length > 0 && (
+                  <section class="archive-bottom-links" aria-labelledby="archive-bottom-links-heading">
+                    <h3 id="archive-bottom-links-heading">{newsLabels.moreNews}</h3>
+                    <ol>
+                      {archiveLinks.map((article) => (
+                        <li>
+                          <a href={`/${language}/news/${article.slug}/`}>
+                            {imageUrl(article.featuredImage, 420) && (
+                              <img
+                                src={imageUrl(article.featuredImage, 420) ?? ''}
+                                alt=""
+                                width="420"
+                                height="263"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            )}
+                            <span>{article.title}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                    <a class="archive-bottom-links__archive" href={`/${language}/news/page/2/`}>
+                      <span>{newsLabels.viewOlderNews}</span>
+                      <span aria-hidden="true">→</span>
+                    </a>
+                  </section>
+                )
               )}
             </>
           )}
       </div>
     </section>
-
-
-    {usefulGuides.length > 0 && (
-      <section class="useful-information" aria-labelledby="useful-information-heading">
-        <div class="container">
-          <div class="useful-information__heading">
-            <div>
-              <p class="eyebrow">{labels.navigation.information}</p>
-              <h2 id="useful-information-heading">{usefulInformationTitle}</h2>
-            </div>
-            <p>{usefulInformationDescription}</p>
-          </div>
-
-          <ol class="guide-links">
-            {usefulGuides.map((guide) => (
-              <li>
-                <article class="guide-link">
-                  <div class="guide-link__agency">
-                    <span>{guide.responsibleAgency}</span>
-                    {guide.isUrgent && <strong>{labels.information.urgentLabel}</strong>}
-                  </div>
-
-                  <div class="guide-link__content">
-                    <h3>
-                      <a href={`/${language}/info/${guide.slug}/`}>{guide.title}</a>
-                    </h3>
-                    <p>{guide.summary}</p>
-                  </div>
-
-                  <div class="guide-link__action">
-                    <p>
-                      {reviewedLabel}<br />
-                      <time datetime={guide.lastReviewedAt}>
-                        {formatDate(guide.lastReviewedAt)}
-                      </time>
-                    </p>
-                    <a href={`/${language}/info/${guide.slug}/`}>
-                      {readGuideLabel} <span aria-hidden="true">→</span>
-                    </a>
-                  </div>
-                </article>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-    )}
-
   </main>
 
-  <SiteFooter slot="footer" language={language} />
+  <SiteFooter slot="footer" language={language} flush />
 </BaseLayout>
 
 <style>
@@ -347,10 +363,15 @@ const reviewedLabel = newsLabels.reviewed
     border-bottom: 2px solid var(--civic-deep);
   }
 
-  .archive-heading p {
-    color: var(--text-soft);
-    font-size: 0.85rem;
-    font-weight: 650;
+  .archive-heading__link {
+    color: var(--civic-deep);
+    font-size: 0.86rem;
+    font-weight: 750;
+    text-decoration: none;
+  }
+
+  .archive-heading__link:hover {
+    color: var(--brand);
   }
 
   .archive-lead {
@@ -450,13 +471,11 @@ const reviewedLabel = newsLabels.reviewed
   }
 
   .archive-supporting,
-  .archive-card-section,
-  .archive-compact {
+  .archive-card-section {
     margin-block-start: clamp(2.5rem, 6vw, 4.5rem);
   }
 
-  .archive-supporting > h3,
-  .archive-compact > h3 {
+  .archive-supporting > h3 {
     padding-block-end: 0.8rem;
     border-bottom: 0.25rem solid var(--brand);
     font-size: 1rem;
@@ -464,16 +483,14 @@ const reviewedLabel = newsLabels.reviewed
     text-transform: uppercase;
   }
 
-  html[lang='ne'] .archive-supporting > h3,
-  html[lang='ne'] .archive-compact > h3 {
+  html[lang='ne'] .archive-supporting > h3 {
     font-size: 1.1rem;
     letter-spacing: 0;
     text-transform: none;
   }
 
   .archive-supporting ol,
-  .archive-card-grid,
-  .archive-compact ol {
+  .archive-card-grid {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -525,26 +542,22 @@ const reviewedLabel = newsLabels.reviewed
   }
 
   .archive-supporting-card h4,
-  .archive-card h4,
-  .archive-compact-row h4 {
+  .archive-card h4 {
     margin-block-start: 0.45rem;
     line-height: 1.25;
   }
 
   .archive-supporting-card h4 { font-size: clamp(1.35rem, 2.6vw, 1.85rem); }
   .archive-card h4 { font-size: clamp(1.15rem, 2vw, 1.45rem); }
-  .archive-compact-row h4 { font-size: clamp(1.05rem, 1.8vw, 1.3rem); }
 
   .archive-supporting-card h4 a,
-  .archive-card h4 a,
-  .archive-compact-row h4 a {
+  .archive-card h4 a {
     color: var(--civic-deep);
     text-decoration: none;
   }
 
   .archive-supporting-card h4 a:hover,
-  .archive-card h4 a:hover,
-  .archive-compact-row h4 a:hover {
+  .archive-card h4 a:hover {
     color: var(--brand);
   }
 
@@ -559,8 +572,7 @@ const reviewedLabel = newsLabels.reviewed
   }
 
   .archive-supporting-card time,
-  .archive-card time,
-  .archive-compact-row time {
+  .archive-card time {
     color: var(--text-soft);
     font-size: 0.84rem;
   }
@@ -571,17 +583,6 @@ const reviewedLabel = newsLabels.reviewed
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.25rem;
-  }
-
-  .archive-compact ol { border-top: 1px solid var(--border); }
-  .archive-compact li { border-bottom: 1px solid var(--border); }
-
-  .archive-compact-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 1.5rem;
-    align-items: center;
-    padding-block: 1rem;
   }
 
   .empty-state {
@@ -605,8 +606,10 @@ const reviewedLabel = newsLabels.reviewed
   }
 
   .useful-information {
-    padding-block: clamp(2.5rem, 6vw, 4.5rem);
-    border-top: 1px solid var(--border);
+    margin-block-start: clamp(2.5rem, 6vw, 4.5rem);
+    padding: clamp(1.5rem, 4vw, 3rem);
+    border: 1px solid var(--border);
+    border-inline-start: 0.3rem solid var(--brand);
     background: var(--surface-muted);
   }
 
@@ -627,6 +630,18 @@ const reviewedLabel = newsLabels.reviewed
   .useful-information__heading > p {
     max-width: 38rem;
     color: var(--text-muted);
+  }
+
+  .useful-information__introduction {
+    display: grid;
+    gap: 0.8rem;
+    max-width: 38rem;
+    color: var(--text-muted);
+  }
+
+  .useful-information__introduction a {
+    color: var(--civic-deep);
+    font-weight: 750;
   }
 
   .guide-links {
@@ -692,21 +707,110 @@ const reviewedLabel = newsLabels.reviewed
   }
 
   .guide-link__action {
-    display: grid;
-    gap: 0.75rem;
-    justify-items: end;
-    text-align: end;
-  }
-
-  .guide-link__action p {
-    color: var(--text-soft);
-    font-size: 0.78rem;
-  }
-
-  .guide-link__action a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: end;
+    gap: 0.45rem;
     color: var(--civic-deep);
     font-weight: 750;
+    text-align: end;
+    text-decoration: none;
   }
+
+  .archive-bottom-links {
+    position: relative;
+    z-index: 0;
+    margin-block-start: clamp(2.5rem, 6vw, 4.5rem);
+    padding-block: clamp(2.5rem, 5vw, 4rem) clamp(3rem, 6vw, 5rem);
+  }
+
+  .archive-bottom-links::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0 calc(50% - 50vw);
+    background: var(--surface-muted);
+    content: '';
+  }
+
+  .archive-bottom-links h3 {
+    margin-block-end: 1.4rem;
+    padding-block-end: 0.8rem;
+    border-bottom: 2px solid var(--civic-deep);
+    color: var(--text-soft);
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .archive-bottom-links h3 {
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .archive-bottom-links ol {
+    counter-reset: archive-links;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .archive-bottom-links li {
+    counter-increment: archive-links;
+    position: relative;
+    padding-block-start: 2.3rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .archive-bottom-links li::before {
+    position: absolute;
+    inset-block-start: 0.85rem;
+    inset-inline-start: 0;
+    display: block;
+    color: var(--brand);
+    content: '0' counter(archive-links);
+    font-size: 0.74rem;
+    font-weight: 780;
+    letter-spacing: 0.06em;
+  }
+
+  .archive-bottom-links a {
+    display: grid;
+    gap: 0.7rem;
+    color: var(--civic-deep);
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    font-weight: 700;
+    line-height: 1.3;
+    text-decoration: none;
+  }
+
+  .archive-bottom-links img {
+    width: 100%;
+    aspect-ratio: 8 / 5;
+    object-fit: cover;
+  }
+
+  .archive-bottom-links a:hover {
+    color: var(--brand);
+  }
+
+  .archive-bottom-links__archive {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    margin-block-start: 2rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--civic-deep);
+    color: #fff !important;
+    font-size: clamp(1.05rem, 2vw, 1.3rem) !important;
+    font-weight: 780 !important;
+  }
+
+  .archive-bottom-links__archive:hover { background: var(--brand); color: #fff !important; }
 
   @media (max-width: 52rem) {
       .archive-card-grid {
@@ -745,11 +849,6 @@ const reviewedLabel = newsLabels.reviewed
         aspect-ratio: 4 / 3;
       }
 
-      .archive-compact-row {
-        grid-template-columns: 1fr;
-        gap: 0.45rem;
-      }
-
     .useful-information__heading,
     .guide-link {
       grid-template-columns: 1fr;
@@ -761,12 +860,8 @@ const reviewedLabel = newsLabels.reviewed
     }
 
     .guide-link__action {
-      justify-items: start;
+      justify-content: start;
       text-align: start;
-    }
-
-    .guide-link__action p {
-      display: none;
     }
 
     .news-hero__inner {
@@ -777,6 +872,10 @@ const reviewedLabel = newsLabels.reviewed
       align-items: start;
       flex-direction: column;
       gap: 0.35rem;
+    }
+
+    .archive-bottom-links ol {
+      grid-template-columns: 1fr;
     }
 
     .archive-lead__image,

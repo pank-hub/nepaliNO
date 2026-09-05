@@ -94,6 +94,69 @@ export const NEWS_ARTICLES_BY_LANGUAGE_QUERY = `
   }
 `;
 
+export const NEWS_ARCHIVE_FEATURED_ARTICLES_BY_LANGUAGE_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    defined(slug.current) &&
+    language == $language &&
+    defined(publishedAt) &&
+    publishedAt <= now()
+  ] | order(publishedAt desc) [0...9] {
+    _id,
+    title,
+    "slug": slug.current,
+    language,
+    summary,
+    newsRegion,
+    category,
+    featuredImage {
+      asset,
+      alt,
+      caption,
+      credit,
+      hotspot,
+      crop
+    },
+    authorName,
+    publishedAt,
+    isFeatured
+  }
+`;
+
+export const NEWS_ARTICLE_COUNT_BY_LANGUAGE_QUERY = `
+  count(*[
+    _type == "newsArticle" &&
+    defined(slug.current) &&
+    language == $language &&
+    defined(publishedAt) &&
+    publishedAt <= now()
+  ])
+`;
+
+export const NEWS_ARCHIVE_PAGE_BY_LANGUAGE_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    defined(slug.current) &&
+    language == $language &&
+    defined(publishedAt) &&
+    publishedAt <= now()
+  ] | order(publishedAt desc) [$start...$end] {
+    _id,
+    title,
+    "slug": slug.current,
+    summary,
+    newsRegion,
+    category,
+    featuredImage {
+      asset,
+      alt,
+      hotspot,
+      crop
+    },
+    publishedAt
+  }
+`;
+
 export const FEATURED_NEWS_ARTICLES_QUERY = `
   *[
     _type == "newsArticle" &&
@@ -162,6 +225,16 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
         lastReviewedAt
       }
     ),
+    "relatedNews": relatedNews[]->{
+      _id,
+      title,
+      "slug": slug.current,
+      language,
+      summary,
+      newsRegion,
+      category,
+      publishedAt
+    },
     newsRegion,
     category,
     featuredImage {

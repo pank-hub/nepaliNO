@@ -5,14 +5,15 @@ import type {SupportedLanguage} from '../i18n/config'
 
 interface Props {
   language: SupportedLanguage
+  flush?: boolean
 }
 
-const {language} = Astro.props
+const {language, flush = false} = Astro.props
 const labels = getTranslations(language)
 const year = new Date().getFullYear()
 ---
 
-<footer class="site-footer">
+<footer class:list={['site-footer', {'site-footer--flush': flush}]}>
   <div class="container site-footer__grid">
     <section class="site-footer__identity" aria-labelledby="footer-brand">
       <a class="footer-brand" href={`/${language}/`} id="footer-brand">
@@ -78,6 +79,10 @@ const year = new Date().getFullYear()
     border-top: 1px solid rgb(255 255 255 / 0.1);
     background: var(--civic-deep);
     color: rgb(255 255 255 / 0.76);
+  }
+
+  .site-footer--flush {
+    margin-block-start: 0;
   }
 
   .site-footer__grid {
