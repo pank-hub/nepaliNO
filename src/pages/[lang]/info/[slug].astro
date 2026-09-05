@@ -28,6 +28,7 @@ interface OfficialLink {
 
 interface ImportantTerm {
   term: string
+  pronunciation?: string
   explanation: string
 }
 
@@ -231,7 +232,12 @@ const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audie
             <dl>
               {guide.importantTerms.map((item) => (
                 <div>
-                  <dt lang="nb">{item.term}</dt>
+                  <dt lang="nb">
+                    <strong>{item.term}</strong>
+                    {item.pronunciation && (
+                      <span class="term-pronunciation"> ({item.pronunciation})</span>
+                    )}
+                  </dt>
                   <dd>{item.explanation}</dd>
                 </div>
               ))}
@@ -419,6 +425,16 @@ const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audie
 
   .guide-main {
     min-width: 0;
+  }
+
+  .terms-panel dt {
+    color: var(--civic-deep);
+  }
+
+  .term-pronunciation {
+    color: var(--text-soft);
+    font-style: italic;
+    font-weight: 400;
   }
 
   .trust-notice {

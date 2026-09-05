@@ -756,10 +756,8 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
     importantTerms[] {
       ...select(
         _type == "reusableNorwegianTerm" => @->{
-          "term": term + select(
-            defined(pronunciation) && pronunciation != "" => " (" + pronunciation + ")",
-            ""
-          ),
+          term,
+          pronunciation,
           explanation
         },
         {
