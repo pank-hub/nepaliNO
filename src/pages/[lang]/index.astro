@@ -2218,6 +2218,58 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
 
     .discussions__topics {
       grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    :global(.discussions__topic-card) {
+      height: auto;
+      border-radius: var(--radius-md);
+      box-shadow: 0 0.45rem 1.2rem rgb(0 0 0 / 0.16);
+    }
+
+    :global(.discussions__topic-link) {
+      min-height: 0;
+      height: auto;
+      grid-template-rows: none;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+
+    :global(.discussions__topic-header) {
+      gap: 0.5rem;
+    }
+
+    :global(.discussions__topic-type) {
+      min-height: 1.6rem;
+      padding: 0.15rem 0.55rem;
+    }
+
+    :global(.discussions__topic-title) {
+      font-size: 1.1rem;
+      line-height: 1.35;
+    }
+
+    :global(.discussions__topic-meta) {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 0.9rem;
+      padding-block-start: 0.65rem;
+    }
+
+    :global(.discussions__topic-detail) {
+      display: flex;
+      align-items: baseline;
+      gap: 0.3rem;
+    }
+
+    :global(.discussions__topic-detail dt),
+    :global(.discussions__topic-detail dd) {
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    :global(.discussions__topic-detail dd) {
+      margin: 0;
     }
   }
 </style>
