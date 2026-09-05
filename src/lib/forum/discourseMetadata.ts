@@ -1,4 +1,4 @@
-import {forumPilot} from '../../config/forum'
+import {forumPilot} from '../../config/forum.ts'
 
 const REQUEST_TIMEOUT_MS = 5_000
 

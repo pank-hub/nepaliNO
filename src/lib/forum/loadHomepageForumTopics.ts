@@ -1,9 +1,9 @@
 import {
   DiscourseMetadataConfigurationError,
   type DiscourseTopicMetadata,
-} from './discourseMetadata'
-import {isHomepageDiscussionEligible} from './forumTopicEligibility'
-import type {ApprovedForumRelationshipRole} from './resolveContentForumRelationships'
+} from './discourseMetadata.ts'
+import {isHomepageDiscussionEligible} from './forumTopicEligibility.ts'
+import type {ApprovedForumRelationshipRole} from './resolveContentForumRelationships.ts'
 
 const MAX_CANDIDATES = 18
 const MAX_TOPICS = 6
