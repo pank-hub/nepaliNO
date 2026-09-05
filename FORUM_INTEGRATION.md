@@ -1,8 +1,7 @@
 # Forum Integration Contract
 
-**Status:** Resolver and disabled public request contract production-proven; public presentation disabled
-**Current checkpoint:** `2f94c2c`
-**Last reviewed:** 11 August 2026
+**Status:** Resolver and content request contract production-proven; homepage discussion feed enabled; content-linked panels disabled
+**Last reviewed:** 5 September 2026
 
 ## 1. Purpose
 
@@ -179,6 +178,8 @@ Configuration flags remain false:
 - `contentIntegrationEnabled`
 - `relatedTopicsEnabled`
 
+`homepageDiscussionFeedEnabled` is enabled independently. It exposes up to six eligible companion discussions through a separate server route, and does not enable public panels on individual News or Guide pages.
+
 ## 11. Production key boundary
 
 Metadata and publishing credentials remain separate:
@@ -220,7 +221,6 @@ The expected focused suites after PR #46 are 56 passing Forum tests and 10 passi
 - verify mobile, accessibility, account, email-link, category-permission, metadata, and publishing behavior after theme work
 - preserve the public disable switch, safe empty states, and independent public-site operation
 - build shared News and Guide Forum presentation only as a separate reviewed milestone
-- add the controlled homepage discussion feed as a later milestone with reverse verification against eligible Sanity content
 
 
 ## Role-aware category policy
@@ -302,7 +302,7 @@ The first Guide proof exposed a malformed `[object Object]` URL because a post-c
 
 Archiving a Guide, future-dating News, unpublishing content, or changing editorial mode never automatically deletes or closes community discussion. Topic lifecycle actions require a separate governed moderation decision.
 
-Public News and Guide pages still show no Forum panel because `contentIntegrationEnabled` and `relatedTopicsEnabled` remain false. The frontend connection is intentionally deferred until `forum.nepali.no` is operational and verified.
+Public News and Guide pages still show no Forum panel because `contentIntegrationEnabled` and `relatedTopicsEnabled` remain false. The homepage feed is separately enabled and includes only the six most recently active reverse-verified News and Guide companion discussions. The content-linked frontend connection remains deferred.
 
 
 ## Connected News and Guide relationship
@@ -337,6 +337,6 @@ The narrow production correction added only the organization-controlled `nepali.
 
 ## 2026-09-01 presentation and social-sharing continuity update
 
-The public presentation branch leaves `contentIntegrationEnabled` and `relatedTopicsEnabled` disabled. News, Event, Directory, homepage, archive, and social-preview changes do not expose Discourse credentials or alter the Sanity-to-Discourse relationship contract.
+The public presentation branch leaves `contentIntegrationEnabled` and `relatedTopicsEnabled` disabled. The homepage may separately use its controlled feed endpoint, which performs server-side relationship verification and metadata retrieval before returning no more than six eligible News or Guide companion topics. News, Event, Directory, archive, and social-preview changes do not expose Discourse credentials or alter the Sanity-to-Discourse relationship contract.
 
 Future public Forum presentation must preserve separate eligibility rules for homepage activity and content-linked panels, safe empty states, server-owned category policy, and reverse verification against eligible Sanity content. Social Open Graph and X metadata are static page metadata only and are unrelated to Discourse API integration.

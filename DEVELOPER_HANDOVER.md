@@ -84,6 +84,8 @@ Discourse is the Phase 1 Forum platform and remains separate from Astro and Sani
 
 Public News and Guide Forum panels remain disabled. Do not enable `contentIntegrationEnabled` or `relatedTopicsEnabled` without a separate reviewed frontend milestone. Creating a Discourse category never makes it automatically eligible for a homepage feed or content-linked panel.
 
+The homepage Forum feed is enabled independently. It presents no more than six recent topics from the News Discussions and Questions about Guides categories, only after reverse-verifying the companion relationship against published same-language Sanity content. It exposes only topic title, reply count, activity time, role, and URL; unavailable, archived, ineligible, and duplicate topics are omitted. Keep article-level Forum panels disabled unless separately approved.
+
 The signed Sanity-to-Discourse companion-topic workflow is production-proven. Preserved evidence includes synthetic topic 13, Guide topic 17, News topic 18, Nepali News topic 27, and the original failed publishing incident. Never casually clear automation attempt IDs, timestamps, failure codes, topic relationships, or preserved fixtures. Inspect both Sanity and Discourse before retrying uncertain operations.
 
 ## Current next milestone

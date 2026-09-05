@@ -20,6 +20,12 @@ This is the current handoff document for developers, operators, editors, and mai
 - Source control: GitHub with protected `main`, pull requests, required checks, and Squash merge
 - Public languages: Nepali (`ne`) and Norwegian Bokmal (`nb`)
 
+### Forum
+
+- The homepage presents up to six recent, reverse-verified News and Guide companion discussions.
+- The feed exposes only safe topic metadata and remains independent from the public site when Forum metadata is unavailable.
+- Content-linked Forum panels on individual News and Guide pages remain disabled.
+
 ## Operational features
 
 ### News

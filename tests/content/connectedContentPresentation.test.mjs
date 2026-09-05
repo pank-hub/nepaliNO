@@ -3,7 +3,18 @@ import {readFile} from 'node:fs/promises'
 import test from 'node:test'
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8')
-const [newsPage, guidePage, supportingCard, relatedNews, ne, nb, forumConfig, homepage] =
+const [
+  newsPage,
+  guidePage,
+  supportingCard,
+  relatedNews,
+  ne,
+  nb,
+  forumConfig,
+  homepage,
+  homepageFeed,
+  homepageEndpoint,
+] =
   await Promise.all([
     read('../../src/pages/[lang]/news/[slug].astro'),
     read('../../src/pages/[lang]/info/[slug].astro'),
@@ -13,6 +24,8 @@ const [newsPage, guidePage, supportingCard, relatedNews, ne, nb, forumConfig, ho
     read('../../src/i18n/nb.ts'),
     read('../../src/config/forum.ts'),
     read('../../src/pages/[lang]/index.astro'),
+    read('../../src/lib/forum/loadHomepageForumTopics.ts'),
+    read('../../src/pages/api/forum-homepage-discussions.ts'),
   ])
 
 test('News renders the supporting Guide only when the safe projection exists', () => {
@@ -43,9 +56,16 @@ test('both languages contain focused connected-content labels', () => {
   }
 })
 
-test('Forum presentation and homepage remain untouched and disabled', () => {
+test('homepage Forum feed is bounded and content-page Forum panels remain disabled', () => {
   assert.match(forumConfig, /contentIntegrationEnabled: false/)
   assert.match(forumConfig, /relatedTopicsEnabled: false/)
+  assert.match(forumConfig, /homepageDiscussionFeedEnabled: true/)
   assert.doesNotMatch(newsPage + guidePage, /ForumDiscussionCard/)
-  assert.match(homepage, /class="discussions__pilot"/)
+  assert.match(homepage, /data-forum-topics/)
+  assert.match(homepage, /api\/forum-homepage-discussions/)
+  assert.doesNotMatch(homepage, /forumPilotAccess|forumInterfaceNotice/)
+  assert.match(homepageFeed, /const MAX_TOPICS = 6/)
+  assert.match(homepageFeed, /isHomepageDiscussionEligible/)
+  assert.match(homepageEndpoint, /forumDiscussion\.topicId/)
+  assert.match(homepageEndpoint, /forumQuestionsTopic\.topicId/)
 })

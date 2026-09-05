@@ -137,7 +137,7 @@ Current role policy:
 - News companion topics: category 10, News Discussions
 - Guide companion topics: category 11, Questions about Guides
 - Curated related topics: categories 5 to 9
-- Future homepage discussion feed: categories 10 and 11 only, subject to reverse verification against eligible Sanity content
+- Homepage discussion feed: categories 10 and 11 only, subject to reverse verification against eligible Sanity content
 - Administrative and excluded categories: Site Feedback (2), Staff (3), and Forum Information and Announcements (4)
 
 When a new category is proposed:
