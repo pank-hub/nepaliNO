@@ -2,6 +2,7 @@
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import ForumDiscussionCard from '../../../components/content/ForumDiscussionCard.astro'
 import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
 import SupportingGuideCard from '../../../components/content/SupportingGuideCard.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
@@ -258,6 +259,13 @@ const translationLabel = newsLabels.translation
             </a>
           </aside>
         )}
+
+        <ForumDiscussionCard
+          contentType="newsArticle"
+          language={language}
+          slug={article.slug}
+          labels={labels.forum}
+        />
       </div>
 
       <aside class="article-sidebar" aria-label={newsLabels.usefulInformation}>

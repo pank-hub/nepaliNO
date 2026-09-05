@@ -1,6 +1,6 @@
 # Forum Integration Contract
 
-**Status:** Resolver and content request contract production-proven; homepage discussion feed enabled; content-linked panels disabled
+**Status:** Resolver, public metadata retrieval, homepage discussion feed, and companion cards enabled; related-topic panels disabled
 **Last reviewed:** 5 September 2026
 
 ## 1. Purpose
@@ -11,8 +11,8 @@ This document defines the safe integration between Sanity editorial content, the
 
 - Sanity owns News Articles, Public Information Guides, publication state, language, and approved topic relationships.
 - Discourse owns topics, posts, users, moderation, visibility, activity, and open or closed state.
-- Vercel server functions form the authenticated bridge.
-- Browser code never receives the Discourse API key.
+- Vercel server functions form the metadata bridge.
+- Browser code never receives a Discourse credential.
 
 ## 3. Sanity relationship model
 
@@ -66,22 +66,19 @@ Desktop may use the existing sidebar. Mobile must move related topics below the 
 
 Implementation: `src/lib/forum/discourseMetadata.ts`
 
-The client:
+The metadata client:
 
 - validates a positive integer topic ID
-- reads Production-only Vercel variables at runtime
-- sends `Api-Key` and `Api-Username` headers server-side
+- reads the public topic JSON without credentials
 - uses a five-second timeout
 - validates the returned topic ID, title, and post count
 - extracts only approved metadata
 - does not return post bodies, users, emails, flags, or moderation records
 
-Environment variable names:
-
-- `DISCOURSE_FORUM_METADATA_API_KEY`
-- `DISCOURSE_FORUM_METADATA_API_USERNAME`
-
-Never record values in documentation.
+The public metadata reader sends no API key or username. It treats inaccessible
+topics as unavailable, while timeouts, transport failures, invalid provider
+responses, and non-topic server failures remain controlled server errors rather
+than being silently converted to an empty feed.
 
 ## 8. Verified count semantics
 
@@ -151,11 +148,11 @@ Verified normalized metadata:
 - category ID 10
 - no tags
 
-## 10. Public endpoint request contract and disabled state
+## 10. Public endpoint request contract and companion cards
 
 Public route: `/api/forum-content`
 
-Future enabled-state identity parameters:
+Enabled-state identity parameters:
 
 - `contentType`: exactly one of `newsArticle` or `publicInformationGuide`
 - `language`: exactly one of `ne` or `nb`
@@ -163,40 +160,48 @@ Future enabled-state identity parameters:
 
 The request parser rejects missing, empty, duplicate, unknown, unsupported, path-like, and Unicode parameters. A caller cannot supply a topic ID, relationship role, Forum URL, category, or synthetic-mode switch.
 
-Current disabled behavior:
+The shared News and Guide card requests the endpoint client-side and remains
+hidden unless its editor-authored companion relationship resolves to a public,
+role-eligible, non-archived Discourse topic. It renders only the normalized
+topic title, open or closed state, a Forum link, and a community-content notice.
+Its script uses DOM construction and `textContent`; it never inserts provider
+data as HTML.
 
-- the feature flag is checked before the request URL is parsed
-- generic HTTP 404
-- `Cache-Control: no-store`
-- no article identity, validation detail, Sanity lookup, or Forum metadata
-- no query parameters, valid-looking identities, and malformed requests all receive the same response
+The feature flag is checked before request parsing when disabled. Malformed,
+unlinked, unpublished, inactive, inaccessible, archived, invalid-category, and
+metadata-invalid topics produce no card. Server-side configuration and fetch
+failures produce a controlled `503` response and server log entry, without
+exposing operational details to browsers.
 
-Production verification included a malformed request containing `topicId=13`; the response remained the same generic 404.
+Configuration flags:
 
-Configuration flags remain false:
-
-- `contentIntegrationEnabled`
+- `contentIntegrationEnabled` is enabled for companion cards
 - `relatedTopicsEnabled`
 
-`homepageDiscussionFeedEnabled` is enabled independently. It exposes up to six eligible companion discussions through a separate server route, and does not enable public panels on individual News or Guide pages.
+`relatedTopicsEnabled` remains false. The endpoint neither loads nor exposes
+related-topic metadata in this state. `homepageDiscussionFeedEnabled` remains
+independent and exposes up to six eligible companion discussions through its
+separate server route.
 
-## 11. Production key boundary
+## 11. Production credential boundary
 
-Metadata and publishing credentials remain separate:
+The public metadata reader requires no Discourse credential. Publishing and
+Sanity operations remain separate:
 
-- `forum-metadata`: dedicated non-admin, non-moderator metadata identity with the restricted pilot read credential used by protected diagnostics
 - `forum-publisher`: dedicated non-admin, non-moderator account, locked at Trust Level 0, with a Single User granular `topics -> write` key
 - Sanity automation uses a separate Editor robot token for authoritative production-document updates
 - Sanity webhook signatures use a separate shared secret
 
-All values are stored only in the password manager and Production-only Sensitive Vercel variables. No browser receives any credential or write capability.
+Credential values are stored only in the password manager and Production-only
+Sensitive Vercel variables. No browser receives any credential or write
+capability.
 
 ## 12. Failure behavior
 
 - Missing relationship: no public Forum presentation.
 - Missing, hidden, deleted, private, staff, or inaccessible topic: no public presentation.
 - Discourse timeout or failure: News or Guide remains fully usable.
-- Missing credential: controlled server failure, never credential detail.
+- Public metadata reads require no credential.
 - Unexpected response: reject metadata.
 - Closed Guide topic: controlled state or editorial review, not a false invitation to reply.
 
@@ -220,7 +225,7 @@ The expected focused suites after PR #46 are 56 passing Forum tests and 10 passi
 - provide a visible `Norsk | English` selector and restore Norwegian Bokmal as the intended public default after development convenience
 - verify mobile, accessibility, account, email-link, category-permission, metadata, and publishing behavior after theme work
 - preserve the public disable switch, safe empty states, and independent public-site operation
-- build shared News and Guide Forum presentation only as a separate reviewed milestone
+- keep related-topic presentation disabled until a separate reviewed milestone
 
 
 ## Role-aware category policy
@@ -254,7 +259,11 @@ The application contains an operational server-only Discourse publisher for comp
 
 The publisher validates content type, language, title, and an HTTPS `nepali.no` content URL. It creates a short localized opening post that links to the complete News article or Guide. It sends credentials only in server-side headers, uses a five-second timeout, and accepts only a positive returned topic ID.
 
-The publishing credential is separate from the read-only metadata credential. No credential value is stored in Git. The publisher credential is configured as a Production-only Sensitive Vercel variable. Publishing is reached only through the signed Sanity workflow; callers cannot choose category IDs or raw topic payloads.
+The publishing credential is separate from the public metadata reader. No
+credential value is stored in Git. The publisher credential is configured as a
+Production-only Sensitive Vercel variable. Publishing is reached only through
+the signed Sanity workflow; callers cannot choose category IDs or raw topic
+payloads.
 
 
 ## Signed Sanity publishing workflow
@@ -302,7 +311,10 @@ The first Guide proof exposed a malformed `[object Object]` URL because a post-c
 
 Archiving a Guide, future-dating News, unpublishing content, or changing editorial mode never automatically deletes or closes community discussion. Topic lifecycle actions require a separate governed moderation decision.
 
-Public News and Guide pages still show no Forum panel because `contentIntegrationEnabled` and `relatedTopicsEnabled` remain false. The homepage feed is separately enabled and includes only the six most recently active reverse-verified News and Guide companion discussions. The content-linked frontend connection remains deferred.
+Public News and Guide pages show only an eligible editor-linked companion card.
+The homepage feed remains separately enabled and includes only the six most
+recently active reverse-verified News and Guide companion discussions. Related
+topics remain unavailable because `relatedTopicsEnabled` is false.
 
 
 ## Connected News and Guide relationship
@@ -337,6 +349,16 @@ The narrow production correction added only the organization-controlled `nepali.
 
 ## 2026-09-01 presentation and social-sharing continuity update
 
-The public presentation branch leaves `contentIntegrationEnabled` and `relatedTopicsEnabled` disabled. The homepage may separately use its controlled feed endpoint, which performs server-side relationship verification and metadata retrieval before returning no more than six eligible News or Guide companion topics. News, Event, Directory, archive, and social-preview changes do not expose Discourse credentials or alter the Sanity-to-Discourse relationship contract.
+The public presentation branch enables `contentIntegrationEnabled` for the
+single companion card and leaves `relatedTopicsEnabled` disabled. The homepage
+separately uses its controlled feed endpoint, which performs server-side
+relationship verification and public metadata retrieval before returning no
+more than six eligible News or Guide companion topics. News, Event, Directory,
+archive, and social-preview changes do not expose Discourse credentials or
+alter the Sanity-to-Discourse relationship contract.
 
-Future public Forum presentation must preserve separate eligibility rules for homepage activity and content-linked panels, safe empty states, server-owned category policy, and reverse verification against eligible Sanity content. Social Open Graph and X metadata are static page metadata only and are unrelated to Discourse API integration.
+Future related-topic presentation must preserve separate eligibility rules for
+homepage activity and content-linked panels, safe empty states, server-owned
+category policy, and reverse verification against eligible Sanity content.
+Social Open Graph and X metadata are static page metadata only and are
+unrelated to Discourse API integration.

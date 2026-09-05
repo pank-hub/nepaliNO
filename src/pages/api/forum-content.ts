@@ -66,7 +66,13 @@ export const GET: APIRoute = async ({request}) => {
     const metadata = await loadForumContentMetadata(
       resolved.relationships,
       getDiscourseTopicMetadata,
+      {includeRelated: forumPilot.relatedTopicsEnabled},
     )
+    const companion = metadata.companion
+
+    if (!companion) {
+      return notFoundResponse()
+    }
 
     return jsonResponse(
       200,
@@ -74,8 +80,12 @@ export const GET: APIRoute = async ({request}) => {
         ok: true,
         code: 'forum_content_available',
         content: resolved.identity,
-        companion: metadata.companion,
-        related: metadata.related,
+        companion: {
+          role: companion.role,
+          title: companion.title,
+          closed: companion.closed,
+          url: companion.url,
+        },
       },
       'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
     )
@@ -85,7 +95,7 @@ export const GET: APIRoute = async ({request}) => {
     }
 
     if (error instanceof ForumContentMetadataUnavailableError) {
-      return unavailableResponse()
+      return notFoundResponse()
     }
 
     console.error('Forum content metadata request failed', {

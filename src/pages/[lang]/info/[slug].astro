@@ -2,6 +2,7 @@
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import ForumDiscussionCard from '../../../components/content/ForumDiscussionCard.astro'
 import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
@@ -280,6 +281,13 @@ const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audie
             <p>{guide.fundingAcknowledgement}</p>
           </section>
         )}
+
+        <ForumDiscussionCard
+          contentType="publicInformationGuide"
+          language={language}
+          slug={guide.slug}
+          labels={labels.forum}
+        />
       </div>
 
       <aside class="guide-sidebar" aria-label={labels.information.officialSource}>

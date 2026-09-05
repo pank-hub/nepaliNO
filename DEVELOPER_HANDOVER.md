@@ -82,9 +82,14 @@ Phase 1 is Pankaj-only with GitHub login, signed sessions, deterministic TypeScr
 
 Discourse is the Phase 1 Forum platform and remains separate from Astro and Sanity. The pilot is login-required and invite-only. Norwegian Bokmal is the intended default interface language; English must remain easy to select; full Nepali localization is deferred.
 
-Public News and Guide Forum panels remain disabled. Do not enable `contentIntegrationEnabled` or `relatedTopicsEnabled` without a separate reviewed frontend milestone. Creating a Discourse category never makes it automatically eligible for a homepage feed or content-linked panel.
+Public News and Guide pages use one shared, client-loaded companion card when
+an editor-authored relationship resolves to a public role-eligible topic.
+`contentIntegrationEnabled` is on; `relatedTopicsEnabled` remains false. Do
+not enable related topics without a separate reviewed frontend milestone.
+Creating a Discourse category never makes it automatically eligible for a
+homepage feed or content-linked panel.
 
-The homepage Forum feed is enabled independently. It presents no more than six recent topics from the News Discussions and Questions about Guides categories, only after reverse-verifying the companion relationship against published same-language Sanity content. It exposes only topic title, reply count, activity time, role, and URL; unavailable, archived, ineligible, and duplicate topics are omitted. Keep article-level Forum panels disabled unless separately approved.
+The homepage Forum feed is enabled independently. It presents no more than six recent topics from the News Discussions and Questions about Guides categories, only after reverse-verifying the companion relationship against published same-language Sanity content. It exposes only topic title, reply count, activity time, role, and URL; unavailable, archived, ineligible, and duplicate topics are omitted. Companion cards expose less: title, open or closed state, link, and notice only.
 
 The signed Sanity-to-Discourse companion-topic workflow is production-proven. Preserved evidence includes synthetic topic 13, Guide topic 17, News topic 18, Nepali News topic 27, and the original failed publishing incident. Never casually clear automation attempt IDs, timestamps, failure codes, topic relationships, or preserved fixtures. Inspect both Sanity and Discourse before retrying uncertain operations.
 

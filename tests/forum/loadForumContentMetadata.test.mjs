@@ -5,6 +5,10 @@ import {
   ForumContentMetadataUnavailableError,
   loadForumContentMetadata,
 } from '../../src/lib/forum/loadForumContentMetadata.ts'
+import {
+  DiscourseMetadataRequestError,
+  DiscourseMetadataResponseError,
+} from '../../src/lib/forum/discourseMetadata.ts'
 
 const categoryForTopicId = (topicId) => {
   if (topicId === 13) return 10
@@ -279,6 +283,41 @@ test('rejects dedicated companion categories for related topics', async () => {
         loader,
       ),
       ForumContentMetadataUnavailableError,
+    )
+  }
+})
+
+test('does not load related topics when the caller disables them', async () => {
+  const loadedTopicIds = []
+  const result = await loadForumContentMetadata(
+    [
+      {role: 'newsDiscussion', topicId: 13},
+      {role: 'related', topicId: 31},
+    ],
+    async (topicId) => {
+      loadedTopicIds.push(topicId)
+      return metadata(topicId)
+    },
+    {includeRelated: false},
+  )
+
+  assert.deepEqual(loadedTopicIds, [13])
+  assert.deepEqual(result.related, [])
+})
+
+test('does not hide systemic Forum metadata failures', async () => {
+  for (const ErrorType of [
+    DiscourseMetadataRequestError,
+    DiscourseMetadataResponseError,
+  ]) {
+    await assert.rejects(
+      loadForumContentMetadata(
+        [{role: 'newsDiscussion', topicId: 13}],
+        async () => {
+          throw new ErrorType('The Forum is unavailable.')
+        },
+      ),
+      ErrorType,
     )
   }
 })

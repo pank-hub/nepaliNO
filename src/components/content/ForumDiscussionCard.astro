@@ -1,0 +1,190 @@
+---
+import {forumPilot} from '../../config/forum'
+import type {SupportedLanguage} from '../../i18n/config'
+
+interface ForumDiscussionLabels {
+  eyebrow: string
+  newsHeading: string
+  guideHeading: string
+  openDiscussion: string
+  readDiscussion: string
+  closed: string
+  notice: string
+}
+
+interface Props {
+  contentType: 'newsArticle' | 'publicInformationGuide'
+  language: SupportedLanguage
+  slug: string
+  labels: ForumDiscussionLabels
+}
+
+const {contentType, language, slug, labels} = Astro.props
+const isNews = contentType === 'newsArticle'
+---
+
+<section
+  class="forum-discussion-card"
+  data-forum-discussion-card
+  data-content-type={contentType}
+  data-language={language}
+  data-slug={slug}
+  data-forum-origin={new URL(forumPilot.url).origin}
+  data-open-label={labels.openDiscussion}
+  data-read-label={labels.readDiscussion}
+  data-closed-label={labels.closed}
+  aria-labelledby={`forum-discussion-${contentType}-${slug}`}
+  hidden
+>
+  <p class="forum-discussion-card__eyebrow">{labels.eyebrow}</p>
+  <h2 id={`forum-discussion-${contentType}-${slug}`}>
+    {isNews ? labels.newsHeading : labels.guideHeading}
+  </h2>
+  <p class="forum-discussion-card__title" data-forum-title></p>
+  <p class="forum-discussion-card__state" data-forum-state hidden></p>
+  <a
+    class="button button-secondary forum-discussion-card__link"
+    data-forum-link
+    href={forumPilot.url}
+    target="_blank"
+    rel="noopener noreferrer"
+  ></a>
+  <p class="forum-discussion-card__notice">{labels.notice}</p>
+</section>
+
+<script>
+  interface ForumCompanion {
+    title: string
+    closed: boolean
+    role: 'newsDiscussion' | 'guideQuestions'
+    url: string
+  }
+
+  const isForumCompanion = (value: unknown): value is ForumCompanion => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+
+    const topic = value as Record<string, unknown>
+    return (
+      typeof topic.title === 'string' &&
+      topic.title.trim().length > 0 &&
+      typeof topic.closed === 'boolean' &&
+      (topic.role === 'newsDiscussion' || topic.role === 'guideQuestions') &&
+      typeof topic.url === 'string'
+    )
+  }
+
+  document
+    .querySelectorAll<HTMLElement>('[data-forum-discussion-card]')
+    .forEach(async (card) => {
+      const contentType = card.dataset.contentType
+      const language = card.dataset.language
+      const slug = card.dataset.slug
+
+      if (
+        (contentType !== 'newsArticle' &&
+          contentType !== 'publicInformationGuide') ||
+        (language !== 'ne' && language !== 'nb') ||
+        !slug
+      ) {
+        return
+      }
+
+      try {
+        const response = await fetch(
+          `/api/forum-content?contentType=${encodeURIComponent(contentType)}&language=${encodeURIComponent(language)}&slug=${encodeURIComponent(slug)}`,
+        )
+        const payload: unknown = await response.json()
+        const companion =
+          response.ok &&
+          payload &&
+          typeof payload === 'object' &&
+          isForumCompanion((payload as {companion?: unknown}).companion)
+            ? (payload as {companion: ForumCompanion}).companion
+            : null
+
+        if (
+          !companion ||
+          (contentType === 'newsArticle' &&
+            companion.role !== 'newsDiscussion') ||
+          (contentType === 'publicInformationGuide' &&
+            companion.role !== 'guideQuestions')
+        ) {
+          return
+        }
+
+        const url = new URL(companion.url)
+        if (
+          url.protocol !== 'https:' ||
+          url.origin !== card.dataset.forumOrigin
+        ) {
+          return
+        }
+
+        const title = card.querySelector<HTMLElement>('[data-forum-title]')
+        const state = card.querySelector<HTMLElement>('[data-forum-state]')
+        const link = card.querySelector<HTMLAnchorElement>('[data-forum-link]')
+        if (!title || !state || !link) return
+
+        title.textContent = companion.title
+        link.href = url.toString()
+        link.textContent = companion.closed
+          ? card.dataset.readLabel || ''
+          : card.dataset.openLabel || ''
+
+        if (companion.closed) {
+          state.textContent = card.dataset.closedLabel || ''
+          state.hidden = false
+        }
+
+        card.hidden = false
+      } catch {
+        // The endpoint has already logged server-side operational failures.
+      }
+    })
+</script>
+
+<style>
+  .forum-discussion-card {
+    margin-block-start: clamp(2rem, 6vw, 4rem);
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border: 1px solid #a5bdd4;
+    border-radius: var(--radius-xl);
+    background: #f5f8fb;
+  }
+
+  .forum-discussion-card__eyebrow {
+    color: var(--civic);
+    font-size: 0.78rem;
+    font-weight: 780;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .forum-discussion-card h2 {
+    margin-block-start: 0.45rem;
+    font-size: clamp(1.35rem, 3vw, 1.8rem);
+  }
+
+  .forum-discussion-card__title {
+    margin-block-start: 0.85rem;
+    color: var(--civic-deep);
+    font-weight: 700;
+  }
+
+  .forum-discussion-card__state,
+  .forum-discussion-card__notice {
+    margin-block-start: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .forum-discussion-card__link {
+    margin-block-start: 1.15rem;
+  }
+
+  html[lang="ne"] .forum-discussion-card__eyebrow {
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+</style>

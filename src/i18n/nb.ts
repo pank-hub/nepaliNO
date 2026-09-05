@@ -63,6 +63,17 @@ export const nb = {
     emptyNews: "Nye artikler vises her når de blir publisert.",
   },
 
+  forum: {
+    eyebrow: "Forum",
+    newsHeading: "Diskuter denne saken i Forum",
+    guideHeading: "Spørsmål og erfaringer fra fellesskapet",
+    openDiscussion: "Åpne diskusjonen i Forum",
+    readDiscussion: "Les diskusjonen i Forum",
+    closed: "Denne diskusjonen er stengt for nye svar.",
+    notice:
+      "Innlegg i Forumet er deltakernes egne erfaringer og meninger. De erstatter ikke offisielle kilder eller verifisert veiledning.",
+  },
+
   news: {
     pageTitle: "Nyheter",
     pageDescription:

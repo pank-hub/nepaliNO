@@ -69,7 +69,8 @@ Members may create and reply according to category and trust permissions. Member
 
 ### Integration identities
 
-`forum-metadata` is a dedicated non-human, non-staff account used only for restricted metadata reading. It must not post or represent a real person.
+Public companion and homepage metadata reads use the corresponding public
+Discourse topic JSON without an account or credential.
 
 `forum-publisher` is a separate non-human account used only for controlled companion-topic creation. It is non-admin, non-moderator, locked at Trust Level 0, and belongs to `forum-publishers`.
 
@@ -160,7 +161,11 @@ Automatic companion-topic creation is opt-in. Publishing or updating content doe
 
 News must be published and not future-dated. Guides must be active. Existing companion relationships always prevent duplicate creation. Manual mode requires an editor-approved existing topic relationship.
 
-The operational automation uses a separate least-privileged Forum publisher identity, signed Sanity webhook delivery, authoritative server-side document re-fetching, idempotent revision-guarded claims, server-owned category mapping, controlled recovery, and non-sensitive failure codes. The existing read-only metadata credential must not be reused for topic creation.
+The operational automation uses a separate least-privileged Forum publisher
+identity, signed Sanity webhook delivery, authoritative server-side document
+re-fetching, idempotent revision-guarded claims, server-owned category mapping,
+controlled recovery, and non-sensitive failure codes. Public metadata reads
+must never be granted publishing capability.
 
 Unpublishing, archiving, title changes, or mode changes must never automatically delete community contributions. Any closing, unlisting, renaming, or archival action in Discourse requires a separately governed operational decision.
 
@@ -183,7 +188,10 @@ Editorial retirement and community preservation are separate decisions:
 - automatic deletion, closing, unlisting, or renaming of community discussion is prohibited
 - moderation or lifecycle actions in Discourse require a separately authorized operational decision
 
-The browser never controls category IDs, publisher identity, automation status, attempt IDs, or provider credentials. Public Forum panels remain disabled until the final hostname and presentation contract are separately approved.
+The browser never controls category IDs, publisher identity, automation status,
+attempt IDs, or provider credentials. Public News and Guide pages may show only
+the approved shared companion card after server-side relationship and category
+eligibility checks. Related-topic presentation remains disabled.
 
 ## Publishing failure classification and controlled retry governance
 

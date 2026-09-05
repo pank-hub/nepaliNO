@@ -104,16 +104,9 @@ A Discourse SMTP `250` response means the outbound relay accepted the message; i
 
 ## 7. Forum accounts and API integration
 
-Dedicated metadata account: `forum-metadata`
-
-Required properties:
-
-- active basic user
-- not administrator
-- not moderator
-- not Staff
-- no posting purpose
-- read-only metadata credential kept separate from publishing
+Public companion and homepage metadata is read from public topic JSON without
+an account or API credential. Keep the relevant Discourse categories and topics
+publicly readable for a companion card to be eligible.
 
 Dedicated publisher account: `forum-publisher`
 
@@ -135,7 +128,10 @@ Publisher API key:
 
 General categories 5 to 9 require Trust Level 1 for topic creation. The locked publisher remains read/reply only there. Categories 10 and 11 grant Create through `forum-publishers` while `everyone` retains See and Reply only.
 
-Credential values live only in Discourse, the password manager, and Production-only Vercel configuration. Metadata, publishing, Sanity automation, and webhook-signing credentials remain separate. If a key appears in chat, output, screenshot, or history, revoke and rotate immediately.
+Credential values live only in Discourse, the password manager, and
+Production-only Vercel configuration. Publishing, Sanity automation, and
+webhook-signing credentials remain separate. If a key appears in chat, output,
+screenshot, or history, revoke and rotate immediately.
 
 ## 8. Backups
 

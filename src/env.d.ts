@@ -9,8 +9,6 @@ interface ImportMetaEnv {
   readonly GITHUB_TRANSLATION_APP_PRIVATE_KEY?: string;
   readonly TRANSLATION_ALLOWED_GITHUB_USER_ID?: string;
   readonly TRANSLATION_SESSION_SECRET?: string;
-  readonly DISCOURSE_FORUM_METADATA_API_KEY?: string;
-  readonly DISCOURSE_FORUM_METADATA_API_USERNAME?: string;
   readonly DISCOURSE_FORUM_PUBLISHER_API_KEY?: string;
   readonly DISCOURSE_FORUM_PUBLISHER_API_USERNAME?: string;
   readonly SANITY_FORUM_WEBHOOK_SECRET?: string;
