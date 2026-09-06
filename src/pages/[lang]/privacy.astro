@@ -1,12 +1,10 @@
 ---
-import {supportedLanguages, type SupportedLanguage} from '../../i18n/config'
+import type {SupportedLanguage} from '../../i18n/config'
 import {sanityClient} from 'sanity:client'
 import {TRUST_PAGE_QUERY} from '../../lib/sanity/queries'
 import StaticPageLayout from '../../layouts/StaticPageLayout.astro'
 
-export function getStaticPaths() {
-  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
-}
+export const prerender = false
 
 type Section = {heading: string; paragraphs?: string[]; items?: string[]}
 type PageCopy = {title: string; description: string; eyebrow: string; sections: Section[]}
@@ -40,7 +38,11 @@ const copy: Record<SupportedLanguage, PageCopy> = {
   },
 }
 
-const {language} = Astro.props
+const {lang} = Astro.params
+if (lang !== 'ne' && lang !== 'nb') {
+  return Astro.redirect('/ne/privacy/')
+}
+const language: SupportedLanguage = lang
 const sanityPage = await sanityClient.fetch<PageCopy | null>(TRUST_PAGE_QUERY, {pageKey: 'privacy', language})
 const page = sanityPage ?? copy[language]
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
