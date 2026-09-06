@@ -1,9 +1,9 @@
 # nepali.no Developer Handover
 
-**Status date:** 5 September 2026
+**Status date:** 6 September 2026
 **Repository:** `pank-hub/nepaliNO`
 **Owner and final decision-maker:** Pankaj Kafley
-**Protected production checkpoint:** PR #57, Nepali typography improvements
+**Protected production checkpoint:** PR #66, on-demand Trust Page rendering
 
 ## Purpose
 
@@ -58,6 +58,8 @@ Bilingual public archives and detail pages are operational. Event and Directory 
 ### Trust pages and footer
 
 About, Transparency, Privacy, and Contact are published in Nepali and Norwegian: eight Sanity `trustPage` documents in total. Existing localized URLs, footer links, language switching, responsive presentation, and safe local fallback content are preserved.
+
+The four localized Trust Page routes use Astro on-demand rendering and query Sanity at request time. Publishing an editorial change therefore does not require a Git commit, pull request, or redeployment. Sanity remains configured with `useCdn: false`; production responses are revalidated by Vercel.
 
 Contact pages use Contact Items, Safety Heading, and Safety Text. The other trust pages use Content Sections. Wording and the privacy notice still need editorial and legal-quality review.
 

@@ -1,8 +1,9 @@
 # nepali.no Project Progress
 
-**Status date:** 5 September 2026
+**Status date:** 6 September 2026
+**Current documentation branch:** `main` after PR #66
+**Current protected production checkpoint:** `d213429 render Trust Pages on demand (#66)`
 **Repository:** `pank-hub/nepaliNO`
-**Protected production checkpoint:** PR #54, Sanity-managed trust pages
 **Project owner:** Pankaj Kafley
 
 ## Purpose
@@ -54,10 +55,12 @@ This is the current handoff document for developers, operators, editors, and mai
 ### Trust pages and footer
 
 - About, Transparency, Privacy, and Contact are published in both Nepali and Norwegian: eight Sanity `trustPage` documents in total.
+- Their content is managed in Sanity and fetched on demand at request time, so editorial updates do not require a code deployment.
 - Existing localized URLs and footer links are preserved.
-- Language switching, responsive presentation, and hardcoded fallback content remain intact.
+- Language switching, responsive presentation, and safe local fallback content remain intact.
 - Contact pages use Contact Items plus Safety Heading and Safety Text. The other trust pages use Content Sections.
 - Wording and the privacy notice still need editorial and legal-quality review.
+- The registered organization name and organization number should later be added to About, Privacy, and a restrained footer identity line after exact wording is approved.
 
 ## Current next milestone
 
