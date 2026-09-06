@@ -32,6 +32,7 @@ export default defineConfig([
                         .title('Drafts')
                         .child(
                           S.documentList()
+                            .id('draft-news-articles')
                             .schemaType('newsArticle')
                             .filter('_type == "newsArticle" && _id in path("drafts.**")'),
                         ),
@@ -39,6 +40,7 @@ export default defineConfig([
                         .title('Scheduled stories')
                         .child(
                           S.documentList()
+                            .id('scheduled-news-articles')
                             .schemaType('newsArticle')
                             .filter('_type == "newsArticle" && publishedAt > now()'),
                         ),
@@ -46,6 +48,7 @@ export default defineConfig([
                         .title('Featured stories')
                         .child(
                           S.documentList()
+                            .id('featured-news-articles')
                             .schemaType('newsArticle')
                             .filter('_type == "newsArticle" && isFeatured == true'),
                         ),
@@ -53,6 +56,7 @@ export default defineConfig([
                         .title('Important Now')
                         .child(
                           S.documentList()
+                            .id('important-news-articles')
                             .schemaType('newsArticle')
                             .filter('_type == "newsArticle" && isImportantNow == true'),
                         ),
@@ -61,6 +65,7 @@ export default defineConfig([
                         .title('Nepali articles')
                         .child(
                           S.documentList()
+                            .id('nepali-news-articles')
                             .schemaType('newsArticle')
                             .filter('_type == "newsArticle" && language == "ne"'),
                         ),
@@ -68,6 +73,7 @@ export default defineConfig([
                         .title('Norwegian articles')
                         .child(
                           S.documentList()
+                            .id('norwegian-news-articles')
                             .schemaType('newsArticle')
                             .filter('_type == "newsArticle" && language == "nb"'),
                         ),
@@ -75,6 +81,7 @@ export default defineConfig([
                         .title('Missing translations')
                         .child(
                           S.documentList()
+                            .id('missing-news-translations')
                             .schemaType('newsArticle')
                             .filter('_type == "newsArticle" && !defined(translation)'),
                         ),
