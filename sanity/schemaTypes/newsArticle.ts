@@ -5,11 +5,21 @@ export const newsArticle = defineType({
   title: 'News Article',
   type: 'document',
 
+  groups: [
+    {name: 'writing', title: 'Writing', default: true},
+    {name: 'classification', title: 'Classification'},
+    {name: 'publishing', title: 'Publishing'},
+    {name: 'sources', title: 'Sources and Trust'},
+    {name: 'forum', title: 'Forum'},
+    {name: 'workflow', title: 'Workflow'},
+  ],
+
   fields: [
     defineField({
       name: 'title',
       title: 'Title',
       type: 'string',
+      group: 'writing',
       description: 'The main headline written in the selected content language.',
       validation: (rule) =>
         rule.required().min(10).max(150).warning('Use a clear, concise headline.'),
@@ -19,6 +29,7 @@ export const newsArticle = defineType({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
+      group: 'writing',
       description: 'The URL-friendly identifier for this article.',
       options: {
         source: 'title',
@@ -31,6 +42,7 @@ export const newsArticle = defineType({
       name: 'language',
       title: 'Content Language',
       type: 'string',
+      group: 'writing',
       description: 'The primary language used in this article.',
       options: {
         list: [
@@ -47,6 +59,7 @@ export const newsArticle = defineType({
       name: 'translation',
       title: 'Translated Version',
       type: 'reference',
+      group: 'workflow',
       description:
         'Optional reference to the corresponding article in the other language.',
       to: [{type: 'newsArticle'}],
@@ -93,6 +106,7 @@ export const newsArticle = defineType({
       name: 'supportingGuide',
       title: 'Primary Supporting Guide',
       type: 'reference',
+      group: 'sources',
       description:
         'Optional active Guide that gives readers durable background, practical steps, and official sources related to this News Article. Leave empty when no Guide is genuinely relevant.',
       to: [{type: 'publicInformationGuide'}],
@@ -150,6 +164,7 @@ export const newsArticle = defineType({
       name: 'summary',
       title: 'Summary',
       type: 'text',
+      group: 'writing',
       rows: 4,
       description: 'A short introduction used on news cards and archive pages.',
       validation: (rule) => rule.required().min(40).max(300),
@@ -159,6 +174,7 @@ export const newsArticle = defineType({
       name: 'newsRegion',
       title: 'News Region',
       type: 'string',
+      group: 'classification',
       description: 'Identifies the geographic focus of the article.',
       options: {
         list: [
@@ -176,6 +192,7 @@ export const newsArticle = defineType({
       name: 'category',
       title: 'Category',
       type: 'string',
+      group: 'classification',
       options: {
         list: [
           {title: 'Current Affairs', value: 'current-affairs'},
@@ -194,6 +211,7 @@ export const newsArticle = defineType({
       name: 'featuredImage',
       title: 'Featured Image',
       type: 'image',
+      group: 'writing',
       options: {
         hotspot: true,
       },
@@ -222,9 +240,42 @@ export const newsArticle = defineType({
       name: 'body',
       title: 'Article Content',
       type: 'array',
+      group: 'writing',
       of: [
         defineArrayMember({
           type: 'block',
+          styles: [
+            {title: 'Normal', value: 'normal'},
+            {title: 'Heading 2', value: 'h2'},
+            {title: 'Heading 3', value: 'h3'},
+            {title: 'Quote', value: 'blockquote'},
+          ],
+          lists: [
+            {title: 'Bullet', value: 'bullet'},
+            {title: 'Numbered', value: 'number'},
+          ],
+          marks: {
+            decorators: [
+              {title: 'Strong', value: 'strong'},
+              {title: 'Emphasis', value: 'em'},
+            ],
+            annotations: [
+              {
+                name: 'link',
+                type: 'object',
+                title: 'Link',
+                fields: [
+                  defineField({
+                    name: 'href',
+                    title: 'URL',
+                    type: 'url',
+                    validation: (rule) =>
+                      rule.uri({scheme: ['http', 'https'], allowRelative: true}),
+                  }),
+                ],
+              },
+            ],
+          },
         }),
         defineArrayMember({
           type: 'image',
@@ -258,6 +309,7 @@ export const newsArticle = defineType({
       name: 'forumCompanionAutomation',
       title: 'Forum Companion Workflow',
       type: 'forumCompanionAutomation',
+    group: 'forum',
       description:
         'Optional workflow choice for a News discussion. Automatic mode will later create a topic in News Discussions only after the article is eligible for publication.',
       validation: (rule) =>
@@ -279,6 +331,7 @@ export const newsArticle = defineType({
       name: 'forumDiscussion',
       title: 'Companion Forum Discussion',
       type: 'forumTopicReference',
+      group: 'forum',
       description:
         'Optional editorial connection to the Discourse topic used for comments and discussion about this News Article. The discussion may later be closed in Discourse.',
     }),
@@ -287,6 +340,7 @@ export const newsArticle = defineType({
       name: 'relatedForumTopics',
       title: 'Related Forum Topics',
       type: 'array',
+      group: 'forum',
       description:
         'Optional manually curated Forum topics related to this News Article. Select no more than three. Public rendering remains developer-controlled.',
       of: [{type: 'forumTopicReference'}],
@@ -306,6 +360,7 @@ export const newsArticle = defineType({
       name: 'authorName',
       title: 'Author Name',
       type: 'string',
+      group: 'publishing',
       validation: (rule) => rule.required(),
     }),
 
@@ -313,6 +368,7 @@ export const newsArticle = defineType({
       name: 'publishedAt',
       title: 'Published At',
       type: 'datetime',
+      group: 'publishing',
       initialValue: () => new Date().toISOString(),
       validation: (rule) => rule.required(),
     }),
@@ -321,6 +377,7 @@ export const newsArticle = defineType({
       name: 'sourceUrl',
       title: 'Original Source URL',
       type: 'url',
+      group: 'sources',
       description:
         'For translated or contextualized reporting, link to the original source.',
       validation: (rule) =>
@@ -333,6 +390,7 @@ export const newsArticle = defineType({
       name: 'isFeatured',
       title: 'Feature on Homepage',
       type: 'boolean',
+      group: 'publishing',
       description:
         'Select one strong editorial story for prominent homepage placement.',
       initialValue: false,
@@ -342,6 +400,7 @@ export const newsArticle = defineType({
       name: 'isImportantNow',
       title: 'Important Now',
       type: 'boolean',
+      group: 'publishing',
       description:
         'Use only for significant, time-sensitive information the community should see quickly. Avoid routine updates and sensational wording.',
       initialValue: false,
@@ -351,6 +410,7 @@ export const newsArticle = defineType({
       name: 'importantUntil',
       title: 'Important Until',
       type: 'datetime',
+      group: 'publishing',
       description:
         'The notice automatically stops appearing in the Important Now area after this time.',
       hidden: ({document}) => document?.isImportantNow !== true,
