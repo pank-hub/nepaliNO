@@ -3,7 +3,7 @@
 **Status date:** 6 September 2026
 **Repository:** `pank-hub/nepaliNO`
 **Owner and final decision-maker:** Pankaj Kafley
-**Protected production checkpoint:** PR #66, on-demand Trust Page rendering
+**Protected production checkpoint:** PR #69, Sanity structure-list fix
 
 ## Purpose
 
@@ -18,6 +18,7 @@ This document is the durable repository handover for a future developer, operato
 - Required validation: Astro check and production build
 - Public application deployment: Vercel project `nepali-no`
 - Studio deployment: Vercel project `nepali-no-studio`
+- Hosted Studio deployment: `https://nepali-no.sanity.studio/`
 - Current local branch may differ from `main`; always run `git status --short --branch` and `git log -3 --oneline` before work.
 - Never commit directly to `main` or rewrite shared history.
 
@@ -40,6 +41,8 @@ This document is the durable repository handover for a future developer, operato
 ### News
 
 Bilingual archives, article pages, homepage presentation, publication scheduling, featured stories, social metadata, and Portable Text rendering are operational. News can store controlled relationships to Public Information Guides and Forum topics. Editors can also curate up to three same-language Related News links on an article; these render on its public article page.
+
+The Sanity News Article editor now uses a writing-first default group, with separate Classification, Publishing, Sources and Trust, Forum, and Workflow groups. Its Portable Text editor explicitly supports approved headings, quotation, bullet and numbered lists, strong text, emphasis, links, and images. The Studio Editorial workspace includes task-oriented News views for drafts, scheduled stories, featured stories, Important Now, language queues, and missing translations. Custom document lists have stable IDs because Sanity requires IDs for custom structure lists.
 
 The News archive uses a magazine-style curated landing page and a paginated older-news archive. Preserve this distinction when changing News presentation.
 
@@ -97,13 +100,9 @@ The signed Sanity-to-Discourse companion-topic workflow is production-proven. Pr
 
 ## Current next milestone
 
-Reorganize the Sanity News Article workspace into a writing-first editor without renaming fields, migrating documents, or changing published content.
+Evaluate whether a separate Form and Preview document view would improve editorial review without changing the current writing-first workflow, field names, or published content.
 
-1. Group writing, classification, translation, publishing, sources, and Forum settings clearly.
-2. Collapse technical automation fields and conditionally show Important Now lifecycle fields.
-3. Add task-oriented News lists for drafts, scheduled stories, featured stories, languages, and missing translations.
-4. Configure the Portable Text toolbar for approved headings, quotation, lists, emphasis, links, and images.
-5. Validate existing documents, publishing, translations, Forum automation, Studio deployment, and editor usability.
+The writing-first editor and task-oriented News views were delivered through PR #68. The missing custom-list IDs that caused the hosted Studio structure-reader error were fixed through PR #69. Both the Vercel Studio and hosted Sanity Studio deployments were verified after the fix.
 
 Keep Event and Directory form organization unchanged unless a separate audit identifies a specific problem.
 
