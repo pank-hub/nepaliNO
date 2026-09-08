@@ -15,6 +15,7 @@ export const translationModuleIds = [
   "events",
   "directory",
   "information",
+  "forum",
   "footer-common",
   "event-submission",
   "directory-submission",
@@ -66,6 +67,10 @@ const moduleMetadata: Record<
   information: {
     title: "Public Information",
     description: "Knowledge-centre, Topic Hub and official-source guidance wording.",
+  },
+  forum: {
+    title: "Forum",
+    description: "Forum discussion labels and community participation wording.",
   },
   "footer-common": {
     title: "Footer and common wording",
@@ -157,6 +162,8 @@ const getModuleSource = (
     }
     case "information":
       return { value: translations.information, prefix: "information" };
+    case "forum":
+      return { value: translations.forum, prefix: "forum" };
     case "footer-common":
       return {
         value: {

@@ -9,6 +9,7 @@ export const assignedTopLevelSections = [
   "events",
   "directory",
   "information",
+  "forum",
   "footer",
   "common",
 ] as const;
