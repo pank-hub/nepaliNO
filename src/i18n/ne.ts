@@ -390,6 +390,7 @@ export const ne = {
     urgentLabel: "अत्यावश्यक जानकारी",
     featuredLabel: "विशेष जानकारी",
     fundingAcknowledgement: "सहयोग तथा साझेदारी",
+    relatedGuides: "यससँग सम्बन्धित अन्य गाइडहरू",
     relatedNews: "यस गाइडसँग सम्बन्धित समाचार",
     readRelatedNews: "समाचार पढ्नुहोस्",
     audiences: {

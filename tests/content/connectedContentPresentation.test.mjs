@@ -45,6 +45,12 @@ test('Guide loads bounded reverse-related News and omits an empty module', () =>
   assert.match(guidePage, /<RelatedNewsList/)
 })
 
+test('Guide renders editor-selected related Guides and omits an empty module', () => {
+  assert.match(guidePage, /guide\.relatedGuides/)
+  assert.match(guidePage, /relatedGuides\.length > 0/)
+  assert.match(guidePage, /<RelatedGuidesList/)
+})
+
 test('connected-content titles are the compact internal links', () => {
   assert.match(supportingCard, /<h2>[\s\S]*<a href=\{`\/\$\{guide\.language\}\/info\/\$\{guide\.slug\}\/`\}>/)
   assert.match(relatedNews, /<a href=\{`\/\$\{article\.language\}\/news\/\$\{article\.slug\}\/`\}>\{article\.title\}<\/a>/)
@@ -56,6 +62,7 @@ test('connected-content titles are the compact internal links', () => {
 test('both languages contain focused connected-content labels', () => {
   for (const source of [ne, nb]) {
     assert.match(source, /relatedNews:/)
+    assert.match(source, /relatedGuides:/)
     assert.match(source, /readRelatedNews:/)
   }
 })
