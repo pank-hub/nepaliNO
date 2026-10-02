@@ -820,6 +820,16 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
         crop
       }
     },
+    "relatedGuides": relatedGuides[
+      @->status == "active" &&
+      @->language == ^.language &&
+      defined(@->slug.current)
+    ]-> {
+      _id,
+      title,
+      "slug": slug.current,
+      language
+    },
     responsibleAgency,
     officialSourceUrl,
     additionalOfficialLinks[] {

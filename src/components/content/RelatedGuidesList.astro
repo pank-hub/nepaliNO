@@ -1,0 +1,76 @@
+---
+import type {SupportedLanguage} from '../../i18n/config'
+
+interface RelatedGuideItem {
+  title: string
+  slug: string
+  language: SupportedLanguage
+}
+
+interface Props {
+  guides: RelatedGuideItem[]
+  heading: string
+}
+
+const {guides, heading} = Astro.props
+---
+
+<section class="related-guides-list" aria-labelledby="related-guides-heading">
+  <h2 id="related-guides-heading">{heading}</h2>
+  <ol>
+    {guides.map((guide) => (
+      <li>
+        <a href={`/${guide.language}/info/${guide.slug}/`}>{guide.title}</a>
+      </li>
+    ))}
+  </ol>
+</section>
+
+<style>
+  .related-guides-list {
+    padding: 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface-warm);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .related-guides-list h2 {
+    color: var(--civic-deep);
+    font-size: 1.05rem;
+    line-height: 1.3;
+  }
+
+  .related-guides-list ol {
+    display: grid;
+    gap: 0;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+  }
+
+  .related-guides-list li {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .related-guides-list li:last-child {
+    border-bottom: 0;
+  }
+
+  .related-guides-list a {
+    display: block;
+    padding-block: 0.8rem;
+    color: var(--civic-deep);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-decoration: none;
+  }
+
+  .related-guides-list a:hover {
+    color: var(--brand);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+</style>
