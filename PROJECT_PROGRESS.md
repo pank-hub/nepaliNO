@@ -378,3 +378,12 @@ The Norwegian (`nb`) site currently publishes News only. Guides, Events, Directo
 - Tests: `npm run test:language-sections` (also added to CI together with `test:guide-search`).
 - Handover: `DEVELOPER_HANDOVER.md` has a "Per-language section availability" section with the re-enable steps.
 - Before promoting the Norwegian site, review the Norwegian About, Privacy, Transparency, and homepage hero text and the Forum automation for `nb` content.
+
+## 17. 2026-10-03 News author dropdown
+
+The News Article `authorName` field now uses a custom Studio input (`sanity/components/AuthorNameInput.tsx`): a dropdown of usual authors plus an "Other" option that reveals a text box. New articles default to the first preset.
+
+- The stored value is still a plain string, so the public site, queries, and existing articles are unchanged. Existing values that are not in the list (including older variants with different casing or trailing spaces) appear as "Other" with the text preserved.
+- Add or reorder authors in `sanity/schemaTypes/authorNamePresets.ts`. Current presets: `nepali.no Editorial`, `Pankaj Kafley`.
+- `@sanity/ui` is pinned to `3.4.5` in `sanity/package.json` to match the version bundled by `sanity`. Keep them aligned when upgrading Sanity.
+- The Studio must be redeployed (Vercel `nepali-no-studio`, and the hosted Studio if it is used) for editors to see the dropdown.
