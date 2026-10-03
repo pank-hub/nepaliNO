@@ -7,6 +7,7 @@ import {
   supportedLanguages,
   type SupportedLanguage,
 } from '../../../i18n/config'
+import {isSectionEnabled} from '../../../config/languageSections'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {
@@ -75,9 +76,11 @@ const [articles, articleCount, usefulGuides, archiveLinks] = await Promise.all([
     language,
   }),
   sanityClient.fetch<number>(NEWS_ARTICLE_COUNT_BY_LANGUAGE_QUERY, {language}),
-  sanityClient.fetch<UsefulGuide[]>(NEWS_ARCHIVE_USEFUL_GUIDES_QUERY, {
-    language,
-  }),
+  isSectionEnabled(language, 'information')
+    ? sanityClient.fetch<UsefulGuide[]>(NEWS_ARCHIVE_USEFUL_GUIDES_QUERY, {
+        language,
+      })
+    : Promise.resolve([] as UsefulGuide[]),
   sanityClient.fetch<ArchiveLink[]>(NEWS_ARCHIVE_PAGE_BY_LANGUAGE_QUERY, {
     language,
     start: 9,

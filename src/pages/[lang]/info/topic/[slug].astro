@@ -3,6 +3,7 @@ import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SiteFooter from '../../../../components/SiteFooter.astro'
 import SiteHeader from '../../../../components/SiteHeader.astro'
+import {isSectionEnabled} from '../../../../config/languageSections'
 import type {SupportedLanguage} from '../../../../i18n/config'
 import BaseLayout from '../../../../layouts/BaseLayout.astro'
 import {
@@ -68,7 +69,9 @@ export async function getStaticPaths() {
     }
   `)
 
-  return topics.map(({slug, language}) => ({
+  return topics
+    .filter(({language}) => isSectionEnabled(language, 'information'))
+    .map(({slug, language}) => ({
     params: {lang: language, slug},
   }))
 }

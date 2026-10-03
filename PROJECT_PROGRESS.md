@@ -1,8 +1,8 @@
 # nepali.no Project Progress
 
-**Status date:** 6 September 2026
-**Current documentation branch:** `main` after PR #69
-**Current protected production checkpoint:** `6a2b610 fix Sanity structure list IDs (#69)`
+**Status date:** 3 October 2026
+**Current documentation branch:** `main` after PR #77
+**Current protected production checkpoint:** PR #77, Norwegian site News only (earlier: `6a2b610`, PR #69)
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
 
@@ -14,7 +14,7 @@ Use this document to understand what is operational now, what is deliberately di
 
 ## 2. Mission and platform position
 
-nepali.no is a multilingual, mobile-first, public-benefit platform for the Nepali community in Norway. The complete public languages are Nepali (`ne`) and Norwegian Bokmal (`nb`). English remains limited to selected submission services and strategic future content.
+nepali.no is a multilingual, mobile-first, public-benefit platform for the Nepali community in Norway. The public languages are Nepali (`ne`, all sections) and Norwegian Bokmal (`nb`, currently News only; see section 16). English remains limited to selected submission services and strategic future content.
 
 The platform combines:
 
@@ -76,7 +76,7 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 - Bilingual upcoming and past archives and individual Event pages are operational. The detail page uses a modern date-led hero, practical information above the fold, controlled responsive imagery, and the shared context-rail card system.
 - Event lifecycle, Oslo timezone, date ranges, external registration safety, and status presentation are implemented.
-- Public Nepali, Norwegian, and limited-English submission forms are operational.
+- Public Nepali and limited-English submission forms are operational. The Norwegian Events and Directory submission pages are disabled with the rest of those sections (section 16).
 - Valid submissions are stored as private drafts in the `submissions` dataset and notify administrators best-effort.
 - Vercel WAF rate limiting protects submission endpoints.
 
@@ -363,4 +363,18 @@ The localized `/[lang]/info/` archive has a minimal client-side Guide search. It
 - The search box appears only when JavaScript runs. With an empty query the page keeps its Topic grouping. While searching, Topic cards are replaced by one de-duplicated list of matching Guides with a result count and an empty state.
 - Labels, placeholder, hint, result count, and empty-state text live in `information` in `src/i18n/ne.ts` and `src/i18n/nb.ts`.
 
-Not included: Guide body or Norwegian-term indexing, ranking, fuzzy or typo-tolerant matching, `?q=` URLs, an external search service, SEO meta keywords, and site-wide search. Nepali spelling variants beyond zero-width joiners (for example chandrabindu versus anusvara) match only if an editor adds them as Search Keywords. Norwegian currently has no published Guides, so `/nb/info/` shows its existing empty state without a search box.
+Not included: Guide body or Norwegian-term indexing, ranking, fuzzy or typo-tolerant matching, `?q=` URLs, an external search service, SEO meta keywords, and site-wide search. Nepali spelling variants beyond zero-width joiners (for example chandrabindu versus anusvara) match only if an editor adds them as Search Keywords. Guides are currently disabled on the Norwegian site (section 16), so the search exists on `/ne/info/` only.
+
+## 16. 2026-10-03 Norwegian site is News only
+
+The Norwegian (`nb`) site currently publishes News only. Guides, Events, Directory, and the Forum are disabled there until Norwegian content exists.
+
+- `src/config/languageSections.ts` is the single switch. `isSectionEnabled(language, section)` drives the header and footer links, the homepage pathways and sections (Guides, Events, Directory, Forum discussions), the News archive "useful information" block, the Forum card and supporting Guide on News articles, the Contact page items, and the Events and Directory submission language switchers.
+- `getStaticPaths()` on every Guide, Topic Hub, Events, and Directory route only generates paths for languages with the section enabled, so no `/nb/info`, `/nb/events`, or `/nb/directory` pages are built.
+- `src/pages/nb/{info,events,directory}/[...slug].astro` are server-rendered 302 redirects to `/nb/`, so old links and bookmarks still land somewhere useful. The redirects are temporary on purpose.
+- The language switcher on Nepali pages points to `/nb/` instead of a disabled Norwegian section (`resolveAlternatePath`).
+- Nepali is unchanged. To re-enable a Norwegian section, set its flag to `true` in `languageSections.ts` and delete the matching redirect page.
+- Not changed: Sanity content and schemas, Norwegian About, Privacy, and Transparency text (they describe the whole service and may still mention Forum, Guides, and Events), the Norwegian homepage hero text, and Forum automation for `nb` content.
+- Tests: `npm run test:language-sections` (also added to CI together with `test:guide-search`).
+- Handover: `DEVELOPER_HANDOVER.md` has a "Per-language section availability" section with the re-enable steps.
+- Before promoting the Norwegian site, review the Norwegian About, Privacy, Transparency, and homepage hero text and the Forum automation for `nb` content.

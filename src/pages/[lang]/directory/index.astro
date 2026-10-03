@@ -3,13 +3,14 @@ import {sanityClient} from 'sanity:client'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
-import {supportedLanguages, type SupportedLanguage} from '../../../i18n/config'
+import {getLanguagesWithSection} from '../../../config/languageSections'
+import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {ACTIVE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
-  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+  return getLanguagesWithSection('directory').map((language) => ({params: {lang: language}, props: {language}}))
 }
 
 interface ListingImage {

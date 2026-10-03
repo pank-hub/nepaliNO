@@ -3,6 +3,7 @@ import {sanityClient} from 'sanity:client'
 import SiteFooter from '../../components/SiteFooter.astro'
 import SiteHeader from '../../components/SiteHeader.astro'
 import {forumPilot} from '../../config/forum'
+import {isSectionEnabled} from '../../config/languageSections'
 import {getTranslations} from '../../i18n'
 import {
   supportedLanguages,
@@ -101,6 +102,11 @@ interface HomeDirectoryListing {
 const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const showInformation = isSectionEnabled(language, 'information')
+const showEvents = isSectionEnabled(language, 'events')
+const showDirectory = isSectionEnabled(language, 'directory')
+const showForum = forumPilot.enabled && isSectionEnabled(language, 'forum')
+const showPathways = showInformation || showForum
 
 const [
   featuredGuides,
@@ -109,20 +115,26 @@ const [
   homepageEvents,
   homepageDirectoryListings,
 ] = await Promise.all([
-  sanityClient.fetch<HomeGuide[]>(FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY, {
-    language,
-  }),
+  showInformation
+    ? sanityClient.fetch<HomeGuide[]>(FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY, {
+        language,
+      })
+    : Promise.resolve([] as HomeGuide[]),
   sanityClient.fetch<HomeArticle | null>(IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY, {
     language,
   }),
   sanityClient.fetch<HomeArticle | null>(HOMEPAGE_FEATURED_NEWS_BY_LANGUAGE_QUERY, {
     language,
   }),
-  sanityClient.fetch<HomeEvent[]>(HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY, {language}),
-  sanityClient.fetch<HomeDirectoryListing[]>(
-    HOMEPAGE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY,
-    {language},
-  ),
+  showEvents
+    ? sanityClient.fetch<HomeEvent[]>(HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY, {language})
+    : Promise.resolve([] as HomeEvent[]),
+  showDirectory
+    ? sanityClient.fetch<HomeDirectoryListing[]>(
+        HOMEPAGE_DIRECTORY_LISTINGS_BY_LANGUAGE_QUERY,
+        {language},
+      )
+    : Promise.resolve([] as HomeDirectoryListing[]),
 ])
 
 const latestStories = await sanityClient.fetch<HomeArticle[]>(
@@ -242,40 +254,44 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
   />
 
   <section class="home-hero">
-    <div class="container home-hero__grid">
+    <div class:list={["container", "home-hero__grid", !showPathways && "home-hero__grid--single"]}>
       <div class="home-hero__content">
         <p class="eyebrow">{labels.home.eyebrow}</p>
         <h1>{labels.home.title}</h1>
         <p class="lead">{labels.home.introduction}</p>
       </div>
 
-      <div
-        class:list={[
-          "home-hero__pathways",
-          !forumPilot.enabled && "home-hero__pathways--without-forum",
-        ]}
-        aria-label={labels.home.title}
-      >
-        <a class="pathway pathway--understand" href={`/${language}/info/`}>
-          <span aria-hidden="true">01</span>
-          <h2>{labels.home.informationHeading}</h2>
-          <p>{labels.home.informationDescription}</p>
-        </a>
-        <a class="pathway pathway--informed" href={`/${language}/news/`}>
-          <span aria-hidden="true">02</span>
-          <h2>{labels.home.newsHeading}</h2>
-          <p>{labels.home.newsDescription}</p>
-        </a>
-        {
-          forumPilot.enabled && (
-            <a class="pathway pathway--participate" href={forumPilot.url}>
-              <span aria-hidden="true">03</span>
-              <h2>{labels.home.discussionsHeading}</h2>
-              <p>{labels.home.discussionsDescription}</p>
+      {
+        showPathways && (
+          <div
+            class:list={[
+              "home-hero__pathways",
+              !showForum && "home-hero__pathways--without-forum",
+            ]}
+            aria-label={labels.home.title}
+          >
+            {showInformation && (
+              <a class="pathway pathway--understand" href={`/${language}/info/`}>
+                <span aria-hidden="true">01</span>
+                <h2>{labels.home.informationHeading}</h2>
+                <p>{labels.home.informationDescription}</p>
+              </a>
+            )}
+            <a class="pathway pathway--informed" href={`/${language}/news/`}>
+              <span aria-hidden="true">02</span>
+              <h2>{labels.home.newsHeading}</h2>
+              <p>{labels.home.newsDescription}</p>
             </a>
-          )
-        }
-      </div>
+            {showForum && (
+              <a class="pathway pathway--participate" href={forumPilot.url}>
+                <span aria-hidden="true">03</span>
+                <h2>{labels.home.discussionsHeading}</h2>
+                <p>{labels.home.discussionsDescription}</p>
+              </a>
+            )}
+          </div>
+        )
+      }
     </div>
   </section>
 
@@ -454,6 +470,7 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
   </section>
 
 
+  {showInformation && (
   <section class="section home-section" aria-labelledby="home-information-heading">
     <div class="container">
       <div class="section-heading">
@@ -496,6 +513,7 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
       }
     </div>
   </section>
+  )}
 
   {
     homepageEvents.length > 0 && (
@@ -597,7 +615,7 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
   }
 
   {
-    forumPilot.enabled &&
+    showForum &&
       forumPilot.homepageDiscussionFeedEnabled && (
       <section class="section discussions" aria-labelledby="home-discussions-heading">
         <div class="container">
@@ -867,6 +885,10 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     gap: clamp(3rem, 8vw, 7rem);
     align-items: center;
     padding-block: clamp(4rem, 10vw, 8rem);
+  }
+
+  .home-hero__grid--single {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .home-hero__content h1 {

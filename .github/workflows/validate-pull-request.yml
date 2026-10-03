@@ -43,6 +43,12 @@ jobs:
       - name: Test connected-content presentation contract
         run: npm run test:connected-content-presentation
 
+      - name: Test Guide archive search
+        run: npm run test:guide-search
+
+      - name: Test per-language section availability
+        run: npm run test:language-sections
+
       - name: Test Forum relationship normalization
         run: npm run test:forum-relationships
 

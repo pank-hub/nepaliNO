@@ -3,13 +3,14 @@ import {sanityClient} from 'sanity:client'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
-import {supportedLanguages, type SupportedLanguage} from '../../../i18n/config'
+import {getLanguagesWithSection} from '../../../config/languageSections'
+import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {UPCOMING_EVENTS_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
-  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+  return getLanguagesWithSection('events').map((language) => ({params: {lang: language}, props: {language}}))
 }
 
 interface EventImage { asset?: unknown; alt?: string; hotspot?: unknown; crop?: unknown }

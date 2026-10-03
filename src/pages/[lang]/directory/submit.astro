@@ -3,14 +3,12 @@ import DirectorySubmissionForm from "../../../components/directory/DirectorySubm
 import SiteFooter from "../../../components/SiteFooter.astro";
 import SiteHeader from "../../../components/SiteHeader.astro";
 import { getTranslations } from "../../../i18n";
-import {
-  supportedLanguages,
-  type SupportedLanguage,
-} from "../../../i18n/config";
+import {getLanguagesWithSection, isSectionEnabled} from "../../../config/languageSections";
+import type {SupportedLanguage} from "../../../i18n/config";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 
 export function getStaticPaths() {
-  return supportedLanguages.map((language) => ({
+  return getLanguagesWithSection('directory').map((language) => ({
     params: { lang: language },
     props: { language },
   }));
@@ -33,7 +31,10 @@ const languageLinks = [
     lang: "nb",
   },
   { href: "/en/directory/submit/", label: copy.actions.useEnglish, lang: "en" },
-];
+].filter(
+  ({ lang }) =>
+    lang === "en" || isSectionEnabled(lang as SupportedLanguage, "directory"),
+);
 ---
 
 <BaseLayout
