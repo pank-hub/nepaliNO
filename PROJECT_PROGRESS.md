@@ -67,7 +67,8 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 ### Public Information
 
 - Guides, Topic Hubs, official sources, review dates, audience metadata, reusable Norwegian terms, search metadata, guide format, priority, and maintenance sensitivity are operational.
-- Related Guides can be selected in Sanity but are not yet projected or rendered publicly.
+- Related Guides are selected in Sanity and rendered publicly in the Guide sidebar (same language, active, slug-safe).
+- Search Keywords and Synonyms feed the client-side Guide search on `/[lang]/info/`; they are never displayed publicly.
 - Guides can store one long-lived Forum questions-and-experiences topic and up to three related Forum topics.
 - Community discussion must remain visually and editorially separate from verified guidance.
 
@@ -190,7 +191,6 @@ The next Studio follow-up is optional evaluation of a separate Form and Preview 
 
 ## 8. Deferred but approved work
 
-- Render Related Guides publicly with same-language, active, slug-safe filtering.
 - Build News Forum panel and related-topic sidebar.
 - Build Guide questions-and-experiences panel and related-topic sidebar.
 - Correct the Translation Editor production-domain OAuth callback.
@@ -352,3 +352,15 @@ All four localized footer trust pages should later move from hardcoded Astro con
 4. Contact
 
 The migration must preserve existing localized URLs, footer links, Nepali and Norwegian language switching, current responsive presentation, publication controls, and safe fallback behavior. This is a separate future milestone and must not be folded casually into the News editor reorganization.
+
+## 15. 2026-10-03 Guide archive search
+
+The localized `/[lang]/info/` archive has a minimal client-side Guide search. It is intentionally not site-wide search.
+
+- `ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY` selects `searchKeywords`. No other guide query, the Guide detail page, metadata, or structured data uses it. `tests/content/guideSearch.test.mjs` fails if the archive query stops selecting it.
+- Each Guide list item carries a normalized `data-search-text` attribute built from title, summary, responsible agency, and Search Keywords. Keywords are never rendered as visible text or cards. They are present in the page source only inside that attribute.
+- `src/lib/guideSearch.ts` normalizes text (case, whitespace, zero-width joiners, Latin accents, and `æ`/`ø`/`å` folded to `ae`/`o`/`a`; Devanagari is preserved) and requires every query term to match.
+- The search box appears only when JavaScript runs. With an empty query the page keeps its Topic grouping. While searching, Topic cards are replaced by one de-duplicated list of matching Guides with a result count and an empty state.
+- Labels, placeholder, hint, result count, and empty-state text live in `information` in `src/i18n/ne.ts` and `src/i18n/nb.ts`.
+
+Not included: Guide body or Norwegian-term indexing, ranking, fuzzy or typo-tolerant matching, `?q=` URLs, an external search service, SEO meta keywords, and site-wide search. Nepali spelling variants beyond zero-width joiners (for example chandrabindu versus anusvara) match only if an editor adds them as Search Keywords. Norwegian currently has no published Guides, so `/nb/info/` shows its existing empty state without a search box.

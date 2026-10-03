@@ -8,6 +8,7 @@ import {
   type SupportedLanguage,
 } from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {buildGuideSearchText} from '../../../lib/guideSearch'
 import {
   ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY,
   PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY,
@@ -26,6 +27,7 @@ interface GuideSummary {
   slug: string
   language: SupportedLanguage
   summary: string
+  searchKeywords?: string[] | null
   topic: string
   intendedAudience?: string[]
   responsibleAgency: string
@@ -66,6 +68,14 @@ const [topics, guides] = await Promise.all([
 
 const activeTopicKeys = new Set(topics.map((topic) => topic.topicKey))
 const fallbackGuides = guides.filter((guide) => !activeTopicKeys.has(guide.topic))
+const fallbackGuideIds = new Set(fallbackGuides.map((guide) => guide._id))
+const showGuidesSection = topics.length === 0 || guides.length > 0
+const guidesVisibleByDefault = topics.length === 0 || fallbackGuides.length > 0
+const searchableGuides = guides.map((guide) => ({
+  guide,
+  searchText: buildGuideSearchText(guide),
+  inDefaultView: topics.length === 0 || fallbackGuideIds.has(guide._id),
+}))
 
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const formatDate = (date: string) =>
@@ -140,8 +150,46 @@ const copy =
       </div>
     </section>
 
+    {guides.length > 0 && (
+      <section class="info-search section-sm" hidden data-guide-search-section>
+        <div class="container">
+          <form class="info-search__form" role="search" data-guide-search-form>
+            <label for="guide-search-input">{labels.information.searchLabel}</label>
+            <input
+              id="guide-search-input"
+              type="search"
+              name="q"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder={labels.information.searchPlaceholder}
+              aria-describedby="guide-search-hint guide-search-status"
+              data-guide-search-input
+            />
+            <p id="guide-search-hint" class="info-search__hint">
+              {labels.information.searchHint}
+            </p>
+            <p
+              id="guide-search-status"
+              class="info-search__status"
+              role="status"
+              aria-live="polite"
+              data-guide-search-status
+              data-count-one={labels.information.searchResultCount.one}
+              data-count-other={labels.information.searchResultCount.other}
+            >
+            </p>
+          </form>
+        </div>
+      </section>
+    )}
+
     {topics.length > 0 && (
-      <section class="topics-section section-sm" aria-labelledby="topics-heading">
+      <section
+        class="topics-section section-sm"
+        aria-labelledby="topics-heading"
+        data-topics-section
+      >
         <div class="container">
           <div class="section-heading section-heading--split">
             <div>
@@ -185,23 +233,35 @@ const copy =
       </section>
     )}
 
-    {(topics.length === 0 || fallbackGuides.length > 0) && (
-      <section class="guides-section section-sm" aria-labelledby="guides-heading">
+    {showGuidesSection && (
+      <section
+        class="guides-section section-sm"
+        aria-labelledby="guides-heading"
+        hidden={!guidesVisibleByDefault}
+        data-guides-section
+        data-visible-by-default={guidesVisibleByDefault ? 'true' : 'false'}
+      >
         <div class="container">
           <div class="section-heading section-heading--split">
             <div>
-              <p class="eyebrow">
+              <p class="eyebrow" data-guides-eyebrow>
                 {topics.length > 0
                   ? copy.fallbackEyebrow
                   : labels.information.officialSource}
               </p>
-              <h2 id="guides-heading">
+              <h2
+                id="guides-heading"
+                data-default-heading={topics.length > 0
+                  ? copy.fallbackHeading
+                  : labels.information.latestHeading}
+                data-search-heading={labels.information.searchResultsHeading}
+              >
                 {topics.length > 0
                   ? copy.fallbackHeading
                   : labels.information.latestHeading}
               </h2>
             </div>
-            {topics.length > 0 && <p>{copy.fallbackDescription}</p>}
+            {topics.length > 0 && <p data-guides-description>{copy.fallbackDescription}</p>}
           </div>
 
           {guides.length === 0 ? (
@@ -211,8 +271,13 @@ const copy =
             </div>
           ) : (
             <ul class="guide-grid">
-              {(topics.length > 0 ? fallbackGuides : guides).map((guide) => (
-                <li>
+              {searchableGuides.map(({guide, searchText, inDefaultView}) => (
+                <li
+                  hidden={!inDefaultView}
+                  data-guide-item
+                  data-default-visible={inDefaultView ? 'true' : 'false'}
+                  data-search-text={searchText}
+                >
                   <article class="guide-card card">
                     <div class="guide-card__topline">
                       <span class="badge badge-success">
@@ -275,6 +340,13 @@ const copy =
                 </li>
               ))}
             </ul>
+          )}
+
+          {guides.length > 0 && (
+            <div class="empty-state surface" hidden data-guide-search-empty>
+              <h3>{labels.information.searchNoResultsHeading}</h3>
+              <p>{labels.information.searchNoResultsMessage}</p>
+            </div>
           )}
         </div>
       </section>
@@ -594,6 +666,60 @@ const copy =
     font-weight: 700;
   }
 
+  .info-search {
+    padding-block-end: 0;
+  }
+
+  .info-search__form {
+    display: grid;
+    max-width: 44rem;
+    gap: 0.5rem;
+  }
+
+  .info-search__form label {
+    color: var(--civic-deep);
+    font-weight: 760;
+  }
+
+  .info-search__form input {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+  }
+
+  .info-search__form input:focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .info-search__hint,
+  .info-search__status {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .info-search__status {
+    min-height: 1.4em;
+    color: var(--civic-deep);
+    font-weight: 700;
+  }
+
+  [data-guide-search-section][hidden],
+  [data-topics-section][hidden],
+  [data-guides-section][hidden],
+  [data-guide-item][hidden],
+  [data-guide-search-empty][hidden],
+  [data-guides-eyebrow][hidden],
+  [data-guides-description][hidden] {
+    display: none !important;
+  }
+
   .empty-state {
     padding: clamp(2rem, 5vw, 4rem);
     text-align: center;
@@ -676,3 +802,53 @@ const copy =
     }
   }
 </style>
+
+<script>
+  import {matchesGuideSearch} from '../../../lib/guideSearch'
+
+  const searchSection = document.querySelector<HTMLElement>('[data-guide-search-section]')
+  const form = document.querySelector<HTMLFormElement>('[data-guide-search-form]')
+  const input = document.querySelector<HTMLInputElement>('[data-guide-search-input]')
+  const status = document.querySelector<HTMLElement>('[data-guide-search-status]')
+  const topicsSection = document.querySelector<HTMLElement>('[data-topics-section]')
+  const guidesSection = document.querySelector<HTMLElement>('[data-guides-section]')
+  const heading = guidesSection?.querySelector<HTMLElement>('#guides-heading')
+  const eyebrow = guidesSection?.querySelector<HTMLElement>('[data-guides-eyebrow]')
+  const description = guidesSection?.querySelector<HTMLElement>('[data-guides-description]')
+  const emptyState = document.querySelector<HTMLElement>('[data-guide-search-empty]')
+  const items = Array.from(document.querySelectorAll<HTMLElement>('[data-guide-item]'))
+
+  if (searchSection && form && input && status && guidesSection && heading) {
+    const guidesVisibleByDefault = guidesSection.dataset.visibleByDefault === 'true'
+
+    const update = () => {
+      const query = input.value
+      const searching = query.trim().length > 0
+      let matches = 0
+
+      for (const item of items) {
+        const visible = searching
+          ? matchesGuideSearch(item.dataset.searchText ?? '', query)
+          : item.dataset.defaultVisible === 'true'
+        item.hidden = !visible
+        if (searching && visible) matches += 1
+      }
+
+      topicsSection && (topicsSection.hidden = searching)
+      guidesSection.hidden = searching ? false : !guidesVisibleByDefault
+      heading.textContent =
+        (searching ? heading.dataset.searchHeading : heading.dataset.defaultHeading) ?? ''
+      eyebrow && (eyebrow.hidden = searching)
+      description && (description.hidden = searching)
+      emptyState && (emptyState.hidden = !(searching && matches === 0))
+
+      const template = matches === 1 ? status.dataset.countOne : status.dataset.countOther
+      status.textContent = searching && template ? template.replace('{count}', String(matches)) : ''
+    }
+
+    searchSection.hidden = false
+    form.addEventListener('submit', (event) => event.preventDefault())
+    input.addEventListener('input', update)
+    update()
+  }
+</script>

@@ -735,6 +735,7 @@ export const ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY = `
       language
     },
     summary,
+    searchKeywords,
     topic,
     intendedAudience,
     responsibleAgency,
