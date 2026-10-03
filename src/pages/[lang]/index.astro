@@ -19,6 +19,7 @@ import {
   HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY,
   IMPORTANT_NOW_NEWS_BY_LANGUAGE_QUERY,
 } from '../../lib/sanity/queries'
+import {getEventAccessLabels} from '../../lib/eventAccess'
 
 export function getStaticPaths() {
   return supportedLanguages.map((language) => ({
@@ -76,6 +77,9 @@ interface HomeEvent {
   city?: string
   onlinePlatform?: string
   organizerName: string
+  registrationRequirement?: string
+  registrationStatus?: string
+  isFree?: boolean
   featuredImage?: HomeArticleImage
   isFeatured?: boolean
 }
@@ -553,9 +557,6 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
                   )}
                   <div class="home-event-card__content">
                     <div class="home-event-card__badges">
-                      {event.isFeatured && (
-                        <strong class="badge badge-brand">{labels.events.featuredEvent}</strong>
-                      )}
                       {isEventOngoing(event) && (
                         <strong class="badge badge-success">{labels.events.ongoing}</strong>
                       )}
@@ -570,6 +571,17 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
                       <span class="badge">
                         {eventFormats[event.eventFormat] ?? event.eventFormat}
                       </span>
+                      {event.isFree === true && (
+                        <span class="badge badge-success">{labels.events.freeEvent}</span>
+                      )}
+                      {event.isFree === false && (
+                        <span class="badge">{labels.events.paidEvent}</span>
+                      )}
+                      {getEventAccessLabels(event, labels.events).needsAction && (
+                        <span class="badge">
+                          {getEventAccessLabels(event, labels.events).requirementLabel}
+                        </span>
+                      )}
                     </div>
                     <p class="home-event-card__date">
                       {formatEventDateRange(event.startDateTime, event.endDateTime)}

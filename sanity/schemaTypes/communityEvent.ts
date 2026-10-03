@@ -305,7 +305,8 @@ export const communityEvent = defineType({
       name: 'onlineUrl',
       title: 'Online Event or Information URL',
       type: 'url',
-      description: 'Use a public event or joining-information page. Avoid exposing private meeting links.',
+      description:
+        'Use a public event or joining-information page. Avoid exposing private meeting links.',
       hidden: ({document}) => document?.eventFormat === 'in-person',
       validation: (rule) => rule.uri({scheme: ['http', 'https']}),
     }),
@@ -325,10 +326,29 @@ export const communityEvent = defineType({
     }),
 
     defineField({
+      name: 'organizerContactPermission',
+      title: 'Organizer approved publishing this contact',
+      type: 'boolean',
+      description:
+        'Tick only if the organizer has agreed that this email or phone number may be shown on nepali.no. Without this, the contact details below are never published.',
+      initialValue: false,
+    }),
+
+    defineField({
       name: 'organizerEmail',
       title: 'Public Organizer Email',
       type: 'email',
       description: 'Publish only an email address intended for public event enquiries.',
+      validation: (rule) =>
+        rule
+          .custom((value, context) =>
+            value &&
+            !(context.document as {organizerContactPermission?: boolean})
+              ?.organizerContactPermission
+              ? 'Not shown publicly until the organizer approval box above is ticked.'
+              : true,
+          )
+          .warning(),
     }),
 
     defineField({
@@ -336,6 +356,16 @@ export const communityEvent = defineType({
       title: 'Public Organizer Phone',
       type: 'string',
       description: 'Publish only a phone number intended for public event enquiries.',
+      validation: (rule) =>
+        rule
+          .custom((value, context) =>
+            value &&
+            !(context.document as {organizerContactPermission?: boolean})
+              ?.organizerContactPermission
+              ? 'Not shown publicly until the organizer approval box above is ticked.'
+              : true,
+          )
+          .warning(),
     }),
 
     defineField({
@@ -431,7 +461,8 @@ export const communityEvent = defineType({
           name: 'alt',
           title: 'Alternative Text',
           type: 'string',
-          description: 'Describe the image for accessibility. Do not rely on a poster for essential details.',
+          description:
+            'Describe the image for accessibility. Do not rely on a poster for essential details.',
           validation: (rule) => rule.required(),
         }),
         defineField({name: 'caption', title: 'Caption', type: 'string'}),
@@ -488,7 +519,9 @@ export const communityEvent = defineType({
 
     defineField({
       name: 'isFeatured',
-      title: 'Feature on Homepage',
+      title: 'Show on Homepage',
+      description:
+        'Controls homepage placement only. Visitors do not see a "featured" or "special" label.',
       type: 'boolean',
       initialValue: false,
     }),

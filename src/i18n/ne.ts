@@ -131,7 +131,6 @@ export const ne = {
     viewPastEvents: "पुराना कार्यक्रमहरू हेर्नुहोस्",
     viewUpcomingEvents: "आगामी कार्यक्रमहरू हेर्नुहोस्",
     readMore: "थप विवरण हेर्नुहोस्",
-    featuredEvent: "विशेष कार्यक्रम",
     viewAllEvents: "सबै कार्यक्रम हेर्नुहोस्",
     eventDetails: "कार्यक्रम विवरण",
     dateAndTime: "मिति र समय",
@@ -154,6 +153,10 @@ export const ne = {
     registrationDeadline: "दर्ता गर्ने अन्तिम मिति",
     registerExternally: "आयोजकसँग दर्ता गर्नुहोस्",
     buyTickets: "टिकट किन्नुहोस्",
+    getFreeTicket: "निःशुल्क टिकट लिनुहोस्",
+    tickets: "टिकट",
+    freeTicketRequired: "निःशुल्क टिकट अनिवार्य छ",
+    paidEvent: "शुल्क लाग्ने",
     registrationUnavailable: "दर्ता उपलब्ध छैन",
     externalRegistrationNotice:
       "दर्ता वा भुक्तानी आयोजक वा बाह्य सेवा प्रदायकले व्यवस्थापन गर्दछ। व्यक्तिगत विवरण पठाउनुअघि उनीहरूको गोपनीयता नीति (Privacy Policy) हेर्नुहोला।",
@@ -183,6 +186,13 @@ export const ne = {
       open: "दर्ता खुला छ",
       closed: "दर्ता बन्द भयो",
       "sold-out": "सबै टिकट बिक्री भयो",
+    },
+    ticketStatuses: {
+      "not-applicable": "लागू हुँदैन",
+      "not-yet-open": "टिकट अझै उपलब्ध भएको छैन",
+      open: "टिकट उपलब्ध छ",
+      closed: "टिकट उपलब्ध छैन",
+      "sold-out": "सबै टिकट सकियो",
     },
     languages: {
       nepali: "नेपाली",

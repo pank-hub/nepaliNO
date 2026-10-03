@@ -49,6 +49,9 @@ jobs:
       - name: Test per-language section availability
         run: npm run test:language-sections
 
+      - name: Test Event ticket labels and organizer contact gating
+        run: npm run test:event-labels
+
       - name: Test Forum relationship normalization
         run: npm run test:forum-relationships
 

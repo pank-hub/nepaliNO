@@ -20,7 +20,8 @@
     "test:content-relationships": "node --experimental-strip-types --test tests/content/newsSupportingGuideContract.test.mjs",
     "test:connected-content-presentation": "node --experimental-strip-types --test tests/content/connectedContentPresentation.test.mjs",
     "test:guide-search": "node --experimental-strip-types --test tests/content/guideSearch.test.mjs",
-    "test:language-sections": "node --experimental-strip-types --test tests/content/languageSections.test.mjs"
+    "test:language-sections": "node --experimental-strip-types --test tests/content/languageSections.test.mjs",
+    "test:event-labels": "node --experimental-strip-types --test tests/content/eventLabels.test.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.4",

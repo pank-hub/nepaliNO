@@ -6,6 +6,7 @@ import {getTranslations} from '../../../i18n'
 import {getLanguagesWithSection} from '../../../config/languageSections'
 import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {getEventAccessLabels} from '../../../lib/eventAccess'
 import {urlFor} from '../../../lib/sanity/image'
 import {UPCOMING_EVENTS_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
 
@@ -49,7 +50,6 @@ const eventTimeZone = 'Europe/Oslo'
 const now = Date.now()
 const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>
-const registrationStatuses = eventLabels.registrationStatuses as Record<string, string>
 const currentEventYear = Number(new Intl.DateTimeFormat('en', {timeZone: eventTimeZone, year: 'numeric'}).format(new Date()))
 const eventYear = (value: string) => Number(new Intl.DateTimeFormat('en', {timeZone: eventTimeZone, year: 'numeric'}).format(new Date(value)))
 const formatDateRange = (startValue: string, endValue?: string) => {
@@ -115,6 +115,8 @@ const imageUrl = (image?: EventImage) => image?.asset ? urlFor(image as any).wid
                       {isOngoing(event) && <strong class="badge badge-live">{eventLabels.ongoing}</strong>}
                       {event.eventStatus !== 'scheduled' && <strong class={`badge badge-${event.eventStatus}`}>{statuses[event.eventStatus] ?? event.eventStatus}</strong>}
                       <span class="badge">{categories[event.eventType] ?? event.eventType}</span>
+                      {event.isFree === true && <span class="badge badge-success">{eventLabels.freeEvent}</span>}
+                      {event.isFree === false && <span class="badge">{eventLabels.paidEvent}</span>}
                     </div>
                     <h3><a href={`/${language}/events/${event.slug}/`}>{event.title}</a></h3>
                     <p>{event.summary}</p>
@@ -122,7 +124,7 @@ const imageUrl = (image?: EventImage) => image?.asset ? urlFor(image as any).wid
                       <div><dt>{eventLabels.dateAndTime}</dt><dd><span>{formatDateRange(event.startDateTime, event.endDateTime)}{event.isAllDay ? ` • ${eventLabels.allDay}` : ` • ${formatTime(event.startDateTime)}`}</span></dd></div>
                       <div><dt>{eventLabels.venue}</dt><dd>{locationLabel(event)}</dd></div>
                       <div><dt>{eventLabels.organizer}</dt><dd>{event.organizerName}</dd></div>
-                      {event.registrationStatus !== 'not-applicable' && <div><dt>{eventLabels.registration}</dt><dd>{registrationStatuses[event.registrationStatus] ?? event.registrationStatus}</dd></div>}
+                      {event.registrationStatus !== 'not-applicable' && <div><dt>{getEventAccessLabels(event, eventLabels).sectionLabel}</dt><dd>{getEventAccessLabels(event, eventLabels).statusLabel}</dd></div>}
                     </dl>
                     <a class="event-link" href={`/${language}/events/${event.slug}/`}>{eventLabels.readMore} <span aria-hidden="true">→</span></a>
                   </div>
