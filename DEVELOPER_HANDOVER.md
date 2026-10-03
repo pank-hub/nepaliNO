@@ -1,9 +1,9 @@
 # nepali.no Developer Handover
 
-**Status date:** 6 September 2026
+**Status date:** 3 October 2026
 **Repository:** `pank-hub/nepaliNO`
 **Owner and final decision-maker:** Pankaj Kafley
-**Protected production checkpoint:** PR #69, Sanity structure-list fix
+**Protected production checkpoint:** PR #77, Norwegian site News only
 
 ## Purpose
 
@@ -35,6 +35,7 @@ This document is the durable repository handover for a future developer, operato
 - Transactional email: Resend from `notifications.nepali.no`
 - Public languages: Nepali (`ne`) and Norwegian Bokmal (`nb`)
 - English is limited to selected submission and administrative services.
+- The Norwegian site currently publishes News only. Guides, Events, Directory, and the Forum are disabled for `nb` through `src/config/languageSections.ts` (see "Per-language section availability").
 
 ## Operational features
 
@@ -50,9 +51,22 @@ Nepali typography was recently adjusted to reduce heavy Devanagari weights in he
 
 ### Public Information
 
-Bilingual Topic Hubs and Guides, official sources, review dates, audience metadata, reusable Norwegian terms, search metadata, editorial classifications, and Portable Text rendering are operational. Related Guides can be selected in Sanity but are not yet rendered publicly.
+Bilingual Topic Hubs and Guides, official sources, review dates, audience metadata, reusable Norwegian terms, search metadata, editorial classifications, and Portable Text rendering are operational. Related Guides are selected in Sanity and rendered in the Guide sidebar (same language, active, with a slug).
+
+The `/[lang]/info/` archive has a minimal client-side Guide search over title, summary, responsible agency, and Search Keywords and Synonyms. `ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY` is the only query that selects `searchKeywords`, and a test enforces that. Keywords are never rendered as visible text; they exist in the page source only inside each list item's `data-search-text` attribute. Matching logic lives in `src/lib/guideSearch.ts`. Guide body text and reusable Norwegian terms are not indexed. Public Information is currently available in Nepali only (see below).
 
 Reusable Norwegian terms expose the Norwegian term and optional Nepali pronunciation separately. The pronunciation is rendered in italic muted text; legacy inline terms remain supported.
+
+### Per-language section availability
+
+`src/config/languageSections.ts` is the single switch for which sections each language publishes. Today `nb` has News only and `ne` has everything.
+
+- `isSectionEnabled(language, section)` controls the header and footer links, homepage pathways and sections, the News archive guide block, the Forum card and supporting Guide on News articles, Contact page items, and the Events and Directory submission language links.
+- Every Guide, Topic Hub, Events, and Directory route builds paths only for languages where the section is enabled (`getLanguagesWithSection` or `isSectionEnabled` inside `getStaticPaths`).
+- `src/pages/nb/{info,events,directory}/[...slug].astro` are server-rendered 302 redirects to `/nb/` for old links. Delete the matching file when re-enabling a section.
+- `resolveAlternatePath` sends the language switcher to the language home when the other language's section is disabled.
+- To re-enable a Norwegian section: set its flag to `true`, delete its redirect page, confirm Norwegian content exists, and rerun `npm run test:language-sections` (update the test expectations deliberately).
+- Not covered by the switch: Norwegian About, Privacy, and Transparency text, Norwegian homepage hero text, Sanity-managed Contact copy, and Forum automation for `nb` content. Review these before the Norwegian site is promoted.
 
 ### Events and Community Directory
 
@@ -124,7 +138,7 @@ Keep Event and Directory form organization unchanged unless a separate audit ide
 2. Inspect the current branch, worktree, open pull requests, and nearby tests.
 3. Work on a feature branch; preserve unrelated user changes.
 4. Make the smallest focused edit.
-5. Run focused tests, `git diff --check`, Astro Check, and `npm run build`.
+5. Run focused tests (`npm run test:guide-search`, `npm run test:language-sections`, and the content and Forum suites that CI runs), `git diff --check`, Astro Check, and `npm run build`.
 6. Review `git diff --stat`, `git diff --name-only`, and the staged inventory.
 7. Push the branch and open a pull request against protected `main`.
 8. Merge only after required checks and both Vercel deployments pass.
@@ -136,6 +150,7 @@ Do not use destructive Git commands such as `git reset --hard` or `git checkout 
 ## Documentation map
 
 - `PROJECT_PROGRESS.md`: concise current status, next milestone, and blockers
+- `src/config/languageSections.ts`: per-language section availability
 - `PROJECT_PROGRESS_ARCHIVE_TO_2026-08-08.md`: historical progress record
 - `PROJECT_PROVENANCE.md`: ownership, custom development, technology, and transparency
 - `TRANSLATION_MODULE_ARCHITECTURE.md`: Translation Editor authority and security contract
