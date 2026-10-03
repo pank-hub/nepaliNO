@@ -1,5 +1,8 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 
+import {AuthorNameInput} from '../components/AuthorNameInput'
+import {AUTHOR_NAME_PRESETS} from './authorNamePresets'
+
 export const newsArticle = defineType({
   name: 'newsArticle',
   title: 'News Article',
@@ -361,6 +364,10 @@ export const newsArticle = defineType({
       title: 'Author Name',
       type: 'string',
       group: 'publishing',
+      description:
+        'Choose a usual author, or pick Other to type a different name. New articles default to the first author in the list.',
+      initialValue: AUTHOR_NAME_PRESETS[0],
+      components: {input: AuthorNameInput},
       validation: (rule) => rule.required(),
     }),
 
