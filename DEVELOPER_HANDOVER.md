@@ -72,6 +72,8 @@ Reusable Norwegian terms expose the Norwegian term and optional Nepali pronuncia
 
 Bilingual public archives and detail pages are operational. Event and Directory suggestions are private, reviewed, and never published automatically. Submission validation, notifications, private contact separation, and Vercel WAF rate limiting are operational.
 
+Event pages publish an organizer's email or phone only when the Event's `organizerContactPermission` is ticked; every Event query projects them conditionally, so never select `organizerEmail` or `organizerPhone` directly. Ticket and registration wording comes from `src/lib/eventAccess.ts`; free ticketed events must never say "buy". `isFeatured` only controls homepage placement and must not be shown as a label. The site intentionally loads no third-party marketing or tracking scripts.
+
 ### Trust pages and footer
 
 About, Transparency, Privacy, and Contact are published in Nepali and Norwegian: eight Sanity `trustPage` documents in total. Existing localized URLs, footer links, language switching, responsive presentation, and safe local fallback content are preserved.

@@ -387,3 +387,12 @@ The News Article `authorName` field now uses a custom Studio input (`sanity/comp
 - Add or reorder authors in `sanity/schemaTypes/authorNamePresets.ts`. Current presets: `nepali.no Editorial`, `Pankaj Kafley`.
 - `@sanity/ui` is pinned to `3.4.5` in `sanity/package.json` to match the version bundled by `sanity`. Keep them aligned when upgrading Sanity.
 - The Studio must be redeployed (Vercel `nepali-no-studio`, and the hosted Studio if it is used) for editors to see the dropdown.
+
+## 18. 2026-10-03 Event labels and organizer contact gating
+
+- **Homepage placement is not a label.** The "special event" badge on homepage Event cards was removed. The Sanity field `isFeatured` is now titled "Show on Homepage" and only controls placement.
+- **Ticket and price wording.** `src/lib/eventAccess.ts` chooses the registration and ticket labels for the homepage, list, and detail pages. Free ticketed events say "Get free ticket" and "Free ticket required" and never use "buy" wording. Ticketed events use ticket statuses ("Tickets available", "All tickets taken") instead of registration statuses. Event cards now show a free or paid badge, and the homepage card also shows when registration or tickets are required.
+- **Organizer contact details need permission.** New Sanity field `organizerContactPermission` (default false). Every Event query projects `organizerEmail` and `organizerPhone` only when it is true, so the details are never fetched or rendered otherwise. Events published before this change lose their public contact details until an editor ticks the box. The email and phone fields show a Studio warning when filled without permission.
+- **No third-party scripts.** The site loads no Google, Facebook, or other marketing or tracking scripts, and none should be added to Events (for example no Google Calendar embeds). Any future calendar feature must be a local `.ics` download. Structured data, if added, is inert JSON-LD.
+- Tests: `npm run test:event-labels`, also run in CI.
+- The new Nepali wording (`getFreeTicket`, `tickets`, `freeTicketRequired`, `paidEvent`, `ticketStatuses`) should be proofread by a Nepali editor.

@@ -135,7 +135,6 @@ export const nb = {
     viewPastEvents: "Se tidligere arrangementer",
     viewUpcomingEvents: "Se kommende arrangementer",
     readMore: "Se arrangementsdetaljer",
-    featuredEvent: "Fremhevet arrangement",
     viewAllEvents: "Se alle arrangementer",
     eventDetails: "Arrangementsdetaljer",
     dateAndTime: "Dato og tid",
@@ -158,6 +157,10 @@ export const nb = {
     registrationDeadline: "Påmeldingsfrist",
     registerExternally: "Meld deg på hos arrangøren",
     buyTickets: "Kjøp billetter",
+    getFreeTicket: "Hent gratis billett",
+    tickets: "Billetter",
+    freeTicketRequired: "Gratis billett kreves",
+    paidEvent: "Betalt arrangement",
     registrationUnavailable: "Påmelding er ikke tilgjengelig",
     externalRegistrationNotice:
       "Påmelding og betaling håndteres av arrangøren eller en ekstern tjeneste. Les deres personverninformasjon før du sender inn personopplysninger.",
@@ -186,6 +189,13 @@ export const nb = {
       "not-yet-open": "Påmeldingen er ikke åpnet ennå",
       open: "Påmeldingen er åpen",
       closed: "Påmeldingen er stengt",
+      "sold-out": "Utsolgt",
+    },
+    ticketStatuses: {
+      "not-applicable": "Ikke aktuelt",
+      "not-yet-open": "Billettene er ikke tilgjengelige ennå",
+      open: "Billetter er tilgjengelige",
+      closed: "Billetter er ikke lenger tilgjengelige",
       "sold-out": "Utsolgt",
     },
     languages: {

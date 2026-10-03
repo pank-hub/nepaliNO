@@ -10,6 +10,7 @@ import {getTranslations} from '../../../i18n'
 import {isSectionEnabled} from '../../../config/languageSections'
 import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {getEventAccessLabels} from '../../../lib/eventAccess'
 import {urlFor} from '../../../lib/sanity/image'
 import {EVENT_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
 
@@ -69,15 +70,13 @@ const formats: Record<string, string> = {'in-person': eventLabels.inPerson, onli
 const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>
 const languages = eventLabels.languages as Record<string, string>
-const registrationRequirements = eventLabels.registrationRequirements as Record<string, string>
-const registrationStatuses = eventLabels.registrationStatuses as Record<string, string>
+const access = getEventAccessLabels(event, eventLabels)
 const heroUrl = event.featuredImage?.asset ? urlFor(event.featuredImage as any).width(1600).height(960).fit('crop').auto('format').url() : null
 const socialImageUrl = event.featuredImage?.asset ? urlFor(event.featuredImage as any).width(1200).height(630).fit('crop').auto('format').url() : undefined
 const portableTextComponents = {type: {image: SanityPortableImage}}
 const spokenLanguages = [...(event.eventLanguages || []).map((value) => languages[value] ?? value), ...(event.otherEventLanguage ? [event.otherEventLanguage] : [])].join(', ')
 const address = [event.address, event.postalCode, event.city].filter(Boolean).join(', ')
 const priceLabel = event.isFree ? eventLabels.freeEvent : event.priceDescription || (typeof event.priceNok === 'number' ? `${event.priceNok} NOK` : eventLabels.price)
-const actionLabel = event.registrationRequirement === 'tickets-required' ? eventLabels.buyTickets : eventLabels.registerExternally
 const startDate = new Date(event.startDateTime)
 const dateCardDay = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, day: '2-digit'}).format(startDate)
 const dateCardMonth = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, month: 'short'}).format(startDate)
@@ -120,11 +119,11 @@ const heroTime = event.isAllDay
             </dl>
 
             <div class="event-hero-actions">
-              {canRegister && <a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{actionLabel} <span aria-hidden="true">↗</span></a>}
+              {canRegister && <a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{access.actionLabel} <span aria-hidden="true">↗</span></a>}
               {event.mapUrl && <a class="button button-secondary" href={event.mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} <span aria-hidden="true">↗</span></a>}
             </div>
 
-            {!canRegister && event.registrationRequirement !== 'not-required' && <p class="event-hero-registration-state">{isPast || event.eventStatus === 'cancelled' ? eventLabels.registrationUnavailable : registrationStatuses[event.registrationStatus] ?? eventLabels.registrationUnavailable}</p>}
+            {!canRegister && event.registrationRequirement !== 'not-required' && <p class="event-hero-registration-state">{isPast || event.eventStatus === 'cancelled' ? eventLabels.registrationUnavailable : access.statusLabel}</p>}
           </div>
         </div>
       </div>
@@ -150,12 +149,12 @@ const heroTime = event.isAllDay
         </ContextRailPanel>
 
         {event.registrationRequirement !== 'not-required' && (
-          <ContextRailPanel title={eventLabels.registration} accent="success">
+          <ContextRailPanel title={access.sectionLabel} accent="success">
             <dl>
-              <div><dt>{eventLabels.registration}</dt><dd>{registrationRequirements[event.registrationRequirement] ?? event.registrationRequirement}<br />{registrationStatuses[event.registrationStatus] ?? event.registrationStatus}</dd></div>
+              <div><dt>{access.sectionLabel}</dt><dd>{access.requirementLabel}<br />{access.statusLabel}</dd></div>
               {event.registrationDeadline && <div><dt>{eventLabels.registrationDeadline}</dt><dd><time datetime={event.registrationDeadline}>{formatDate(event.registrationDeadline)}</time></dd></div>}
             </dl>
-            {canRegister && <a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{actionLabel} <span aria-hidden="true">↗</span></a>}
+            {canRegister && <a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{access.actionLabel} <span aria-hidden="true">↗</span></a>}
           </ContextRailPanel>
         )}
 
