@@ -153,6 +153,7 @@ export const ne = {
     registrationDeadline: "दर्ता गर्ने अन्तिम मिति",
     registerExternally: "आयोजकसँग दर्ता गर्नुहोस्",
     buyTickets: "टिकट किन्नुहोस्",
+    allDates: "सबै मितिहरू",
     getFreeTicket: "निःशुल्क टिकट लिनुहोस्",
     tickets: "टिकट",
     freeTicketRequired: "निःशुल्क टिकट अनिवार्य छ",

@@ -12,6 +12,7 @@ import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {getEventAccessLabels} from '../../../lib/eventAccess'
 import {urlFor} from '../../../lib/sanity/image'
+import {getAllDates, nextOccurrence} from '../../../lib/eventOccurrences'
 import {EVENT_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
 
 interface TranslationSummary { _id: string; title: string; slug: string; language: SupportedLanguage }
@@ -19,7 +20,7 @@ interface EventImage { asset?: unknown; alt?: string; caption?: string; credit?:
 interface EventDocument {
   _id: string; title: string; slug: string; language: SupportedLanguage; translation?: TranslationSummary; summary: string
   eventLanguages?: string[]; otherEventLanguage?: string; eventType: string; eventFormat: string; eventStatus: string; isAllDay?: boolean
-  startDateTime: string; endDateTime?: string; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string
+  startDateTime: string; endDateTime?: string; additionalDates?: {startDateTime: string; endDateTime?: string}[] | null; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string
   accessibilityInformation?: string; transportInformation?: string; onlinePlatform?: string; onlineUrl?: string
   organizerName: string; organizerUrl?: string; organizerEmail?: string; organizerPhone?: string
   registrationRequirement: string; registrationStatus: string; registrationUrl?: string; registrationDeadline?: string
@@ -38,14 +39,16 @@ if ((lang !== 'ne' && lang !== 'nb') || !slug) return Astro.redirect('/ne/events
 const language: SupportedLanguage = lang
 const labels = getTranslations(language)
 const eventLabels = labels.events
-const event = await sanityClient.fetch<EventDocument | null>(EVENT_BY_SLUG_QUERY, {language, slug})
-if (!event) return Astro.redirect(`/${language}/events/`)
+const fetchedEvent = await sanityClient.fetch<EventDocument | null>(EVENT_BY_SLUG_QUERY, {language, slug})
+if (!fetchedEvent) return Astro.redirect(`/${language}/events/`)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
-const activeTranslation = event.translation?.slug && event.translation.language === alternateLanguage ? event.translation : undefined
+const activeTranslation = fetchedEvent.translation?.slug && fetchedEvent.translation.language === alternateLanguage ? fetchedEvent.translation : undefined
 const alternatePath = activeTranslation ? `/${activeTranslation.language}/events/${activeTranslation.slug}/` : `/${alternateLanguage}/events/`
 const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const eventTimeZone = 'Europe/Oslo'
 const now = Date.now()
+const event = nextOccurrence(fetchedEvent, now)
+const allDates = getAllDates(fetchedEvent)
 const start = new Date(event.startDateTime).getTime()
 const end = new Date(event.endDateTime || event.startDateTime).getTime()
 const isPast = end < now
@@ -140,7 +143,9 @@ const heroTime = event.isAllDay
       <ContentContextRail label={eventLabels.eventDetails}>
         <ContextRailPanel title={eventLabels.eventDetails} accent="brand">
           <dl>
-            <div><dt>{eventLabels.dateAndTime}</dt><dd><span>{formatDateRange(event.startDateTime, event.endDateTime)}</span>{event.isAllDay ? <><br />{eventLabels.allDay}</> : <><br />{formatTime(event.startDateTime)}{event.endDateTime && ` – ${formatTime(event.endDateTime)}`}</>}</dd></div>
+            {allDates.length > 1
+              ? <div><dt>{eventLabels.allDates}</dt><dd><ul class="event-all-dates">{allDates.map((d) => <li><time datetime={d.startDateTime}>{formatDateRange(d.startDateTime, d.endDateTime)}{event.isAllDay ? ` · ${eventLabels.allDay}` : ` · ${formatTime(d.startDateTime)}${d.endDateTime ? ` – ${formatTime(d.endDateTime)}` : ''}`}</time></li>)}</ul></dd></div>
+              : <div><dt>{eventLabels.dateAndTime}</dt><dd><span>{formatDateRange(event.startDateTime, event.endDateTime)}</span>{event.isAllDay ? <><br />{eventLabels.allDay}</> : <><br />{formatTime(event.startDateTime)}{event.endDateTime && ` – ${formatTime(event.endDateTime)}`}</>}</dd></div>}
             <div><dt>{eventLabels.venue}</dt><dd>{formats[event.eventFormat] ?? event.eventFormat}</dd></div>
             {spokenLanguages && <div><dt>{eventLabels.eventLanguages}</dt><dd>{spokenLanguages}</dd></div>}
             {event.intendedAudience && <div><dt>{eventLabels.intendedAudience}</dt><dd>{event.intendedAudience}</dd></div>}
@@ -183,6 +188,7 @@ const heroTime = event.isAllDay
   <SiteFooter slot="footer" language={language} />
 </BaseLayout>
 <style>
+  .event-all-dates { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
   .event-page { min-width: 0; background: #fff; }
   .event-header { border-bottom: 1px solid var(--border); background: radial-gradient(circle at 88% 0%, rgb(198 42 31 / .08), transparent 20rem), linear-gradient(135deg, var(--surface-muted), var(--page-bg) 64%, #fff5f4); }
   .event-header__inner { padding-block: clamp(2.25rem, 5vw, 4rem); }

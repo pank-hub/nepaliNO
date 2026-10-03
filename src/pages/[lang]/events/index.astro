@@ -8,6 +8,7 @@ import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {getEventAccessLabels} from '../../../lib/eventAccess'
 import {urlFor} from '../../../lib/sanity/image'
+import {expandUpcomingOccurrences} from '../../../lib/eventOccurrences'
 import {UPCOMING_EVENTS_BY_LANGUAGE_QUERY} from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
@@ -28,6 +29,7 @@ interface EventSummary {
   isAllDay?: boolean
   startDateTime: string
   endDateTime?: string
+  additionalDates?: {startDateTime: string; endDateTime?: string}[] | null
   venueName?: string
   city?: string
   onlinePlatform?: string
@@ -44,10 +46,11 @@ const {language} = Astro.props
 const labels = getTranslations(language)
 const eventLabels = labels.events
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
-const events = await sanityClient.fetch<EventSummary[]>(UPCOMING_EVENTS_BY_LANGUAGE_QUERY, {language})
+const fetchedEvents = await sanityClient.fetch<EventSummary[]>(UPCOMING_EVENTS_BY_LANGUAGE_QUERY, {language})
 const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const eventTimeZone = 'Europe/Oslo'
 const now = Date.now()
+const events = expandUpcomingOccurrences(fetchedEvents, now)
 const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>
 const currentEventYear = Number(new Intl.DateTimeFormat('en', {timeZone: eventTimeZone, year: 'numeric'}).format(new Date()))
