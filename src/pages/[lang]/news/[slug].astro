@@ -9,6 +9,7 @@ import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
 import type {SupportedLanguage} from '../../../i18n/config'
+import {isSectionEnabled} from '../../../config/languageSections'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {NEWS_ARTICLE_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
@@ -103,6 +104,8 @@ if ((lang !== 'ne' && lang !== 'nb') || !slug) {
 
 const language: SupportedLanguage = lang
 const labels = getTranslations(language)
+const forumEnabled = isSectionEnabled(language, 'forum')
+const informationEnabled = isSectionEnabled(language, 'information')
 const article = await sanityClient.fetch<NewsArticle | null>(
   NEWS_ARTICLE_BY_SLUG_QUERY,
   {language, slug},
@@ -260,12 +263,14 @@ const translationLabel = newsLabels.translation
           </aside>
         )}
 
-        <ForumDiscussionCard
-          contentType="newsArticle"
-          language={language}
-          slug={article.slug}
-          labels={labels.forum}
-        />
+        {forumEnabled && (
+          <ForumDiscussionCard
+            contentType="newsArticle"
+            language={language}
+            slug={article.slug}
+            labels={labels.forum}
+          />
+        )}
       </div>
 
       <aside class="article-sidebar" aria-label={newsLabels.usefulInformation}>
@@ -298,7 +303,7 @@ const translationLabel = newsLabels.translation
           />
         )}
 
-        {article.supportingGuide && (
+        {informationEnabled && article.supportingGuide && (
           <SupportingGuideCard
             guide={article.supportingGuide}
             eyebrow={newsLabels.usefulInformation}

@@ -3,11 +3,12 @@ import EventSubmissionForm from '../../../components/events/EventSubmissionForm.
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
-import {supportedLanguages, type SupportedLanguage} from '../../../i18n/config'
+import {getLanguagesWithSection, isSectionEnabled} from '../../../config/languageSections'
+import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 
 export function getStaticPaths() {
-  return supportedLanguages.map((language) => ({params: {lang: language}, props: {language}}))
+  return getLanguagesWithSection('events').map((language) => ({params: {lang: language}, props: {language}}))
 }
 
 interface Props {
@@ -23,7 +24,7 @@ const languageLinks = [
   {href: '/ne/events/submit/', label: copy.actions.useNepali, lang: 'ne'},
   {href: '/nb/events/submit/', label: copy.actions.useNorwegian, lang: 'nb'},
   {href: '/en/events/submit/', label: copy.actions.useEnglish, lang: 'en'},
-]
+].filter(({lang}) => lang === 'en' || isSectionEnabled(lang as SupportedLanguage, 'events'))
 ---
 
 <BaseLayout

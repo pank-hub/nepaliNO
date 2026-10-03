@@ -1,5 +1,6 @@
 ---
 import {forumPilot} from '../config/forum'
+import {isSectionEnabled, resolveAlternatePath} from '../config/languageSections'
 import {getTranslations} from '../i18n'
 import type {SupportedLanguage} from '../i18n/config'
 
@@ -13,17 +14,26 @@ const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 const alternateLabels = getTranslations(alternateLanguage)
 const currentPath = Astro.url.pathname
-const resolvedAlternatePath = alternatePath ?? `/${alternateLanguage}/`
+const resolvedAlternatePath = resolveAlternatePath(
+  alternateLanguage,
+  alternatePath ?? `/${alternateLanguage}/`,
+)
 
 const navigationItems = [
   {label: labels.navigation.home, href: `/${language}/`},
   {label: labels.navigation.news, href: `/${language}/news/`},
-  {label: labels.navigation.information, href: `/${language}/info/`},
-  {label: labels.navigation.events, href: `/${language}/events/`},
-  ...(forumPilot.enabled
+  ...(isSectionEnabled(language, 'information')
+    ? [{label: labels.navigation.information, href: `/${language}/info/`}]
+    : []),
+  ...(isSectionEnabled(language, 'events')
+    ? [{label: labels.navigation.events, href: `/${language}/events/`}]
+    : []),
+  ...(forumPilot.enabled && isSectionEnabled(language, 'forum')
     ? [{label: labels.navigation.forum, href: forumPilot.url}]
     : []),
-  {label: labels.navigation.businesses, href: `/${language}/directory/`},
+  ...(isSectionEnabled(language, 'directory')
+    ? [{label: labels.navigation.businesses, href: `/${language}/directory/`}]
+    : []),
 ]
 
 const isActive = (href: string) => {

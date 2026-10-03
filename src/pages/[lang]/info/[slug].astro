@@ -8,6 +8,7 @@ import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
+import {isSectionEnabled} from '../../../config/languageSections'
 import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {
@@ -94,7 +95,9 @@ export async function getStaticPaths() {
     }
   `)
 
-  return paths.map(({slug, language}) => ({
+  return paths
+    .filter(({language}) => isSectionEnabled(language, 'information'))
+    .map(({slug, language}) => ({
     params: {
       lang: language,
       slug,

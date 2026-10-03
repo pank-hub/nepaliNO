@@ -1,6 +1,7 @@
 ---
 import type {SupportedLanguage} from '../../i18n/config'
 import {sanityClient} from 'sanity:client'
+import {isSectionEnabled} from '../../config/languageSections'
 import {TRUST_PAGE_QUERY} from '../../lib/sanity/queries'
 import StaticPageLayout from '../../layouts/StaticPageLayout.astro'
 
@@ -26,7 +27,7 @@ const copy: Record<SupportedLanguage, PageCopy> = {
   },
   nb: {
     title: 'Kontakt',
-    description: 'Velg riktig kontaktvei for generelle spørsmål, redaksjonelle rettelser, samarbeid, arrangementer, katalogen eller Forumet.',
+    description: 'Velg riktig kontaktvei for generelle spørsmål, redaksjonelle rettelser, samarbeid eller nyheter.',
     eyebrow: 'Kontakt nepali.no',
     safetyHeading: 'Ikke send sensitive opplysninger',
     safetyText: 'Ikke send fødselsnummer, bankopplysninger, helseopplysninger, passord, utlendingsdokumenter eller andre sensitive personopplysninger i vanlig e-post. nepali.no er ikke en nødtjeneste eller offentlig myndighet. Kontakt den ansvarlige norske tjenesten direkte ved en nødssituasjon.',
@@ -46,7 +47,17 @@ if (lang !== 'ne' && lang !== 'nb') {
 }
 const language: SupportedLanguage = lang
 const sanityPage = await sanityClient.fetch<PageCopy | null>(TRUST_PAGE_QUERY, {pageKey: 'contact', language})
-const page = sanityPage ?? copy[language]
+const basePage = sanityPage ?? copy[language]
+const isDisabledSectionLink = (href?: string) => {
+  if (!href) return false
+  if (href.includes('forum@nepali.no')) return !isSectionEnabled(language, 'forum')
+  const section = href.match(/^\/[a-z]{2}\/(events|directory)(\/|$)/)?.[1]
+  return section ? !isSectionEnabled(language, section as 'events' | 'directory') : false
+}
+const page = {
+  ...basePage,
+  items: basePage.items.filter((item) => !isDisabledSectionLink(item.href)),
+}
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 ---
 

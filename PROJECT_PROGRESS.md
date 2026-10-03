@@ -364,3 +364,15 @@ The localized `/[lang]/info/` archive has a minimal client-side Guide search. It
 - Labels, placeholder, hint, result count, and empty-state text live in `information` in `src/i18n/ne.ts` and `src/i18n/nb.ts`.
 
 Not included: Guide body or Norwegian-term indexing, ranking, fuzzy or typo-tolerant matching, `?q=` URLs, an external search service, SEO meta keywords, and site-wide search. Nepali spelling variants beyond zero-width joiners (for example chandrabindu versus anusvara) match only if an editor adds them as Search Keywords. Norwegian currently has no published Guides, so `/nb/info/` shows its existing empty state without a search box.
+
+## 16. 2026-10-03 Norwegian site is News only
+
+The Norwegian (`nb`) site currently publishes News only. Guides, Events, Directory, and the Forum are disabled there until Norwegian content exists.
+
+- `src/config/languageSections.ts` is the single switch. `isSectionEnabled(language, section)` drives the header and footer links, the homepage pathways and sections (Guides, Events, Directory, Forum discussions), the News archive "useful information" block, the Forum card and supporting Guide on News articles, the Contact page items, and the Events and Directory submission language switchers.
+- `getStaticPaths()` on every Guide, Topic Hub, Events, and Directory route only generates paths for languages with the section enabled, so no `/nb/info`, `/nb/events`, or `/nb/directory` pages are built.
+- `src/pages/nb/{info,events,directory}/[...slug].astro` are server-rendered 302 redirects to `/nb/`, so old links and bookmarks still land somewhere useful. The redirects are temporary on purpose.
+- The language switcher on Nepali pages points to `/nb/` instead of a disabled Norwegian section (`resolveAlternatePath`).
+- Nepali is unchanged. To re-enable a Norwegian section, set its flag to `true` in `languageSections.ts` and delete the matching redirect page.
+- Not changed: Sanity content and schemas, Norwegian About, Privacy, and Transparency text (they describe the whole service and may still mention Forum, Guides, and Events), the Norwegian homepage hero text, and Forum automation for `nb` content.
+- Tests: `npm run test:language-sections` (also added to CI together with `test:guide-search`).

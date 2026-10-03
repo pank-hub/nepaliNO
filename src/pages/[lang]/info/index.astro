@@ -3,10 +3,8 @@ import {sanityClient} from 'sanity:client'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
-import {
-  supportedLanguages,
-  type SupportedLanguage,
-} from '../../../i18n/config'
+import {getLanguagesWithSection} from '../../../config/languageSections'
+import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {buildGuideSearchText} from '../../../lib/guideSearch'
 import {
@@ -15,7 +13,7 @@ import {
 } from '../../../lib/sanity/queries'
 
 export function getStaticPaths() {
-  return supportedLanguages.map((language) => ({
+  return getLanguagesWithSection('information').map((language) => ({
     params: {lang: language},
     props: {language},
   }))

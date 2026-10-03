@@ -1,5 +1,6 @@
 ---
 import {forumPilot} from '../config/forum'
+import {isSectionEnabled} from '../config/languageSections'
 import {getTranslations} from '../i18n'
 import type {SupportedLanguage} from '../i18n/config'
 
@@ -11,10 +12,15 @@ interface Props {
 const {language, flush = false} = Astro.props
 const labels = getTranslations(language)
 const year = new Date().getFullYear()
+const showInformation = isSectionEnabled(language, 'information')
+const showForum = forumPilot.enabled && isSectionEnabled(language, 'forum')
+const showEvents = isSectionEnabled(language, 'events')
+const showDirectory = isSectionEnabled(language, 'directory')
+const showCommunity = isSectionEnabled(language, 'forum') || showEvents || showDirectory
 ---
 
 <footer class:list={['site-footer', {'site-footer--flush': flush}]}>
-  <div class="container site-footer__grid">
+  <div class:list={['container', 'site-footer__grid', !showCommunity && 'site-footer__grid--compact']}>
     <section class="site-footer__identity" aria-labelledby="footer-brand">
       <a class="footer-brand" href={`/${language}/`} id="footer-brand">
         <span class="footer-brand__symbol" aria-hidden="true">ने</span>
@@ -29,26 +35,30 @@ const year = new Date().getFullYear()
       <h2 id="footer-explore-heading">{labels.footer.exploreHeading}</h2>
       <ul>
         <li><a href={`/${language}/news/`}>{labels.navigation.news}</a></li>
-        <li><a href={`/${language}/info/`}>{labels.navigation.information}</a></li>
+        {showInformation && (
+          <li><a href={`/${language}/info/`}>{labels.navigation.information}</a></li>
+        )}
       </ul>
     </nav>
 
-    <nav aria-labelledby="footer-community-heading">
+    {showCommunity && (
+      <nav aria-labelledby="footer-community-heading">
       <h2 id="footer-community-heading">{labels.footer.communityHeading}</h2>
       <ul>
-        <li>
-          {
-            forumPilot.enabled ? (
+        {isSectionEnabled(language, 'forum') && (
+          <li>
+            {showForum ? (
               <a href={forumPilot.url}>{labels.footer.forum}</a>
             ) : (
               <span>{labels.footer.forum}</span>
-            )
-            }
-        </li>
-        <li><span>{labels.navigation.events}</span></li>
-        <li><span>{labels.navigation.businesses}</span></li>
+            )}
+          </li>
+        )}
+        {showEvents && <li><span>{labels.navigation.events}</span></li>}
+        {showDirectory && <li><span>{labels.navigation.businesses}</span></li>}
       </ul>
     </nav>
+    )}
 
     <nav aria-labelledby="footer-trust-heading">
       <h2 id="footer-trust-heading">{labels.footer.trustHeading}</h2>
@@ -89,6 +99,10 @@ const year = new Date().getFullYear()
     grid-template-columns: minmax(14rem, 1.5fr) repeat(3, minmax(9rem, 1fr));
     gap: clamp(2rem, 5vw, 4.5rem);
     padding-block: clamp(3.5rem, 7vw, 6rem);
+  }
+
+  .site-footer__grid--compact {
+    grid-template-columns: minmax(14rem, 1.5fr) repeat(2, minmax(9rem, 1fr));
   }
 
   .site-footer__identity {

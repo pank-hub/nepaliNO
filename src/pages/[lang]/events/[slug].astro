@@ -7,6 +7,7 @@ import ContextRailPanel from '../../../components/content/ContextRailPanel.astro
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
+import {isSectionEnabled} from '../../../config/languageSections'
 import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
@@ -27,7 +28,9 @@ interface EventDocument {
 interface EventPath { slug: string; language: SupportedLanguage }
 export async function getStaticPaths() {
   const paths = await sanityClient.fetch<EventPath[]>(`*[_type == "communityEvent" && defined(slug.current) && language in ["ne", "nb"]]{"slug": slug.current, language}`)
-  return paths.map(({slug, language}) => ({params: {lang: language, slug}}))
+  return paths
+    .filter(({language}) => isSectionEnabled(language, 'events'))
+    .map(({slug, language}) => ({params: {lang: language, slug}}))
 }
 const {lang, slug} = Astro.params
 if ((lang !== 'ne' && lang !== 'nb') || !slug) return Astro.redirect('/ne/events/')
