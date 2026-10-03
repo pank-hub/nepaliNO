@@ -52,6 +52,9 @@ jobs:
       - name: Test Event ticket labels and organizer contact gating
         run: npm run test:event-labels
 
+      - name: Test multi-date Event expansion
+        run: npm run test:event-occurrences
+
       - name: Test Forum relationship normalization
         run: npm run test:forum-relationships
 

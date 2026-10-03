@@ -10,6 +10,7 @@ import {
   type SupportedLanguage,
 } from '../../i18n/config'
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import {expandUpcomingOccurrences} from '../../lib/eventOccurrences'
 import {urlFor} from '../../lib/sanity/image'
 import {
   FEATURED_PUBLIC_INFORMATION_GUIDES_QUERY,
@@ -73,6 +74,7 @@ interface HomeEvent {
   isAllDay?: boolean
   startDateTime: string
   endDateTime?: string
+  additionalDates?: {startDateTime: string; endDateTime?: string}[] | null
   venueName?: string
   city?: string
   onlinePlatform?: string
@@ -116,7 +118,7 @@ const [
   featuredGuides,
   importantNow,
   featuredStory,
-  homepageEvents,
+  fetchedHomepageEvents,
   homepageDirectoryListings,
 ] = await Promise.all([
   showInformation
@@ -165,6 +167,9 @@ const formatDate = (date: string) =>
 
 const eventTimeZone = 'Europe/Oslo'
 const now = Date.now()
+const homepageEvents = expandUpcomingOccurrences(fetchedHomepageEvents, now)
+  .sort((a, b) => Number(!!b.isFeatured) - Number(!!a.isFeatured))
+  .slice(0, 3)
 const eventCategories = labels.events.categories as Record<string, string>
 const eventStatuses = labels.events.statuses as Record<string, string>
 const eventFormats: Record<string, string> = {

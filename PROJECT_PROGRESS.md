@@ -396,3 +396,11 @@ The News Article `authorName` field now uses a custom Studio input (`sanity/comp
 - **No third-party scripts.** The site loads no Google, Facebook, or other marketing or tracking scripts, and none should be added to Events (for example no Google Calendar embeds). Any future calendar feature must be a local `.ics` download. Structured data, if added, is inert JSON-LD.
 - Tests: `npm run test:event-labels`, also run in CI.
 - The new Nepali wording (`getFreeTicket`, `tickets`, `freeTicketRequired`, `paidEvent`, `ticketStatuses`) should be proofread by a Nepali editor.
+
+## 19. 2026-10-03 Events with multiple dates
+
+- New Sanity array `additionalDates` (start and end per date) on Community Event. Start/End stay the first date; further days go in the list.
+- `src/lib/eventOccurrences.ts` expands an event into one entry per upcoming or ongoing date. The events list and homepage show the event under each upcoming date (homepage: featured first, max 3). The detail page shows all dates under "All dates" and its hero uses the next date.
+- Queries keep an event in "upcoming" while any date is still ahead, and in "past" only after its last date.
+- Tests: `npm run test:event-occurrences` (also in CI). The Studio needs a redeploy to show the new field.
+- Not done: past-list shows only events whose last date has passed, using the first date's end for display.

@@ -157,6 +157,7 @@ export const nb = {
     registrationDeadline: "Påmeldingsfrist",
     registerExternally: "Meld deg på hos arrangøren",
     buyTickets: "Kjøp billetter",
+    allDates: "Alle datoer",
     getFreeTicket: "Hent gratis billett",
     tickets: "Billetter",
     freeTicketRequired: "Gratis billett kreves",

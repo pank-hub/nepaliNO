@@ -268,7 +268,7 @@ export const UPCOMING_EVENTS_BY_LANGUAGE_QUERY = `
     defined(slug.current) &&
     language == $language &&
     defined(startDateTime) &&
-    coalesce(endDateTime, startDateTime) >= now()
+    (coalesce(endDateTime, startDateTime) >= now() || count(additionalDates[coalesce(endDateTime, startDateTime) >= now()]) > 0)
   ] | order(startDateTime asc) {
     _id,
     title,
@@ -289,6 +289,7 @@ export const UPCOMING_EVENTS_BY_LANGUAGE_QUERY = `
     isAllDay,
     startDateTime,
     endDateTime,
+    additionalDates[defined(startDateTime)] | order(startDateTime asc) {startDateTime, endDateTime},
     venueName,
     address,
     postalCode,
@@ -331,7 +332,8 @@ export const PAST_EVENTS_BY_LANGUAGE_QUERY = `
     defined(slug.current) &&
     language == $language &&
     defined(startDateTime) &&
-    coalesce(endDateTime, startDateTime) < now()
+    coalesce(endDateTime, startDateTime) < now() &&
+    count(additionalDates[coalesce(endDateTime, startDateTime) >= now()]) == 0
   ] | order(coalesce(endDateTime, startDateTime) desc) {
     _id,
     title,
@@ -352,6 +354,7 @@ export const PAST_EVENTS_BY_LANGUAGE_QUERY = `
     isAllDay,
     startDateTime,
     endDateTime,
+    additionalDates[defined(startDateTime)] | order(startDateTime asc) {startDateTime, endDateTime},
     venueName,
     address,
     postalCode,
@@ -394,9 +397,9 @@ export const HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY = `
     defined(slug.current) &&
     language == $language &&
     defined(startDateTime) &&
-    coalesce(endDateTime, startDateTime) >= now() &&
+    (coalesce(endDateTime, startDateTime) >= now() || count(additionalDates[coalesce(endDateTime, startDateTime) >= now()]) > 0) &&
     eventStatus != "cancelled"
-  ] | order(isFeatured desc, startDateTime asc) [0...3] {
+  ] | order(isFeatured desc, startDateTime asc) {
     _id,
     title,
     "slug": slug.current,
@@ -416,6 +419,7 @@ export const HOMEPAGE_EVENTS_BY_LANGUAGE_QUERY = `
     isAllDay,
     startDateTime,
     endDateTime,
+    additionalDates[defined(startDateTime)] | order(startDateTime asc) {startDateTime, endDateTime},
     venueName,
     address,
     postalCode,
@@ -477,6 +481,7 @@ export const EVENT_BY_SLUG_QUERY = `
     isAllDay,
     startDateTime,
     endDateTime,
+    additionalDates[defined(startDateTime)] | order(startDateTime asc) {startDateTime, endDateTime},
     venueName,
     address,
     postalCode,

@@ -235,6 +235,54 @@ export const communityEvent = defineType({
     }),
 
     defineField({
+      name: 'additionalDates',
+      title: 'Additional Dates',
+      type: 'array',
+      description:
+        'Use when the same event is repeated on other days (same venue and details). Start and End above are the first date; add each further date here.',
+      of: [
+        {
+          type: 'object',
+          name: 'eventDate',
+          title: 'Date',
+          fields: [
+            defineField({
+              name: 'startDateTime',
+              title: 'Start Date and Time',
+              type: 'datetime',
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: 'endDateTime',
+              title: 'End Date and Time',
+              type: 'datetime',
+              validation: (rule) =>
+                rule.custom((end, context) => {
+                  const start = (context.parent as {startDateTime?: string} | undefined)
+                    ?.startDateTime
+                  if (!end || !start) return true
+                  return new Date(end as string) > new Date(start)
+                    ? true
+                    : 'The end time must be later than the start time.'
+                }),
+            }),
+          ],
+          preview: {
+            select: {start: 'startDateTime', end: 'endDateTime'},
+            prepare: ({start, end}: {start?: string; end?: string}) => ({
+              title: start
+                ? new Date(start).toLocaleString('en-GB', {timeZone: 'Europe/Oslo'})
+                : 'No start',
+              subtitle: end
+                ? `Ends ${new Date(end).toLocaleString('en-GB', {timeZone: 'Europe/Oslo'})}`
+                : undefined,
+            }),
+          },
+        },
+      ],
+    }),
+
+    defineField({
       name: 'venueName',
       title: 'Venue Name',
       type: 'string',
