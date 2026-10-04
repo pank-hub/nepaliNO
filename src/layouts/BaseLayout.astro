@@ -47,6 +47,10 @@ const openGraphLocale = language === "ne" ? "ne_NP" : "nb_NO";
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#172534" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" href="/favicon-96.png" sizes="96x96" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     {noIndex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={resolvedCanonicalUrl} />
