@@ -404,3 +404,7 @@ The News Article `authorName` field now uses a custom Studio input (`sanity/comp
 - Queries keep an event in "upcoming" while any date is still ahead, and in "past" only after its last date.
 - Tests: `npm run test:event-occurrences` (also in CI). The Studio needs a redeploy to show the new field.
 - Not done: past-list shows only events whose last date has passed, using the first date's end for display.
+
+## 20. 2026-10-04 Favicon
+
+- Replaced the default Astro favicon with the nepali.no logo (red square with white "ने"). `public/` now has `favicon.ico` and `favicon-96.png` (letter only, readable at tab size), `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` (full logo with wordmark) and `site.webmanifest`. `BaseLayout.astro` links them on every page.
