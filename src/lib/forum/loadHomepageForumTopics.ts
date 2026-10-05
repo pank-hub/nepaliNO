@@ -9,6 +9,7 @@ import type {ApprovedForumRelationshipRole} from './resolveContentForumRelations
 
 const MAX_CANDIDATES = 18
 const MAX_TOPICS = 6
+const CONCURRENCY = 3
 
 type HomepageTopicRole = Exclude<ApprovedForumRelationshipRole, 'related'>
 
@@ -52,24 +53,32 @@ export const loadHomepageForumTopics = async (
     if (uniqueCandidates.length === MAX_CANDIDATES) break
   }
 
-  const results = await Promise.allSettled(
-    uniqueCandidates.map(async (candidate) => {
-      const metadata = await loadTopicMetadata(candidate.topicId)
-      return isHomepageDiscussionEligible(metadata, candidate.role)
-        ? {...metadata, role: candidate.role}
-        : null
-    }),
-  )
+  const results: PromiseSettledResult<HomepageForumTopic | null>[] = []
 
-  const configurationFailure = results.find(
-    (result) =>
-      result.status === 'rejected' &&
-      (result.reason instanceof DiscourseMetadataConfigurationError ||
-        result.reason instanceof DiscourseMetadataRequestError ||
-        result.reason instanceof DiscourseMetadataResponseError),
-  )
-  if (configurationFailure?.status === 'rejected') {
-    throw configurationFailure.reason
+  // Small batches keep Discourse from rate limiting (HTTP 429) the whole feed.
+  for (let index = 0; index < uniqueCandidates.length; index += CONCURRENCY) {
+    const batch = await Promise.allSettled(
+      uniqueCandidates.slice(index, index + CONCURRENCY).map(async (candidate) => {
+        const metadata = await loadTopicMetadata(candidate.topicId)
+        return isHomepageDiscussionEligible(metadata, candidate.role)
+          ? {...metadata, role: candidate.role}
+          : null
+      }),
+    )
+    results.push(...batch)
+  }
+
+  const isServiceFailure = (result: PromiseSettledResult<unknown>) =>
+    result.status === 'rejected' &&
+    (result.reason instanceof DiscourseMetadataConfigurationError ||
+      result.reason instanceof DiscourseMetadataRequestError ||
+      result.reason instanceof DiscourseMetadataResponseError)
+
+  // Show the topics that loaded; only fail when nothing could be loaded.
+  const loadedAny = results.some((result) => result.status === 'fulfilled')
+  const serviceFailure = results.find(isServiceFailure)
+  if (!loadedAny && serviceFailure?.status === 'rejected') {
+    throw serviceFailure.reason
   }
 
   return results
