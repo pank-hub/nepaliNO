@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {loadHomepageForumTopics} from '../../src/lib/forum/loadHomepageForumTopics.ts'
+import {DiscourseMetadataRequestError} from '../../src/lib/forum/discourseMetadata.ts'
 
 const topic = (topicId, categoryId, lastPostedAt) => ({
   topicId,
@@ -80,5 +81,23 @@ test('omits unavailable, archived, and invalid-category topics', async () => {
   assert.deepEqual(
     result.map(({topicId}) => topicId),
     [3],
+  )
+})
+
+test('keeps loaded topics when some requests are rate limited and fails only when all fail', async () => {
+  const candidates = [1, 2, 3].map((topicId) => ({topicId, role: 'newsDiscussion'}))
+  const rateLimited = new DiscourseMetadataRequestError('HTTP 429')
+
+  const partial = await loadHomepageForumTopics(candidates, async (topicId) => {
+    if (topicId === 2) throw rateLimited
+    return topic(topicId, 10, '2026-09-03T10:00:00Z')
+  })
+  assert.equal(partial.length, 2)
+
+  await assert.rejects(
+    loadHomepageForumTopics(candidates, async () => {
+      throw rateLimited
+    }),
+    DiscourseMetadataRequestError,
   )
 })
