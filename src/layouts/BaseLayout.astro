@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 
+import Analytics from "@vercel/analytics/astro";
 import { getTranslations } from "../i18n";
 import type { SupportedLanguage } from "../i18n/config";
 
@@ -92,5 +93,7 @@ const openGraphLocale = language === "ne" ? "ne_NP" : "nb_NO";
     </main>
 
     <slot name="footer" />
+
+    <Analytics />
   </body>
 </html>
