@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /translations/
+Disallow: /api/
+
+Sitemap: https://nepali.no/sitemap-index.xml
