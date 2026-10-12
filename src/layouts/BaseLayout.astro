@@ -15,6 +15,7 @@ interface Props {
   contentType?: "website" | "article";
   publishedAt?: string;
   noIndex?: boolean;
+  structuredData?: Record<string, unknown>;
   bodyClass?: string;
 }
 
@@ -28,6 +29,7 @@ const {
   contentType = "website",
   publishedAt,
   noIndex = false,
+  structuredData,
   bodyClass = "",
 } = Astro.props;
 
@@ -36,6 +38,10 @@ const siteOrigin = Astro.site ?? new URL("https://nepali.no");
 const resolvedCanonicalUrl = canonicalUrl ?? new URL(Astro.url.pathname, siteOrigin);
 const resolvedSocialImage = socialImage
   ? new URL(socialImage, siteOrigin).toString()
+  : undefined;
+// Escape "<" so serialized data can never close the script element.
+const structuredDataJson = structuredData
+  ? JSON.stringify(structuredData).replace(/</g, "\\u003c")
   : undefined;
 const openGraphLocale = language === "ne" ? "ne_NP" : "nb_NO";
 ---
@@ -77,6 +83,10 @@ const openGraphLocale = language === "ne" ? "ne_NP" : "nb_NO";
     {resolvedSocialImage && <meta name="twitter:image:alt" content={socialImageAlt} />}
 
     <title>{title}</title>
+
+    {structuredDataJson && (
+      <script type="application/ld+json" set:html={structuredDataJson} />
+    )}
 
     <slot name="head" />
   </head>
