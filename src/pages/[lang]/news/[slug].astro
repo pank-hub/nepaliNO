@@ -13,6 +13,7 @@ import {isSectionEnabled} from '../../../config/languageSections'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {NEWS_ARTICLE_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
+import {buildNewsArticleStructuredData} from '../../../lib/structuredData/newsArticle'
 
 interface TranslationSummary {
   _id: string
@@ -67,6 +68,7 @@ interface NewsArticle {
   featuredImage?: NewsImage
   body?: any[]
   authorName: string
+  authorType?: 'person' | 'organization'
   publishedAt: string
   sourceUrl?: string
   isFeatured?: boolean
@@ -164,6 +166,22 @@ const categoryLabel = categoryLabels[article.category] ?? article.category
 const sourceLabel = newsLabels.source
 const authorLabel = newsLabels.author
 const translationLabel = newsLabels.translation
+
+// Only a localized label that is actually shown on the page; never a raw key.
+const articleSection = categoryLabels[article.category]
+const structuredData = buildNewsArticleStructuredData({
+  origin: (Astro.site ?? new URL('https://nepali.no')).origin,
+  language,
+  slug: article.slug,
+  title: article.title,
+  summary: article.summary,
+  publishedAt: article.publishedAt,
+  authorName: article.authorName,
+  authorType: article.authorType,
+  imageUrl: socialImageUrl,
+  articleSection,
+  breadcrumbLabels: {home: labels.navigation.home, news: labels.navigation.news},
+})
 ---
 
 <BaseLayout
@@ -174,6 +192,7 @@ const translationLabel = newsLabels.translation
   socialImageAlt={article.featuredImage?.alt || article.title}
   contentType="article"
   publishedAt={article.publishedAt}
+  structuredData={structuredData}
 >
   <SiteHeader
     slot="header"
