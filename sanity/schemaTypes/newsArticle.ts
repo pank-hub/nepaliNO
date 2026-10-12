@@ -1,7 +1,11 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 
 import {AuthorNameInput} from '../components/AuthorNameInput'
-import {AUTHOR_NAME_PRESETS} from './authorNamePresets'
+import {
+  AUTHOR_PRESETS,
+  AUTHOR_TYPE_OPTIONS,
+  getMissingAuthorTypeWarning,
+} from './authorNamePresets'
 
 export const newsArticle = defineType({
   name: 'newsArticle',
@@ -366,9 +370,29 @@ export const newsArticle = defineType({
       group: 'publishing',
       description:
         'Choose a usual author, or pick Other to type a different name. New articles default to the first author in the list.',
-      initialValue: AUTHOR_NAME_PRESETS[0],
+      initialValue: AUTHOR_PRESETS[0].name,
       components: {input: AuthorNameInput},
       validation: (rule) => rule.required(),
+    }),
+
+    defineField({
+      name: 'authorType',
+      title: 'Author Type',
+      type: 'string',
+      group: 'publishing',
+      description:
+        'Set automatically when you choose a usual author. For a custom name, choose Person or Organization.',
+      initialValue: AUTHOR_PRESETS[0].type,
+      options: {list: AUTHOR_TYPE_OPTIONS, layout: 'radio'},
+      validation: (rule) =>
+        rule
+          .custom((value, context) =>
+            getMissingAuthorTypeWarning(
+              (context.document as {authorName?: string} | undefined)?.authorName,
+              value,
+            ),
+          )
+          .warning(),
     }),
 
     defineField({
