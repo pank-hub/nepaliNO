@@ -23,6 +23,7 @@
     "test:language-sections": "node --experimental-strip-types --test tests/content/languageSections.test.mjs",
     "test:event-labels": "node --experimental-strip-types --test tests/content/eventLabels.test.mjs",
     "test:news-author-type": "node --experimental-strip-types --test tests/sanity/newsAuthorType.test.mjs",
+    "test:news-article-structured-data": "node --experimental-strip-types --test tests/structuredData/newsArticle.test.mjs",
     "test:event-occurrences": "node --experimental-strip-types --test tests/content/eventOccurrences.test.mjs"
   },
   "dependencies": {

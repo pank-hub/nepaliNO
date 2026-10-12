@@ -257,6 +257,7 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
       }
     },
     authorName,
+    authorType,
     publishedAt,
     sourceUrl,
     isFeatured
