@@ -105,6 +105,35 @@ interface HomeDirectoryListing {
   isFeatured?: boolean
 }
 
+const homepageStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': 'https://nepali.no/#website',
+      url: 'https://nepali.no/',
+      name: 'nepali.no',
+      alternateName: ['Nepali.no', 'Nepali No', 'NepaliNO'],
+      publisher: {'@id': 'https://nepali.no/#organization'},
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://nepali.no/#organization',
+      name: 'NEPALI.NO',
+      alternateName: 'nepali.no',
+      url: 'https://nepali.no/',
+      logo: {
+        '@type': 'ImageObject',
+        '@id': 'https://nepali.no/#logo',
+        url: 'https://nepali.no/icon-512.png',
+        contentUrl: 'https://nepali.no/icon-512.png',
+        width: 512,
+        height: 512,
+      },
+    },
+  ],
+}
+
 const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
@@ -255,6 +284,7 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
   language={language}
   title={labels.home.metaTitle}
   description={labels.home.metaDescription}
+  structuredData={homepageStructuredData}
 >
   <SiteHeader
     slot="header"
