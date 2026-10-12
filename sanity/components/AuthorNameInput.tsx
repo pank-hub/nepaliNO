@@ -1,32 +1,43 @@
 import {Select, Stack, TextInput} from '@sanity/ui'
 import {useState, type ChangeEvent} from 'react'
-import {set, unset, type StringInputProps} from 'sanity'
+import {PatchEvent, set, unset, useFormCallbacks, type StringInputProps} from 'sanity'
 
-import {AUTHOR_NAME_PRESETS} from '../schemaTypes/authorNamePresets'
+import {
+  AUTHOR_PRESETS,
+  OTHER_AUTHOR as OTHER,
+  buildAuthorPatchSpecs,
+  findAuthorPreset,
+  resolveAuthorSelection,
+} from '../schemaTypes/authorNamePresets'
 
-const OTHER = '__other__'
-
-// A dropdown of the usual author names with an "Other" option for a one-off name.
-// The stored value stays a plain string, so the public site and queries are unaffected.
+// A dropdown of the usual authors with an "Other" option for a one-off name.
+// Choosing a preset writes both authorName and authorType in a single patch event;
+// for a custom name the editor picks the type with the Author Type field below.
+// The stored authorName stays a plain string, so the public site and queries are unaffected.
 export function AuthorNameInput(props: StringInputProps) {
-  const {value, onChange, readOnly, elementProps} = props
+  const {value, onChange, readOnly, elementProps, path} = props
+  // A field's own onChange can only patch itself, so sibling writes go through the form callbacks.
+  const {onChange: onFormChange} = useFormCallbacks()
   const [otherSelected, setOtherSelected] = useState(false)
 
-  const isPreset = !!value && AUTHOR_NAME_PRESETS.includes(value)
+  const isPreset = !!findAuthorPreset(value)
   const showCustom = otherSelected || (!!value && !isPreset)
   const selectValue = showCustom ? OTHER : (value ?? '')
 
   const handleSelect = (event: ChangeEvent<HTMLSelectElement>) => {
     const next = event.currentTarget.value
 
-    if (next === OTHER) {
-      setOtherSelected(true)
-      if (isPreset) onChange(unset())
-      return
-    }
+    setOtherSelected(next === OTHER)
 
-    setOtherSelected(false)
-    onChange(next ? set(next) : unset())
+    // Nothing to change when moving from a custom name to "Other".
+    if (next === OTHER && !isPreset) return
+
+    const specs = buildAuthorPatchSpecs(path.slice(0, -1), resolveAuthorSelection(next))
+    onFormChange(
+      PatchEvent.from(
+        specs.map((spec) => (spec.op === 'set' ? set(spec.value, spec.path) : unset(spec.path))),
+      ),
+    )
   }
 
   return (
@@ -41,7 +52,7 @@ export function AuthorNameInput(props: StringInputProps) {
         readOnly={readOnly}
       >
         <option value="">Choose an author…</option>
-        {AUTHOR_NAME_PRESETS.map((name) => (
+        {AUTHOR_PRESETS.map(({name}) => (
           <option key={name} value={name}>
             {name}
           </option>
