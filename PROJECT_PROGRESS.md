@@ -408,3 +408,15 @@ The News Article `authorName` field now uses a custom Studio input (`sanity/comp
 ## 20. 2026-10-04 Favicon
 
 - Replaced the default Astro favicon with the nepali.no logo (red square with white "ने"). `public/` now has `favicon.ico` and `favicon-96.png` (letter only, readable at tab size), `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` (full logo with wordmark) and `site.webmanifest`. `BaseLayout.astro` links them on every page.
+
+## 21. 2026-10-14 News article structured data
+
+PR #88 adds one JSON-LD `@graph` to Nepali and Norwegian News article detail pages only:
+
+- Each graph contains one `NewsArticle` and one `BreadcrumbList`. The article uses the page's canonical URL, visible title, summary, publication date, localized language and category, and a free-access declaration.
+- Featured images reuse the same resolved production URL as the page's Open Graph image. Articles without a featured image omit the `image` property.
+- Author type comes from the optional Sanity `authorType` (`person` or `organization`) when set. For legacy articles, the exact author name `nepali.no Editorial` maps to `Organization`; any other non-empty name maps to `Person`; an empty or unavailable name omits the author. This fallback does not infer types from naming patterns.
+- The publisher references the existing `https://nepali.no/#organization` entity without redefining it. Author profile URLs and `dateModified` are omitted because reliable source data is unavailable.
+- Breadcrumb items use localized Home and News labels and absolute URLs, followed by the current article URL and title. The visible breadcrumb displays Home and News; the article title is the page heading.
+- `NEWS_ARTICLE_BY_SLUG_QUERY` fetches `authorType`; no other query or page type receives this markup. Existing page metadata and homepage structured data are unchanged.
+- Tests: `npm run test:news-article-structured-data` covers author resolution, image handling, language, canonical IDs, publisher, breadcrumbs and omitted fields.
