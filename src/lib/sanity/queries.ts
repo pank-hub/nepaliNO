@@ -814,6 +814,11 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
       status
     },
     summary,
+    socialImage {
+      asset,
+      hotspot,
+      crop
+    },
     topic,
     intendedAudience,
     body[] {

@@ -1,4 +1,5 @@
 ---
+import type {SanityImageSource} from '@sanity/image-url'
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
@@ -11,6 +12,7 @@ import {getTranslations} from '../../../i18n'
 import {isSectionEnabled} from '../../../config/languageSections'
 import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
+import {urlFor} from '../../../lib/sanity/image'
 import {
   PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY,
   RECENT_NEWS_FOR_GUIDE_QUERY,
@@ -58,6 +60,7 @@ interface GuideDocument {
   title: string
   slug: string
   language: SupportedLanguage
+  socialImage?: SanityImageSource & {asset?: {_ref: string; _type?: 'reference'}}
   translation?: TranslationSummary
   relatedGuides?: RelatedGuideSummary[]
   summary: string
@@ -128,6 +131,10 @@ const relatedNews = await sanityClient.fetch<RelatedNewsSummary[]>(
 )
 
 const relatedGuides = guide.relatedGuides?.filter(Boolean) ?? []
+const socialImageUrl =
+  guide.socialImage?.asset
+    ? urlFor(guide.socialImage).width(1200).height(630).fit('crop').auto('format').url()
+    : undefined
 
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
@@ -166,6 +173,8 @@ const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audie
   language={language}
   title={`${guide.title} | nepali.no`}
   description={guide.summary}
+  socialImage={socialImageUrl}
+  socialImageAlt={guide.title}
 >
   <SiteHeader
     slot="header"
