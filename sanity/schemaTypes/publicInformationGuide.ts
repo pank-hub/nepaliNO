@@ -84,6 +84,15 @@ export const publicInformationGuide = defineType({
     }),
 
     defineField({
+      name: 'socialImage',
+      title: 'Social sharing image',
+      type: 'image',
+      description:
+        'Used for Facebook and other social link previews. This image is not displayed on the Guide page.',
+      options: {hotspot: true},
+    }),
+
+    defineField({
       name: 'searchKeywords',
       title: 'Search Keywords and Synonyms',
       type: 'array',
