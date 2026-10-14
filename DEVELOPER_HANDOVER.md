@@ -1,6 +1,6 @@
 # nepali.no Developer Handover
 
-**Status date:** 3 October 2026
+**Status date:** 14 October 2026
 **Repository:** `pank-hub/nepaliNO`
 **Owner and final decision-maker:** Pankaj Kafley
 **Protected production checkpoint:** PR #77, Norwegian site News only
@@ -46,6 +46,10 @@ Bilingual archives, article pages, homepage presentation, publication scheduling
 The Sanity News Article editor now uses a writing-first default group, with separate Classification, Publishing, Sources and Trust, Forum, and Workflow groups. Its Portable Text editor explicitly supports approved headings, quotation, bullet and numbered lists, strong text, emphasis, links, and images. The Studio Editorial workspace includes task-oriented News views for drafts, scheduled stories, featured stories, Important Now, language queues, and missing translations. Custom document lists have stable IDs because Sanity requires IDs for custom structure lists.
 
 The News archive uses a magazine-style curated landing page and a paginated older-news archive. Preserve this distinction when changing News presentation.
+
+News article detail pages in both active languages emit one JSON-LD graph containing `NewsArticle` and `BreadcrumbList`. The article markup uses the canonical URL, visible title and summary, publication date, localized language/category, and featured image URL already used by `og:image` when available. Articles without a featured image omit `image`; `dateModified` is not emitted because there is no reliable editorial modification date.
+
+Author markup follows the optional Sanity `authorType` (`person` or `organization`). For legacy articles without it, only the exact author name `nepali.no Editorial` maps to `Organization`; other non-empty names map to `Person`; absent or empty names omit author. The publisher references `https://nepali.no/#organization` without redefining the entity. Breadcrumb markup uses localized Home and News labels and includes the current article as the final item; the visible breadcrumb itself shows Home and News, with the article title as the page heading. This markup is limited to News article detail pages; archives and other content types do not receive it. See `PROJECT_PROGRESS.md` section 21 for implementation and test details.
 
 Nepali typography was recently adjusted to reduce heavy Devanagari weights in headings and rich-text bold content. Avoid reintroducing very heavy weights for large Nepali display text without visual review.
 
