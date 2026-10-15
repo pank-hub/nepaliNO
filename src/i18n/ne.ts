@@ -91,7 +91,7 @@ export const ne = {
     pageLabel: (page: number) => `पृष्ठ ${page}`,
     articleCount: (count: number) => `${count} समाचार`,
     author: "लेखक",
-    source: "मूल स्रोत",
+    source: "मुख्य स्रोत",
     sourceDescription: "सम्बन्धित मूल सामग्री वा आधिकारिक जानकारी हेर्नुहोस्।",
     translation: "अर्को भाषामा पढ्नुहोस्",
     relatedNews: "सम्बन्धित समाचार",
