@@ -1,0 +1,147 @@
+---
+import {
+  formatChartUnit,
+  formatChartValue,
+  formatPercentage,
+} from "../../lib/editorialChart/format.ts";
+import { maxOf } from "../../lib/editorialChart/palette.ts";
+import type {
+  ChartLanguage,
+  NormalizedChart,
+} from "../../lib/editorialChart/types.ts";
+
+interface Props {
+  chart: NormalizedChart;
+  language: ChartLanguage;
+  labels: { category: string; unavailable: string; dataTable: string };
+  focusable?: boolean;
+}
+
+const { chart, language, labels, focusable = false } = Astro.props;
+const polar = chart.chartType === "pie" || chart.chartType === "donut";
+const showPercentages = chart.showPercentages && polar;
+const rowCount = maxOf(
+  chart.series.map((item) => item.values.length),
+  chart.categories.length,
+);
+const formatValue = (value: number) => formatChartValue(value, chart, language);
+---
+
+<div class="editorial-chart__table-wrap" tabindex={focusable ? 0 : undefined}>
+  <table>
+    <caption>{labels.dataTable}</caption>
+    <thead>
+      <tr>
+        <th scope="col">{labels.category}</th>
+        {
+          chart.series.map((item) => (
+            <th scope="col">
+              {item.label}
+              {chart.unit && (
+                <span> ({formatChartUnit(chart.unit, language)})</span>
+              )}
+            </th>
+          ))
+        }
+        {showPercentages && <th scope="col">%</th>}
+      </tr>
+    </thead>
+    <tbody>
+      {
+        Array.from({ length: rowCount }, (_, categoryIndex) => {
+          const category = chart.categories[categoryIndex];
+          return (
+            <tr>
+              <th scope="row">
+                {category || `${labels.category} ${categoryIndex + 1}`}
+              </th>
+              {chart.series.map((item) => {
+                const numericValue = item.values[categoryIndex];
+                return (
+                  <td>
+                    {numericValue === null || numericValue === undefined
+                      ? labels.unavailable
+                      : formatValue(numericValue)}
+                  </td>
+                );
+              })}
+              {showPercentages && (
+                <td>
+                  {chart.percentages[categoryIndex] === null ||
+                  chart.percentages[categoryIndex] === undefined
+                    ? labels.unavailable
+                    : formatPercentage(
+                        chart.percentages[categoryIndex]!,
+                        language,
+                      )}
+                </td>
+              )}
+            </tr>
+          );
+        })
+      }
+      {
+        rowCount === 0 && (
+          <tr>
+            <td colspan={chart.series.length + 1}>{labels.unavailable}</td>
+          </tr>
+        )
+      }
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .editorial-chart__table-wrap {
+    max-width: 100%;
+    margin-block-start: 0.7rem;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    font-variant-numeric: tabular-nums;
+  }
+  caption {
+    padding: 0.5rem;
+    font-weight: 700;
+    text-align: start;
+  }
+  th,
+  td {
+    min-width: 6rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--chart-border);
+    text-align: start;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+  thead th,
+  tbody th {
+    background: var(--chart-table-heading);
+    font-weight: 700;
+  }
+  .editorial-chart__table-wrap:focus-visible {
+    outline: 0.18rem solid var(--focus);
+    outline-offset: 0.2rem;
+  }
+  @media (max-width: 35rem) {
+    .editorial-chart__table-wrap {
+      margin-inline: -0.35rem;
+      max-width: calc(100% + 0.7rem);
+    }
+    th,
+    td {
+      padding: 0.45rem;
+    }
+  }
+  @media print {
+    .editorial-chart__table-wrap {
+      overflow: visible;
+    }
+    table {
+      font-size: 9pt;
+    }
+  }
+</style>

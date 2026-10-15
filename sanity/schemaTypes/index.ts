@@ -1,4 +1,5 @@
 import {directoryListing} from './directoryListing'
+import {editorialChart} from './editorialChart'
 import {forumCompanionAutomation} from './forumCompanionAutomation'
 import {forumTopicReference} from './forumTopicReference'
 import {communityEvent} from './communityEvent'
@@ -14,6 +15,7 @@ export const schemaTypes = [
   newsArticle,
   communityEvent,
   directoryListing,
+  editorialChart,
   publicInformationGuide,
   publicInformationTopic,
   norwegianTerm,

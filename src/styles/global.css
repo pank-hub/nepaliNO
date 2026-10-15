@@ -67,6 +67,22 @@
   --success: #027a48;
   --gold: #bd8e35;
 
+  --chart-surface: #ffffff;
+  --chart-border: #bdcad7;
+  --chart-grid: #dce4ec;
+  --chart-baseline: #526273;
+  --chart-text: #172534;
+  --chart-table-heading: #f5f8fb;
+  --chart-scrollbar: #718096;
+  --chart-blue: #285f91;
+  --chart-teal: #0b6e69;
+  --chart-gold: #956515;
+  --chart-purple: #704095;
+  --chart-slate: #526273;
+  --chart-indigo: #3e4d8a;
+  --chart-cyan: #176b86;
+  --chart-brown: #79533c;
+
   --content-wide: 80rem;
   --content-reading: 46rem;
   --page-gutter: clamp(1rem, 3vw, 2rem);

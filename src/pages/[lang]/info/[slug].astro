@@ -3,6 +3,8 @@ import type {SanityImageSource} from '@sanity/image-url'
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import EditorialChartNe from '../../../components/content/EditorialChartNe.astro'
+import EditorialChartNb from '../../../components/content/EditorialChartNb.astro'
 import ForumDiscussionCard from '../../../components/content/ForumDiscussionCard.astro'
 import RelatedGuidesList from '../../../components/content/RelatedGuidesList.astro'
 import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
@@ -17,6 +19,7 @@ import {
   PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY,
   RECENT_NEWS_FOR_GUIDE_QUERY,
 } from '../../../lib/sanity/queries'
+import type {EditorialChartInput} from '../../../lib/editorialChart/types'
 
 interface TranslationSummary {
   _id: string
@@ -66,7 +69,27 @@ interface GuideDocument {
   summary: string
   topic: string
   intendedAudience?: string[]
-  body?: any[]
+  body?: (
+    | {
+        _type: 'block'
+        _key?: string
+        style?: string
+        children?: {text?: string; _type?: string; _key?: string}[]
+        markDefs?: {_key?: string; _type?: string; href?: string}[]
+        listItem?: string
+      }
+    | {
+        _type: 'image'
+        _key?: string
+        asset?: unknown
+        alt?: string
+        caption?: string
+        credit?: string
+        hotspot?: unknown
+        crop?: unknown
+      }
+    | (EditorialChartInput & {_type: 'editorialChart'; _key?: string})
+  )[]
   responsibleAgency: string
   officialSourceUrl: string
   additionalOfficialLinks?: OfficialLink[]
@@ -156,6 +179,7 @@ const formatDateTime = (date: string) =>
 const portableTextComponents = {
   type: {
     image: SanityPortableImage,
+    editorialChart: language === 'ne' ? EditorialChartNe : EditorialChartNb,
   },
 }
 
