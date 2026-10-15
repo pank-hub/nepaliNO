@@ -1,0 +1,14 @@
+---
+import EditorialChart from "./EditorialChart.astro";
+import type { EditorialChartInput } from "../../lib/editorialChart/types";
+
+interface Props {
+  node: EditorialChartInput;
+  index?: number;
+  isInline?: boolean;
+}
+
+const { node, index } = Astro.props;
+---
+
+<EditorialChart node={node} index={index} language="ne" />

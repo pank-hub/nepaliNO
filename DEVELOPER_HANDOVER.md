@@ -18,7 +18,7 @@ This document is the durable repository handover for a future developer, operato
 - Required validation: Astro check and production build
 - Public application deployment: Vercel project `nepali-no`
 - Studio deployment: Vercel project `nepali-no-studio`
-- Hosted Studio deployment: `https://nepali-no.sanity.studio/`
+- Canonical daily public editorial Studio: `https://nepali-no-studio.vercel.app/content/`
 - Current local branch may differ from `main`; always run `git status --short --branch` and `git log -3 --oneline` before work.
 - Never commit directly to `main` or rewrite shared history.
 
@@ -36,6 +36,14 @@ This document is the durable repository handover for a future developer, operato
 - Public languages: Nepali (`ne`) and Norwegian Bokmal (`nb`)
 - English is limited to selected submission and administrative services.
 - The Norwegian site currently publishes News only. Guides, Events, Directory, and the Forum are disabled for `nb` through `src/config/languageSections.ts` (see "Per-language section availability").
+
+### Sanity Studio URLs and deployment cleanup
+
+- Use `https://nepali-no-studio.vercel.app/content/` as the canonical Studio for daily public editorial work.
+- `https://nepali-no-studio.sanity.studio/` is a legacy/fallback Sanity-hosted deployment and may have an outdated schema. Do not use it for routine editorial work.
+- `https://nepali-no.sanity.studio/` is another Sanity-hosted deployment; its purpose and current schema status still need verification.
+- A future cleanup should leave one clearly identifiable daily Studio and either remove obsolete Sanity-hosted deployments or retain only one fallback that has been updated to the current schema and clearly labelled as a fallback.
+- Before removing any hosted Studio, verify the exact deployment being removed. Removing a Studio deployment must not include deleting or modifying the `production` dataset or its content.
 
 ## Operational features
 
@@ -89,6 +97,59 @@ Contact pages use Contact Items, Safety Heading, and Safety Text. The other trus
 ### Translation Editor
 
 Phase 1 is Pankaj-only with GitHub login, signed sessions, deterministic TypeScript updates, generated branches, and protected pull requests. The production-domain GitHub OAuth callback still needs correction and end-to-end verification. Keep the working `nepali-no.vercel.app` route available until that is complete.
+
+## Editorial charts
+
+One shared Sanity object, `editorialChart`, is used in News and Public Information Guides. It is rendered as static server-generated SVG and HTML. Editor guidance is in `docs/editorial-charts.md`. Implementation is complete; production deployment follows the rollout order below.
+
+### Architecture
+
+- Shared Sanity object: `sanity/schemaTypes/editorialChart.ts`, registered in `sanity/schemaTypes/index.ts`.
+- News: `sanity/schemaTypes/newsArticle.ts` and `src/pages/[lang]/news/[slug].astro`.
+- Guides: `sanity/schemaTypes/publicInformationGuide.ts` and `src/pages/[lang]/info/[slug].astro`.
+- Shared renderer: `src/components/content/EditorialChart.astro`; shared data table: `src/components/content/EditorialChartTable.astro`.
+- Language wrappers: `EditorialChartNe.astro` and `EditorialChartNb.astro` (thin; they forward the node and index).
+- Shared logic in `src/lib/editorialChart/`: `types.ts`, `normalize.ts`, `format.ts`, `geometry.ts`, `palette.ts`.
+- Tests: `tests/editorialChart/editorialChart.test.mjs`.
+
+### Data model
+
+- All chart types share `categories` and `series`; each series' `values` align with category positions. Order follows editorial category and series order.
+- Pie and donut require exactly one series. Their percentages are calculated automatically; manually entered percentages are not stored.
+- True zero values stay in the data table but draw no bar or slice, so they never look like small positive values.
+- Malformed values are never silently converted to zero.
+
+### Rendering and accessibility
+
+- Static server-generated SVG and HTML. No runtime charting dependency and no client hydration.
+- Every visual is accompanied by a complete HTML data table. Information never depends on colour alone: series also use patterns, dashes or numbering, tied to series position rather than the chosen colour.
+- Print shows the full data table even when the on-screen disclosure is closed (`::details-content` where supported, otherwise a print-only copy), scoped to chart disclosures.
+- Malformed or unknown chart types fall back to readable text and table data without breaking the article or Guide page. If geometry generation throws, the SVG is omitted, the table remains, and the error is logged with `console.error` (chart title and message only; no routine noise because it happens only for invalid data). Data warnings use `console.warn`. A visible diagnostic is shown only in development.
+
+### Responsive behaviour
+
+- Cartesian charts are rendered in a compact and a wide layout; a CSS container query chooses one. Thresholds live in `CHART_LAYOUTS` in `geometry.ts`.
+- Ordinary five-category charts fit narrow screens. Horizontal bars keep labels and bars visible on mobile and grow taller instead of wider.
+- Genuinely large datasets use a contained, focusable horizontal scroll region. Never introduce page-level horizontal overflow.
+- Very long graphical labels may be shortened with an ellipsis; the complete labels remain in the data table.
+
+### Formatting
+
+- Nepali content uses `ne-NP`; Norwegian content uses `nb-NO`. Units, prefixes, suffixes and decimal precision (0 to 3) are supported.
+- A percent unit combined with a `%` value suffix is rejected in Studio and normalized by the renderer, so output cannot read "12% prosent".
+- Enter large Norwegian monetary values in an editorially understandable unit such as "अर्ब क्रोनर" or "milliarder kroner" rather than relying on raw full-value formatting.
+
+### Extending chart support
+
+Add a new chart type through: (1) the shared chart-type definition, (2) Sanity chart-type options and validation, (3) normalization compatibility, (4) geometry generation, (5) the shared Astro renderer, (6) the accessibility fallback, (7) focused tests, (8) editor documentation. Do not create a separate Portable Text object per chart type unless a requirement cannot fit the shared model.
+
+### Rollout and rollback
+
+- Deploy the public frontend before editors can publish chart blocks. Then verify existing News and Guide pages, deploy the canonical Studio, create one controlled draft chart, preview it on mobile and desktop, and publish only after production rendering is verified.
+- Canonical Studio: `https://nepali-no-studio.vercel.app/content/`. Legacy Sanity-hosted Studio deployments may have outdated schemas and are not the daily editorial Studio.
+- Never restore a pre-chart frontend while published `editorialChart` blocks remain in Sanity.
+- Rollback: (1) stop creating charts, (2) keep the chart-capable frontend while chart content exists, (3) remove or replace published chart blocks before restoring a pre-chart frontend.
+- No destructive Sanity migration is required.
 
 ## Non-negotiable security and data boundaries
 
@@ -165,6 +226,7 @@ Do not use destructive Git commands such as `git reset --hard` or `git checkout 
 - `FORUM_INTEGRATION.md`: Sanity, Vercel, and Discourse integration contract
 - `DISCOURSE_GIGAHOST_RUNBOOK.md`: Forum operational procedures
 - `docs/decisions/ADR-001-discourse-on-gigahost.md`: settled Forum hosting decision
+- `docs/editorial-charts.md`: editor guide for the shared editorial chart block
 
 ## Handover maintenance rule
 

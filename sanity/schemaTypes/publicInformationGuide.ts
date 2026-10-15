@@ -315,6 +315,7 @@ export const publicInformationGuide = defineType({
             defineField({name: 'credit', title: 'Image Credit', type: 'string'}),
           ],
         }),
+        defineArrayMember({type: 'editorialChart'}),
       ],
       validation: (rule) => rule.required(),
     }),

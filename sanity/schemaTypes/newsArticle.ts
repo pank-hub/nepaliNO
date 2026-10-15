@@ -308,6 +308,7 @@ export const newsArticle = defineType({
             }),
           ],
         }),
+        defineArrayMember({type: 'editorialChart'}),
       ],
       validation: (rule) => rule.required().min(1),
     }),

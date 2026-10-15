@@ -33,7 +33,8 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 - Public application: Astro and TypeScript on Vercel project `nepali-no`
 - Production domain: `https://nepali.no`
 - Editorial CMS: Sanity Content Lake and Sanity Studio
-- Studio delivery: separate Vercel project `nepali-no-studio` and hosted Studio at `https://nepali-no.sanity.studio/`
+- Canonical daily public editorial Studio: `https://nepali-no-studio.vercel.app/content/` (separate Vercel project `nepali-no-studio`)
+- Sanity-hosted deployments: `https://nepali-no-studio.sanity.studio/` is a legacy/fallback that may have an outdated schema; the purpose and schema status of `https://nepali-no.sanity.studio/` need verification. See `DEVELOPER_HANDOVER.md` before future cleanup.
 - Public editorial dataset: `production`
 - Private submission dataset: `submissions`
 - Source control: GitHub repository `pank-hub/nepaliNO`
@@ -420,3 +421,24 @@ PR #88 adds one JSON-LD `@graph` to Nepali and Norwegian News article detail pag
 - Breadcrumb items use localized Home and News labels and absolute URLs, followed by the current article URL and title. The visible breadcrumb displays Home and News; the article title is the page heading.
 - `NEWS_ARTICLE_BY_SLUG_QUERY` fetches `authorType`; no other query or page type receives this markup. Existing page metadata and homepage structured data are unchanged.
 - Tests: `npm run test:news-article-structured-data` covers author resolution, image handling, language, canonical IDs, publisher, breadcrumbs and omitted fields.
+
+## 22. 2026-10-15 Shared editorial charts (implemented, not yet deployed)
+
+Implementation is complete and committed on the working branch. It is **not deployed and not active in production**. Deployment is a separate, later step.
+
+- One shared `editorialChart` Portable Text object is available in both News articles and Public Information Guides. Supported types: vertical bar, horizontal bar, grouped bar, stacked bar, line, area, donut and pie.
+- Charts are rendered server-side with Astro, HTML and SVG. No charting library was added and no client hydration is required.
+- Included: accessible HTML data tables, textual fallback, compact and wide responsive layouts, controlled internal scrolling for genuinely large datasets, mobile-readable layouts for ordinary datasets, print support (the full table prints even when the disclosure is closed), automatic percentages for pie and donut, locale-aware Nepali (`ne-NP`) and Norwegian (`nb-NO`) number formatting, and graceful handling of malformed or unknown chart data.
+- Existing News and Guide content needs no migration, and chart-free content renders unchanged. Charts stay language-specific inside each News or Guide document. No Norwegian Guide routes or disabled sections were enabled.
+- Documentation: `docs/editorial-charts.md` (editors) and the "Editorial charts" section of `DEVELOPER_HANDOVER.md`.
+
+Validation status at completion: 41 focused editorial-chart tests passed; 170 total tests passed; Astro check 0 errors; Astro production build succeeded; Sanity Studio build succeeded; ESLint passed; Prettier passed; `git diff --check` passed.
+
+Required rollout sequence:
+
+1. Deploy the public Astro frontend first.
+2. Verify existing production News and Guide pages.
+3. Deploy the canonical Vercel-hosted Sanity Studio.
+4. Create one controlled draft chart in Sanity.
+5. Preview the draft on mobile and desktop.
+6. Publish only after production rendering is verified.

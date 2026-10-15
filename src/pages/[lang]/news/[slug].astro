@@ -2,6 +2,8 @@
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
+import EditorialChartNe from '../../../components/content/EditorialChartNe.astro'
+import EditorialChartNb from '../../../components/content/EditorialChartNb.astro'
 import ForumDiscussionCard from '../../../components/content/ForumDiscussionCard.astro'
 import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
 import SupportingGuideCard from '../../../components/content/SupportingGuideCard.astro'
@@ -14,6 +16,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {NEWS_ARTICLE_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
 import {buildNewsArticleStructuredData} from '../../../lib/structuredData/newsArticle'
+import type {EditorialChartInput} from '../../../lib/editorialChart/types'
 
 interface TranslationSummary {
   _id: string
@@ -66,7 +69,27 @@ interface NewsArticle {
   newsRegion: string
   category: string
   featuredImage?: NewsImage
-  body?: any[]
+  body?: (
+    | {
+        _type: 'block'
+        _key?: string
+        style?: string
+        children?: {text?: string; _type?: string; _key?: string}[]
+        markDefs?: {_key?: string; _type?: string; href?: string}[]
+        listItem?: string
+      }
+    | {
+        _type: 'image'
+        _key?: string
+        asset?: unknown
+        alt?: string
+        caption?: string
+        credit?: string
+        hotspot?: unknown
+        crop?: unknown
+      }
+    | (EditorialChartInput & {_type: 'editorialChart'; _key?: string})
+  )[]
   authorName: string
   authorType?: 'person' | 'organization'
   publishedAt: string
@@ -155,6 +178,7 @@ const socialImageUrl = article.featuredImage?.asset
 const portableTextComponents = {
   type: {
     image: SanityPortableImage,
+    editorialChart: language === 'ne' ? EditorialChartNe : EditorialChartNb,
   },
 }
 
