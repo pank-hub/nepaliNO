@@ -151,6 +151,40 @@ Add a new chart type through: (1) the shared chart-type definition, (2) Sanity c
 - Rollback: (1) stop creating charts, (2) keep the chart-capable frontend while chart content exists, (3) remove or replace published chart blocks before restoring a pre-chart frontend.
 - No destructive Sanity migration is required.
 
+## Information boxes
+
+One shared Sanity object, `informationBox`, is available in both News articles and Public Information Guides. It is a single schema and frontend system, not separate News and Guide implementations.
+
+### Architecture
+
+- Schema and shared array member (`informationBoxBlockMember`): `sanity/schemaTypes/informationBox.ts`, registered in `sanity/schemaTypes/index.ts` and added to `body` in `newsArticle.ts` and `publicInformationGuide.ts`. The existing News and Guide `block` configurations are unchanged.
+- Renderer: `src/components/content/InformationBox.astro`, with thin `InformationBoxNe.astro` and `InformationBoxNb.astro` wrappers because `astro-portabletext` passes no language to components. Both pages register it in `portableTextComponents`.
+- Logic: `src/lib/informationBox/normalize.ts`. Tests: `tests/informationBox/informationBox.test.mjs` (`npm run test:information-box`).
+
+### Data model and rules
+
+- `variant` (required): `important`, `attention`, `tip` or `fact`. New boxes default to `important`.
+- `title` (optional, max 80 characters) and `body` (required, at least one block).
+- The body supports normal paragraphs, bullet and numbered lists, bold, italic and links (HTTP, HTTPS or relative).
+- Headings, images, charts, nested information boxes and separate CTA/link fields are not supported inside the box.
+- Variant labels come from the central i18n files (`informationBox.variants` in `ne.ts`, `nb.ts`, and the English fallback in `en.ts`). The Studio preview uses English administrative labels.
+- Unknown or missing variants render with the neutral `fact` presentation.
+- Empty or invalid boxes render nothing. Unsafe link protocols are removed at render time and the link text is kept.
+- Existing News and Guide documents require no migration.
+
+### Editor guidance: choosing a variant
+
+- `important`: information readers should notice.
+- `attention`: caution, deadline, risk or possible consequence.
+- `tip`: practical advice or recommended next step.
+- `fact`: neutral fact, definition or contextual information.
+
+The optional title supplements the visible variant label; it does not replace it.
+
+### Rollout
+
+Deploy the public frontend before editors publish content containing `informationBox`, then deploy the canonical Studio. Do not restore a frontend without this support while published boxes exist.
+
 ## Non-negotiable security and data boundaries
 
 - Sanity owns verified editorial content and deliberate references to Forum topics.

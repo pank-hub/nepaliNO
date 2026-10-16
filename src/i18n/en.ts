@@ -4,6 +4,14 @@ import type { EventSubmissionCopy } from "./eventSubmission";
 export const en = {
   languageName: "English",
   common: { skipToContent: "Skip to main content" },
+  informationBox: {
+    variants: {
+      important: "Important information",
+      attention: "Attention / warning",
+      tip: "Useful tip",
+      fact: "Key fact",
+    },
+  },
   events: {
     categories: {
       "cultural-celebration": "Cultural celebration",

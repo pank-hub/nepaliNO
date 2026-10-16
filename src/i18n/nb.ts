@@ -455,6 +455,15 @@ export const nb = {
     builtFor: "Utviklet spesielt for det nepalske miljøet i Norge.",
   },
 
+  informationBox: {
+    variants: {
+      important: "Viktig informasjon",
+      attention: "Obs / advarsel",
+      tip: "Nyttig tips",
+      fact: "Nøkkelfakta",
+    },
+  },
+
   common: {
     mainNavigation: "Hovednavigasjon",
     languageSelector: "Velg språk",

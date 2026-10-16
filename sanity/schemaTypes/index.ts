@@ -2,6 +2,7 @@ import {directoryListing} from './directoryListing'
 import {editorialChart} from './editorialChart'
 import {forumCompanionAutomation} from './forumCompanionAutomation'
 import {forumTopicReference} from './forumTopicReference'
+import {informationBox} from './informationBox'
 import {communityEvent} from './communityEvent'
 import {newsArticle} from './newsArticle'
 import {norwegianTerm} from './norwegianTerm'
@@ -16,6 +17,7 @@ export const schemaTypes = [
   communityEvent,
   directoryListing,
   editorialChart,
+  informationBox,
   publicInformationGuide,
   publicInformationTopic,
   norwegianTerm,

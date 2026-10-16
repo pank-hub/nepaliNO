@@ -5,6 +5,8 @@ import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
 import EditorialChartNe from '../../../components/content/EditorialChartNe.astro'
 import EditorialChartNb from '../../../components/content/EditorialChartNb.astro'
+import InformationBoxNe from '../../../components/content/InformationBoxNe.astro'
+import InformationBoxNb from '../../../components/content/InformationBoxNb.astro'
 import ForumDiscussionCard from '../../../components/content/ForumDiscussionCard.astro'
 import RelatedGuidesList from '../../../components/content/RelatedGuidesList.astro'
 import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
@@ -20,6 +22,7 @@ import {
   RECENT_NEWS_FOR_GUIDE_QUERY,
 } from '../../../lib/sanity/queries'
 import type {EditorialChartInput} from '../../../lib/editorialChart/types'
+import type {InformationBoxInput} from '../../../lib/informationBox/normalize.ts'
 
 interface TranslationSummary {
   _id: string
@@ -89,6 +92,7 @@ interface GuideDocument {
         crop?: unknown
       }
     | (EditorialChartInput & {_type: 'editorialChart'; _key?: string})
+    | (InformationBoxInput & {_type: 'informationBox'; _key?: string})
   )[]
   responsibleAgency: string
   officialSourceUrl: string
@@ -180,6 +184,7 @@ const portableTextComponents = {
   type: {
     image: SanityPortableImage,
     editorialChart: language === 'ne' ? EditorialChartNe : EditorialChartNb,
+    informationBox: language === 'ne' ? InformationBoxNe : InformationBoxNb,
   },
 }
 
