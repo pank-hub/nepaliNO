@@ -1,5 +1,7 @@
 import {defineField, defineType} from 'sanity'
 
+import {validateSafeSlug} from './slugValidation'
+
 const topicOptions = [
   {title: 'Immigration and Residence', value: 'immigration-residence'},
   {title: 'Work and Employment', value: 'work-employment'},
@@ -53,7 +55,8 @@ export const publicInformationTopic = defineType({
         source: 'title',
         maxLength: 80,
       },
-      validation: (rule) => rule.required(),
+      validation: (rule) =>
+        rule.required().custom((value) => validateSafeSlug(value?.current)),
     }),
     defineField({
       name: 'language',

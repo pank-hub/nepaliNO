@@ -25,7 +25,9 @@
     "test:news-author-type": "node --experimental-strip-types --test tests/sanity/newsAuthorType.test.mjs",
     "test:news-article-structured-data": "node --experimental-strip-types --test tests/structuredData/newsArticle.test.mjs",
     "test:event-occurrences": "node --experimental-strip-types --test tests/content/eventOccurrences.test.mjs",
-    "test:information-box": "node --experimental-strip-types --test tests/informationBox/informationBox.test.mjs"
+    "test:information-box": "node --experimental-strip-types --test tests/informationBox/informationBox.test.mjs",
+    "test:topic-slug": "node --experimental-strip-types --test tests/sanity/topicSlug.test.mjs",
+    "test:seo-redirects": "node --experimental-strip-types --test tests/content/seoRedirects.test.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
@@ -50,6 +52,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@types/node": "^26.1.1",
+    "@vercel/routing-utils": "^5.3.3",
     "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^6.0.3"

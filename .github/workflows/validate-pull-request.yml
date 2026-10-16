@@ -73,8 +73,20 @@ jobs:
       - name: Test Sanity Forum publishing workflow
         run: npm run test:forum-publishing-workflow
 
+      - name: Test News author type
+        run: npm run test:news-author-type
+
+      - name: Test information box
+        run: npm run test:information-box
+
+      - name: Test Topic slug validation
+        run: npm run test:topic-slug
+
       - name: Run Astro Check
         run: npx astro check
 
       - name: Run production build
         run: npm run build
+
+      - name: Test SEO redirects and generated routes
+        run: npm run test:seo-redirects

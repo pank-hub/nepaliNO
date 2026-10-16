@@ -80,6 +80,14 @@ Reusable Norwegian terms expose the Norwegian term and optional Nepali pronuncia
 - To re-enable a Norwegian section: set its flag to `true`, delete its redirect page, confirm Norwegian content exists, and rerun `npm run test:language-sections` (update the test expectations deliberately).
 - Not covered by the switch: Norwegian About, Privacy, and Transparency text, Norwegian homepage hero text, Sanity-managed Contact copy, and Forum automation for `nb` content. Review these before the Norwegian site is promoted.
 
+### Permanent redirects and Topic slugs
+
+- `/` redirects permanently (308) to `/ne/` through `redirects` in `astro.config.mjs`, which the Vercel adapter emits as a real HTTP route ahead of the filesystem. Keep it out of the shared `vercel.json`, which the separate Studio project also reads. There is no `src/pages/index.astro`.
+- `vercel.json` keeps two permanent (308) redirects from the old malformed Topic URLs (a Topic title or trailing space had been appended to the slug) to `/ne/info/topic/norwegian-language-and-integration/` and `/ne/info/topic/digital-sewa-ra-online-suraksha/`. Do not remove them; they are narrowly scoped and never match the clean URLs.
+- Topic slugs must use lowercase Latin letters, digits and single hyphens. The Topic slug field in Studio enforces this (`sanity/schemaTypes/slugValidation.ts`); it only reports errors and never rewrites a value.
+- Topic pages are prerendered and the Sanity webhook does not cover Topic documents, so a changed Topic slug needs a website rebuild (merge or manual redeploy) before the new URL exists. Add a redirect from the old URL in the same deployment.
+- Tests: `npm run test:topic-slug`; `npm run test:seo-redirects` (run after `npm run build` to include the generated-route check).
+
 ### Events and Community Directory
 
 Bilingual public archives and detail pages are operational. Event and Directory suggestions are private, reviewed, and never published automatically. Submission validation, notifications, private contact separation, and Vercel WAF rate limiting are operational.
