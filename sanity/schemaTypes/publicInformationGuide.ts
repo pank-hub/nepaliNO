@@ -1,5 +1,7 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 
+import {informationBoxBlockMember} from './informationBox'
+
 export const publicInformationGuide = defineType({
   name: 'publicInformationGuide',
   title: 'Public Information Guide',
@@ -325,6 +327,7 @@ export const publicInformationGuide = defineType({
           ],
         }),
         defineArrayMember({type: 'editorialChart'}),
+        informationBoxBlockMember,
       ],
       validation: (rule) => rule.required(),
     }),

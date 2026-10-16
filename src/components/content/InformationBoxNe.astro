@@ -1,0 +1,14 @@
+---
+import InformationBox from "./InformationBox.astro";
+import type { InformationBoxInput } from "../../lib/informationBox/normalize.ts";
+
+interface Props {
+  node: InformationBoxInput;
+  index?: number;
+  isInline?: boolean;
+}
+
+const { node, index } = Astro.props;
+---
+
+<InformationBox node={node} index={index} language="ne" />

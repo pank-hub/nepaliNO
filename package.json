@@ -24,7 +24,8 @@
     "test:event-labels": "node --experimental-strip-types --test tests/content/eventLabels.test.mjs",
     "test:news-author-type": "node --experimental-strip-types --test tests/sanity/newsAuthorType.test.mjs",
     "test:news-article-structured-data": "node --experimental-strip-types --test tests/structuredData/newsArticle.test.mjs",
-    "test:event-occurrences": "node --experimental-strip-types --test tests/content/eventOccurrences.test.mjs"
+    "test:event-occurrences": "node --experimental-strip-types --test tests/content/eventOccurrences.test.mjs",
+    "test:information-box": "node --experimental-strip-types --test tests/informationBox/informationBox.test.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

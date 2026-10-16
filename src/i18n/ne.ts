@@ -446,6 +446,15 @@ export const ne = {
     builtFor: "नर्वेको नेपाली समुदायका लागि विशेष रूपमा विकसित।",
   },
 
+  informationBox: {
+    variants: {
+      important: "महत्त्वपूर्ण जानकारी",
+      attention: "ध्यान दिनुहोस् / चेतावनी",
+      tip: "उपयोगी सुझाव",
+      fact: "मुख्य तथ्य",
+    },
+  },
+
   common: {
     mainNavigation: "मुख्य नेभिगेसन",
     languageSelector: "भाषा छान्नुहोस्",

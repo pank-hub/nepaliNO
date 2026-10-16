@@ -6,6 +6,7 @@ import {
   AUTHOR_TYPE_OPTIONS,
   getMissingAuthorTypeWarning,
 } from './authorNamePresets'
+import {informationBoxBlockMember} from './informationBox'
 
 export const newsArticle = defineType({
   name: 'newsArticle',
@@ -309,6 +310,7 @@ export const newsArticle = defineType({
           ],
         }),
         defineArrayMember({type: 'editorialChart'}),
+        informationBoxBlockMember,
       ],
       validation: (rule) => rule.required().min(1),
     }),
