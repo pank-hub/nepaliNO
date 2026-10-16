@@ -35,6 +35,10 @@ export default defineConfig({
 
   adapter: vercel(),
 
+  // Emitted by the Vercel adapter as a real HTTP redirect; kept out of the shared vercel.json so the Studio project is unaffected.
+  redirects: {
+    "/": { status: 308, destination: "/ne/" },
+  },
   vite: {
     plugins: [tailwindcss()],
   },

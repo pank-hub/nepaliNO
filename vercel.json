@@ -1,5 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/ne/info/topic/norwegian-language-and-integration(%20.*| .*)",
+      "destination": "/ne/info/topic/norwegian-language-and-integration/",
+      "permanent": true
+    },
+    {
+      "source": "/ne/info/topic/digital-sewa-ra-online-suraksha(%20| )(/?)",
+      "destination": "/ne/info/topic/digital-sewa-ra-online-suraksha/",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/content",
