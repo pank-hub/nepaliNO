@@ -1,5 +1,7 @@
 @import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/inter/wght-italic.css";
 @import "@fontsource-variable/noto-sans-devanagari/wght.css";
+@import "@fontsource/mukta/devanagari-600.css";
 @import "tailwindcss";
 
 @theme {
@@ -575,8 +577,12 @@ html[lang="ne"] .prose strong {
   font-style: italic;
 }
 
+/* Devanagari has no italic and font-synthesis is off, so Devanagari stays upright; Latin words in Nepali emphasis use Inter's real italic. Weight is inherited and colour is not shared with strong. */
 html[lang="ne"] .prose em {
-  font-weight: 580;
+  color: inherit;
+  font-family: "Inter Variable", "Noto Sans Devanagari Variable", system-ui, sans-serif;
+  font-style: italic;
+  font-weight: inherit;
 }
 
 .prose a {
