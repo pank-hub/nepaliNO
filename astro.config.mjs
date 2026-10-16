@@ -23,6 +23,8 @@ export default defineConfig({
       filter: (page) =>
         new URL(page).pathname !== "/" &&
         !/^\/(translations|api)(\/|$)/.test(new URL(page).pathname) &&
+        // TEMPORARY: typography lab; remove with src/pages/dev/typography-lab.astro.
+        !/^\/dev(\/|$)/.test(new URL(page).pathname) &&
         !/\/(directory|events)\/submit\/?$/.test(page),
       // On-demand (SSR) public pages are not discovered by the integration.
       customPages: ["ne", "nb"].flatMap((lang) =>

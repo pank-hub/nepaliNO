@@ -1,0 +1,188 @@
+---
+// TEMPORARY: Devanagari headline comparison. Remove before any permanent typography PR is merged.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import "@fontsource/mukta/devanagari-400.css";
+import "@fontsource/mukta/devanagari-600.css";
+import "@fontsource/mukta/devanagari-700.css";
+import "@fontsource/mukta/latin-400.css";
+import "@fontsource/mukta/latin-600.css";
+import "@fontsource/mukta/latin-700.css";
+import "@fontsource-variable/anek-devanagari/wght.css";
+import "@fontsource/tiro-devanagari-hindi/devanagari-400.css";
+import "@fontsource/tiro-devanagari-hindi/latin-400.css";
+
+const candidates = [
+  { id: "noto-500", name: "Noto Sans Devanagari Variable 500", family: '"Noto Sans Devanagari Variable"', weight: 500 },
+  { id: "noto-600", name: "Noto Sans Devanagari Variable 600 (production baseline)", family: '"Noto Sans Devanagari Variable"', weight: 600 },
+  { id: "noto-700", name: "Noto Sans Devanagari Variable 700", family: '"Noto Sans Devanagari Variable"', weight: 700 },
+  { id: "mukta-600", name: "Mukta 600", family: "Mukta", weight: 600 },
+  { id: "mukta-700", name: "Mukta 700", family: "Mukta", weight: 700 },
+  { id: "anek-600", name: "Anek Devanagari Variable 600", family: '"Anek Devanagari Variable"', weight: 600 },
+  { id: "anek-700", name: "Anek Devanagari Variable 700", family: '"Anek Devanagari Variable"', weight: 700 },
+  { id: "tiro-400", name: "Tiro Devanagari Hindi 400 (regular reference only)", family: '"Tiro Devanagari Hindi"', weight: 400 },
+];
+
+const headlines = [
+  "नर्वेमा स्ट्रिमिङ सेवा महँगिँदै",
+  "नर्वे सरकारद्वारा सन् २०२७ को राष्ट्रिय बजेट प्रस्ताव",
+  "एयर ट्राफिक कन्ट्रोलरहरूको हडतालले",
+  "अन्तर्राष्ट्रिय न्यायकी अभियन्ता नवनीतम नावी",
+  "दृष्टिकोण, पृष्ठभूमि, वृद्धि र उपलब्धि",
+  "प्रत्यक्ष स्वास्थ्य सेवा र गृहकार्य",
+];
+
+const summary =
+  "नर्वेका धेरै घरपरिवारले टिभी, खेलकुद र चलचित्रका लागि एकभन्दा बढी स्ट्रिमिङ सेवा लिएका छन्। मासिक शुल्क बढेपछि कतिपयले सदस्यता घटाउने विचार गरिरहेका छन्, जबकि NRK जस्ता सार्वजनिक सेवा भने निःशुल्क उपलब्ध छन्।";
+const body =
+  "नर्वेमा बसोबास गर्ने नेपालीहरूले आफ्नो D-nummer वा fødselsnummer प्राप्त गरेपछि बैंक खाता खोल्न, कर कार्ड बुझ्न र स्वास्थ्य सेवाका लागि फास्टलेगे (fastlege) दर्ता गर्न सक्छन्। यी प्रक्रिया सुरु गर्नुअघि आफ्नो परिचयपत्र र बसोबासको कागजात तयार राख्नु उपयोगी हुन्छ।";
+const meta = "प्रकाशित: १५ सेप्टेम्बर २०२६ · लेखक: nepali.no सम्पादकीय · पढ्न लाग्ने समय: ४ मिनेट";
+const nav = "गृहपृष्ठ · समाचार · जानकारी गाइड · कार्यक्रम · डिरेक्टरी · सम्पर्क";
+
+// "Production" string: code points read from the built HTML of
+// /ne/news/norway-streaming-services-price-increase/ (dist/client).
+const productionCodePoints = [0x938, 0x94d, 0x91f, 0x94d, 0x930, 0x93f, 0x92e, 0x93f, 0x919];
+const productionString = String.fromCodePoint(...productionCodePoints);
+// Freshly typed literal, then explicitly NFC-normalised.
+const typedString = "स्ट्रिमिङ".normalize("NFC");
+const unicodeRows = [
+  { label: "Production build output", value: productionString },
+  { label: "Freshly entered, NFC", value: typedString },
+].map((row) => ({
+  ...row,
+  codePoints: [...row.value].map((c) => "U+" + c.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0")),
+  isNfc: row.value === row.value.normalize("NFC"),
+}));
+const identical =
+  unicodeRows[0].value === unicodeRows[1].value &&
+  unicodeRows[0].codePoints.join(" ") === unicodeRows[1].codePoints.join(" ");
+---
+
+<BaseLayout
+  language="ne"
+  title="Typography lab (temporary)"
+  description="Temporary internal typography comparison. Not for publication."
+  noIndex
+>
+  <div class="lab">
+    <header class="lab__intro">
+      <p class="lab__flag">TEMPORARY · noindex · remove before permanent typography PR</p>
+      <h1 class="lab__title">Devanagari headline typography lab</h1>
+      <p class="lab__note">
+        Production News h1 rules are replicated on <code>p.h</code> elements: <code>max-width: 18ch</code>,
+        line-height 1.35, letter-spacing 0, <code>text-wrap: balance</code>. Desktop frame simulates a 1280px viewport
+        (font-size 6vw = 4.8rem, content width up to 62rem); mobile frame is 375px (11vw = 2.578rem, 1rem gutter). Because
+        <code>ch</code> is measured from each font's "0" glyph, the 18ch measure differs per candidate, as it would in
+        production. The candidate font is applied to headlines and to the text samples (body at weight 400, strong at 700,
+        navigation at 600), so body readability is comparable too.
+      </p>
+    </header>
+
+    <section class="lab__section" aria-labelledby="unicode">
+      <h2 id="unicode" class="lab__h2">Unicode check: स्ट्रिमिङ</h2>
+      <table class="lab__table">
+        <thead><tr><th>Source</th><th>Rendered</th><th>Code points</th><th>NFC?</th></tr></thead>
+        <tbody>
+          {unicodeRows.map((row) => (
+            <tr>
+              <td>{row.label}</td>
+              <td class="lab__rendered">{row.value}</td>
+              <td><code>{row.codePoints.join(" ")}</code></td>
+              <td>{row.isNfc ? "yes" : "no"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="lab__verdict" data-identical={String(identical)}>
+        {identical
+          ? "Result: the two strings are identical (same code points, same NFC form)."
+          : "Result: the strings DIFFER; see the code-point readout above."}
+      </p>
+    </section>
+
+    {candidates.map((c) => (
+      <section
+        class="lab__section"
+        aria-labelledby={`h-${c.id}`}
+        data-candidate={c.id}
+        style={`--f:${c.family}, "Inter Variable", system-ui, sans-serif; --w:${c.weight}`}
+      >
+        <h2 id={`h-${c.id}`} class="lab__h2">{c.name}</h2>
+
+        <div class="lab__frames">
+          <div class="frame frame--desktop">
+            <p class="frame__label">Desktop (1280px viewport)</p>
+            {headlines.map((h) => <p class="h h--desktop" lang="ne">{h}</p>)}
+          </div>
+          <div class="frame frame--mobile">
+            <p class="frame__label">Mobile (375px viewport)</p>
+            {headlines.map((h) => <p class="h h--mobile" lang="ne">{h}</p>)}
+          </div>
+        </div>
+
+        <div class="frame frame--text" lang="ne">
+          <p class="frame__label">Text samples in the candidate font</p>
+          <p class="lead">{summary}</p>
+          <div class="prose-sample">
+            <p>{body}</p>
+            <p>
+              सामान्य पाठ, <strong>बलियो पाठ (strong)</strong> र <em>जोड दिइएको पाठ (em)</em>। नेपाली अङ्क: ०१२३४५६७८९, २०२७, ४५%।
+              Latin शब्दहरू: Aftenposten, NRK, UDI, Skatteetaten, D-nummer।
+            </p>
+          </div>
+          <p class="meta">{meta}</p>
+          <p class="nav-sample">{nav}</p>
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<style is:global>
+  .lab {
+    width: min(100% - 2rem, 80rem);
+    margin-inline: auto;
+    padding-block: 2rem 4rem;
+  }
+  .lab__flag {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    background: #fff3cd;
+    border: 1px solid #c9a400;
+    font: 600 0.8rem/1.4 system-ui, sans-serif;
+  }
+  .lab__title { font-size: 1.75rem; margin-block: 0.75rem; }
+  .lab__note { max-width: 60rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+  .lab__section { margin-block-start: 3rem; padding-block-start: 1.5rem; border-top: 2px solid var(--border-strong); }
+  .lab__h2 { font-size: 1.1rem; font-family: system-ui, sans-serif; letter-spacing: 0; line-height: 1.4; }
+  .lab__table { border-collapse: collapse; margin-block-start: 1rem; font-size: 0.9rem; }
+  .lab__table th, .lab__table td { border: 1px solid var(--border-strong); padding: 0.4rem 0.7rem; text-align: left; }
+  .lab__rendered { font-size: 2rem; }
+  .lab__verdict { margin-block-start: 0.75rem; font-weight: 700; }
+  .lab__verdict[data-identical="false"] { color: var(--brand); }
+
+  .lab__frames { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start; margin-block-start: 1rem; }
+  .frame { background: var(--page-bg); border: 1px solid var(--border); padding: 1.25rem; min-width: 0; font-family: var(--f); }
+  .frame--desktop { width: min(100%, 64rem); }
+  .frame--mobile { width: 375px; max-width: 100%; padding-inline: 1rem; }
+  .frame--text { margin-block-start: 1.5rem; max-width: 62rem; }
+  .frame__label { margin: 0 0 1rem; color: var(--text-soft); font: 500 0.75rem/1.4 system-ui, sans-serif; }
+
+  .h {
+    margin: 0 0 1.5rem;
+    color: var(--civic-deep);
+    font-weight: var(--w);
+    line-height: 1.35;
+    letter-spacing: 0;
+    text-wrap: balance;
+    max-width: 18ch;
+  }
+  .h--desktop { font-size: 4.8rem; }
+  .h--mobile { font-size: 2.578rem; }
+
+  .lab .lead { font-size: 1.35rem; font-weight: 400; line-height: 1.85; color: var(--text-muted); text-wrap: pretty; max-width: 52rem; }
+  .prose-sample { font-size: 1.125rem; font-weight: 400; line-height: 1.95; max-width: 42rem; }
+  .prose-sample strong { color: var(--civic-deep); font-weight: 700; }
+  .prose-sample em { color: var(--civic-deep); font-style: italic; }
+  .lab .meta { font-size: 0.875rem; font-weight: 400; color: var(--text-muted); }
+  .nav-sample { font-size: 0.95rem; font-weight: 600; }
+</style>
