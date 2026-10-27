@@ -112,15 +112,15 @@ test('id suffix is sanitized and falls back to index', () => {
   assert.equal(normalizeInformationBox(box({_key: undefined}), 3).idSuffix, 'i3')
 })
 
-test('every variant has a label in ne, nb and the English fallback', async () => {
+test('variant labels are not rendered or translated', async () => {
   for (const file of ['ne', 'nb', 'en']) {
     const source = await read(`../../src/i18n/${file}.ts`)
-    const block = source.slice(source.indexOf('informationBox: {'))
-    const variants = block.slice(0, block.indexOf('},\n  },'))
-    for (const variant of INFORMATION_BOX_VARIANTS) {
-      assert.match(variants, new RegExp(`${variant}: "[^"]+"`), `${file}:${variant}`)
-    }
+    assert.doesNotMatch(source, /informationBox: \{/, file)
   }
+  const component = await read('../../src/components/content/InformationBox.astro')
+  assert.doesNotMatch(component, /information-box__label|variants/)
+  const schema = await read('../../sanity/schemaTypes/informationBox.ts')
+  assert.doesNotMatch(schema, /subtitle/)
 })
 
 test('schema is registered and used in News and Guide bodies without touching block members', async () => {
