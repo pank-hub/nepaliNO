@@ -79,12 +79,10 @@ export const informationBox = defineType({
     }),
   ],
   preview: {
-    select: {title: 'title', variant: 'variant', body: 'body'},
-    prepare({title, variant, body}) {
-      const label = informationBoxVariants.find((item) => item.value === variant)?.title
+    select: {title: 'title', body: 'body'},
+    prepare({title, body}) {
       return {
         title: title || firstPlainText(body) || 'Empty information box',
-        subtitle: label ?? 'Information box (no type selected)',
       }
     },
   },

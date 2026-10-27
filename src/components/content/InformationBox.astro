@@ -1,7 +1,5 @@
 ---
 import { PortableText } from "astro-portabletext";
-import { en } from "../../i18n/en";
-import { getTranslations } from "../../i18n";
 import type { SupportedLanguage } from "../../i18n/config";
 import {
   normalizeInformationBox,
@@ -16,11 +14,6 @@ interface Props {
 
 const { node, language, index = 0 } = Astro.props;
 const box = normalizeInformationBox(node, index);
-const variants =
-  language === "ne" || language === "nb"
-    ? getTranslations(language).informationBox.variants
-    : en.informationBox.variants;
-const labelId = box ? `information-box-label-${box.idSuffix}` : undefined;
 const titleId = box?.title ? `information-box-title-${box.idSuffix}` : undefined;
 ---
 
@@ -28,18 +21,15 @@ const titleId = box?.title ? `information-box-title-${box.idSuffix}` : undefined
   box && (
     <aside
       class={`information-box information-box--${box.variant}`}
-      aria-labelledby={titleId ? `${labelId} ${titleId}` : labelId}
+      aria-labelledby={titleId}
     >
-      <div class="information-box__header">
-        <p class="information-box__label" id={labelId}>
-          {variants[box.variant]}
-        </p>
-        {box.title && (
+      {box.title && (
+        <div class="information-box__header">
           <p class="information-box__title" id={titleId}>
             {box.title}
           </p>
-        )}
-      </div>
+        </div>
+      )}
       <div class="information-box__body">
         <PortableText value={box.body as any} />
       </div>
@@ -91,24 +81,8 @@ const titleId = box?.title ? `information-box-title-${box.idSuffix}` : undefined
     margin-block-end: 0.5rem;
   }
 
-  .information-box__label {
-    margin: 0;
-    color: var(--box-accent);
-    font-size: 0.8125rem;
-    font-weight: 750;
-    letter-spacing: 0.04em;
-    line-height: 1.4;
-    text-transform: uppercase;
-  }
-
-  :global(html[lang="ne"]) .information-box__label {
-    font-size: 0.9375rem;
-    letter-spacing: 0;
-    text-transform: none;
-  }
-
   .information-box__title {
-    margin: 0.2rem 0 0;
+    margin: 0;
     color: var(--civic-deep);
     font-size: 1.125rem;
     font-weight: 700;
@@ -150,7 +124,6 @@ const titleId = box?.title ? `information-box-title-${box.idSuffix}` : undefined
       box-shadow: none;
     }
 
-    .information-box__label,
     .information-box__title {
       color: #000;
     }
