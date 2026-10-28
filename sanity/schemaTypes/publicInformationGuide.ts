@@ -87,6 +87,14 @@ export const publicInformationGuide = defineType({
     }),
 
     defineField({
+      name: 'articleSummary',
+      title: 'Summary box (key points)',
+      type: 'articleSummary',
+      description:
+        'Optional and off by default. Use only when a long Guide benefits from a scannable set of key points; the Summary above already introduces every Guide.',
+    }),
+
+    defineField({
       name: 'socialImage',
       title: 'Social sharing image',
       type: 'image',

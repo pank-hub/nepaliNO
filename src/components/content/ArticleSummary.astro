@@ -1,0 +1,315 @@
+---
+import type {SupportedLanguage} from '../../i18n/config'
+import {getTranslations} from '../../i18n'
+import {
+  articleSummaryIds,
+  normalizeArticleSummary,
+  type ArticleSummaryInput,
+} from '../../lib/articleSummary/normalize.ts'
+
+interface Props {
+  summary?: ArticleSummaryInput | null
+  language: SupportedLanguage
+  documentId?: string
+}
+
+const {summary, language, documentId} = Astro.props
+const content = normalizeArticleSummary(summary)
+const text = getTranslations(language).common.articleSummary
+const ids = articleSummaryIds(documentId)
+---
+
+{
+  content && (
+    <section class="article-summary" data-article-summary aria-labelledby={ids.heading}>
+      <script is:inline>
+        (function () {
+          try {
+            var root = document.currentScript.parentElement;
+            var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+            var timer = 0;
+
+            var finish = function (region) {
+              clearTimeout(timer);
+              region.style.height = '';
+            };
+
+            var toggle = function (button) {
+              var region = root.querySelector('[data-summary-more]');
+              var expanding = !root.hasAttribute('data-expanded');
+              var animate = !reduceMotion.matches;
+              finish(region);
+              if (expanding) {
+                if (animate) region.style.height = '0px';
+                root.setAttribute('data-expanded', '');
+                if (animate) {
+                  void region.offsetHeight;
+                  region.style.height = region.scrollHeight + 'px';
+                  timer = setTimeout(function () { finish(region); }, 450);
+                }
+              } else {
+                if (animate) {
+                  region.style.height = region.scrollHeight + 'px';
+                  void region.offsetHeight;
+                }
+                root.removeAttribute('data-expanded');
+                if (animate) {
+                  region.style.height = '0px';
+                  timer = setTimeout(function () { finish(region); }, 450);
+                }
+              }
+              button.setAttribute('aria-expanded', expanding ? 'true' : 'false');
+              button.textContent = expanding ? button.dataset.labelLess : button.dataset.labelMore;
+            };
+
+            root.addEventListener('click', function (event) {
+              var button = event.target.closest && event.target.closest('[data-summary-toggle]');
+              if (button) toggle(button);
+            });
+            root.addEventListener('transitionend', function (event) {
+              if (event.propertyName === 'height' && event.target.hasAttribute('data-summary-more')) {
+                finish(event.target);
+              }
+            });
+
+            // Runs as the section is parsed, so the collapsed state applies before its content can paint.
+            // Without JS this attribute is never set and the whole summary stays visible.
+            root.setAttribute('data-enhanced', '');
+            requestAnimationFrame(function () {
+              root.setAttribute('data-ready', '');
+            });
+          } catch (error) {
+            /* leave the summary fully expanded */
+          }
+        })();
+      </script>
+      <div class="article-summary__header">
+        <h2 id={ids.heading} class="article-summary__title">
+          {text.title}
+        </h2>
+        <svg
+          class="article-summary__icon"
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            fill="currentColor"
+            d="M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9L10 3zm8.5 9l.95 2.55L22 15.5l-2.55.95L18.5 19l-.95-2.55L15 15.5l2.55-.95L18.5 12zM17 3l.7 1.8L19.5 5.5l-1.8.7L17 8l-.7-1.8L14.5 5.5l1.8-.7L17 3z"
+          />
+        </svg>
+      </div>
+
+      <ul class="article-summary__list">
+        <li>{content.first}</li>
+      </ul>
+
+      {content.more.length > 0 && (
+        <div
+          class="article-summary__more"
+          id={ids.region}
+          role="group"
+          aria-labelledby={ids.heading}
+          data-summary-more
+        >
+          <ul class="article-summary__list article-summary__list--more">
+            {content.more.map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div class:list={["article-summary__footer", {"article-summary__footer--note": content.aiAssisted}]}>
+        {content.more.length > 0 && (
+          <button
+            type="button"
+            class="article-summary__toggle"
+            id={ids.button}
+            aria-expanded="false"
+            aria-controls={ids.region}
+            data-summary-toggle
+            data-label-more={text.showMore}
+            data-label-less={text.showLess}
+          >
+            {text.showMore}
+          </button>
+        )}
+        {content.aiAssisted && <p class="article-summary__disclosure">{text.disclosure}</p>}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .article-summary {
+    margin: 0 0 1.75rem;
+    padding: 1.1rem 1.15rem 1rem;
+    border: 1px solid var(--color-brand-200);
+    border-radius: var(--radius-md);
+    background: var(--color-brand-50);
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  .article-summary__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .article-summary__title {
+    margin: 0;
+    color: var(--civic-deep);
+    font-size: 1.25rem;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+
+  html[lang="ne"] .article-summary__title {
+    line-height: 1.5;
+    text-wrap: wrap;
+  }
+
+  .article-summary__icon {
+    flex: none;
+    color: var(--color-brand-700);
+  }
+
+  .article-summary__list {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0 0 0 1.25rem;
+    list-style: disc;
+  }
+
+  .article-summary__list--more {
+    padding-top: 0.6rem;
+  }
+
+  .article-summary__list li {
+    min-width: 0;
+    font-size: 1.02rem;
+    line-height: 1.6;
+  }
+
+  .article-summary__list li::marker {
+    color: var(--color-brand-700);
+  }
+
+  html[lang="ne"] .article-summary__list li {
+    line-height: 1.75;
+  }
+
+  .article-summary__more {
+    overflow: hidden;
+  }
+
+  .article-summary[data-enhanced]:not([data-expanded]) .article-summary__more {
+    height: 0;
+    visibility: hidden;
+  }
+
+  .article-summary[data-ready] .article-summary__more {
+    transition: height 0.28s ease, visibility 0s linear 0s;
+  }
+
+  .article-summary[data-ready]:not([data-expanded]) .article-summary__more {
+    transition-delay: 0s, 0.28s;
+  }
+
+  .article-summary__footer {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-top: 0.9rem;
+  }
+
+  /* Without JS the button is hidden, so the footer only exists when it holds the disclosure. */
+  .article-summary__footer--note,
+  .article-summary[data-enhanced] .article-summary__footer {
+    display: flex;
+  }
+
+  .article-summary__toggle {
+    display: none;
+    min-height: 2.75rem;
+    padding: 0.55rem 1.25rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-brand-700);
+    color: #fff;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .article-summary[data-enhanced] .article-summary__toggle {
+    display: inline-block;
+  }
+
+  .article-summary__toggle:hover {
+    background: var(--color-brand-800);
+  }
+
+  .article-summary__toggle:focus-visible {
+    outline: 0.2rem solid var(--focus);
+    outline-offset: 0.2rem;
+  }
+
+  .article-summary__disclosure {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  html[lang="ne"] .article-summary__disclosure {
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+
+  @media (min-width: 40rem) {
+    .article-summary {
+      padding: 1.25rem 1.5rem 1.15rem;
+    }
+
+    .article-summary__footer {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1rem;
+    }
+
+    .article-summary__disclosure {
+      flex: 1 1 16rem;
+      min-width: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .article-summary[data-ready] .article-summary__more,
+    .article-summary__toggle {
+      transition: none;
+    }
+  }
+
+  @media print {
+    .article-summary__toggle {
+      display: none;
+    }
+
+    .article-summary[data-enhanced] .article-summary__more {
+      height: auto !important;
+      visibility: visible;
+    }
+  }
+</style>
