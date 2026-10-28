@@ -457,6 +457,7 @@ export const nb = {
 
 
   common: {
+    readAlso: "Les også",
     mainNavigation: "Hovednavigasjon",
     languageSelector: "Velg språk",
     skipToContent: "Gå til hovedinnhold",

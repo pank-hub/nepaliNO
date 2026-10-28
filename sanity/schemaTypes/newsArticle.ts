@@ -7,6 +7,7 @@ import {
   getMissingAuthorTypeWarning,
 } from './authorNamePresets'
 import {informationBoxBlockMember} from './informationBox'
+import {readAlsoBlockMember} from './readAlso'
 
 export const newsArticle = defineType({
   name: 'newsArticle',
@@ -311,6 +312,7 @@ export const newsArticle = defineType({
         }),
         defineArrayMember({type: 'editorialChart'}),
         informationBoxBlockMember,
+        readAlsoBlockMember,
       ],
       validation: (rule) => rule.required().min(1),
     }),

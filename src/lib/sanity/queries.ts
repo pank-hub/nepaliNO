@@ -1,3 +1,30 @@
+// Resolves Read also targets for News and Guide bodies. Guide targets never project an image.
+// `documentId` is the containing document, used to reject self-references.
+const READ_ALSO_BODY_PROJECTION = `
+      _type == "readAlsoCard" => {
+        _key,
+        "documentId": ^._id,
+        "target": target->{
+          _id,
+          _type,
+          title,
+          "slug": slug.current,
+          language,
+          _type == "newsArticle" => {
+            publishedAt,
+            featuredImage {
+              asset,
+              alt,
+              hotspot,
+              crop
+            }
+          },
+          _type == "publicInformationGuide" => {
+            status
+          }
+        }
+      }`
+
 export const NEWS_ARTICLES_QUERY = `
   *[
     _type == "newsArticle" &&
@@ -254,7 +281,8 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
         credit,
         hotspot,
         crop
-      }
+      },
+${READ_ALSO_BODY_PROJECTION}
     },
     authorName,
     authorType,
@@ -830,7 +858,8 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
         credit,
         hotspot,
         crop
-      }
+      },
+${READ_ALSO_BODY_PROJECTION}
     },
     "relatedGuides": relatedGuides[
       @->status == "active" &&

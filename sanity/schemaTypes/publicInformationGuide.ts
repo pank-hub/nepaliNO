@@ -1,6 +1,7 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 
 import {informationBoxBlockMember} from './informationBox'
+import {readAlsoBlockMember} from './readAlso'
 
 export const publicInformationGuide = defineType({
   name: 'publicInformationGuide',
@@ -328,6 +329,7 @@ export const publicInformationGuide = defineType({
         }),
         defineArrayMember({type: 'editorialChart'}),
         informationBoxBlockMember,
+        readAlsoBlockMember,
       ],
       validation: (rule) => rule.required(),
     }),

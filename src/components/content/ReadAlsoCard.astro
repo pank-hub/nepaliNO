@@ -1,0 +1,189 @@
+---
+import type {SupportedLanguage} from '../../i18n/config'
+import {getTranslations} from '../../i18n'
+import {urlFor} from '../../lib/sanity/image'
+import {normalizeReadAlso, type ReadAlsoInput} from '../../lib/readAlso/normalize.ts'
+
+interface Props {
+  node: ReadAlsoInput
+  language: SupportedLanguage
+  index?: number
+  isInline?: boolean
+}
+
+const {node, language} = Astro.props
+const card = normalizeReadAlso(node, {language})
+const label = getTranslations(language).common.readAlso
+
+const imageUrl = card?.image
+  ? urlFor(card.image as any)
+      .width(480)
+      .height(360)
+      .fit('crop')
+      .auto('format')
+      .url()
+  : undefined
+---
+
+{
+  card && (
+    <a
+      class:list={['read-also', {'read-also--has-image': imageUrl}]}
+      href={card.href}
+      aria-label={`${label}: ${card.title}`}
+    >
+      <span class="read-also__text">
+        <span class="read-also__label">{label}</span>
+        <span class="read-also__title">{card.title}</span>
+      </span>
+      {imageUrl && (
+        <span class="read-also__media" aria-hidden="true">
+          <img src={imageUrl} alt="" width="480" height="360" loading="lazy" decoding="async" />
+        </span>
+      )}
+    </a>
+  )
+}
+
+<style>
+  .read-also {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem 1rem;
+    align-items: center;
+    max-width: 100%;
+    margin-block: 1.75rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--color-brand-200);
+    border-radius: var(--radius-md);
+    background: var(--color-brand-50);
+    color: var(--civic-deep);
+    font-weight: 400;
+    line-height: 1.4;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .read-also--has-image {
+    grid-template-columns: minmax(0, 1fr) 5rem;
+  }
+
+  .read-also:hover {
+    border-color: var(--brand);
+    background: var(--color-brand-100);
+    color: var(--civic-deep);
+  }
+
+  .read-also:focus-visible {
+    border-radius: var(--radius-md);
+    outline: 0.2rem solid var(--focus);
+    outline-offset: 0.2rem;
+  }
+
+  .read-also__text {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .read-also__label {
+    color: var(--brand);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .read-also__label {
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 0.9rem;
+  }
+
+  .read-also__title {
+    min-width: 0;
+    color: var(--civic-deep);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  html[lang="ne"] .read-also__title {
+    line-height: 1.5;
+  }
+
+  .read-also:hover .read-also__title {
+    text-decoration: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+  }
+
+  .read-also__media {
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    background: var(--color-brand-100);
+  }
+
+  .read-also__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    object-fit: cover;
+  }
+
+  /* A side thumbnail leaves too little width for the title on very narrow screens. */
+  @media (max-width: 22rem) {
+    .read-also--has-image {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .read-also__media {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  @media (min-width: 40rem) {
+    .read-also {
+      padding: 1.25rem 1.5rem;
+      gap: 1.25rem 1.5rem;
+    }
+
+    .read-also--has-image {
+      grid-template-columns: minmax(0, 1fr) 12rem;
+    }
+
+    .read-also__title {
+      font-size: 1.35rem;
+    }
+
+    .read-also__media {
+      aspect-ratio: 4 / 3;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .read-also {
+      transition: none;
+    }
+  }
+
+  @media print {
+    .read-also {
+      border-color: #000;
+      background: none;
+    }
+
+    .read-also__label,
+    .read-also__title {
+      color: #000;
+    }
+
+    .read-also__media {
+      display: none;
+    }
+  }
+</style>
