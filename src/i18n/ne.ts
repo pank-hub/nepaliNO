@@ -52,7 +52,7 @@ export const ne = {
     businessesDescription:
       "नेपाल वा नेपाली समुदायसँग सम्बन्धित व्यवसाय, संस्था, व्यावसायिक सेवा र उपयोगी स्रोतहरू खोज्नुहोस्।",
     comingSoon: "छिट्टै आउँदैछ",
-    importantNow: "अहिले महत्त्वपूर्ण",
+    importantNow: "भर्खरै",
     importantUntil: "यो समयसम्म महत्त्वपूर्ण",
     featuredStory: "प्रमुख समाचार",
     latestNews: "पछिल्ला समाचार",
