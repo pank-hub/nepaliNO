@@ -238,6 +238,11 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
       publishedAt
     },
     summary,
+    articleSummary {
+      enabled,
+      items,
+      aiAssisted
+    },
     "supportingGuide": select(
       supportingGuide->status == "active" &&
       supportingGuide->language == language &&
@@ -842,6 +847,11 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
       status
     },
     summary,
+    articleSummary {
+      enabled,
+      items,
+      aiAssisted
+    },
     socialImage {
       asset,
       hotspot,

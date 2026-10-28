@@ -6,6 +6,7 @@ import EditorialChartNe from '../../../components/content/EditorialChartNe.astro
 import EditorialChartNb from '../../../components/content/EditorialChartNb.astro'
 import InformationBoxNe from '../../../components/content/InformationBoxNe.astro'
 import InformationBoxNb from '../../../components/content/InformationBoxNb.astro'
+import ArticleSummary from '../../../components/content/ArticleSummary.astro'
 import ReadAlsoCardNe from '../../../components/content/ReadAlsoCardNe.astro'
 import ReadAlsoCardNb from '../../../components/content/ReadAlsoCardNb.astro'
 import ForumDiscussionCard from '../../../components/content/ForumDiscussionCard.astro'
@@ -22,6 +23,7 @@ import {NEWS_ARTICLE_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
 import {buildNewsArticleStructuredData} from '../../../lib/structuredData/newsArticle'
 import type {EditorialChartInput} from '../../../lib/editorialChart/types'
 import type {InformationBoxInput} from '../../../lib/informationBox/normalize.ts'
+import type {ArticleSummaryInput} from '../../../lib/articleSummary/normalize.ts'
 import type {ReadAlsoInput} from '../../../lib/readAlso/normalize.ts'
 
 interface TranslationSummary {
@@ -70,6 +72,7 @@ interface NewsArticle {
   language: SupportedLanguage
   translation?: TranslationSummary
   summary: string
+  articleSummary?: ArticleSummaryInput | null
   supportingGuide?: SupportingGuideSummary
   relatedNews?: RelatedNewsSummary[]
   newsRegion: string
@@ -290,6 +293,8 @@ const structuredData = buildNewsArticleStructuredData({
 
     <div class="container article-layout">
       <div class="article-main">
+        <ArticleSummary summary={article.articleSummary} language={language} documentId={article._id} />
+
         {article.body && article.body.length > 0 && (
           <section class="prose article-body" aria-label={article.title}>
             <PortableText value={article.body} components={portableTextComponents} />

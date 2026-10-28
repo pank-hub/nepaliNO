@@ -458,6 +458,12 @@ export const nb = {
 
   common: {
     readAlso: "Les også",
+    articleSummary: {
+      title: "Kort fortalt",
+      showMore: "Vis mer",
+      showLess: "Vis mindre",
+      disclosure: "Sammendraget er laget med KI-støtte og kontrollert redaksjonelt.",
+    },
     mainNavigation: "Hovednavigasjon",
     languageSelector: "Velg språk",
     skipToContent: "Gå til hovedinnhold",

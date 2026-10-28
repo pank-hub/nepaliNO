@@ -1,3 +1,4 @@
+import {articleSummary} from './articleSummary'
 import {directoryListing} from './directoryListing'
 import {editorialChart} from './editorialChart'
 import {forumCompanionAutomation} from './forumCompanionAutomation'
@@ -19,6 +20,7 @@ export const schemaTypes = [
   directoryListing,
   editorialChart,
   informationBox,
+  articleSummary,
   readAlso,
   publicInformationGuide,
   publicInformationTopic,

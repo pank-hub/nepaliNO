@@ -3,7 +3,16 @@ import type { EventSubmissionCopy } from "./eventSubmission";
 
 export const en = {
   languageName: "English",
-  common: { skipToContent: "Skip to main content", readAlso: "Read also" },
+  common: {
+    skipToContent: "Skip to main content",
+    readAlso: "Read also",
+    articleSummary: {
+      title: "In brief",
+      showMore: "Show more",
+      showLess: "Show less",
+      disclosure: "This summary was prepared with AI assistance and reviewed editorially.",
+    },
+  },
   events: {
     categories: {
       "cultural-celebration": "Cultural celebration",

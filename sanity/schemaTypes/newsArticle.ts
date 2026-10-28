@@ -180,6 +180,13 @@ export const newsArticle = defineType({
     }),
 
     defineField({
+      name: 'articleSummary',
+      title: 'Summary box (key points)',
+      type: 'articleSummary',
+      group: 'writing',
+    }),
+
+    defineField({
       name: 'newsRegion',
       title: 'News Region',
       type: 'string',

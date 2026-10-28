@@ -449,6 +449,12 @@ export const ne = {
 
   common: {
     readAlso: "यो पनि पढ्नुहोस्",
+    articleSummary: {
+      title: "छोटकरीमा",
+      showMore: "थप हेर्नुहोस्",
+      showLess: "कम देखाउनुहोस्",
+      disclosure: "एआईको सहयोगमा तयार गरिएको सारांश, सम्पादकीय रूपमा जाँच गरिएको।",
+    },
     mainNavigation: "मुख्य नेभिगेसन",
     languageSelector: "भाषा छान्नुहोस्",
     skipToContent: "मुख्य सामग्रीमा जानुहोस्",
