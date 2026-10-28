@@ -47,9 +47,11 @@ test('Mukta is absent from global, body, prose, navigation and heading rules', (
   assert.doesNotMatch(css, /font-family:[^;]*mukta/i)
 })
 
-test('Nepali h1 selectors use the font-independent 10em measure', () => {
-  assert.match(declarationsOf(newsPage, 'html[lang="ne"] .article-header h1'), /max-width: 10em;/)
-  assert.match(declarationsOf(guidePage, 'html[lang="ne"] .guide-hero__content h1'), /max-width: 10em;/)
+test('Nepali h1 selectors have no width cap and wrap naturally', () => {
+  assert.match(declarationsOf(newsPage, 'html[lang="ne"] .article-header h1'), /max-width: none;/)
+  assert.match(declarationsOf(guidePage, 'html[lang="ne"] .guide-hero__content h1'), /max-width: none;/)
+  assert.match(declarationsOf(css, 'html[lang="ne"] h6'), /text-wrap: wrap;/)
+  assert.match(declarationsOf(css, 'html[lang="ne"] .prose h4'), /text-wrap: wrap;/)
 })
 
 test('Norwegian and default headings keep their font and 18ch rule', () => {

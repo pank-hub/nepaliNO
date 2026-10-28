@@ -207,6 +207,7 @@ html[lang="ne"] h6 {
   font-weight: 600;
   line-height: 1.35;
   letter-spacing: 0;
+  text-wrap: wrap;
 }
 
 h1 {
@@ -464,6 +465,12 @@ html[lang="ne"] .prose {
 .prose h4 {
   color: var(--civic-deep);
   text-wrap: balance;
+}
+
+html[lang="ne"] .prose h2,
+html[lang="ne"] .prose h3,
+html[lang="ne"] .prose h4 {
+  text-wrap: wrap;
 }
 
 .prose h2 {
