@@ -1,0 +1,14 @@
+---
+import ReadAlsoCard from "./ReadAlsoCard.astro";
+import type { ReadAlsoInput } from "../../lib/readAlso/normalize.ts";
+
+interface Props {
+  node: ReadAlsoInput;
+  index?: number;
+  isInline?: boolean;
+}
+
+const { node, index } = Astro.props;
+---
+
+<ReadAlsoCard node={node} index={index} language="nb" />

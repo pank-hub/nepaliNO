@@ -7,6 +7,8 @@ import EditorialChartNe from '../../../components/content/EditorialChartNe.astro
 import EditorialChartNb from '../../../components/content/EditorialChartNb.astro'
 import InformationBoxNe from '../../../components/content/InformationBoxNe.astro'
 import InformationBoxNb from '../../../components/content/InformationBoxNb.astro'
+import ReadAlsoCardNe from '../../../components/content/ReadAlsoCardNe.astro'
+import ReadAlsoCardNb from '../../../components/content/ReadAlsoCardNb.astro'
 import ForumDiscussionCard from '../../../components/content/ForumDiscussionCard.astro'
 import RelatedGuidesList from '../../../components/content/RelatedGuidesList.astro'
 import RelatedNewsList from '../../../components/content/RelatedNewsList.astro'
@@ -23,6 +25,7 @@ import {
 } from '../../../lib/sanity/queries'
 import type {EditorialChartInput} from '../../../lib/editorialChart/types'
 import type {InformationBoxInput} from '../../../lib/informationBox/normalize.ts'
+import type {ReadAlsoInput} from '../../../lib/readAlso/normalize.ts'
 
 interface TranslationSummary {
   _id: string
@@ -93,6 +96,7 @@ interface GuideDocument {
       }
     | (EditorialChartInput & {_type: 'editorialChart'; _key?: string})
     | (InformationBoxInput & {_type: 'informationBox'; _key?: string})
+    | (ReadAlsoInput & {_type: 'readAlsoCard'; _key?: string})
   )[]
   responsibleAgency: string
   officialSourceUrl: string
@@ -185,6 +189,7 @@ const portableTextComponents = {
     image: SanityPortableImage,
     editorialChart: language === 'ne' ? EditorialChartNe : EditorialChartNb,
     informationBox: language === 'ne' ? InformationBoxNe : InformationBoxNb,
+    readAlsoCard: language === 'ne' ? ReadAlsoCardNe : ReadAlsoCardNb,
   },
 }
 

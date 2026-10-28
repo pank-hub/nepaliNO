@@ -8,6 +8,7 @@ import {newsArticle} from './newsArticle'
 import {norwegianTerm} from './norwegianTerm'
 import {publicInformationGuide} from './publicInformationGuide'
 import {publicInformationTopic} from './publicInformationTopic'
+import {readAlso} from './readAlso'
 import {trustPage} from './trustPage'
 
 export const schemaTypes = [
@@ -18,6 +19,7 @@ export const schemaTypes = [
   directoryListing,
   editorialChart,
   informationBox,
+  readAlso,
   publicInformationGuide,
   publicInformationTopic,
   norwegianTerm,

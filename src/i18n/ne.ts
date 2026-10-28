@@ -448,6 +448,7 @@ export const ne = {
 
 
   common: {
+    readAlso: "यो पनि पढ्नुहोस्",
     mainNavigation: "मुख्य नेभिगेसन",
     languageSelector: "भाषा छान्नुहोस्",
     skipToContent: "मुख्य सामग्रीमा जानुहोस्",

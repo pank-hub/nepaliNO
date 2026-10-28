@@ -18,6 +18,8 @@ export default defineConfig({
       dataset: env.PUBLIC_SANITY_DATASET,
       apiVersion: "2026-03-01",
       useCdn: false,
+      // Public pages must never resolve drafts, including through references.
+      perspective: "published",
     }),
     sitemap({
       filter: (page) =>
