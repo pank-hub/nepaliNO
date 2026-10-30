@@ -1,0 +1,14 @@
+---
+import ExpandableSection from "./ExpandableSection.astro";
+import type { ExpandableSectionInput } from "../../lib/expandableSection/normalize.ts";
+
+interface Props {
+  node: ExpandableSectionInput;
+  index?: number;
+  isInline?: boolean;
+}
+
+const { node, index } = Astro.props;
+---
+
+<ExpandableSection node={node} index={index} language="nb" />

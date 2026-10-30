@@ -15,7 +15,8 @@ interface Props {
 
 const {summary, language, documentId} = Astro.props
 const content = normalizeArticleSummary(summary)
-const text = getTranslations(language).common.articleSummary
+const commonText = getTranslations(language).common
+const text = commonText.articleSummary
 const ids = articleSummaryIds(documentId)
 ---
 
@@ -131,10 +132,10 @@ const ids = articleSummaryIds(documentId)
             aria-expanded="false"
             aria-controls={ids.region}
             data-summary-toggle
-            data-label-more={text.showMore}
-            data-label-less={text.showLess}
+            data-label-more={commonText.showMore}
+            data-label-less={commonText.showLess}
           >
-            {text.showMore}
+            {commonText.showMore}
           </button>
         )}
         {content.aiAssisted && <p class="article-summary__disclosure">{text.disclosure}</p>}

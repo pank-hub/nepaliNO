@@ -122,7 +122,9 @@ test('component source: accessibility, progressive enhancement, styling', async 
 
 test('component text comes from translations, not hardcoded', async () => {
   const src = await read('../../src/components/content/ArticleSummary.astro')
-  assert.match(src, /common\.articleSummary/)
+  assert.match(src, /commonText\.articleSummary/)
+  assert.match(src, /commonText\.showMore/)
+  assert.match(src, /commonText\.showLess/)
   for (const s of ['Kort fortalt', 'छोटकरीमा', 'Show more', 'Vis mer']) assert.ok(!src.includes(s))
 })
 

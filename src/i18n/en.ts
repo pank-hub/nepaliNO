@@ -6,10 +6,10 @@ export const en = {
   common: {
     skipToContent: "Skip to main content",
     readAlso: "Read also",
+    showMore: "Show more",
+    showLess: "Show less",
     articleSummary: {
       title: "In brief",
-      showMore: "Show more",
-      showLess: "Show less",
       disclosure: "This summary was prepared with AI assistance and reviewed editorially.",
     },
   },
