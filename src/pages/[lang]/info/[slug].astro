@@ -5,6 +5,8 @@ import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
 import EditorialChartNe from '../../../components/content/EditorialChartNe.astro'
 import EditorialChartNb from '../../../components/content/EditorialChartNb.astro'
+import ExpandableSectionNe from '../../../components/content/ExpandableSectionNe.astro'
+import ExpandableSectionNb from '../../../components/content/ExpandableSectionNb.astro'
 import InformationBoxNe from '../../../components/content/InformationBoxNe.astro'
 import InformationBoxNb from '../../../components/content/InformationBoxNb.astro'
 import ArticleSummary from '../../../components/content/ArticleSummary.astro'
@@ -28,6 +30,7 @@ import type {EditorialChartInput} from '../../../lib/editorialChart/types'
 import type {InformationBoxInput} from '../../../lib/informationBox/normalize.ts'
 import type {ArticleSummaryInput} from '../../../lib/articleSummary/normalize.ts'
 import type {ReadAlsoInput} from '../../../lib/readAlso/normalize.ts'
+import type {ExpandableSectionInput} from '../../../lib/expandableSection/normalize.ts'
 
 interface TranslationSummary {
   _id: string
@@ -99,6 +102,7 @@ interface GuideDocument {
       }
     | (EditorialChartInput & {_type: 'editorialChart'; _key?: string})
     | (InformationBoxInput & {_type: 'informationBox'; _key?: string})
+    | (ExpandableSectionInput & {_type: 'expandableSection'; _key?: string})
     | (ReadAlsoInput & {_type: 'readAlsoCard'; _key?: string})
   )[]
   responsibleAgency: string
@@ -192,6 +196,7 @@ const portableTextComponents = {
     image: SanityPortableImage,
     editorialChart: language === 'ne' ? EditorialChartNe : EditorialChartNb,
     informationBox: language === 'ne' ? InformationBoxNe : InformationBoxNb,
+    expandableSection: language === 'ne' ? ExpandableSectionNe : ExpandableSectionNb,
     readAlsoCard: language === 'ne' ? ReadAlsoCardNe : ReadAlsoCardNb,
   },
 }

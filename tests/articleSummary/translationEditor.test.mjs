@@ -11,10 +11,13 @@ test('Translation Editor discovers, validates and targets the new keys', async (
   for (const language of ['ne', 'nb']) {
     const mod = getTranslationModule(language, 'footer-common')
     const entries = new Map(mod.entries.map((e) => [e.key, e.value]))
-    for (const k of ['title', 'showMore', 'showLess', 'disclosure']) {
+    for (const k of ['title', 'disclosure']) {
       assert.ok(entries.has(`common.articleSummary.${k}`), `${language} ${k}`)
     }
-    const key = 'common.articleSummary.showMore'
+    for (const k of ['showMore', 'showLess']) {
+      assert.ok(entries.has(`common.${k}`), `${language} ${k}`)
+    }
+    const key = 'common.showMore'
     const result = validateTranslationProposal({
       language,
       module: 'footer-common',
@@ -35,11 +38,11 @@ test('translations exist in ne, nb and en; English routing untouched', async () 
   const {nb} = await import('../../src/i18n/nb.ts')
   const {en} = await import('../../src/i18n/en.ts')
   assert.equal(ne.common.articleSummary.title, 'छोटकरीमा')
-  assert.equal(ne.common.articleSummary.showMore, 'थप हेर्नुहोस्')
-  assert.equal(ne.common.articleSummary.showLess, 'कम देखाउनुहोस्')
+  assert.equal(ne.common.showMore, 'थप हेर्नुहोस्')
+  assert.equal(ne.common.showLess, 'कम देखाउनुहोस्')
   assert.equal(nb.common.articleSummary.title, 'Kort fortalt')
-  assert.equal(nb.common.articleSummary.showMore, 'Vis mer')
-  assert.equal(nb.common.articleSummary.showLess, 'Vis mindre')
+  assert.equal(nb.common.showMore, 'Vis mer')
+  assert.equal(nb.common.showLess, 'Vis mindre')
   assert.equal(en.common.articleSummary.title, 'In brief')
   for (const l of [ne, nb, en]) assert.ok(l.common.articleSummary.disclosure.length > 10)
 })

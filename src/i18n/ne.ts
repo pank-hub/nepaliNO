@@ -449,10 +449,10 @@ export const ne = {
 
   common: {
     readAlso: "यो पनि पढ्नुहोस्",
+    showMore: "थप हेर्नुहोस्",
+    showLess: "कम देखाउनुहोस्",
     articleSummary: {
       title: "छोटकरीमा",
-      showMore: "थप हेर्नुहोस्",
-      showLess: "कम देखाउनुहोस्",
       disclosure: "एआई (AI) को सहयोगमा तयार पारिएको यो सारांशलाई मानवीय रूपमा जाँच र परिमार्जन गरिएको छ।",
     },
     mainNavigation: "मुख्य नेभिगेसन",

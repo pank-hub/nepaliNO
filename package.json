@@ -28,6 +28,7 @@
     "test:event-occurrences": "node --experimental-strip-types --test tests/content/eventOccurrences.test.mjs",
     "test:information-box": "node --experimental-strip-types --test tests/informationBox/informationBox.test.mjs",
     "test:article-summary": "node --experimental-strip-types --test tests/articleSummary/articleSummary.test.mjs && npx tsx --test tests/articleSummary/translationEditor.test.mjs",
+    "test:expandable-section": "npx tsx --test tests/expandableSection/expandableSection.test.mjs",
     "test:read-also": "node --experimental-strip-types --test tests/readAlso/readAlso.test.mjs",
     "test:topic-slug": "node --experimental-strip-types --test tests/sanity/topicSlug.test.mjs",
     "test:seo-redirects": "node --experimental-strip-types --test tests/content/seoRedirects.test.mjs"

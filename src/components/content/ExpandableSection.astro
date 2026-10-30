@@ -1,0 +1,287 @@
+---
+import { PortableText } from "astro-portabletext";
+import type { SupportedLanguage } from "../../i18n/config";
+import { getTranslations } from "../../i18n";
+import {
+  normalizeExpandableSection,
+  type ExpandableSectionInput,
+} from "../../lib/expandableSection/normalize.ts";
+
+interface Props {
+  node: ExpandableSectionInput;
+  language: SupportedLanguage;
+  index?: number;
+}
+
+const { node, language, index = 0 } = Astro.props;
+const section = normalizeExpandableSection(node, index);
+const labels = getTranslations(language).common;
+const titleId = section
+  ? `expandable-section-title-${section.idSuffix}`
+  : undefined;
+const contentId = section
+  ? `expandable-section-content-${section.idSuffix}`
+  : undefined;
+const expandable = Boolean(section?.hiddenBlocks.length);
+---
+
+{
+  section && (
+    <section
+      class="expandable-section"
+      aria-labelledby={titleId}
+      data-expandable-section={expandable ? "" : undefined}
+    >
+      {expandable && (
+        <script is:inline>
+          document.currentScript.parentElement.setAttribute("data-preparing",
+          "");
+        </script>
+      )}
+      <h2 class="expandable-section__title" id={titleId}>
+        {section.title}
+      </h2>
+      <div class="expandable-section__body">
+        <PortableText value={section.visibleBlocks as any} />
+      </div>
+      {expandable && (
+        <>
+          <div
+            class:list={[
+              "expandable-section__continuation",
+              {
+                "expandable-section__continuation--cue":
+                  !section.continuationText,
+              },
+            ]}
+            aria-hidden="true"
+          >
+            {section.continuationText && (
+              <span class="expandable-section__continuation-text">
+                {section.continuationText}
+              </span>
+            )}
+          </div>
+          <div
+            class="expandable-section__hidden"
+            id={contentId}
+            role="region"
+            aria-labelledby={titleId}
+            data-expandable-content
+          >
+            <div class="expandable-section__body">
+              <PortableText value={section.hiddenBlocks as any} />
+            </div>
+          </div>
+          <button
+            class="expandable-section__toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls={contentId}
+            data-expandable-toggle
+            data-label-more={labels.showMore}
+            data-label-less={labels.showLess}
+          >
+            {labels.showMore}
+          </button>
+        </>
+      )}
+    </section>
+  )
+}
+
+<script>
+  import "../../lib/expandableSection/enhance.ts";
+</script>
+
+<style>
+  .expandable-section {
+    max-width: 100%;
+    margin-block: 1.75rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  :global(.prose) .expandable-section__title {
+    margin: 0 0 0.65rem;
+    color: var(--civic-deep);
+    font-size: 1.2rem;
+    line-height: 1.4;
+    letter-spacing: 0;
+  }
+
+  html[lang="ne"] :global(.prose) .expandable-section__title {
+    line-height: 1.6;
+  }
+
+  .expandable-section__body > :global(* + *) {
+    margin-block-start: 0.8em;
+  }
+
+  :global(.prose) .expandable-section__body :global(p),
+  :global(.prose) .expandable-section__body :global(ul),
+  :global(.prose) .expandable-section__body :global(ol) {
+    margin-block: 0;
+  }
+
+  :global(.prose) .expandable-section__body :global(ul),
+  :global(.prose) .expandable-section__body :global(ol) {
+    padding-inline-start: 1.5rem;
+  }
+
+  .expandable-section__body :global(a) {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .expandable-section__continuation,
+  .expandable-section__toggle {
+    display: none;
+  }
+
+  .expandable-section[data-enhanced] .expandable-section__continuation {
+    position: relative;
+    display: block;
+    max-height: 3.4em;
+    margin-top: 0.45rem;
+    overflow: hidden;
+    font-size: 0.95em;
+    line-height: 1.7;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .expandable-section__continuation-text {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  .expandable-section__continuation::after {
+    position: absolute;
+    inset: 30% 0 0;
+    background: linear-gradient(to bottom, transparent, var(--surface-muted));
+    content: "";
+    pointer-events: none;
+  }
+
+  .expandable-section__continuation--cue {
+    min-height: 3.4em;
+    background: linear-gradient(
+      to bottom,
+      var(--surface-muted),
+      var(--surface)
+    );
+  }
+
+  @supports (mask-image: linear-gradient(to bottom, var(--text), transparent))
+    or
+    (-webkit-mask-image: linear-gradient(to bottom, var(--text), transparent)) {
+    .expandable-section__continuation-text {
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        var(--text) 0%,
+        var(--text) 38%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        var(--text) 0%,
+        var(--text) 38%,
+        transparent 100%
+      );
+    }
+
+    .expandable-section__continuation::after {
+      display: none;
+    }
+  }
+
+  .expandable-section__hidden {
+    overflow: hidden;
+  }
+
+  .expandable-section[data-enhanced]:not([data-expanded])
+    .expandable-section__hidden {
+    height: 0;
+    visibility: hidden;
+  }
+
+  .expandable-section[data-preparing] .expandable-section__hidden {
+    height: 0;
+    visibility: hidden;
+  }
+
+  .expandable-section[data-enhanced][data-ready] .expandable-section__hidden {
+    transition:
+      height 0.32s ease,
+      visibility 0s linear;
+  }
+
+  .expandable-section[data-enhanced][data-ready]:not([data-expanded])
+    .expandable-section__hidden {
+    transition-delay: 0s, 0.32s;
+  }
+
+  .expandable-section[data-expanded] .expandable-section__continuation {
+    display: none;
+  }
+
+  .expandable-section[data-enhanced] .expandable-section__toggle {
+    display: block;
+    min-height: 2.75rem;
+    margin: 0.25rem auto 0;
+    padding: 0.55rem 1.3rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--civic);
+    color: var(--surface);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .expandable-section[data-enhanced] .expandable-section__toggle:hover {
+    background: var(--civic-deep);
+  }
+
+  .expandable-section__toggle:focus-visible {
+    outline: 0.2rem solid var(--focus);
+    outline-offset: 0.2rem;
+  }
+
+  @media (min-width: 40rem) {
+    .expandable-section {
+      padding: 1.2rem 1.45rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .expandable-section[data-enhanced][data-ready] .expandable-section__hidden,
+    .expandable-section__toggle {
+      transition: none;
+    }
+  }
+
+  @media print {
+    .expandable-section__toggle,
+    .expandable-section__continuation {
+      display: none !important;
+    }
+
+    .expandable-section[data-enhanced] .expandable-section__hidden {
+      height: auto !important;
+      overflow: visible;
+    }
+
+    .expandable-section {
+      border-color: currentColor;
+      background: none;
+    }
+  }
+</style>
