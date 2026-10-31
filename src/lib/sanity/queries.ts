@@ -267,6 +267,12 @@ export const NEWS_ARTICLE_BY_SLUG_QUERY = `
       category,
       publishedAt
     },
+    showAiInformationLink,
+    "aiInformationAvailable": count(*[
+      _type == "aiTransparencyPage" &&
+      pageKey == "aiInformation" &&
+      language == ^.language
+    ]) > 0,
     newsRegion,
     category,
     featuredImage {
@@ -852,6 +858,12 @@ export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
       items,
       aiAssisted
     },
+    showAiInformationLink,
+    "aiInformationAvailable": count(*[
+      _type == "aiTransparencyPage" &&
+      pageKey == "aiInformation" &&
+      language == ^.language
+    ]) > 0,
     socialImage {
       asset,
       hotspot,
@@ -1141,4 +1153,41 @@ export const PUBLIC_INFORMATION_GUIDES_BY_TOPIC_QUERY = `
     isFeatured,
     isUrgent
   }
+`;
+
+export const AI_TRANSPARENCY_PAGE_QUERY = `
+{
+  "page": *[
+    _type == "aiTransparencyPage" &&
+    pageKey == $pageKey &&
+    language == $language
+  ][0] {
+    _id,
+    pageKey,
+    language,
+    title,
+    summary,
+    body[] {
+      _type,
+      _key,
+      style,
+      listItem,
+      level,
+      children,
+      markDefs
+    },
+    seoTitle,
+    seoDescription,
+    lastReviewedAt
+  },
+  "availablePages": array::unique(*[
+    _type == "aiTransparencyPage" &&
+    language == $language
+  ].pageKey),
+  "alternateAvailable": count(*[
+    _type == "aiTransparencyPage" &&
+    pageKey == $pageKey &&
+    language == $alternateLanguage
+  ]) > 0
+}
 `;

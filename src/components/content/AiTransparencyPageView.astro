@@ -1,0 +1,59 @@
+---
+import { PortableText } from "astro-portabletext";
+import { getTranslations } from "../../i18n";
+import type { SupportedLanguage } from "../../i18n/config";
+import StaticPageLayout from "../../layouts/StaticPageLayout.astro";
+import type { NormalizedAiTransparencyPage } from "../../lib/aiTransparency/pages.ts";
+
+interface Props {
+  page: NormalizedAiTransparencyPage;
+  language: SupportedLanguage;
+  alternatePath: string;
+}
+
+const { page, language, alternatePath } = Astro.props;
+const labels = getTranslations(language);
+
+const updatedDate = page.lastReviewedAt
+  ? new Date(`${page.lastReviewedAt}T00:00:00Z`).toLocaleDateString(
+      language === "ne" ? "ne-NP" : "nb-NO",
+      { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" },
+    )
+  : undefined;
+---
+
+<StaticPageLayout
+  language={language}
+  title={page.title}
+  description={page.summary}
+  eyebrow={labels.footer.trustHeading}
+  alternatePath={alternatePath}
+  metaTitle={page.seoTitle}
+  metaDescription={page.seoDescription || page.title}
+  updatedLabel={updatedDate ? labels.common.lastReviewed : undefined}
+  updatedDate={updatedDate}
+>
+  <div class="ai-page-body">
+    <PortableText value={page.body as any} />
+  </div>
+</StaticPageLayout>
+
+<style is:global>
+  .ai-page-body {
+    overflow-wrap: anywhere;
+  }
+
+  .ai-page-body > :first-child {
+    margin-block-start: 0;
+  }
+
+  .ai-page-body blockquote {
+    margin-inline: 0;
+    padding: 1rem 1.25rem;
+    border-inline-start: 0.25rem solid var(--civic);
+    background: var(--surface-muted);
+    color: var(--civic-deep);
+    font-weight: 600;
+    overflow-wrap: break-word;
+  }
+</style>

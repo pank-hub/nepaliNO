@@ -96,6 +96,14 @@ export const publicInformationGuide = defineType({
     }),
 
     defineField({
+      name: 'showAiInformationLink',
+      title: 'Show link to AI information',
+      type: 'boolean',
+      description:
+        'Displays a link to nepali.no’s general information about AI use. This does not replace image credits or the Article Summary AI disclosure.',
+    }),
+
+    defineField({
       name: 'socialImage',
       title: 'Social sharing image',
       type: 'image',

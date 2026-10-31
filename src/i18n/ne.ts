@@ -455,6 +455,9 @@ export const ne = {
       title: "छोटकरीमा",
       disclosure: "एआई (AI) को सहयोगमा तयार पारिएको यो सारांशलाई मानवीय रूपमा जाँच र परिमार्जन गरिएको छ।",
     },
+    aiInformation: {
+      articleLinkLabel: "nepali.no मा एआईको प्रयोगबारे जानकारी",
+    },
     mainNavigation: "मुख्य नेभिगेसन",
     languageSelector: "भाषा छान्नुहोस्",
     skipToContent: "मुख्य सामग्रीमा जानुहोस्",

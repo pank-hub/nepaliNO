@@ -1,0 +1,76 @@
+---
+import { getTranslations } from "../../i18n";
+import type { SupportedLanguage } from "../../i18n/config";
+import { resolveAiInformationLink } from "../../lib/aiTransparency/pages.ts";
+
+interface Props {
+  enabled?: boolean | null;
+  available?: boolean | null;
+  language: SupportedLanguage;
+}
+
+const { enabled, available, language } = Astro.props;
+const link = resolveAiInformationLink({ enabled, available, language });
+const label = getTranslations(language).common.aiInformation.articleLinkLabel;
+---
+
+{
+  link && (
+    <p class="ai-information-link">
+      <a href={link.href}>
+        <svg
+          class="ai-information-link__icon"
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            fill="currentColor"
+            d="M10 3l1.7 5.3L17 10l-5.3 1.7L10 17l-1.7-5.3L3 10l5.3-1.7L10 3zm8 9l.9 2.6L21.5 15.5l-2.6.9L18 19l-.9-2.6-2.6-.9 2.6-.9L18 12z"
+          />
+        </svg>
+        <span>{label}</span>
+      </a>
+    </p>
+  )
+}
+
+<style>
+  .ai-information-link {
+    margin-block: clamp(1.75rem, 5vw, 2.75rem) 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .ai-information-link a {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-block: 0.6rem;
+    color: var(--civic);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.2em;
+    text-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .ai-information-link a:hover {
+    color: var(--civic-deep);
+  }
+
+  .ai-information-link a:focus-visible {
+    outline: 0.2rem solid var(--focus);
+    outline-offset: 0.2rem;
+  }
+
+  .ai-information-link__icon {
+    flex: none;
+    margin-block-start: 0.2em;
+    color: var(--gold);
+  }
+</style>

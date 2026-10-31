@@ -13,6 +13,8 @@ interface Props {
   alternatePath: string
   updatedLabel?: string
   updatedDate?: string
+  metaTitle?: string
+  metaDescription?: string
 }
 
 const {
@@ -23,6 +25,8 @@ const {
   alternatePath,
   updatedLabel,
   updatedDate,
+  metaTitle,
+  metaDescription,
 } = Astro.props
 
 const labels = getTranslations(language)
@@ -30,8 +34,8 @@ const labels = getTranslations(language)
 
 <BaseLayout
   language={language}
-  title={`${title} | nepali.no`}
-  description={description}
+  title={`${metaTitle ?? title} | nepali.no`}
+  description={metaDescription ?? description}
 >
   <SiteHeader
     slot="header"
@@ -50,7 +54,7 @@ const labels = getTranslations(language)
 
         <p class="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
-        <p class="lead">{description}</p>
+        {description && <p class="lead">{description}</p>}
 
         {updatedLabel && updatedDate && (
           <p class="static-page-updated">

@@ -1,0 +1,51 @@
+---
+import { sanityClient } from "sanity:client";
+import AiTransparencyPageView from "../../components/content/AiTransparencyPageView.astro";
+import type { SupportedLanguage } from "../../i18n/config";
+import {
+  isAiPageLanguage,
+  normalizeAiTransparencyPage,
+  resolveAiAlternatePath,
+} from "../../lib/aiTransparency/pages.ts";
+import { AI_TRANSPARENCY_PAGE_QUERY } from "../../lib/sanity/queries";
+
+export const prerender = false;
+
+const pageKey = "aiInformation";
+const { lang } = Astro.params;
+
+if (!isAiPageLanguage(lang)) {
+  return Astro.redirect("/ne/transparency/");
+}
+
+const language: SupportedLanguage = lang;
+const alternateLanguage: SupportedLanguage = language === "ne" ? "nb" : "ne";
+const result = await sanityClient.fetch<{
+  page: Record<string, unknown> | null;
+  availablePages: string[];
+  alternateAvailable: boolean;
+}>(AI_TRANSPARENCY_PAGE_QUERY, { pageKey, language, alternateLanguage });
+
+const page = normalizeAiTransparencyPage(result?.page, {
+  key: pageKey,
+  language: lang,
+  availablePages: result?.availablePages ?? [],
+});
+
+// A missing or unpublished document never produces a broken page.
+if (!page) {
+  return Astro.redirect(`/${language}/transparency/`);
+}
+
+const alternatePath = resolveAiAlternatePath({
+  key: pageKey,
+  language: lang,
+  alternateAvailable: result?.alternateAvailable === true,
+});
+---
+
+<AiTransparencyPageView
+  page={page}
+  language={language}
+  alternatePath={alternatePath}
+/>

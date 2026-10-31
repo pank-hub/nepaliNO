@@ -464,6 +464,9 @@ export const nb = {
       title: "Kort fortalt",
       disclosure: "Sammendraget er laget med KI-støtte og kontrollert redaksjonelt.",
     },
+    aiInformation: {
+      articleLinkLabel: "Informasjon om KI-bruk i nepali.no",
+    },
     mainNavigation: "Hovednavigasjon",
     languageSelector: "Velg språk",
     skipToContent: "Gå til hovedinnhold",
