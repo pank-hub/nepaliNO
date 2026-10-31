@@ -150,6 +150,51 @@ test("derives plain continuation text from only the first hidden semantic group"
   assert.equal(result.continuationText.includes("example.com"), false);
 });
 
+test("skips a substantially duplicate first hidden group and previews the next safe group", () => {
+  const visibleText =
+    "The city plans to renovate the old stadium next year, creating new space for concerts and international football.";
+  const duplicateText = `${visibleText} now.`;
+  const safeText = "A new public transport study will evaluate access.";
+  const result = normalizeExpandableSection(
+    section(
+      [paragraph(visibleText), paragraph(duplicateText), paragraph(safeText)],
+      { previewSize: "compact" },
+    ),
+  );
+
+  assert.equal(result.continuationText, safeText);
+  assert.equal(result.hiddenBlocks.length, 2);
+  assert.deepEqual(
+    result.hiddenBlocks.map((block) => block.children[0].text),
+    [duplicateText, safeText],
+  );
+  assert.equal(result.visibleBlocks[0].children[0].text, visibleText);
+});
+
+test("uses no text clone when all remaining hidden groups are duplicate or invalid", () => {
+  const visibleText =
+    "The city plans to renovate the old stadium next year, creating new space for concerts and international football.";
+  const result = normalizeExpandableSection(
+    section(
+      [
+        paragraph(visibleText),
+        paragraph(
+          "  THE CITY plans to renovate the old stadium next year, creating new space for concerts and international football!  ",
+        ),
+        paragraph("   ", {
+          children: [{ _type: "image", text: "unsupported", marks: [] }],
+        }),
+      ],
+      { previewSize: "compact" },
+    ),
+  );
+
+  assert.equal(result.continuationText, null);
+  assert.equal(result.hiddenBlocks.length, 1);
+  assert.match(result.hiddenBlocks[0].children[0].text, /THE CITY plans/);
+  assert.equal(result.visibleBlocks[0].children[0].text, visibleText);
+});
+
 test("list continuation uses only the first hidden item, including nested lists", () => {
   const result = normalizeExpandableSection(
     section(
@@ -357,6 +402,10 @@ test("uses a full-block reveal with a JS-only control and no line-clamping", asy
   assert.match(component, /-webkit-mask-image: linear-gradient/);
   assert.match(
     component,
+    /\.expandable-section__continuation-text\s*\{[\s\S]*?mask-image/,
+  );
+  assert.match(
+    component,
     /background: linear-gradient\([\s\S]*?var\(--surface-muted\)/,
   );
   assert.match(
@@ -384,6 +433,16 @@ test("uses a full-block reveal with a JS-only control and no line-clamping", asy
     component,
     /\.expandable-section\[data-expanded\] \.expandable-section__continuation/,
   );
+  assert.match(component, /aria-hidden="true"/);
+  assert.match(component, /user-select: none/);
+  assert.match(component, /margin: -0\.65rem auto 0/);
+  assert.match(component, /margin-top: 0\.45rem/);
+  assert.match(component, /min-height: 2\.75rem/);
+  assert.match(
+    component,
+    /:global\(\.prose\) \.expandable-section__title\s*\{[^}]*border: 0;/,
+  );
+  assert.match(component, /var\(--border\)/);
   assert.match(enhancement, /region\.inert = true/);
   assert.match(enhancement, /region\.scrollHeight/);
   assert.match(
