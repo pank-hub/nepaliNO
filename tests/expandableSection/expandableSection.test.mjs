@@ -3,8 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { getTranslationModule } from "../../src/lib/translationBrowser/registry.ts";
 import {
+  EXPANDABLE_SECTION_PREVIEW_LINES,
   EXPANDABLE_SECTION_PREVIEW_SIZES,
-  getContinuationText,
   normalizeExpandableSection,
 } from "../../src/lib/expandableSection/normalize.ts";
 
@@ -28,7 +28,7 @@ const section = (body, overrides = {}) => ({
   ...overrides,
 });
 
-test("validates the object and requires a trimmed non-empty title and body", () => {
+test("validates the object and requires a trimmed title and meaningful body", () => {
   assert.equal(normalizeExpandableSection(null), null);
   assert.equal(normalizeExpandableSection({ _type: "informationBox" }), null);
   assert.equal(
@@ -36,6 +36,7 @@ test("validates the object and requires a trimmed non-empty title and body", () 
     null,
   );
   assert.equal(normalizeExpandableSection(section([])), null);
+  assert.equal(normalizeExpandableSection(section([paragraph("   ")])), null);
   assert.equal(normalizeExpandableSection(section([{ _type: "image" }])), null);
   assert.equal(
     normalizeExpandableSection(section([paragraph("x")])).title,
@@ -43,291 +44,157 @@ test("validates the object and requires a trimmed non-empty title and body", () 
   );
 });
 
-test("normalizes preview size and splits complete paragraph blocks", () => {
+test("extracts paragraph text in reading order without repeating duplicate blocks", () => {
+  const body = [
+    paragraph("First paragraph ", {
+      children: [
+        { _type: "span", text: "First ", marks: ["strong"] },
+        { _type: "span", text: "paragraph", marks: ["em"] },
+      ],
+    }),
+    paragraph("Second paragraph."),
+    paragraph("Second   paragraph!"),
+    paragraph("Third paragraph."),
+  ];
+  const original = structuredClone(body);
+  const result = normalizeExpandableSection(section(body));
+
+  assert.equal(
+    result.previewText,
+    "First paragraph\nSecond paragraph.\nThird paragraph.",
+  );
+  assert.deepEqual(result.body, original);
+  assert.deepEqual(body, original);
+});
+
+test("converts bullet, numbered, and nested list items to readable plain text", () => {
+  const result = normalizeExpandableSection(
+    section([
+      paragraph("Before list."),
+      paragraph("First bullet", { listItem: "bullet", level: 1 }),
+      paragraph("Nested bullet", { listItem: "bullet", level: 2 }),
+      paragraph("Another bullet", { listItem: "bullet", level: 1 }),
+      paragraph("First numbered", { listItem: "number", level: 1 }),
+      paragraph("Second numbered", { listItem: "number", level: 1 }),
+      paragraph("After list."),
+    ]),
+  );
+
+  assert.equal(
+    result.previewText,
+    [
+      "Before list.",
+      "• First bullet",
+      "  • Nested bullet",
+      "• Another bullet",
+      "1. First numbered",
+      "2. Second numbered",
+      "After list.",
+    ].join("\n"),
+  );
+  assert.doesNotMatch(result.previewText, /<[^>]+>/);
+});
+
+test("retains safe linked text without exposing its destination or link behavior", () => {
+  const result = normalizeExpandableSection(
+    section([
+      paragraph("Read ", {
+        markDefs: [
+          { _key: "safe", _type: "link", href: "https://example.com/guide" },
+          { _key: "unsafe", _type: "link", href: "javascript:alert(1)" },
+        ],
+        children: [
+          { _type: "span", text: "Read ", marks: ["strong"] },
+          { _type: "span", text: "the safe guide", marks: ["safe"] },
+          { _type: "span", text: " and unsafe label", marks: ["unsafe"] },
+        ],
+      }),
+    ]),
+  );
+
+  assert.equal(result.previewText, "Read the safe guide and unsafe label");
+  assert.equal(result.previewText.includes("example.com"), false);
+  assert.equal(result.previewText.includes("javascript:"), false);
+  assert.equal(result.body[0].markDefs.length, 1);
+  assert.equal(result.body[0].markDefs[0].href, "https://example.com/guide");
+});
+
+test("normalizes whitespace and skips malformed and unsupported content", () => {
+  const result = normalizeExpandableSection(
+    section([
+      { _type: "editorialChart", title: "Not Portable Text" },
+      paragraph("  Several\twords\nwith   spacing.  "),
+      paragraph(" \n\t ", {
+        children: [{ _type: "image", text: "unsupported child", marks: [] }],
+      }),
+      { _type: "block", children: "malformed" },
+      paragraph("Later valid paragraph."),
+    ]),
+  );
+
+  assert.equal(
+    result.previewText,
+    "Several words with spacing.\nLater valid paragraph.",
+  );
+  assert.equal(result.body.length, 2);
+});
+
+test("maps Compact, Standard, and Extended to predictable line targets", () => {
   assert.deepEqual(EXPANDABLE_SECTION_PREVIEW_SIZES, [
     "compact",
     "standard",
     "extended",
   ]);
-  const body = ["One", "Two", "Three", "Four"].map((text) => paragraph(text));
-  const compact = normalizeExpandableSection(
-    section(body, { previewSize: "compact" }),
-  );
-  const standard = normalizeExpandableSection(section(body));
-  const extended = normalizeExpandableSection(
-    section(body, { previewSize: "extended" }),
-  );
-  const fallback = normalizeExpandableSection(
-    section(body, { previewSize: "unexpected" }),
-  );
+  assert.deepEqual(EXPANDABLE_SECTION_PREVIEW_LINES, {
+    compact: 4,
+    standard: 6,
+    extended: 9,
+  });
 
-  assert.equal(compact.visibleBlocks.length, 1);
-  assert.equal(compact.hiddenBlocks.length, 3);
-  assert.equal(standard.visibleBlocks.length, 2);
-  assert.equal(standard.hiddenBlocks.length, 2);
-  assert.equal(extended.visibleBlocks.length, 3);
-  assert.equal(extended.hiddenBlocks.length, 1);
-  assert.equal(fallback.previewSize, "standard");
-  assert.equal(
-    normalizeExpandableSection(section(body.slice(0, 2))).hiddenBlocks.length,
-    0,
-  );
+  for (const [previewSize, previewLines] of Object.entries(
+    EXPANDABLE_SECTION_PREVIEW_LINES,
+  )) {
+    const result = normalizeExpandableSection(
+      section([paragraph("A long enough body.")], { previewSize }),
+    );
+    assert.equal(result.previewSize, previewSize);
+    assert.equal(result.previewLines, previewLines);
+  }
 });
 
-test("keeps consecutive logical lists together when splitting the preview", () => {
+test("falls back to Standard for an invalid preview size and creates unique fallback ids", () => {
+  const result = normalizeExpandableSection(
+    section([paragraph("A valid single paragraph.")], {
+      previewSize: "unexpected",
+      _key: "",
+    }),
+    4,
+  );
+
+  assert.equal(result.previewSize, "standard");
+  assert.equal(result.previewLines, 6);
+  assert.equal(result.idSuffix, "i4");
+});
+
+test("keeps all complete canonical blocks for the expanded state", () => {
   const body = [
-    paragraph("Introduction"),
-    paragraph("Bullet one", { listItem: "bullet", level: 1 }),
-    paragraph("Bullet two", { listItem: "bullet", level: 1 }),
-    paragraph("Numbered one", { listItem: "number", level: 1 }),
-    paragraph("Nested bullet", { listItem: "bullet", level: 2 }),
-    paragraph("Closing"),
+    paragraph("Opening paragraph."),
+    paragraph("First list item", { listItem: "bullet", level: 1 }),
+    paragraph("Nested list item", { listItem: "bullet", level: 2 }),
+    paragraph("Closing paragraph."),
   ];
   const result = normalizeExpandableSection(section(body));
 
+  assert.equal(result.body.length, 4);
   assert.deepEqual(
-    result.visibleBlocks.map((block) => block.children[0].text),
-    ["Introduction", "Bullet one", "Bullet two"],
+    result.body.map((block) => block.children[0].text),
+    body.map((block) => block.children[0].text),
   );
-  assert.deepEqual(
-    result.hiddenBlocks.map((block) => block.children[0].text),
-    ["Numbered one", "Nested bullet", "Closing"],
-  );
-
-  const nested = normalizeExpandableSection(
-    section([
-      paragraph("Introduction"),
-      paragraph("Parent item", { listItem: "bullet", level: 1 }),
-      paragraph("Nested item", { listItem: "bullet", level: 2 }),
-      paragraph("Next section"),
-    ]),
-  );
-  assert.deepEqual(
-    nested.visibleBlocks.map((block) => block.children[0].text),
-    ["Introduction", "Parent item", "Nested item"],
-  );
-  assert.deepEqual(
-    nested.hiddenBlocks.map((block) => block.children[0].text),
-    ["Next section"],
-  );
+  assert.equal("visibleBlocks" in result, false);
+  assert.equal("hiddenBlocks" in result, false);
 });
 
-test("derives plain continuation text from only the first hidden semantic group", () => {
-  const linkedParagraph = paragraph("See this ", {
-    markDefs: [
-      { _key: "safe-link", _type: "link", href: "https://example.com/" },
-    ],
-    children: [
-      { _type: "span", text: "Read ", marks: ["strong"] },
-      { _type: "span", text: "the linked guide", marks: ["safe-link"] },
-    ],
-  });
-  const nextParagraph = paragraph("This group must not appear in the preview.");
-  const result = normalizeExpandableSection(
-    section(
-      [
-        paragraph("Visible group one."),
-        paragraph("Visible group two."),
-        linkedParagraph,
-        nextParagraph,
-      ],
-      { previewSize: "standard" },
-    ),
-  );
-
-  assert.equal(result.continuationText, "Read the linked guide");
-  assert.equal(result.hiddenBlocks.length, 2);
-  assert.deepEqual(
-    result.hiddenBlocks.map((block) =>
-      block.children.map((child) => child.text),
-    ),
-    [
-      ["Read ", "the linked guide"],
-      ["This group must not appear in the preview."],
-    ],
-  );
-  assert.equal(result.hiddenBlocks[0].markDefs[0].href, "https://example.com/");
-  assert.equal(result.continuationText.includes("example.com"), false);
-});
-
-test("skips a substantially duplicate first hidden group and previews the next safe group", () => {
-  const visibleText =
-    "The city plans to renovate the old stadium next year, creating new space for concerts and international football.";
-  const duplicateText = `${visibleText} now.`;
-  const safeText = "A new public transport study will evaluate access.";
-  const result = normalizeExpandableSection(
-    section(
-      [paragraph(visibleText), paragraph(duplicateText), paragraph(safeText)],
-      { previewSize: "compact" },
-    ),
-  );
-
-  assert.equal(result.continuationText, safeText);
-  assert.equal(result.hiddenBlocks.length, 2);
-  assert.deepEqual(
-    result.hiddenBlocks.map((block) => block.children[0].text),
-    [duplicateText, safeText],
-  );
-  assert.equal(result.visibleBlocks[0].children[0].text, visibleText);
-});
-
-test("uses no text clone when all remaining hidden groups are duplicate or invalid", () => {
-  const visibleText =
-    "The city plans to renovate the old stadium next year, creating new space for concerts and international football.";
-  const result = normalizeExpandableSection(
-    section(
-      [
-        paragraph(visibleText),
-        paragraph(
-          "  THE CITY plans to renovate the old stadium next year, creating new space for concerts and international football!  ",
-        ),
-        paragraph("   ", {
-          children: [{ _type: "image", text: "unsupported", marks: [] }],
-        }),
-      ],
-      { previewSize: "compact" },
-    ),
-  );
-
-  assert.equal(result.continuationText, null);
-  assert.equal(result.hiddenBlocks.length, 1);
-  assert.match(result.hiddenBlocks[0].children[0].text, /THE CITY plans/);
-  assert.equal(result.visibleBlocks[0].children[0].text, visibleText);
-});
-
-test("list continuation uses only the first hidden item, including nested lists", () => {
-  const result = normalizeExpandableSection(
-    section(
-      [
-        paragraph("Visible paragraph one."),
-        paragraph("Visible paragraph two."),
-        paragraph("First hidden item", {
-          listItem: "bullet",
-          level: 1,
-          children: [
-            { _type: "span", text: "First ", marks: ["strong"] },
-            { _type: "span", text: "hidden item", marks: [] },
-          ],
-        }),
-        paragraph("Nested item must not become a second preview element.", {
-          listItem: "bullet",
-          level: 2,
-        }),
-        paragraph("Next logical group."),
-      ],
-      { previewSize: "standard" },
-    ),
-  );
-
-  assert.equal(result.continuationText, "First hidden item");
-  assert.equal(result.hiddenBlocks.length, 3);
-  assert.deepEqual(
-    result.hiddenBlocks.map((block) => block.children[0].text),
-    [
-      "First ",
-      "Nested item must not become a second preview element.",
-      "Next logical group.",
-    ],
-  );
-});
-
-test("unsafe and malformed continuation data yields safe text or the cue fallback", () => {
-  const unsafeLink = paragraph("Do not expose a link target.", {
-    markDefs: [
-      { _key: "unsafe-link", _type: "link", href: "javascript:alert(1)" },
-    ],
-    children: [
-      { _type: "span", text: "Plain text ", marks: ["unsafe-link"] },
-      { _type: "image", text: "unsupported child", marks: [] },
-      { _type: "span", text: "remains.", marks: [] },
-    ],
-  });
-  const result = normalizeExpandableSection(
-    section([
-      paragraph("Visible group one."),
-      paragraph("Visible group two."),
-      { _type: "image" },
-      unsafeLink,
-      paragraph("Later hidden group."),
-    ]),
-  );
-
-  assert.equal(result.continuationText, "Plain text remains.");
-  assert.deepEqual(result.hiddenBlocks[0].markDefs, []);
-  assert.deepEqual(
-    result.hiddenBlocks[0].children.map((child) => child.text),
-    ["Plain text ", "remains."],
-  );
-  assert.equal(
-    getContinuationText([
-      {
-        children: [
-          { _type: "image", text: "not a span" },
-          { _type: "span", text: "   " },
-        ],
-      },
-    ]),
-    null,
-  );
-  assert.equal(getContinuationText([]), null);
-});
-
-test("unsupported blocks interrupt otherwise compatible logical lists", () => {
-  const result = normalizeExpandableSection(
-    section([
-      paragraph("Intro"),
-      paragraph("First bullet", { listItem: "bullet", level: 1 }),
-      { _type: "editorialChart" },
-      paragraph("Second list", { listItem: "bullet", level: 1 }),
-      paragraph("Closing"),
-    ]),
-  );
-
-  assert.deepEqual(
-    result.visibleBlocks.map((block) => block.children[0].text),
-    ["Intro", "First bullet"],
-  );
-  assert.deepEqual(
-    result.hiddenBlocks.map((block) => block.children[0].text),
-    ["Second list", "Closing"],
-  );
-});
-
-test("sanitizes unsupported nodes, marks, and unsafe links without splitting blocks", () => {
-  const result = normalizeExpandableSection(
-    section([
-      paragraph("First"),
-      paragraph("Unsafe link", {
-        markDefs: [
-          { _key: "bad", _type: "link", href: "javascript:alert(1)" },
-          { _key: "good", _type: "link", href: "https://example.com" },
-        ],
-        children: [
-          {
-            _type: "span",
-            text: "Unsafe",
-            marks: ["bad", "unknown", "strong"],
-          },
-          { _type: "span", text: "Safe", marks: ["good", "em"] },
-          { _type: "image", text: "not allowed", marks: [] },
-        ],
-      }),
-      { _type: "editorialChart" },
-      paragraph("Last", { style: "h2" }),
-    ]),
-  );
-
-  assert.equal(result.visibleBlocks[1].children.length, 2);
-  assert.deepEqual(result.visibleBlocks[1].children[0].marks, ["strong"]);
-  assert.deepEqual(result.visibleBlocks[1].children[1].marks, ["good", "em"]);
-  assert.deepEqual(result.visibleBlocks[1].markDefs, [
-    { _key: "good", _type: "link", href: "https://example.com" },
-  ]);
-  assert.equal(result.hiddenBlocks.length, 1);
-  assert.equal(result.hiddenBlocks[0].style, "normal");
-});
-
-test("uses the existing localized common labels in the Translation Editor registry", async () => {
+test("uses existing localized common labels in the Translation Editor registry", async () => {
   for (const language of ["ne", "nb"]) {
     const entries = new Map(
       getTranslationModule(language, "footer-common").entries.map(
@@ -355,7 +222,7 @@ test("uses the existing localized common labels in the Translation Editor regist
   );
 });
 
-test("registers the shared block, safe body schema, and renderer in News and Guides", async () => {
+test("keeps the shared block, safe links, and renderer registered in News and Guides", async () => {
   const schemaIndex = await read("../../sanity/schemaTypes/index.ts");
   const schema = await read("../../sanity/schemaTypes/expandableSection.ts");
   assert.match(schemaIndex, /expandableSection,/);
@@ -363,6 +230,20 @@ test("registers the shared block, safe body schema, and renderer in News and Gui
   assert.match(
     schema,
     /rule\.uri\(\{scheme: \['http', 'https'\], allowRelative: true\}\)/,
+  );
+  assert.match(schema, /meaningful text/);
+  assert.doesNotMatch(
+    schema,
+    /requiredGroups|countContentGroups|previewBlockCount/,
+  );
+  assert.match(schema, /approximately 4 lines/);
+  assert.match(schema, /approximately 6 lines/);
+  assert.match(schema, /approximately 9 lines/);
+  assert.match(schema, /final two lines fade/);
+  assert.match(schema, /complete formatted content/);
+  assert.doesNotMatch(
+    schema,
+    /opening paragraphs or complete lists become the collapsed preview/i,
   );
   assert.doesNotMatch(
     schema,
@@ -382,73 +263,41 @@ test("registers the shared block, safe body schema, and renderer in News and Gui
   }
 });
 
-test("uses a full-block reveal with a JS-only control and no line-clamping", async () => {
+test("renders a plain-text preview, complete canonical body, and scoped progressive fade", async () => {
   const component = await read(
     "../../src/components/content/ExpandableSection.astro",
   );
-  assert.match(component, /aria-hidden/);
-  assert.match(component, /data-preparing/);
-  assert.match(component, /expandable-section__continuation/);
+  assert.match(component, /data-expandable-preview/);
+  assert.match(component, /section\.previewText/);
   assert.match(component, /aria-hidden="true"/);
-  assert.match(component, /section\.continuationText/);
-  assert.match(component, /expandable-section__continuation-text/);
-  assert.doesNotMatch(
-    component.match(
-      /<div[\s\S]*?expandable-section__continuation[\s\S]*?<\/div>/,
-    )?.[0] ?? "",
-    /<a\b|<button\b|\bid=/,
-  );
+  assert.match(component, /data-expandable-content/);
+  assert.match(component, /section\.body as any/);
+  assert.match(component, /data-preview-size=\{section\.previewSize\}/);
+  assert.match(component, /--preview-lines: 4/);
+  assert.match(component, /--preview-lines: 6/);
+  assert.match(component, /--preview-lines: 9/);
+  assert.match(component, /--preview-fade-start/);
   assert.match(component, /mask-image: linear-gradient/);
   assert.match(component, /-webkit-mask-image: linear-gradient/);
-  assert.match(
-    component,
-    /\.expandable-section__continuation-text\s*\{[\s\S]*?mask-image/,
-  );
-  assert.match(
-    component,
-    /background: linear-gradient\([\s\S]*?var\(--surface-muted\)/,
-  );
-  assert.match(
-    component,
-    /\.expandable-section\[data-enhanced\] \.expandable-section__toggle:hover/,
-  );
-  assert.ok(
-    component.indexOf("data-preparing") <
-      component.indexOf("data-expandable-content"),
-  );
+  assert.match(component, /color-mix\(in srgb, var\(--text\)/);
+  assert.match(component, /var\(--surface-muted\)/);
+  assert.doesNotMatch(component, /filter:\s*blur|#[\da-f]{3,8}\b/i);
+  assert.doesNotMatch(component, /continuation/);
+  assert.match(component, /border: 0;/);
+  assert.match(component, /min-height: 2\.75rem/);
+  assert.match(component, /data-preparing/);
   assert.match(component, /expandableSection\/enhance\.ts/);
-  assert.doesNotMatch(component, /line-clamp|webkit-line-clamp|clip-path/);
-  assert.doesNotMatch(component, /#[\da-f]{3,8}\b/i);
 
   const enhancement = await read("../../src/lib/expandableSection/enhance.ts");
-  assert.match(
-    component,
-    /\.expandable-section__continuation,\s*\.expandable-section__toggle\s*\{\s*display:\s*none/s,
-  );
-  assert.match(
-    component,
-    /\.expandable-section\[data-enhanced\] \.expandable-section__continuation\s*\{[\s\S]*?display:\s*block/,
-  );
-  assert.match(
-    component,
-    /\.expandable-section\[data-expanded\] \.expandable-section__continuation/,
-  );
-  assert.match(component, /aria-hidden="true"/);
-  assert.match(component, /user-select: none/);
-  assert.match(component, /margin: -0\.65rem auto 0/);
-  assert.match(component, /margin-top: 0\.45rem/);
-  assert.match(component, /min-height: 2\.75rem/);
-  assert.match(
-    component,
-    /:global\(\.prose\) \.expandable-section__title\s*\{[^}]*border: 0;/,
-  );
-  assert.match(component, /var\(--border\)/);
+  assert.match(enhancement, /contentHeight <= previewHeight/);
+  assert.match(enhancement, /button\.remove\(\)/);
   assert.match(enhancement, /region\.inert = true/);
+  assert.match(enhancement, /preview\.removeAttribute\("aria-hidden"\)/);
+  assert.match(enhancement, /preview\.setAttribute\("aria-hidden", "true"\)/);
   assert.match(enhancement, /region\.scrollHeight/);
-  assert.match(
-    enhancement,
-    /region\.style\.height = `\$\{region\.scrollHeight\}px`/,
-  );
+  assert.match(enhancement, /reduceMotion\.matches/);
+  assert.match(enhancement, /new ResizeObserver/);
+  assert.match(enhancement, /transitionend/);
   assert.equal(
     (enhancement.match(/button\.addEventListener\(["']click["']/g) ?? [])
       .length,

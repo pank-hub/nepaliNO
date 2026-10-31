@@ -1,81 +1,40 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const expandableSectionPreviewSizes = [
-  {title: 'Compact — shows a short preview', value: 'compact'},
-  {title: 'Standard — shows a balanced preview', value: 'standard'},
-  {title: 'Extended — shows a longer preview', value: 'extended'},
+  {title: 'Compact — approximately 4 lines', value: 'compact'},
+  {title: 'Standard — approximately 6 lines', value: 'standard'},
+  {title: 'Extended — approximately 9 lines', value: 'extended'},
 ]
 
-const previewBlockCount = {
-  compact: 1,
-  standard: 2,
-  extended: 3,
-} as const
+const hasMeaningfulBody = (body: unknown) =>
+  Array.isArray(body) &&
+  body.some(
+    (block) =>
+      typeof block === 'object' &&
+      block !== null &&
+      !Array.isArray(block) &&
+      Array.isArray((block as {children?: unknown}).children) &&
+      (block as {children: unknown[]}).children.some(
+        (child) =>
+          typeof child === 'object' &&
+          child !== null &&
+          !Array.isArray(child) &&
+          typeof (child as {text?: unknown}).text === 'string' &&
+          (child as {text: string}).text.trim().length > 0,
+      ),
+  )
 
-type PreviewSize = keyof typeof previewBlockCount
-type ListBlock = {
-  _type?: string
-  listItem?: string
-  level?: number
-  children?: {text?: unknown}[]
-}
-
-const countContentGroups = (value: unknown): number => {
-  if (!Array.isArray(value)) return 0
-
-  let groups = 0
-  let previousListStyle: string | undefined
-
-  for (const item of value as ListBlock[]) {
-    if (item?._type !== 'block') {
-      previousListStyle = undefined
-      continue
-    }
-    if (
-      !Array.isArray(item.children) ||
-      !item.children.some((child) => typeof child?.text === 'string' && child.text.trim())
-    ) {
-      previousListStyle = undefined
-      continue
-    }
-
-    const listStyle = item.listItem
-    if (listStyle !== 'bullet' && listStyle !== 'number') {
-      groups += 1
-      previousListStyle = undefined
-      continue
-    }
-
-    if (previousListStyle !== listStyle) groups += 1
-    previousListStyle = listStyle
-  }
-
-  return groups
-}
-
-const validateExpandableBody = (body: unknown, context: {parent?: unknown}) => {
-  const parent = context.parent
-  const size =
-    typeof parent === 'object' && parent !== null && !Array.isArray(parent)
-      ? (parent as Record<string, unknown>).previewSize
-      : undefined
-  const previewSize =
-    typeof size === 'string' && Object.hasOwn(previewBlockCount, size)
-      ? (size as PreviewSize)
-      : 'standard'
-  const requiredGroups = previewBlockCount[previewSize] + 1
-
-  return countContentGroups(body) >= requiredGroups
+const validateExpandableBody = (body: unknown) =>
+  hasMeaningfulBody(body)
     ? true
-    : `Add more content to reach at least ${requiredGroups} separate paragraphs or complete lists, or choose a smaller preview size.`
-}
+    : 'Add at least one paragraph or list item containing meaningful text.'
 
 export const expandableSection = defineType({
   name: 'expandableSection',
   title: 'Expandable Section',
   type: 'object',
   description:
-    'Optional supplementary or detailed information. The opening paragraphs or complete lists become the collapsed preview.',
+    'Optional supplementary or detailed information. Choose an approximate preview length; the final two preview lines fade, and exact wrapping varies by screen width and language. Full formatting, lists, emphasis, and safe links appear when opened.',
   fields: [
     defineField({
       name: 'title',
@@ -99,7 +58,7 @@ export const expandableSection = defineType({
       options: {list: expandableSectionPreviewSizes, layout: 'radio'},
       initialValue: 'standard',
       description:
-        'The preview shows complete opening paragraphs or lists. Choose a short, balanced or longer preview.',
+        'Choose how much text readers see before expanding the section. The complete formatted content appears when the section is opened.',
       validation: (rule) => rule.required(),
     }),
     defineField({
@@ -108,7 +67,8 @@ export const expandableSection = defineType({
       type: 'array',
       description: [
         'Use this for supplementary or detailed information, not to conceal weak or repetitive writing.',
-        'The opening paragraphs or complete lists become the collapsed preview. Put the most useful introductory context first.',
+        'Choose how much text readers see before expanding the section. Compact shows approximately 4 lines, Standard 6 lines, and Extended 9 lines; the final two lines fade. Wrapping varies slightly by screen width and language.',
+        'The complete formatted content, including lists, emphasis, and safe links, appears when the section is opened.',
         'Do not hide important safety information, deadlines or actions unnecessarily.',
       ].join(' '),
       of: [
