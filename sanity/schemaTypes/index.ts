@@ -1,3 +1,4 @@
+import {aiTransparencyPage} from './aiTransparencyPage'
 import {articleSummary} from './articleSummary'
 import {directoryListing} from './directoryListing'
 import {editorialChart} from './editorialChart'
@@ -28,4 +29,5 @@ export const schemaTypes = [
   publicInformationTopic,
   norwegianTerm,
   trustPage,
+  aiTransparencyPage,
 ]

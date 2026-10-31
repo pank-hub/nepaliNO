@@ -188,6 +188,15 @@ export const newsArticle = defineType({
     }),
 
     defineField({
+      name: 'showAiInformationLink',
+      title: 'Show link to AI information',
+      type: 'boolean',
+      group: 'sources',
+      description:
+        'Displays a link to nepali.no’s general information about AI use. This does not replace image credits or the Article Summary AI disclosure.',
+    }),
+
+    defineField({
       name: 'newsRegion',
       title: 'News Region',
       type: 'string',

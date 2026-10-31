@@ -12,6 +12,9 @@ export const en = {
       title: "In brief",
       disclosure: "This summary was prepared with AI assistance and reviewed editorially.",
     },
+    aiInformation: {
+      articleLinkLabel: "Information about AI use at nepali.no",
+    },
   },
   events: {
     categories: {

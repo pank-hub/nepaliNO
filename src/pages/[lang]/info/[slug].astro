@@ -9,6 +9,7 @@ import ExpandableSectionNe from '../../../components/content/ExpandableSectionNe
 import ExpandableSectionNb from '../../../components/content/ExpandableSectionNb.astro'
 import InformationBoxNe from '../../../components/content/InformationBoxNe.astro'
 import InformationBoxNb from '../../../components/content/InformationBoxNb.astro'
+import AiInformationLink from '../../../components/content/AiInformationLink.astro'
 import ArticleSummary from '../../../components/content/ArticleSummary.astro'
 import ReadAlsoCardNe from '../../../components/content/ReadAlsoCardNe.astro'
 import ReadAlsoCardNb from '../../../components/content/ReadAlsoCardNb.astro'
@@ -79,6 +80,8 @@ interface GuideDocument {
   relatedGuides?: RelatedGuideSummary[]
   summary: string
   articleSummary?: ArticleSummaryInput | null
+  showAiInformationLink?: boolean
+  aiInformationAvailable?: boolean
   topic: string
   intendedAudience?: string[]
   body?: (
@@ -348,6 +351,12 @@ const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audie
             <p>{guide.fundingAcknowledgement}</p>
           </section>
         )}
+
+        <AiInformationLink
+          enabled={guide.showAiInformationLink}
+          available={guide.aiInformationAvailable}
+          language={language}
+        />
 
         <ForumDiscussionCard
           contentType="publicInformationGuide"

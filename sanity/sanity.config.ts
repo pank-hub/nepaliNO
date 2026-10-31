@@ -99,6 +99,9 @@ export default defineConfig([
                 .title('Directory Listings')
                 .child(S.documentTypeList('directoryListing')),
               S.listItem().title('Trust Pages').child(S.documentTypeList('trustPage')),
+              S.listItem()
+                .title('AI Transparency Pages')
+                .child(S.documentTypeList('aiTransparencyPage')),
               S.listItem().title('Norwegian Terms').child(S.documentTypeList('norwegianTerm')),
               S.divider(),
               S.listItem()

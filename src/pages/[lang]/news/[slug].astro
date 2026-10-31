@@ -8,6 +8,7 @@ import ExpandableSectionNe from '../../../components/content/ExpandableSectionNe
 import ExpandableSectionNb from '../../../components/content/ExpandableSectionNb.astro'
 import InformationBoxNe from '../../../components/content/InformationBoxNe.astro'
 import InformationBoxNb from '../../../components/content/InformationBoxNb.astro'
+import AiInformationLink from '../../../components/content/AiInformationLink.astro'
 import ArticleSummary from '../../../components/content/ArticleSummary.astro'
 import ReadAlsoCardNe from '../../../components/content/ReadAlsoCardNe.astro'
 import ReadAlsoCardNb from '../../../components/content/ReadAlsoCardNb.astro'
@@ -76,6 +77,8 @@ interface NewsArticle {
   translation?: TranslationSummary
   summary: string
   articleSummary?: ArticleSummaryInput | null
+  showAiInformationLink?: boolean
+  aiInformationAvailable?: boolean
   supportingGuide?: SupportingGuideSummary
   relatedNews?: RelatedNewsSummary[]
   newsRegion: string
@@ -325,6 +328,12 @@ const structuredData = buildNewsArticleStructuredData({
             </a>
           </aside>
         )}
+
+        <AiInformationLink
+          enabled={article.showAiInformationLink}
+          available={article.aiInformationAvailable}
+          language={language}
+        />
 
         {forumEnabled && (
           <ForumDiscussionCard
