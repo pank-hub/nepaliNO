@@ -6,6 +6,12 @@ export const EXPANDABLE_SECTION_PREVIEW_SIZES = [
   "extended",
 ] as const;
 
+export const EXPANDABLE_SECTION_PREVIEW_LINES = {
+  compact: 4,
+  standard: 6,
+  extended: 9,
+} as const;
+
 export type ExpandableSectionPreviewSize =
   (typeof EXPANDABLE_SECTION_PREVIEW_SIZES)[number];
 
@@ -22,20 +28,14 @@ type Block = Record<string, unknown>;
 export interface NormalizedExpandableSection {
   title: string;
   previewSize: ExpandableSectionPreviewSize;
-  visibleBlocks: Block[];
-  hiddenBlocks: Block[];
-  continuationText: string | null;
+  previewLines: number;
+  previewText: string;
+  body: Block[];
   idSuffix: string;
 }
 
 const isRecord = (value: unknown): value is Block =>
   typeof value === "object" && value !== null && !Array.isArray(value);
-
-const previewBlocks: Record<ExpandableSectionPreviewSize, number> = {
-  compact: 1,
-  standard: 2,
-  extended: 3,
-};
 
 const sanitizeBlock = (value: unknown): Block | undefined => {
   if (
@@ -80,8 +80,10 @@ const sanitizeBlock = (value: unknown): Block | undefined => {
       !isRecord(child) ||
       child._type !== "span" ||
       typeof child.text !== "string"
-    )
+    ) {
       return [];
+    }
+
     const marks = Array.isArray(child.marks)
       ? child.marks.filter(
           (mark): mark is string =>
@@ -107,7 +109,6 @@ const sanitizeBlock = (value: unknown): Block | undefined => {
     return undefined;
   }
 
-  const listItem = value.listItem;
   const level =
     Number.isInteger(value.level) &&
     typeof value.level === "number" &&
@@ -119,70 +120,27 @@ const sanitizeBlock = (value: unknown): Block | undefined => {
     _type: "block",
     ...(typeof value._key === "string" ? { _key: value._key } : {}),
     style: "normal",
-    ...(listItem ? { listItem, level } : {}),
+    ...(value.listItem ? { listItem: value.listItem, level } : {}),
     children,
     markDefs: safeLinks,
   };
 };
 
-const groupBlocks = (blocks: Array<Block | undefined>): Block[][] => {
-  const groups: Block[][] = [];
+const getBlockText = (block: Block): string => {
+  if (!Array.isArray(block.children)) return "";
 
-  for (const block of blocks) {
-    if (!block) {
-      groups.push([]);
-      continue;
-    }
-
-    const listItem = block.listItem;
-    const previous = groups.at(-1)?.[0];
-    if (
-      (listItem === "bullet" || listItem === "number") &&
-      previous?.listItem === listItem
-    ) {
-      // Level changes create nested items, not a safe place to split the list.
-      groups[groups.length - 1].push(block);
-    } else {
-      groups.push([block]);
-    }
-  }
-
-  return groups;
-};
-
-export const getContinuationText = (blocks: unknown): string | null => {
-  const firstBlock = Array.isArray(blocks) ? blocks[0] : undefined;
-  if (!isRecord(firstBlock) || !Array.isArray(firstBlock.children)) return null;
-
-  const text = firstBlock.children
-    .map((child) =>
+  return block.children
+    .flatMap((child) =>
       isRecord(child) &&
       child._type === "span" &&
       typeof child.text === "string"
-        ? child.text
-        : "",
+        ? [child.text]
+        : [],
     )
     .join("")
     .replace(/\s+/gu, " ")
     .trim();
-
-  return text || null;
 };
-
-const getGroupText = (blocks: Block[]): string =>
-  blocks
-    .flatMap((block) =>
-      Array.isArray(block.children)
-        ? block.children.flatMap((child) =>
-            isRecord(child) && typeof child.text === "string"
-              ? [child.text]
-              : [],
-          )
-        : [],
-    )
-    .join(" ")
-    .replace(/\s+/gu, " ")
-    .trim();
 
 const normalizeComparableText = (text: string): string =>
   text
@@ -190,49 +148,53 @@ const normalizeComparableText = (text: string): string =>
     .toLowerCase()
     .replace(/[\p{P}\p{S}\p{White_Space}]+/gu, "");
 
-const getCharacterBigrams = (text: string): Map<string, number> => {
-  const characters = Array.from(text);
-  const bigrams = new Map<string, number>();
-  for (let index = 0; index < characters.length - 1; index += 1) {
-    const bigram = `${characters[index]}${characters[index + 1]}`;
-    bigrams.set(bigram, (bigrams.get(bigram) ?? 0) + 1);
+const formatPreviewText = (blocks: Block[]): string => {
+  const lines: string[] = [];
+  const seen = new Set<string>();
+  const numberedItems = new Map<number, number>();
+  let previousWasList = false;
+
+  for (const block of blocks) {
+    const text = getBlockText(block);
+    const comparableText = normalizeComparableText(text);
+    if (
+      !text ||
+      !comparableText ||
+      seen.has(comparableText) ||
+      (comparableText.length >= 12 &&
+        lines.some((line) =>
+          normalizeComparableText(line).includes(comparableText),
+        ))
+    ) {
+      continue;
+    }
+    seen.add(comparableText);
+
+    const listItem = block.listItem;
+    if (listItem === "bullet" || listItem === "number") {
+      const level =
+        typeof block.level === "number" && block.level > 0 ? block.level : 1;
+      const indent = "  ".repeat(Math.min(level - 1, 4));
+      let marker = "•";
+      if (listItem === "number") {
+        const number = (numberedItems.get(level) ?? 0) + 1;
+        numberedItems.set(level, number);
+        marker = `${number}.`;
+      }
+      for (const nestedLevel of numberedItems.keys()) {
+        if (nestedLevel > level) numberedItems.delete(nestedLevel);
+      }
+      lines.push(`${indent}${marker} ${text}`);
+      previousWasList = true;
+      continue;
+    }
+
+    if (previousWasList) numberedItems.clear();
+    lines.push(text);
+    previousWasList = false;
   }
-  return bigrams;
-};
 
-const isSubstantiallyDuplicate = (
-  candidate: string,
-  visible: string,
-): boolean => {
-  const normalizedCandidate = normalizeComparableText(candidate);
-  const normalizedVisible = normalizeComparableText(visible);
-  if (!normalizedCandidate || !normalizedVisible) return false;
-  if (normalizedCandidate === normalizedVisible) return true;
-
-  const longerLength = Math.max(
-    Array.from(normalizedCandidate).length,
-    Array.from(normalizedVisible).length,
-  );
-  const shorterLength = Math.min(
-    Array.from(normalizedCandidate).length,
-    Array.from(normalizedVisible).length,
-  );
-  if (longerLength < 24 || shorterLength / longerLength < 0.85) return false;
-
-  const candidateBigrams = getCharacterBigrams(normalizedCandidate);
-  const visibleBigrams = getCharacterBigrams(normalizedVisible);
-  let sharedBigrams = 0;
-  for (const [bigram, count] of candidateBigrams) {
-    sharedBigrams += Math.min(count, visibleBigrams.get(bigram) ?? 0);
-  }
-
-  const totalBigrams =
-    Array.from(candidateBigrams.values()).reduce(
-      (sum, count) => sum + count,
-      0,
-    ) +
-    Array.from(visibleBigrams.values()).reduce((sum, count) => sum + count, 0);
-  return totalBigrams > 0 && (2 * sharedBigrams) / totalBigrams >= 0.9;
+  return lines.join("\n").trim();
 };
 
 const normalizePreviewSize = (value: unknown): ExpandableSectionPreviewSize =>
@@ -257,31 +219,23 @@ export const normalizeExpandableSection = (
   const title = typeof input.title === "string" ? input.title.trim() : "";
   if (!title || title.length > 160) return null;
 
-  const blocks = Array.isArray(input.body)
-    ? input.body.map((block) => sanitizeBlock(block))
+  const body = Array.isArray(input.body)
+    ? input.body.flatMap((block) => {
+        const sanitized = sanitizeBlock(block);
+        return sanitized ? [sanitized] : [];
+      })
     : [];
-  if (!blocks.some((block) => block)) return null;
+  const previewText = formatPreviewText(body);
+  if (!body.length || !previewText) return null;
 
   const previewSize = normalizePreviewSize(input.previewSize);
-  const groups = groupBlocks(blocks).filter((group) => group.length > 0);
-  const splitAt = Math.min(previewBlocks[previewSize], groups.length);
-  const visibleGroups = groups.slice(0, splitAt);
-  const hiddenGroups = groups.slice(splitAt);
-  const hiddenBlocks = hiddenGroups.flat();
-  const finalVisibleText = getGroupText(visibleGroups.at(-1) ?? []);
-  const continuationText =
-    hiddenGroups
-      .map((group) => getContinuationText(group))
-      .find(
-        (text) => text && !isSubstantiallyDuplicate(text, finalVisibleText),
-      ) ?? null;
 
   return {
     title,
     previewSize,
-    visibleBlocks: visibleGroups.flat(),
-    hiddenBlocks,
-    continuationText,
+    previewLines: EXPANDABLE_SECTION_PREVIEW_LINES[previewSize],
+    previewText,
+    body,
     idSuffix: createIdSuffix(input, index),
   };
 };
