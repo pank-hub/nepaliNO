@@ -98,8 +98,8 @@ const expandable = Boolean(section?.hiddenBlocks.length);
   .expandable-section {
     max-width: 100%;
     margin-block: 1.75rem;
-    padding: 1rem 1.1rem;
-    border: 1px solid var(--border-strong);
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface-muted);
     color: var(--text);
@@ -107,7 +107,9 @@ const expandable = Boolean(section?.hiddenBlocks.length);
   }
 
   :global(.prose) .expandable-section__title {
-    margin: 0 0 0.65rem;
+    margin: 0 0 0.35rem;
+    padding-block-end: 0;
+    border: 0;
     color: var(--civic-deep);
     font-size: 1.2rem;
     line-height: 1.4;
@@ -119,7 +121,7 @@ const expandable = Boolean(section?.hiddenBlocks.length);
   }
 
   .expandable-section__body > :global(* + *) {
-    margin-block-start: 0.8em;
+    margin-block-start: 0.5em;
   }
 
   :global(.prose) .expandable-section__body :global(p),
@@ -146,8 +148,8 @@ const expandable = Boolean(section?.hiddenBlocks.length);
   .expandable-section[data-enhanced] .expandable-section__continuation {
     position: relative;
     display: block;
-    max-height: 3.4em;
-    margin-top: 0.45rem;
+    max-height: 3.55em;
+    margin-top: 0.2rem;
     overflow: hidden;
     font-size: 0.95em;
     line-height: 1.7;
@@ -162,14 +164,18 @@ const expandable = Boolean(section?.hiddenBlocks.length);
 
   .expandable-section__continuation::after {
     position: absolute;
-    inset: 30% 0 0;
-    background: linear-gradient(to bottom, transparent, var(--surface-muted));
+    inset: 12% 0 0;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--surface-muted) 98%
+    );
     content: "";
     pointer-events: none;
   }
 
   .expandable-section__continuation--cue {
-    min-height: 3.4em;
+    min-height: 3.55em;
     background: linear-gradient(
       to bottom,
       var(--surface-muted),
@@ -184,13 +190,13 @@ const expandable = Boolean(section?.hiddenBlocks.length);
       -webkit-mask-image: linear-gradient(
         to bottom,
         var(--text) 0%,
-        var(--text) 38%,
+        var(--text) 24%,
         transparent 100%
       );
       mask-image: linear-gradient(
         to bottom,
         var(--text) 0%,
-        var(--text) 38%,
+        var(--text) 24%,
         transparent 100%
       );
     }
@@ -231,9 +237,10 @@ const expandable = Boolean(section?.hiddenBlocks.length);
   }
 
   .expandable-section[data-enhanced] .expandable-section__toggle {
+    position: relative;
     display: block;
     min-height: 2.75rem;
-    margin: 0.25rem auto 0;
+    margin: -0.65rem auto 0;
     padding: 0.55rem 1.3rem;
     border: 0;
     border-radius: 999px;
@@ -255,9 +262,20 @@ const expandable = Boolean(section?.hiddenBlocks.length);
     outline-offset: 0.2rem;
   }
 
+  .expandable-section[data-expanded] .expandable-section__toggle {
+    margin-top: 0.45rem;
+  }
+
+  html[lang="ne"]
+    .expandable-section[data-enhanced]
+    .expandable-section__continuation {
+    max-height: 3.8em;
+    line-height: 1.85;
+  }
+
   @media (min-width: 40rem) {
     .expandable-section {
-      padding: 1.2rem 1.45rem;
+      padding: 1rem 1.2rem;
     }
   }
 

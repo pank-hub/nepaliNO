@@ -169,6 +169,72 @@ export const getContinuationText = (blocks: unknown): string | null => {
   return text || null;
 };
 
+const getGroupText = (blocks: Block[]): string =>
+  blocks
+    .flatMap((block) =>
+      Array.isArray(block.children)
+        ? block.children.flatMap((child) =>
+            isRecord(child) && typeof child.text === "string"
+              ? [child.text]
+              : [],
+          )
+        : [],
+    )
+    .join(" ")
+    .replace(/\s+/gu, " ")
+    .trim();
+
+const normalizeComparableText = (text: string): string =>
+  text
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\p{P}\p{S}\p{White_Space}]+/gu, "");
+
+const getCharacterBigrams = (text: string): Map<string, number> => {
+  const characters = Array.from(text);
+  const bigrams = new Map<string, number>();
+  for (let index = 0; index < characters.length - 1; index += 1) {
+    const bigram = `${characters[index]}${characters[index + 1]}`;
+    bigrams.set(bigram, (bigrams.get(bigram) ?? 0) + 1);
+  }
+  return bigrams;
+};
+
+const isSubstantiallyDuplicate = (
+  candidate: string,
+  visible: string,
+): boolean => {
+  const normalizedCandidate = normalizeComparableText(candidate);
+  const normalizedVisible = normalizeComparableText(visible);
+  if (!normalizedCandidate || !normalizedVisible) return false;
+  if (normalizedCandidate === normalizedVisible) return true;
+
+  const longerLength = Math.max(
+    Array.from(normalizedCandidate).length,
+    Array.from(normalizedVisible).length,
+  );
+  const shorterLength = Math.min(
+    Array.from(normalizedCandidate).length,
+    Array.from(normalizedVisible).length,
+  );
+  if (longerLength < 24 || shorterLength / longerLength < 0.85) return false;
+
+  const candidateBigrams = getCharacterBigrams(normalizedCandidate);
+  const visibleBigrams = getCharacterBigrams(normalizedVisible);
+  let sharedBigrams = 0;
+  for (const [bigram, count] of candidateBigrams) {
+    sharedBigrams += Math.min(count, visibleBigrams.get(bigram) ?? 0);
+  }
+
+  const totalBigrams =
+    Array.from(candidateBigrams.values()).reduce(
+      (sum, count) => sum + count,
+      0,
+    ) +
+    Array.from(visibleBigrams.values()).reduce((sum, count) => sum + count, 0);
+  return totalBigrams > 0 && (2 * sharedBigrams) / totalBigrams >= 0.9;
+};
+
 const normalizePreviewSize = (value: unknown): ExpandableSectionPreviewSize =>
   EXPANDABLE_SECTION_PREVIEW_SIZES.includes(
     value as ExpandableSectionPreviewSize,
@@ -202,13 +268,20 @@ export const normalizeExpandableSection = (
   const visibleGroups = groups.slice(0, splitAt);
   const hiddenGroups = groups.slice(splitAt);
   const hiddenBlocks = hiddenGroups.flat();
+  const finalVisibleText = getGroupText(visibleGroups.at(-1) ?? []);
+  const continuationText =
+    hiddenGroups
+      .map((group) => getContinuationText(group))
+      .find(
+        (text) => text && !isSubstantiallyDuplicate(text, finalVisibleText),
+      ) ?? null;
 
   return {
     title,
     previewSize,
     visibleBlocks: visibleGroups.flat(),
     hiddenBlocks,
-    continuationText: getContinuationText(hiddenGroups[0] ?? []),
+    continuationText,
     idSuffix: createIdSuffix(input, index),
   };
 };
