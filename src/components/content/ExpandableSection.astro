@@ -256,6 +256,56 @@ const contentId = section
     margin-top: 0.45rem;
   }
 
+  @media (max-width: 39.999rem) {
+    .expandable-section:is(
+        :not([data-enhanced]),
+        [data-expanded],
+        [data-transitioning]
+      )
+      .expandable-section__body {
+      font-size: 1.0625rem;
+      line-height: 1.75;
+    }
+
+    :global(.prose)
+      .expandable-section:is(
+        :not([data-enhanced]),
+        [data-expanded],
+        [data-transitioning]
+      )
+      .expandable-section__body
+      > :global(p + *),
+    :global(.prose)
+      .expandable-section:is(
+        :not([data-enhanced]),
+        [data-expanded],
+        [data-transitioning]
+      )
+      .expandable-section__body
+      > :global(ul + *),
+    :global(.prose)
+      .expandable-section:is(
+        :not([data-enhanced]),
+        [data-expanded],
+        [data-transitioning]
+      )
+      .expandable-section__body
+      > :global(ol + *) {
+      margin-block-start: 0.5em;
+    }
+
+    :global(.prose)
+      .expandable-section:is(
+        :not([data-enhanced]),
+        [data-expanded],
+        [data-transitioning]
+      )
+      .expandable-section__body
+      :global(li) {
+      margin-block: 0.2rem;
+    }
+  }
+
   @media (min-width: 40rem) {
     .expandable-section {
       padding: 1rem 1.2rem;

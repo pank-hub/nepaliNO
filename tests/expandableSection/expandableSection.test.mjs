@@ -289,6 +289,7 @@ test("renders a plain-text preview, complete canonical body, and scoped progress
   assert.match(component, /expandableSection\/enhance\.ts/);
 
   const enhancement = await read("../../src/lib/expandableSection/enhance.ts");
+  assert.match(enhancement, /const lineHeight = getLineHeight\(root\)/);
   assert.match(enhancement, /contentHeight <= previewHeight/);
   assert.match(enhancement, /button\.remove\(\)/);
   assert.match(enhancement, /region\.inert = true/);
@@ -303,4 +304,27 @@ test("renders a plain-text preview, complete canonical body, and scoped progress
       .length,
     1,
   );
+});
+
+test("scopes compact canonical typography to mobile without changing preview or desktop rules", async () => {
+  const component = await read(
+    "../../src/components/content/ExpandableSection.astro",
+  );
+  const mobileRules = component.match(
+    /@media \(max-width: 39\.999rem\) \{([\s\S]*?)\n  \}/,
+  )?.[1];
+
+  assert.ok(mobileRules);
+  assert.match(
+    mobileRules,
+    /\.expandable-section:is\(\s*:not\(\[data-enhanced\]\),\s*\[data-expanded\],\s*\[data-transitioning\]\s*\)\s*\.expandable-section__body\s*\{[^}]*font-size:\s*1\.0625rem;[^}]*line-height:\s*1\.75;/,
+  );
+  assert.match(
+    mobileRules,
+    /\.expandable-section:is\(\s*:not\(\[data-enhanced\]\),\s*\[data-expanded\],\s*\[data-transitioning\]\s*\)\s*\.expandable-section__body\s+:global\(li\)\s*\{\s*margin-block:\s*0\.2rem;/,
+  );
+  assert.match(mobileRules, /margin-block-start:\s*0\.5em;/);
+  assert.match(component, /@media \(min-width: 40rem\)/);
+  assert.match(component, /--preview-lines: 4/);
+  assert.match(component, /--preview-fade-start: 50%/);
 });
