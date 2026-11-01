@@ -1,8 +1,7 @@
 import { EXPANDABLE_SECTION_PREVIEW_LINES } from "./normalize.ts";
 
-const getLineHeight = (body: HTMLElement): number => {
-  const textElement = body.querySelector<HTMLElement>("p, li") ?? body;
-  const styles = window.getComputedStyle(textElement);
+const getLineHeight = (element: HTMLElement): number => {
+  const styles = window.getComputedStyle(element);
   const lineHeight = Number.parseFloat(styles.lineHeight);
   if (Number.isFinite(lineHeight) && lineHeight > 0) return lineHeight;
 
@@ -47,7 +46,7 @@ const enhanceExpandableSections = () => {
       ] ?? EXPANDABLE_SECTION_PREVIEW_LINES.standard;
 
     const updatePreviewMetrics = () => {
-      const lineHeight = getLineHeight(body);
+      const lineHeight = getLineHeight(root);
       root.style.setProperty("--preview-line-height", `${lineHeight}px`);
       return { lineHeight, previewHeight: lineHeight * previewLines };
     };
