@@ -399,6 +399,15 @@ export const directoryListing = defineType({
       validation: (rule) => rule.uri({scheme: ['http', 'https']}),
     }),
     defineField({
+      name: 'mapLocation',
+      title: 'Map Coordinates',
+      type: 'mapLocation',
+      group: 'location',
+      hidden: ({document}) => !physicalPresence(document),
+      description:
+        'Optional public map position for a physical presence. Use a safe approximate centre; never publish a private home location.',
+    }),
+    defineField({
       name: 'coverageModes',
       title: 'Service Coverage',
       type: 'array',

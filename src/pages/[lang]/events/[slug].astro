@@ -4,6 +4,7 @@ import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
 import ContentContextRail from '../../../components/content/ContentContextRail.astro'
 import ContextRailPanel from '../../../components/content/ContextRailPanel.astro'
+import LocationMap from '../../../components/content/LocationMap.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
@@ -14,13 +15,14 @@ import {getEventAccessLabels} from '../../../lib/eventAccess'
 import {urlFor} from '../../../lib/sanity/image'
 import {getAllDates, nextOccurrence} from '../../../lib/eventOccurrences'
 import {EVENT_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
+import {isPublicEventLocation, type MapLocation} from '../../../lib/maps/location'
 
 interface TranslationSummary { _id: string; title: string; slug: string; language: SupportedLanguage }
 interface EventImage { asset?: unknown; alt?: string; caption?: string; credit?: string; hotspot?: unknown; crop?: unknown }
 interface EventDocument {
   _id: string; title: string; slug: string; language: SupportedLanguage; translation?: TranslationSummary; summary: string
   eventLanguages?: string[]; otherEventLanguage?: string; eventType: string; eventFormat: string; eventStatus: string; isAllDay?: boolean
-  startDateTime: string; endDateTime?: string; additionalDates?: {startDateTime: string; endDateTime?: string}[] | null; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string
+  startDateTime: string; endDateTime?: string; additionalDates?: {startDateTime: string; endDateTime?: string}[] | null; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string; mapLocation?: MapLocation
   accessibilityInformation?: string; transportInformation?: string; onlinePlatform?: string; onlineUrl?: string
   organizerName: string; organizerUrl?: string; organizerEmail?: string; organizerPhone?: string
   registrationRequirement: string; registrationStatus: string; registrationUrl?: string; registrationDeadline?: string
@@ -79,6 +81,11 @@ const socialImageUrl = event.featuredImage?.asset ? urlFor(event.featuredImage a
 const portableTextComponents = {type: {image: SanityPortableImage}}
 const spokenLanguages = [...(event.eventLanguages || []).map((value) => languages[value] ?? value), ...(event.otherEventLanguage ? [event.otherEventLanguage] : [])].join(', ')
 const address = [event.address, event.postalCode, event.city].filter(Boolean).join(', ')
+const publicMapLocation =
+  isPublicEventLocation(event.eventFormat)
+    ? event.mapLocation
+    : undefined
+const mapDescription = [event.venueName, address || event.city].filter(Boolean).join(', ') || eventLabels.venue
 const priceLabel = event.isFree ? eventLabels.freeEvent : event.priceDescription || (typeof event.priceNok === 'number' ? `${event.priceNok} NOK` : eventLabels.price)
 const startDate = new Date(event.startDateTime)
 const dateCardDay = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, day: '2-digit'}).format(startDate)
@@ -137,6 +144,14 @@ const heroTime = event.isAllDay
     <div class="container event-layout">
       <main class="event-content">
         {event.description && event.description.length > 0 && <section class="prose"><PortableText value={event.description} components={portableTextComponents} /></section>}
+        {publicMapLocation && (
+          <LocationMap
+            location={publicMapLocation}
+            description={mapDescription}
+            labels={labels.common.maps}
+            title={event.venueName || eventLabels.venue}
+          />
+        )}
         {event.sourceUrl && <aside class="source-note"><div><strong>{eventLabels.originalSource}</strong><p>{eventLabels.lastVerified}: <time datetime={event.lastVerifiedAt}>{formatDate(event.lastVerifiedAt)}</time></p></div><a class="button button-secondary" href={event.sourceUrl} target="_blank" rel="noopener noreferrer">{eventLabels.originalSource} <span aria-hidden="true">↗</span></a></aside>}
       </main>
 

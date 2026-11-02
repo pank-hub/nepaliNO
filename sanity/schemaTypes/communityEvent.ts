@@ -327,6 +327,15 @@ export const communityEvent = defineType({
     }),
 
     defineField({
+      name: 'mapLocation',
+      title: 'Map Coordinates',
+      type: 'mapLocation',
+      hidden: ({document}) => document?.eventFormat === 'online',
+      description:
+        'Optional public map position. Add only for an in-person or hybrid event; existing addresses and map links remain unchanged.',
+    }),
+
+    defineField({
       name: 'accessibilityInformation',
       title: 'Accessibility Information',
       type: 'text',

@@ -24,7 +24,7 @@ export default defineConfig({
     sitemap({
       filter: (page) =>
         new URL(page).pathname !== "/" &&
-        !/^\/(translations|api)(\/|$)/.test(new URL(page).pathname) &&
+        !/^\/(translations|api|dev)(\/|$)/.test(new URL(page).pathname) &&
         !/\/(directory|events)\/submit\/?$/.test(page),
       // On-demand (SSR) public pages are not discovered by the integration.
       customPages: ["ne", "nb"].flatMap((lang) =>
