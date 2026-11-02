@@ -1,0 +1,27 @@
+---
+import LocationMap from "./LocationMap.astro";
+import { getTranslations } from "../../i18n";
+import type { LocationMapBlock } from "../../lib/maps/location";
+
+interface Props {
+  node: LocationMapBlock;
+  index?: number;
+  isInline?: boolean;
+}
+
+const { node } = Astro.props;
+---
+
+<LocationMap
+  location={node.location}
+  locations={node.locations}
+  initialZoom={node.initialZoom}
+  route={node.route}
+  editorialPath={node.editorialPath}
+  description={node.accessibleDescription ?? ""}
+  labels={getTranslations("nb").common.maps}
+  title={node.title}
+  caption={node.caption}
+  sourceLabel={node.sourceLabel}
+  sourceUrl={node.sourceUrl}
+/>

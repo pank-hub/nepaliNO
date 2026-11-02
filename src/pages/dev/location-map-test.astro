@@ -1,0 +1,222 @@
+---
+// Local-only fixture for manual LocationMap checks. Never served outside `astro dev`.
+export const prerender = false;
+
+import LocationMap from "../../components/content/LocationMap.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getTranslations } from "../../i18n";
+
+if (!import.meta.env.DEV) {
+  return new Response(null, { status: 404 });
+}
+
+const fixtureRoute = (await import("../../lib/maps/dev/fixtureRoute.json"))
+  .default;
+const labels = getTranslations("ne").common.maps;
+const point = (lat: number, lng: number) => ({ lat, lng });
+const routePlaces = [
+  {
+    _key: "oslo-s",
+    label: "Oslo S (start)",
+    description: "Fixture start.",
+    coordinates: point(59.9111, 10.7528),
+    precision: "exact" as const,
+    icon: "airport" as const,
+  },
+  {
+    _key: "frogner",
+    label: "Frogner Park",
+    coordinates: point(59.927, 10.7011),
+    precision: "exact" as const,
+    icon: "parking" as const,
+  },
+  {
+    _key: "aker-brygge",
+    label: "Aker Brygge (destination)",
+    coordinates: point(59.9139, 10.7389),
+    precision: "exact" as const,
+    icon: "restaurant" as const,
+  },
+];
+const iconPlaces = [
+  ["pin", "Standard pin", 59.9139, 10.7522],
+  ["home", "Home", 59.9165, 10.7595],
+  ["parking", "Parking", 59.9115, 10.7455],
+  ["restaurant", "Restaurant", 59.9185, 10.7445],
+  ["hospital", "Hospital", 59.9205, 10.7535],
+  ["airport", "Airport", 59.9095, 10.7615],
+  ["warning", "Warning", 59.9225, 10.7655],
+].map(([icon, label, lat, lng]) => ({
+  _key: icon as string,
+  label: label as string,
+  description:
+    icon === "hospital"
+      ? "Fixture description with <b>markup</b> that must show as text."
+      : undefined,
+  coordinates: point(lat as number, lng as number),
+  precision: "exact" as const,
+  icon: icon as "pin",
+}));
+---
+
+<BaseLayout
+  language="ne"
+  title="Location map test (local only)"
+  description="Local-only fixture"
+  noIndex
+>
+  <div class="container" style="padding-block: 2rem">
+    <h1>Location map test (local only)</h1>
+    <p>Fixture data only. Not published content.</p>
+
+    <h2>1. Legacy single exact location</h2>
+    <LocationMap
+      title="Legacy exact fixture"
+      description="Exact fixture pin near Oslo Central Station."
+      labels={labels}
+      location={{
+        coordinates: point(59.9111, 10.7528),
+        precision: "exact",
+        initialZoom: 16,
+      }}
+      caption="Exact pin fixture."
+    />
+    <p style="margin-block: 30vh">Scroll spacer.</p>
+
+    <h2>2. Legacy approximate location</h2>
+    <LocationMap
+      title="Legacy approximate fixture"
+      description="Approximate fixture area around central Bergen."
+      labels={labels}
+      location={{
+        coordinates: point(60.3913, 5.3221),
+        precision: "approximate",
+        radiusMeters: 1500,
+        initialZoom: 13,
+      }}
+      caption="Approximate area fixture."
+    />
+    <p style="margin-block: 30vh">Scroll spacer.</p>
+
+    <h2>3. Multiple exact locations with different icons</h2>
+    <LocationMap
+      title="Multiple exact fixture"
+      description="Seven fixture places in Oslo, one per icon."
+      labels={labels}
+      locations={iconPlaces}
+      caption="Seven icons."
+    />
+    <p style="margin-block: 30vh">Scroll spacer.</p>
+
+    <h2>4. Mixed exact and approximate</h2>
+    <LocationMap
+      title="Mixed fixture"
+      description="One exact venue and one approximate area in Bergen."
+      labels={labels}
+      locations={[
+        {
+          _key: "venue",
+          label: "Exact venue",
+          coordinates: point(60.3943, 5.3259),
+          precision: "exact",
+          icon: "home",
+        },
+        {
+          _key: "area",
+          label: "Approximate area",
+          description: "Circle only, no centre marker.",
+          coordinates: point(60.3849, 5.3355),
+          precision: "approximate",
+          radiusMeters: 900,
+        },
+      ]}
+      caption="Mixed precision."
+    />
+    <p style="margin-block: 30vh">Scroll spacer.</p>
+
+    <h2>5. Saved driving route (stored geometry, no routing request)</h2>
+    <LocationMap
+      title="Route fixture"
+      description="Saved driving route between three Oslo stops."
+      labels={labels}
+      locations={[
+        ...routePlaces,
+        {
+          _key: "area",
+          label: "Approximate area (not a stop)",
+          coordinates: point(59.9, 10.8),
+          precision: "approximate",
+          radiusMeters: 800,
+        },
+      ]}
+      route={{
+        enabled: true,
+        stopKeys: ["oslo-s", "frogner", "aker-brygge"],
+        ...fixtureRoute,
+      }}
+      caption="Route fixture."
+    />
+    <h2>6. Editorial highlighted path (manual, synthetic data)</h2>
+    <LocationMap
+      title="Editorial path fixture"
+      description="Synthetic corridor from Start by, through Midtpunkt, to Sluttstasjon, with an approximate area."
+      labels={labels}
+      locations={[
+        {
+          _key: "start",
+          label: "Start by",
+          description: "Synthetic start location.",
+          coordinates: point(59.95, 10.8),
+          precision: "exact",
+          icon: "home",
+          showLabel: true,
+        },
+        {
+          _key: "mid",
+          label: "Midtpunkt (label on hover only)",
+          description: "Synthetic intermediate location.",
+          coordinates: point(59.975, 10.9),
+          precision: "exact",
+          icon: "warning",
+          showLabel: false,
+        },
+        {
+          _key: "end",
+          label: "Sluttstasjon",
+          description: "Synthetic destination.",
+          coordinates: point(60.0, 11.02),
+          precision: "exact",
+          icon: "hospital",
+          showLabel: true,
+        },
+        {
+          _key: "zone",
+          label: "Omtrentlig sone",
+          coordinates: point(59.99, 10.8),
+          precision: "approximate",
+          radiusMeters: 1200,
+        },
+      ]}
+      editorialPath={{
+        enabled: true,
+        label: "Fremhevet sti (manuelt tegnet)",
+        description:
+          "Original sample geometry drawn by hand; not a calculated route.",
+        color: "red",
+        style: "dashed",
+        points: [
+          point(59.95, 10.8),
+          point(59.955, 10.83),
+          point(59.96, 10.85),
+          point(59.97, 10.88),
+          point(59.975, 10.9),
+          point(59.985, 10.95),
+          point(59.99, 10.99),
+          point(60.0, 11.02),
+        ],
+      }}
+      caption="Caption beneath the map: a synthetic editorial path."
+    />
+    <p style="margin-block: 30vh">End of page.</p>
+  </div>
+</BaseLayout>

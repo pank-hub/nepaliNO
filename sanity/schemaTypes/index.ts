@@ -6,6 +6,7 @@ import {expandableSection} from './expandableSection'
 import {forumCompanionAutomation} from './forumCompanionAutomation'
 import {forumTopicReference} from './forumTopicReference'
 import {informationBox} from './informationBox'
+import {locationMap, mapEditorialPath, mapLocation, mapPlace, mapRoute} from './mapLocation'
 import {communityEvent} from './communityEvent'
 import {newsArticle} from './newsArticle'
 import {norwegianTerm} from './norwegianTerm'
@@ -23,6 +24,11 @@ export const schemaTypes = [
   editorialChart,
   expandableSection,
   informationBox,
+  mapLocation,
+  mapPlace,
+  mapRoute,
+  mapEditorialPath,
+  locationMap,
   articleSummary,
   readAlso,
   publicInformationGuide,

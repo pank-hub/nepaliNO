@@ -346,6 +346,7 @@ export const publicInformationGuide = defineType({
         }),
         defineArrayMember({type: 'editorialChart'}),
         informationBoxBlockMember,
+        defineArrayMember({type: 'locationMap'}),
         expandableSectionBlockMember,
         readAlsoBlockMember,
       ],

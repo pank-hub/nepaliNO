@@ -329,6 +329,7 @@ export const newsArticle = defineType({
         }),
         defineArrayMember({type: 'editorialChart'}),
         informationBoxBlockMember,
+        defineArrayMember({type: 'locationMap'}),
         expandableSectionBlockMember,
         readAlsoBlockMember,
       ],

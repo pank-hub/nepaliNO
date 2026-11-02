@@ -5,12 +5,14 @@ import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import ContentContextRail from '../../../components/content/ContentContextRail.astro'
 import ContextRailPanel from '../../../components/content/ContextRailPanel.astro'
+import LocationMap from '../../../components/content/LocationMap.astro'
 import {getTranslations} from '../../../i18n'
 import {isSectionEnabled} from '../../../config/languageSections'
 import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {DIRECTORY_LISTING_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
+import {isPublicDirectoryLocation, type MapLocation} from '../../../lib/maps/location'
 
 interface TranslationSummary {
   _id: string
@@ -59,6 +61,7 @@ interface DirectoryListingDocument {
   streetAddress?: string
   postalCode?: string
   mapUrl?: string
+  mapLocation?: MapLocation
   coverageModes: string[]
   serviceCounties?: string[]
   serviceMunicipalities?: string[]
@@ -196,6 +199,10 @@ const locationLabel =
   listing.presenceType === 'online-only' || listing.presenceType === 'no-public-location'
     ? presenceTypes[listing.presenceType] || listing.presenceType
     : address || presenceTypes[listing.presenceType] || listing.presenceType
+const publicMapLocation =
+  isPublicDirectoryLocation(listing.presenceType)
+    ? listing.mapLocation
+    : undefined
 const isClosed = ['temporarily-closed', 'permanently-closed'].includes(
   listing.listingStatus,
 )
@@ -322,6 +329,15 @@ const socialLinks = [
           <section class="prose listing-description" aria-label={listing.name}>
             <PortableText value={listing.description} components={portableTextComponents} />
           </section>
+        )}
+
+        {publicMapLocation && (
+          <LocationMap
+            location={publicMapLocation}
+            description={locationLabel}
+            labels={labels.common.maps}
+            title={listing.name}
+          />
         )}
 
         {listing.isVerified && (

@@ -1,0 +1,772 @@
+---
+import {
+  MAP_PROVIDER,
+  ROUTING_PROVIDER,
+  openStreetMapLocationUrl,
+  validateMapLocation,
+  type MapEditorialPath,
+  type MapLocation,
+  type MapPlace,
+  type MapRoute,
+} from "../../lib/maps/location";
+import {
+  iconForPlace,
+  isLegacyBlock,
+  normalizePlaces,
+  publicEditorialPath,
+  publicRoute,
+  validPlaces,
+  validatePlaces,
+} from "../../lib/maps/places";
+
+interface Props {
+  location?: MapLocation;
+  locations?: MapPlace[];
+  initialZoom?: number;
+  route?: MapRoute;
+  editorialPath?: MapEditorialPath;
+  description: string;
+  labels: {
+    load: string;
+    loading: string;
+    failed: string;
+    externalNotice: string;
+    exact: string;
+    approximate: string;
+    openInOsm: string;
+    zoomIn: string;
+    zoomOut: string;
+    approximateRadius: string;
+    locationsList: string;
+    showOnMap: string;
+    defaultPlaceLabel: string;
+    routeHeading: string;
+    routeSummary: string;
+    routeEstimate: string;
+    routeCalculated: string;
+    routeAttribution: string;
+    reportMapError: string;
+  };
+  title?: string;
+  caption?: string;
+  sourceLabel?: string;
+  sourceUrl?: string;
+  class?: string;
+}
+
+const {
+  location,
+  locations,
+  initialZoom,
+  route: routeInput,
+  editorialPath: pathInput,
+  description,
+  labels,
+  title,
+  caption,
+  sourceLabel,
+  sourceUrl,
+  class: className = "",
+} = Astro.props;
+const places = validPlaces(
+  normalizePlaces({ location, locations, title }, labels.defaultPlaceLabel),
+);
+const legacy = isLegacyBlock({ location, locations });
+const error =
+  places.length === 0
+    ? ((legacy ? validateMapLocation(location) : validatePlaces(locations)) ??
+      "Choose a map location.")
+    : undefined;
+const route = places.length > 0 ? publicRoute(routeInput, places) : undefined;
+const path = places.length > 0 ? publicEditorialPath(pathInput) : undefined;
+const single = places.length === 1 ? places[0] : undefined;
+const precision = single?.precision === "approximate" ? "approximate" : "exact";
+const showList = !legacy || places.length > 1;
+// Legacy blocks keep their stored zoom; a lone new exact place may set its own.
+const fixedZoom =
+  route || path || !single
+    ? undefined
+    : legacy
+      ? location?.initialZoom
+      : single.precision === "exact"
+        ? (initialZoom ?? 15)
+        : undefined;
+const safeSourceUrl = (() => {
+  if (!sourceUrl) return undefined;
+  try {
+    const url = new URL(sourceUrl);
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+})();
+// Only a single legacy exact place keeps the block-level link; never one link for many places.
+const mapUrl =
+  !error && legacy && single && single.precision === "exact"
+    ? openStreetMapLocationUrl(single.coordinates!, location?.initialZoom ?? 15)
+    : undefined;
+const radiusText = (place: MapPlace) =>
+  labels.approximateRadius.replace(
+    "{radius}",
+    String(place.radiusMeters ?? ""),
+  );
+const precisionLabel =
+  places.length > 1
+    ? ""
+    : precision === "approximate"
+      ? `${labels.approximate} · ${radiusText(single!)}`
+      : labels.exact;
+const clientPlaces = places.map((place) => ({
+  key: place._key,
+  label: place.label,
+  description: place.description,
+  lat: place.coordinates!.lat,
+  lng: place.coordinates!.lng,
+  precision: place.precision,
+  radius: place.precision === "approximate" ? place.radiusMeters : undefined,
+  icon: place.precision === "exact" ? iconForPlace(place) : undefined,
+  showLabel: place.showLabel !== false,
+}));
+const routeSummary = route
+  ? labels.routeSummary
+      .replace("{distance}", (route.distanceMeters! / 1000).toFixed(1))
+      .replace(
+        "{duration}",
+        String(Math.max(1, Math.round(route.durationSeconds! / 60))),
+      )
+  : "";
+const routeDate = route?.calculatedAt?.slice(0, 10);
+const routeData = route?.geometry;
+const mapId = `location-map-${crypto.randomUUID()}`;
+---
+
+{
+  error ? (
+    <aside
+      class={`location-map location-map--fallback ${className}`}
+      role="note"
+    >
+      {title && <h2>{title}</h2>}
+      <p>{description || error}</p>
+      {caption && <p>{caption}</p>}
+      {safeSourceUrl && (
+        <p>
+          <a href={safeSourceUrl} target="_blank" rel="noopener noreferrer">
+            {sourceLabel || safeSourceUrl}
+          </a>
+        </p>
+      )}
+    </aside>
+  ) : (
+    <figure
+      class={`location-map ${className}`}
+      data-location-map
+      data-map-id={mapId}
+      data-places={JSON.stringify(clientPlaces)}
+      data-route={route ? routeData : undefined}
+      data-path={path ? JSON.stringify(path) : undefined}
+      data-zoom={fixedZoom ?? ""}
+      data-description={description}
+      data-tile-url={MAP_PROVIDER.tiles}
+      data-attribution={MAP_PROVIDER.attribution}
+      data-max-zoom={MAP_PROVIDER.maxZoom}
+      data-referrer-policy={MAP_PROVIDER.referrerPolicy}
+      data-load-label={labels.load}
+      data-loading-label={labels.loading}
+      data-failed-label={labels.failed}
+      data-zoom-in-label={labels.zoomIn}
+      data-zoom-out-label={labels.zoomOut}
+      data-radius-label={labels.approximateRadius}
+    >
+      {title && <h2 class="location-map__title">{title}</h2>}
+      <p class="location-map__description">{description}</p>
+      <p class="location-map__external-notice">{labels.externalNotice}</p>
+      <div class="location-map__stage">
+        <div
+          class="location-map__canvas"
+          data-map-canvas
+          hidden
+          aria-hidden="true"
+        />
+        <div class="location-map__controls" data-map-controls hidden>
+          <button type="button" data-map-zoom-in aria-label={labels.zoomIn}>
+            +
+          </button>
+          <button type="button" data-map-zoom-out aria-label={labels.zoomOut}>
+            −
+          </button>
+        </div>
+      </div>
+      <p
+        class="location-map__status"
+        data-map-status
+        role="status"
+        aria-live="polite"
+      />
+      <div class="location-map__actions">
+        <button type="button" class="location-map__load" data-map-load>
+          {labels.load}
+        </button>
+        {mapUrl && (
+          <a href={mapUrl} target="_blank" rel="noopener noreferrer">
+            {labels.openInOsm}
+          </a>
+        )}
+      </div>
+      {showList && (
+        <section class="location-map__places">
+          <h3 class="location-map__subheading">{labels.locationsList}</h3>
+          <ol>
+            {places.map((place) => (
+              <li data-place-key={place._key}>
+                <strong>{place.label}</strong>
+                <span class="location-map__place-kind">
+                  {place.precision === "approximate"
+                    ? `${labels.approximate} · ${radiusText(place)}`
+                    : labels.exact}
+                </span>
+                {place.description && <p>{place.description}</p>}
+                <span class="location-map__place-actions">
+                  <button
+                    type="button"
+                    data-map-focus={place._key}
+                    aria-label={`${labels.showOnMap}: ${place.label}`}
+                    hidden
+                  >
+                    {labels.showOnMap}
+                  </button>
+                  {place.precision === "exact" && (
+                    <a
+                      href={openStreetMapLocationUrl(place.coordinates!, 17)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${labels.openInOsm}: ${place.label}`}
+                    >
+                      {labels.openInOsm}
+                    </a>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+      {path && (path.label || path.description) && (
+        <section class="location-map__path">
+          {path.label && <h3 class="location-map__subheading">{path.label}</h3>}
+          {path.description && <p>{path.description}</p>}
+        </section>
+      )}
+      {route && (
+        <section class="location-map__route">
+          <h3 class="location-map__subheading">{labels.routeHeading}</h3>
+          <p>
+            {routeSummary} {labels.routeEstimate}
+          </p>
+          <p class="location-map__route-meta">
+            {labels.routeCalculated
+              .replace("{date}", routeDate ?? "")
+              .replace(
+                "{provider}",
+                route.providerName ?? ROUTING_PROVIDER.name,
+              )}{" "}
+            {labels.routeAttribution}{" "}
+            <a
+              href={ROUTING_PROVIDER.fixTheMapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {labels.reportMapError}
+            </a>
+          </p>
+        </section>
+      )}
+      <figcaption class="location-map__caption">
+        {caption && <span>{caption}</span>}
+        {safeSourceUrl && (
+          <span>
+            {sourceLabel && <span>{sourceLabel}: </span>}
+            <a href={safeSourceUrl} target="_blank" rel="noopener noreferrer">
+              {sourceLabel || safeSourceUrl}
+            </a>
+          </span>
+        )}
+        {precisionLabel && <span>{precisionLabel}</span>}
+      </figcaption>
+    </figure>
+  )
+}
+
+<script>
+  import type {
+    Circle,
+    LatLngBoundsExpression,
+    Map as LeafletMap,
+    Marker,
+    TileLayer,
+  } from "leaflet";
+  import {
+    createPlaceIcon,
+    labelContent,
+    placeContent,
+  } from "../../lib/maps/markerIcons";
+  import type { PlaceIcon } from "../../lib/maps/location";
+  import { decodePolyline6 } from "../../lib/maps/places";
+
+  type ClientPlace = {
+    key: string;
+    label: string;
+    description?: string;
+    lat: number;
+    lng: number;
+    precision: "exact" | "approximate";
+    radius?: number;
+    icon?: PlaceIcon;
+    showLabel?: boolean;
+  };
+
+  type MapRecord = {
+    map: LeafletMap;
+    layers: Map<string, Marker | Circle>;
+    tiles: TileLayer;
+    root: HTMLElement;
+  };
+
+  const readPlaces = (raw: string | undefined): ClientPlace[] => {
+    try {
+      const parsed: unknown = JSON.parse(raw ?? "[]");
+      return Array.isArray(parsed)
+        ? parsed.filter(
+            (place): place is ClientPlace =>
+              !!place &&
+              Number.isFinite(place.lat) &&
+              Number.isFinite(place.lng) &&
+              typeof place.label === "string",
+          )
+        : [];
+    } catch {
+      return [];
+    }
+  };
+
+  type ClientPath = {
+    points: [number, number][];
+    color: string;
+    dashArray?: string;
+  };
+
+  const readPath = (raw: string | undefined): ClientPath | undefined => {
+    try {
+      const parsed = JSON.parse(raw ?? "null");
+      return parsed &&
+        Array.isArray(parsed.points) &&
+        parsed.points.length > 1 &&
+        /^#[0-9a-f]{6}$/i.test(parsed.color)
+        ? parsed
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const activeMaps = new Map<string, MapRecord>();
+  let leafletPromise: Promise<typeof import("leaflet")> | undefined;
+
+  const loadLeaflet = () => {
+    leafletPromise ??= Promise.all([
+      import("leaflet"),
+      import("leaflet/dist/leaflet.css"),
+    ]).then(([leaflet]) => leaflet);
+    return leafletPromise;
+  };
+
+  const announce = (root: HTMLElement, message: string) => {
+    const status = root.querySelector<HTMLElement>("[data-map-status]");
+    if (status) status.textContent = message;
+  };
+
+  const dispose = (root: HTMLElement) => {
+    const id = root.dataset.mapId;
+    if (!id) return;
+    activeMaps.get(id)?.map.remove();
+    activeMaps.delete(id);
+    root.querySelector<HTMLElement>("[data-map-canvas]")?.replaceChildren();
+    root
+      .querySelectorAll<HTMLElement>("[data-map-focus]")
+      .forEach((control) => (control.hidden = true));
+  };
+
+  const activate = async (root: HTMLElement) => {
+    const id = root.dataset.mapId;
+    if (!id || activeMaps.has(id)) return;
+
+    const canvas = root.querySelector<HTMLElement>("[data-map-canvas]");
+    const button = root.querySelector<HTMLButtonElement>("[data-map-load]");
+    const controls = root.querySelector<HTMLElement>("[data-map-controls]");
+    const places = readPlaces(root.dataset.places);
+    const zoom = Number(root.dataset.zoom);
+    if (!canvas || !button || !controls || places.length === 0) {
+      announce(root, root.dataset.failedLabel ?? "");
+      return;
+    }
+
+    announce(root, root.dataset.loadingLabel ?? "");
+    button.disabled = true;
+    try {
+      const L = await loadLeaflet();
+      if (!root.isConnected) return;
+      canvas.hidden = false;
+      canvas.setAttribute("aria-hidden", "false");
+      canvas.setAttribute("role", "region");
+      canvas.setAttribute("aria-label", root.dataset.description ?? "");
+      controls.hidden = false;
+      const map = L.map(canvas, {
+        center: [places[0].lat, places[0].lng],
+        zoom: Number.isFinite(zoom) && root.dataset.zoom !== "" ? zoom : 13,
+        maxZoom: Number(root.dataset.maxZoom),
+        keyboard: true,
+        scrollWheelZoom: false,
+        zoomControl: false,
+      });
+      const tiles = L.tileLayer(root.dataset.tileUrl ?? "", {
+        attribution: root.dataset.attribution ?? "",
+        maxZoom: Number(root.dataset.maxZoom),
+        referrerPolicy: (root.dataset.referrerPolicy ||
+          "strict-origin-when-cross-origin") as "strict-origin-when-cross-origin",
+      }).addTo(map);
+      const record: MapRecord = { map, tiles, root, layers: new Map() };
+      activeMaps.set(id, record);
+
+      const bounds = L.latLngBounds([]);
+      const routePoints = root.dataset.route
+        ? (() => {
+            try {
+              return decodePolyline6(root.dataset.route);
+            } catch {
+              return [];
+            }
+          })()
+        : [];
+      if (routePoints.length > 1) {
+        L.polyline(routePoints, {
+          color: "#1d4ed8",
+          weight: 5,
+          opacity: 0.8,
+          interactive: false,
+        }).addTo(map);
+        bounds.extend(routePoints);
+      }
+      const editorialPath = readPath(root.dataset.path);
+      if (editorialPath) {
+        // White casing keeps the highlighted path readable over any base map.
+        L.polyline(editorialPath.points, {
+          color: "#ffffff",
+          weight: 9,
+          opacity: 0.9,
+          interactive: false,
+        }).addTo(map);
+        L.polyline(editorialPath.points, {
+          color: editorialPath.color,
+          weight: 5,
+          opacity: 1,
+          dashArray: editorialPath.dashArray,
+          interactive: false,
+        }).addTo(map);
+        bounds.extend(editorialPath.points);
+      }
+      for (const place of places) {
+        const latlng: [number, number] = [place.lat, place.lng];
+        if (place.precision === "approximate" && place.radius) {
+          const circle = L.circle(latlng, {
+            radius: place.radius,
+            color: "#b42318",
+            fillColor: "#f04438",
+            fillOpacity: 0.18,
+            weight: 2,
+          }).addTo(map);
+          // Popup opens at the click point, never at the circle centre.
+          circle.bindPopup(placeContent(place, document));
+          record.layers.set(place.key, circle);
+          bounds.extend(circle.getBounds());
+        } else {
+          const marker = L.marker(latlng, {
+            title: place.label,
+            keyboard: true,
+            icon: createPlaceIcon(L, place.icon),
+          }).addTo(map);
+          marker.bindPopup(placeContent(place, document));
+          marker.bindTooltip(labelContent(place.label, document), {
+            permanent: place.showLabel !== false,
+            direction: "right",
+            offset: [8, 0],
+          });
+          marker.getElement()?.setAttribute("aria-label", place.label);
+          record.layers.set(place.key, marker);
+          bounds.extend(latlng);
+        }
+      }
+      if (root.dataset.zoom === "" && bounds.isValid()) {
+        map.fitBounds(bounds as LatLngBoundsExpression, {
+          padding: [32, 32],
+          maxZoom: 16,
+        });
+      }
+      const only = places.length === 1 ? places[0] : undefined;
+      if (only?.precision === "approximate") {
+        const radiusLabel = (root.dataset.radiusLabel ?? "").replace(
+          "{radius}",
+          String(Math.round(only.radius ?? 0)),
+        );
+        canvas.setAttribute(
+          "aria-label",
+          `${root.dataset.description ?? ""}. ${radiusLabel}`,
+        );
+      }
+      root
+        .querySelectorAll<HTMLElement>("[data-map-focus]")
+        .forEach((control) => (control.hidden = false));
+
+      tiles.on("tileerror", () => {
+        dispose(root);
+        canvas.hidden = true;
+        canvas.setAttribute("aria-hidden", "true");
+        controls.hidden = true;
+        announce(root, root.dataset.failedLabel ?? "");
+        button.hidden = false;
+        button.disabled = false;
+        button.textContent = root.dataset.loadLabel ?? "";
+      });
+      tiles.once("load", () => announce(root, ""));
+      button.textContent = root.dataset.loadLabel ?? "";
+      button.disabled = false;
+      button.hidden = true;
+      requestAnimationFrame(() => map.invalidateSize());
+      announce(root, "");
+    } catch (error) {
+      dispose(root);
+      canvas.hidden = true;
+      canvas.setAttribute("aria-hidden", "true");
+      controls.hidden = true;
+      button.hidden = false;
+      button.disabled = false;
+      announce(root, root.dataset.failedLabel ?? "");
+      console.error("[location-map] Unable to load map resources.", error);
+    }
+  };
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const zoomControl = target.closest<HTMLButtonElement>(
+      "[data-map-zoom-in], [data-map-zoom-out]",
+    );
+    const zoomRoot = zoomControl?.closest<HTMLElement>("[data-location-map]");
+    const zoomMap = zoomRoot?.dataset.mapId
+      ? activeMaps.get(zoomRoot.dataset.mapId)?.map
+      : undefined;
+    if (zoomControl && zoomMap) {
+      if (zoomControl.hasAttribute("data-map-zoom-in")) zoomMap.zoomIn();
+      else zoomMap.zoomOut();
+      return;
+    }
+    const focusControl = target.closest<HTMLButtonElement>("[data-map-focus]");
+    const focusRoot = focusControl?.closest<HTMLElement>("[data-location-map]");
+    const focusRecord = focusRoot?.dataset.mapId
+      ? activeMaps.get(focusRoot.dataset.mapId)
+      : undefined;
+    if (focusControl && focusRecord) {
+      const layer = focusRecord.layers.get(focusControl.dataset.mapFocus ?? "");
+      if (layer && "getBounds" in layer) {
+        // Approximate area: fit the circle, never open anything at its centre.
+        focusRecord.map.fitBounds(layer.getBounds(), { padding: [32, 32] });
+      } else if (layer) {
+        focusRecord.map.setView(
+          layer.getLatLng(),
+          Math.max(focusRecord.map.getZoom(), 16),
+        );
+        layer.openPopup();
+      }
+      focusRoot
+        ?.querySelector<HTMLElement>("[data-map-canvas]")
+        ?.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    const button = target.closest<HTMLButtonElement>("[data-map-load]");
+    const root = button?.closest<HTMLElement>("[data-location-map]");
+    if (root) void activate(root);
+  });
+
+  const disposeAll = () => {
+    for (const record of activeMaps.values()) record.map.remove();
+    activeMaps.clear();
+  };
+
+  document.addEventListener("astro:before-swap", disposeAll);
+  window.addEventListener("pagehide", disposeAll);
+</script>
+
+<style>
+  .location-map {
+    position: relative;
+    margin: 2rem 0;
+    padding: 1rem;
+    border: 1px solid var(--border, #dce4ec);
+    border-radius: 0.75rem;
+    background: var(--surface, #fff);
+  }
+
+  .location-map__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+  }
+
+  .location-map__description,
+  .location-map__external-notice {
+    margin: 0.5rem 0;
+  }
+
+  .location-map__external-notice {
+    color: var(--text-muted, #526273);
+    font-size: 0.875rem;
+  }
+
+  .location-map__canvas {
+    width: 100%;
+    height: clamp(18rem, 55vw, 32rem);
+    min-height: 18rem;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: #e8eef5;
+    touch-action: pan-y;
+  }
+
+  .location-map [hidden] {
+    display: none !important;
+  }
+
+  .location-map__stage {
+    position: relative;
+  }
+
+  .location-map__controls {
+    position: absolute;
+    z-index: 500;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .location-map__controls button,
+  .location-map__load {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    border: 1px solid var(--border-strong, #bdcad7);
+    border-radius: 0.5rem;
+    background: var(--surface, #fff);
+    color: var(--text, #172534);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .location-map__load {
+    padding: 0.65rem 1rem;
+    background: var(--civic-deep, #172534);
+    color: #fff;
+  }
+
+  .location-map__controls button:focus-visible,
+  .location-map__load:focus-visible,
+  .location-map a:focus-visible {
+    outline: 3px solid var(--focus, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .location-map__actions,
+  .location-map__caption {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    align-items: center;
+    margin-top: 0.75rem;
+  }
+
+  .location-map__status {
+    min-height: 1.5em;
+    margin: 0.35rem 0;
+  }
+
+  .location-map__subheading {
+    margin: 1rem 0 0.35rem;
+    font-size: 1rem;
+  }
+
+  .location-map__places ol {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .location-map__places p {
+    margin: 0.2rem 0 0;
+  }
+
+  .location-map__place-kind {
+    margin-left: 0.5rem;
+    color: var(--text-muted, #526273);
+    font-size: 0.875rem;
+  }
+
+  .location-map__place-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    margin-top: 0.35rem;
+  }
+
+  .location-map__place-actions button {
+    min-height: 2.75rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--border-strong, #bdcad7);
+    border-radius: 0.5rem;
+    background: var(--surface, #fff);
+    color: var(--text, #172534);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .location-map__place-actions button:focus-visible {
+    outline: 3px solid var(--focus, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .location-map__route-meta {
+    color: var(--text-muted, #526273);
+    font-size: 0.875rem;
+  }
+
+  .location-map__caption {
+    color: var(--text-muted, #526273);
+    font-size: 0.875rem;
+  }
+
+  .location-map a {
+    color: var(--civic, #30465c);
+    text-underline-offset: 0.15em;
+  }
+
+  @media (min-width: 48rem) {
+    .location-map {
+      padding: 1.25rem;
+    }
+
+    .location-map__canvas {
+      height: 28rem;
+    }
+  }
+</style>
