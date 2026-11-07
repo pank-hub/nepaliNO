@@ -62,12 +62,14 @@ are outside this module's control. Review disclosure and logging configuration
 before enabling the UI. OpenStreetMap rendering and requests remain independent.
 
 **Release safeguard:** all three endpoints return a generic no-store 404 before
-reading input or contacting Sanity or Entur unless the server process has
+reading input, contacting Redis, Sanity or Entur unless the server process has
 `ENTUR_TRAVEL_API_ENABLED` set to the exact string `true`. It is not a
-`PUBLIC_*` variable and defaults to disabled. Do not enable it in production
-until distributed protection, privacy review and provider-terms review have
-been approved and verified. For local tests only, set it in the server process
-environment; the automated tests set and restore it explicitly.
+`PUBLIC_*` variable and defaults to disabled. Even when it is `true`, the
+endpoints fail closed (503) unless the distributed rate limiter is fully
+configured (see below). Do not enable it in production until privacy review and
+provider-terms review have been approved and the hosted verification has
+passed. For local tests only, set it in the server process environment; the
+automated tests set and restore it explicitly.
 
 `POST /api/entur/availability` accepts only `{type, id}` with the same selector
 validation as journeys. When enabled it independently checks the published
@@ -78,8 +80,8 @@ component remains invisible until this runtime check succeeds. It makes no
 origin or journey request before the visitor searches. A previously open form
 may remain visible until refresh after a flag change, but the routes fail closed.
 Newly eligible static pages require their normal rebuild. All three endpoints,
-including availability (which can query Sanity), require approved distributed
-protection before activation.
+including availability (which can query Sanity), are protected by the
+distributed limiter described below.
 
 The interface uses a deliberately submitted origin query and a selected result,
 then sends `{origin, destination: {type, id}, dateTime, mode: "departAfter"}`.
@@ -90,36 +92,116 @@ transfers and only labels real-time data when the normalized leg says so.
 The browser never directly contacts Entur or supplies destination coordinates.
 No browser geolocation or journey storage is used.
 
-The current size limits, timeout and fixed operations do not provide distributed
-rate limiting. No paid service or in-process rate limiter is included. The
-owner reports that Vercel Hobby's single rate-limit rule already protects Event
-and Directory submissions: preserve that rule unchanged. Suitable separate
-protection must be approved before activation. A possible future design is
-two independent IP-keyed Vercel WAF rules for paths `/api/entur/origins` and
-`/api/entur/journeys` (including trailing-slash variants): initial proposed
-limits are 20 requests per 10 seconds and 120 per 600 seconds, each with a
-429 action. These are starting values requiring owner approval and traffic
-testing, not established provider quotas. Vercel's counters are regional,
-not globally strict, and fixed windows can permit bursts across window edges.
-Verify both rules actually apply, return sanitized 429 responses and a bounded
-`Retry-After`, including across regions; the WAF default response/header
-contract has not been verified. Pro supports two rate rules, whereas Hobby
-currently permits only one. Consult Vercel's regional pricing and assess
-shared-IP false positives before enabling. IP addresses are used by Vercel
-for counting and may appear in firewall logs; review access and retention.
-Never use journey data as a key.
+## Distributed rate limiting
+
+**Why in the application.** Size limits, timeouts and fixed operations bound a
+single request but not request volume. Each travel request can spend Sanity or
+Entur quota and a serverless invocation, so accidental loops and obvious abuse
+need a shared counter. An in-process limiter is not distributed protection and
+is not used. The Vercel WAF submission rule (below) cannot cover these routes
+without changing it, and Hobby permits only one rate-limit rule, so the limit
+is enforced in the application against a provider-isolated store.
+
+**Architecture.** Routes call a provider-neutral limiter
+(`src/lib/rateLimit/server/limiter.ts`) that returns `allowed`, `limited`
+(with retry-after seconds) or `unavailable`. Only
+`src/lib/rateLimit/server/upstash.ts` knows Upstash; it uses `@upstash/redis`
+(REST, serverless-compatible) and `@upstash/ratelimit` with a sliding window
+against an Upstash Redis Pay as You Go database. Limits and categories live in
+`src/lib/rateLimit/server/config.ts`. Every module is server-only and must not
+be imported by components, islands or `PUBLIC_*` variables; a test enforces it.
+
+| Category | Endpoint | Limit |
+| --- | --- | --- |
+| `entur-origin` | `/api/entur/origins` | 20 requests / 60 s |
+| `entur-journey` | `/api/entur/journeys` | 10 requests / 60 s |
+| `entur-availability` | `/api/entur/availability` | 30 requests / 60 s |
+
+Availability runs once per page view that offers travel help, so it has the
+highest limit. Each category is counted independently.
+
+**Environment variables** (server-only, names only; never commit values, never
+prefix with `PUBLIC_`, never log): `UPSTASH_REDIS_REST_URL` (must be `https`),
+`UPSTASH_REDIS_REST_TOKEN` and `RATE_LIMIT_HASH_SECRET` (a long random value
+generated for this purpose; rotating it resets everyone's counters).
+
+**Request order.** For every endpoint: (1) feature flag; (2) method,
+content-type and declared body-size checks, which need no provider; (3)
+distributed rate-limit decision; (4) body reading, JSON parsing and validation;
+(5) Sanity or Entur. A rejected or limited request never reaches step 4 or 5.
+Invalid bodies that pass step 2 still count against the limit.
+
+**Pseudonymous identifier.** The client address is read only from
+`X-Forwarded-For`. Trust boundary: Vercel overwrites that header with the
+connecting client address and does not forward client-supplied values, and the
+Astro Vercel adapter derives `clientAddress` from the same header. A list, port,
+bracket, zone identifier or non-address is treated as untrusted and fails
+closed, as does an absent header (local development and Codespaces). IPv4 is
+used whole, IPv4-mapped IPv6 collapses to IPv4, and other IPv6 addresses are
+reduced to their /64 prefix. The Redis identifier is only
+`HMAC-SHA-256(RATE_LIMIT_HASH_SECRET, normalizedAddress + "\n" + category)` as
+hex, under the key prefix `nepali-no:ratelimit:<category>`. Raw addresses,
+search text, coordinates, datetimes, routes, destination IDs, user agents and
+request bodies are never sent to Redis or logged. Redis keys expire after the
+window. Shared addresses (offices, mobile carriers) share one allowance.
+
+**Fail-closed behavior.**
+
+| Condition | Response |
+| --- | --- |
+| Flag absent or not `true` | 404 `not_found`; no Redis, Sanity or Entur call |
+| Flag `true`, Redis URL, token or hash secret missing | 503 `temporarily_unavailable` |
+| Client address missing or malformed | 503 `temporarily_unavailable` |
+| Upstash error or no answer within 2 s | 503 `temporarily_unavailable` |
+| Limit exceeded | 429 `rate_limited` with `Retry-After` (1–60 s, from the window reset) |
+
+All responses are `private, no-store`. The Upstash SDK's own timeout would
+resolve as *allowed*, so it is disabled and the application enforces the 2 s
+timeout; retries are disabled. The only log line is
+`[rate-limit] unavailable {category, reason}`. The browser maps 429 to its
+existing rate-limited message and other failures to the generic failure message.
+
+**No analytics.** `@upstash/ratelimit` analytics and SDK telemetry are off, so
+no analytics keys or extra metadata are written. The SDK keeps a small
+in-memory cache of already-blocked identifiers per warm instance; it only skips
+Redis calls after Redis has already rejected the identifier.
+
+**Cost and monitoring.** The database runs on Upstash Pay as You Go with a
+maximum budget of $20 (owner-stated operational fact; configured in the Upstash
+console, not in this repository). Each limiter check that reaches Redis is one
+script evaluation; blocked-cache hits and flag-disabled requests make none.
+Watch the Upstash console's command count and usage/billing views after
+activation and after any traffic spike, keep the budget cap and a billing alert
+enabled, and treat an unexpected rise as a possible loop or abuse. Confirm how
+Upstash counts script evaluations before relying on any command estimate.
+
+**Vercel WAF.** The existing Vercel submission rate-limit rule for Event and
+Directory submissions is separate and must not be changed. No Entur WAF rule is
+required by this design and none is represented in the repository.
+
+**Deployment and rollback.** Create the Upstash database and set the three
+variables as server-only, Production-scoped variables in Vercel (leave Preview
+unset until a hosted test is approved). Redeploy, then verify with the flag
+still absent that all three routes return 404. Only then set
+`ENTUR_TRAVEL_API_ENABLED=true` for the target environment and redeploy;
+confirm a normal 200, exceed a limit to see 429 with `Retry-After`, and confirm
+503 if a variable is removed in a preview. To roll back, unset the flag and
+redeploy (routes return 404 and never contact Redis). To rotate credentials,
+replace the variables and redeploy; the flag stays off while the limiter is
+misconfigured because the routes return 503.
 
 The resolver cannot independently detect private or sensitive locations, verify
 real-world location accuracy, or establish Norway coverage; editor confirmation
 is essential.
 The backend foundation and shared Event/Directory interface are implemented.
-The automated Entur test suites pass, and the mocked fixture's origin-selection
-and journey-results flow has been manually verified. No live production Entur
-journey has been tested. Keyboard, mobile, screen-reader and DST acceptance
-checks remain.
+The automated Entur and rate-limit test suites pass (`npm run test:entur`,
+`npm run test:entur-ui`, `npm run test:rate-limit`), and the mocked fixture's
+origin-selection and journey-results flow has been manually verified. No live
+Upstash, no live production Entur journey, and no hosted verification has been
+performed. Keyboard, mobile, screen-reader and DST acceptance checks remain.
 
-Do not enable the routes until distributed protection and its response contract
-are verified. Privacy review, Entur provider-terms and attribution review, and
+Do not enable the routes until the hosted limiter verification passes. Privacy
+review, Entur provider-terms and attribution review, and
 localized Privacy-page disclosure remain required before launch. The initial
 English, Norwegian and Nepali interface wording is present; editorial
 translation polishing and News integration remain future work. Browser
@@ -134,7 +216,8 @@ cover eligible and ineligible content, results and failure states. It returns
 404 outside development and `/dev` is excluded from the sitemap. The normal
 public pages, if enabled locally, use live Entur and published Sanity data:
 do not enter personal data during testing. Run `npm run test:entur` and
-`npm run test:entur-ui`. Browser keyboard, mobile, screen-reader and DST
+`npm run test:entur-ui` and `npm run test:rate-limit` (mocked Redis; no network).
+Browser keyboard, mobile, screen-reader and DST
 acceptance testing is still required.
 
 To roll back, unset the server flag or set it to a value other than `true`, then
