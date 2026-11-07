@@ -1,8 +1,10 @@
 import { directorySubmissionNe } from "./directorySubmission.ne";
 import { eventSubmissionNe } from "./eventSubmission.ne";
+import { travelHelp } from "./travelHelp";
 
 export const ne = {
   languageName: "नेपाली",
+  travelHelp: travelHelp.ne,
 
   navigation: {
     home: "गृहपृष्ठ",

@@ -1,0 +1,20 @@
+---
+import TravelHelp from "./TravelHelp";
+import "./travelHelp.css";
+import type { JourneyRequest } from "../../lib/entur/types";
+import type { SupportedLanguage } from "../../i18n/config";
+import { getTranslations } from "../../i18n";
+
+interface Props {
+  destination: JourneyRequest["destination"];
+  language: SupportedLanguage;
+}
+const { destination, language } = Astro.props;
+---
+
+<TravelHelp
+  client:load
+  destination={destination}
+  language={language}
+  labels={getTranslations(language).travelHelp}
+/>

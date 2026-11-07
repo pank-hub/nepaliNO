@@ -1,8 +1,10 @@
 import { directorySubmissionNB } from "./directorySubmission.nb";
 import { eventSubmissionNB } from "./eventSubmission.nb";
+import { travelHelp } from "./travelHelp";
 
 export const nb = {
   languageName: "Norsk",
+  travelHelp: travelHelp.nb,
 
   navigation: {
     home: "Forside",

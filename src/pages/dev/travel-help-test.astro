@@ -1,0 +1,67 @@
+---
+export const prerender = false
+
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import TravelHelp from '../../components/content/TravelHelp.astro'
+import {eligibleDestinationCoordinates} from '../../lib/entur/eligibility'
+import {isEnturApiEnabled} from '../../lib/entur/server/config'
+
+if (!import.meta.env.DEV) return new Response(null, {status: 404})
+
+const common = {language: 'ne', slug: 'fixture', travelHelpEnabled: true,
+  mapLocation: {precision: 'exact', hasRadius: false, coordinates: {lat: 59.9, lng: 10.7}}}
+const fixtures = [
+  {label: 'Eligible Event', selector: {type: 'communityEvent' as const, id: 'fixture-event'},
+    document: {...common, _id: 'fixture-event', _type: 'communityEvent', eventFormat: 'in-person', eventStatus: 'scheduled'}},
+  {label: 'Eligible Directory listing', selector: {type: 'directoryListing' as const, id: 'fixture-listing'},
+    document: {...common, _id: 'fixture-listing', _type: 'directoryListing', presenceType: 'physical', listingStatus: 'active', publishedAt: '2020-01-01T00:00:00Z'}},
+  {label: 'Ineligible listing (no component expected)', selector: {type: 'directoryListing' as const, id: 'fixture-disabled'},
+    document: {...common, _id: 'fixture-disabled', _type: 'directoryListing', travelHelpEnabled: false, presenceType: 'physical', listingStatus: 'active', publishedAt: '2020-01-01T00:00:00Z'}},
+]
+const cases = ['success', 'no-origins', 'no-journeys', 'origin-timeout', 'origin-failure',
+  'origin-malformed', 'origin-rate-limit', 'journey-timeout', 'journey-failure',
+  'journey-malformed', 'journey-rate-limit', 'disabled']
+---
+<BaseLayout language="ne" title="Travel help fixture" description="Local mock fixture" noIndex>
+  <div class="container" style="padding-block: 2rem">
+    <h1>Travel help fixture (development only)</h1>
+    <p>All travel responses are mocked in this page. No journey data is sent to Entur.</p>
+    {!isEnturApiEnabled() && <p>Start the development server with ENTUR_TRAVEL_API_ENABLED=true to test the interface.</p>}
+    <nav aria-label="Mock scenario">
+      {cases.map((value) => <a href={`?scenario=${value}`} style="display:inline-block; padding:.5rem">{value}</a>)}
+    </nav>
+    <script is:inline>
+      (() => {
+        const realFetch = window.fetch.bind(window)
+        const scenario = new URL(location.href).searchParams.get('scenario') || 'success'
+        const reply = (body, status = 200) => Response.json(body, {status})
+        window.fetch = async (input, init) => {
+          const path = typeof input === 'string' ? input : input instanceof URL ? input.pathname : new URL(input.url).pathname
+          if (!['/api/entur/availability', '/api/entur/origins', '/api/entur/journeys'].includes(path)) return realFetch(input, init)
+          if (path.endsWith('/availability')) return scenario === 'disabled' ? reply({ok:false, code:'not_found'}, 404) : reply({ok:true})
+          const phase = path.endsWith('/origins') ? 'origin' : 'journey'
+          if (scenario === `${phase}-timeout`) return reply({ok:false, code:'timeout'}, 504)
+          if (scenario === `${phase}-failure`) return reply({ok:false, code:'upstream_unavailable'}, 502)
+          if (scenario === `${phase}-malformed`) return reply({ok:true, suggestions:'invalid', journeys:'invalid'})
+          if (scenario === `${phase}-rate-limit`) return reply({ok:false, code:'rate_limited'}, 429)
+          if (path.endsWith('/origins')) return reply({ok:true, suggestions: scenario === 'no-origins' ? [] : [
+            {label:'Oslo S', locality:'Oslo', coordinates:{lat:59.911,lng:10.752}, id:'fixture-stop'},
+            {label:'Bergen stasjon', locality:'Bergen', coordinates:{lat:60.39,lng:5.33}, id:'fixture-bergen'},
+          ]})
+          if (scenario === 'no-journeys') return reply({ok:false, code:'no_journeys'}, 404)
+          const start = new Date(Date.now() + 600000).toISOString()
+          const end = new Date(Date.now() + 2400000).toISOString()
+          return reply({ok:true, journeys:[{startTime:start, endTime:end, durationSeconds:1800, transfers:0, walkingDurationSeconds:300,
+            legs:[{startTime:start, endTime:end, durationSeconds:1800, mode:'bus', isPublicTransport:true,
+              realtime:true, fromName:'Oslo S', toName:'Fixture stop', lineName:'30'}]}]})
+        }
+      })()
+    </script>
+    {isEnturApiEnabled() && fixtures.map(({label, selector, document}) => (
+      <section>
+        <h2>{label}</h2>
+        {eligibleDestinationCoordinates(selector, document) && <TravelHelp destination={selector} language="ne" />}
+      </section>
+    ))}
+  </div>
+</BaseLayout>
