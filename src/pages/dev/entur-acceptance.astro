@@ -1,0 +1,21 @@
+---
+// TEMPORARY Preview acceptance fixture for PR #112. Delete before merge, together with the
+// Preview-only override in src/lib/entur/server/destination.ts.
+export const prerender = false
+
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import TravelHelp from '../../components/content/TravelHelp.astro'
+import {PREVIEW_ACCEPTANCE_DESTINATION_ID} from '../../lib/entur/server/destination'
+
+if (import.meta.env.VERCEL_ENV !== 'preview') return new Response(null, {status: 404})
+---
+<BaseLayout language="ne" title="Entur acceptance fixture" description="Temporary Preview acceptance fixture" noIndex>
+  <div class="container" style="padding-block: 2rem">
+    <h1>Entur acceptance fixture (temporary, Preview only)</h1>
+    <p>
+      This temporary page exists only on Vercel Preview deployments to exercise the real Entur
+      endpoints against a fixed public destination (Oslo S). It must be removed before PR #112 is merged.
+    </p>
+    <TravelHelp destination={{type: 'directoryListing', id: PREVIEW_ACCEPTANCE_DESTINATION_ID}} language="ne" />
+  </div>
+</BaseLayout>

@@ -482,6 +482,37 @@ test('missing and ineligible destinations produce identical responses without En
   }
 })
 
+// TEMPORARY (PR #112 hosted acceptance): remove with the Preview-only destination override.
+const acceptanceSelector = {type: 'directoryListing', id: 'preview-acceptance-oslo'}
+const acceptanceCoordinates = {lat: 59.910357, lng: 10.753051}
+const forbiddenReader = {fetch: async () => { throw new Error('unexpected Sanity query') }}
+
+test('Preview acceptance destination resolves without a Sanity query only in Preview', async () => {
+  assert.deepEqual(await resolveDestination(acceptanceSelector, forbiddenReader, Date.now(), 'preview'),
+    acceptanceCoordinates)
+})
+
+for (const environment of ['production', 'development', undefined]) {
+  test(`Preview acceptance destination is not served in ${environment ?? 'an unset environment'}`, async () => {
+    let queried = false
+    await assert.rejects(
+      resolveDestination(acceptanceSelector, {fetch: async () => { queried = true; return null }}, Date.now(), environment),
+      (error) => error.code === 'destination_unavailable' && error.status === 404)
+    assert.equal(queried, true)
+  })
+}
+
+test('Preview acceptance override requires the exact directoryListing selector', async () => {
+  for (const selector of [{type: 'communityEvent', id: 'preview-acceptance-oslo'},
+    {type: 'directoryListing', id: 'preview-acceptance-oslo-2'}]) {
+    let queried = false
+    await assert.rejects(
+      resolveDestination(selector, {fetch: async () => { queried = true; return null }}, Date.now(), 'preview'),
+      (error) => error.code === 'destination_unavailable')
+    assert.equal(queried, true)
+  }
+})
+
 test('Studio validation requires a public exact pin for enabled travel help', () => {
   const location = {precision: 'exact', coordinates: destinationCoordinates}
   const event = {eventFormat: 'hybrid', mapLocation: location}

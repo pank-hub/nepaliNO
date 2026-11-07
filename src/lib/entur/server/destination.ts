@@ -23,6 +23,12 @@ const QUERIES = {
   }`,
 } as const
 
+// TEMPORARY (PR #112 hosted acceptance): remove with src/pages/dev/entur-acceptance.astro before merge.
+// Entur NSR:StopPlace:59872 "Oslo S, Oslo", verified once with the Entur Geocoder.
+export const PREVIEW_ACCEPTANCE_DESTINATION_ID = 'preview-acceptance-oslo'
+const PREVIEW_ACCEPTANCE_COORDINATES: TravelCoordinates = {lat: 59.910357, lng: 10.753051}
+const deploymentEnvironment = (): string | undefined => import.meta.env?.VERCEL_ENV
+
 type Selector = JourneyRequest['destination']
 type PublicReader = {
   fetch: (query: string, params: {id: string}, options: {signal: AbortSignal}) => Promise<unknown>
@@ -32,7 +38,10 @@ export async function resolveDestination(
   selector: Selector,
   reader: PublicReader = client,
   now = Date.now(),
+  environment: string | undefined = deploymentEnvironment(),
 ): Promise<TravelCoordinates> {
+  if (environment === 'preview' && selector.type === 'directoryListing' &&
+    selector.id === PREVIEW_ACCEPTANCE_DESTINATION_ID) return {...PREVIEW_ACCEPTANCE_COORDINATES}
   let document: unknown
   try {
     document = await reader.fetch(QUERIES[selector.type], {id: selector.id}, {
