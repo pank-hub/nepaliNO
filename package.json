@@ -28,6 +28,7 @@
     "test:event-occurrences": "node --experimental-strip-types --test tests/content/eventOccurrences.test.mjs",
     "test:maps": "node --experimental-strip-types --test tests/maps/location.test.mjs tests/maps/places.test.mjs tests/maps/editorialPath.test.mjs tests/maps/loading.test.mjs",
     "test:entur": "node --experimental-strip-types --test tests/entur/*.test.mjs",
+    "test:entur-ui": "tsx --test tests/entur-ui/*.test.mjs",
     "test:preview": "node --experimental-strip-types --test tests/preview/preview.test.mjs",
     "test:information-box": "node --experimental-strip-types --test tests/informationBox/informationBox.test.mjs",
     "test:article-summary": "node --experimental-strip-types --test tests/articleSummary/articleSummary.test.mjs && npx tsx --test tests/articleSummary/translationEditor.test.mjs",

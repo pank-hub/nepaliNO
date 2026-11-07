@@ -527,6 +527,9 @@ export const EVENT_BY_SLUG_QUERY = `
     language == $language
   ][0] {
     _id,
+    _type,
+    travelHelpEnabled,
+    "travelLocation": mapLocation {precision, "hasRadius": defined(radiusMeters), coordinates {lat, lng}},
     title,
     "slug": slug.current,
     language,
@@ -720,6 +723,9 @@ export const DIRECTORY_LISTING_BY_SLUG_QUERY = `
     publishedAt <= now()
   ][0] {
     _id,
+    _type,
+    travelHelpEnabled,
+    "travelLocation": mapLocation {precision, "hasRadius": defined(radiusMeters), coordinates {lat, lng}},
     name,
     "slug": slug.current,
     language,

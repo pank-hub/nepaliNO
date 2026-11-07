@@ -1,4 +1,4 @@
-# Entur travel assistance: Phase 1
+# Entur travel assistance
 
 The server-only client uses Entur's
 [Geocoder v3 autocomplete](https://developer.entur.no/docs/open-services/geocoder)
@@ -61,13 +61,34 @@ processing search metadata; infrastructure access logs and upstream retention
 are outside this module's control. Review disclosure and logging configuration
 before enabling the UI. OpenStreetMap rendering and requests remain independent.
 
-**Release safeguard:** both endpoints return a generic no-store 404 before
+**Release safeguard:** all three endpoints return a generic no-store 404 before
 reading input or contacting Sanity or Entur unless the server process has
 `ENTUR_TRAVEL_API_ENABLED` set to the exact string `true`. It is not a
 `PUBLIC_*` variable and defaults to disabled. Do not enable it in production
 until distributed protection, privacy review and provider-terms review have
 been approved and verified. For local tests only, set it in the server process
 environment; the automated tests set and restore it explicitly.
+
+`POST /api/entur/availability` accepts only `{type, id}` with the same selector
+validation as journeys. When enabled it independently checks the published
+destination and returns only `{ok: true}` if eligible; errors are no-store.
+When disabled it returns the generic 404 before reading the body or contacting
+Sanity. The prerendered page uses the shared eligibility rules, and the hydrated
+component remains invisible until this runtime check succeeds. It makes no
+origin or journey request before the visitor searches. A previously open form
+may remain visible until refresh after a flag change, but the routes fail closed.
+Newly eligible static pages require their normal rebuild. All three endpoints,
+including availability (which can query Sanity), require approved distributed
+protection before activation.
+
+The interface uses a deliberately submitted origin query and a selected result,
+then sends `{origin, destination: {type, id}, dateTime, mode: "departAfter"}`.
+The date input is Norway time; nonexistent and ambiguous Oslo DST times are
+rejected rather than silently shifted. The same five-minute tolerance and
+90-day elapsed horizon used by the server apply. The UI shows estimated
+transfers and only labels real-time data when the normalized leg says so.
+The browser never directly contacts Entur or supplies destination coordinates.
+No browser geolocation or journey storage is used.
 
 The current size limits, timeout and fixed operations do not provide distributed
 rate limiting. No paid service or in-process rate limiter is included. The
@@ -91,7 +112,61 @@ Never use journey data as a key.
 The resolver cannot independently detect private or sensitive locations, verify
 real-world location accuracy, or establish Norway coverage; editor confirmation
 is essential.
-No component, geolocation, translations or reader consent flow is implemented.
-Do not deploy the endpoints until distributed protection and its response
-contract are verified. Before launch, also review Entur attribution/terms,
-privacy disclosure, event dates and accessible presentation.
+The backend foundation and shared Event/Directory interface are implemented.
+The automated Entur test suites pass, and the mocked fixture's origin-selection
+and journey-results flow has been manually verified. No live production Entur
+journey has been tested. Keyboard, mobile, screen-reader and DST acceptance
+checks remain.
+
+Do not enable the routes until distributed protection and its response contract
+are verified. Privacy review, Entur provider-terms and attribution review, and
+localized Privacy-page disclosure remain required before launch. The initial
+English, Norwegian and Nepali interface wording is present; editorial
+translation polishing and News integration remain future work. Browser
+geolocation is not implemented.
+
+## Local checks and rollback
+
+Start the local development server with `ENTUR_TRAVEL_API_ENABLED=true` in its
+server environment and open `/dev/travel-help-test/`. The page overrides fetch
+for its three travel endpoints with mock responses only; its scenario links
+cover eligible and ineligible content, results and failure states. It returns
+404 outside development and `/dev` is excluded from the sitemap. The normal
+public pages, if enabled locally, use live Entur and published Sanity data:
+do not enter personal data during testing. Run `npm run test:entur` and
+`npm run test:entur-ui`. Browser keyboard, mobile, screen-reader and DST
+acceptance testing is still required.
+
+To roll back, unset the server flag or set it to a value other than `true`, then
+restart/redeploy the server. Confirm generic private no-store 404s from all
+three endpoints and reload open pages; do not change the submission firewall rule.
+
+## Privacy-page draft — editorial and legal review required, not published
+
+**English:** When you search for a public transport journey, nepali.no sends
+the starting place you enter to Entur to find suggestions. When you select a
+starting place and request a journey, nepali.no sends its coordinates, the
+destination and the requested date and time to Entur. Our application does not
+log the submitted travel search data. Infrastructure and providers, including
+Vercel and Entur, may process your IP address and technical request metadata;
+their retention practices are outside our control. Entur's own privacy and
+usage terms apply. Maps shown on the page may also make requests to external
+OpenStreetMap-related providers.
+
+**Norsk:** Når du søker etter en kollektivreise, sender nepali.no startstedet
+du skriver inn til Entur for å finne forslag. Når du velger et startsted og
+søker etter en reise, sender nepali.no koordinatene, reisemålet og ønsket dato
+og klokkeslett til Entur. Applikasjonen vår logger ikke reisesøket du sender inn.
+Infrastruktur og leverandører, blant annet Vercel og Entur, kan behandle
+IP-adressen din og tekniske forespørselsdata; vi styrer ikke deres lagringstid.
+Enturs egne personvern- og bruksvilkår gjelder. Kart på siden kan også sende
+forespørsler til eksterne OpenStreetMap-relaterte leverandører.
+
+**नेपाली:** सार्वजनिक यातायातको यात्रा खोज्दा तपाईंले लेखेको प्रस्थान स्थान
+सुझाव खोज्न nepali.no ले Entur लाई पठाउँछ। प्रस्थान स्थान छानेर यात्रा खोज्दा
+त्यसको निर्देशाङ्क, गन्तव्य र चाहिएको मिति तथा समय Entur लाई पठाइन्छ। हाम्रो
+एप्लिकेसनले तपाईंले पठाएको यात्रा खोजीको विवरण लग गर्दैन। Vercel र Entur
+लगायत पूर्वाधार तथा सेवा प्रदायकले तपाईंको IP ठेगाना र प्राविधिक अनुरोध
+विवरण प्रशोधन गर्न सक्छन्; तिनको भण्डारण अवधि हाम्रो नियन्त्रणमा छैन।
+Entur का आफ्नै गोपनीयता र प्रयोगसम्बन्धी सर्त लागू हुन्छन्। पृष्ठमा देखिने
+नक्साले बाह्य OpenStreetMap सम्बन्धित प्रदायकलाई पनि अनुरोध पठाउन सक्छ।

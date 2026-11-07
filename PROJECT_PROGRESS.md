@@ -53,12 +53,15 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 ## 4. Operational services
 
-### Entur travel assistance (in development; release-disabled)
+### Entur travel assistance (interface implemented; release-disabled)
 
+- The Entur backend foundation and shared Event/Directory interface are implemented. The automated Entur suites pass, and the mocked fixture's origin selection and journey-results flow has been manually verified; no live production Entur journey has been tested. Keyboard, mobile, screen-reader and DST acceptance checks remain.
 - Community Event and Directory Studio records have an editor-controlled `travelHelpEnabled` opt-in; new and existing documents are ineligible unless the value is explicitly `true`. Editors must verify coordinates are appropriate to expose.
-- Server-side resolution uses only eligible published exact public Event and Directory locations; destination coordinates never come from the browser. News remains unsupported and no public travel interface exists.
-- Both Entur endpoints remain disabled in production. Activation requires approved distributed protection, provider-terms review, a localized privacy disclosure and browser acceptance testing.
+- The shared collapsed travel interface supports eligible Events and Directory listings; News remains unsupported. A runtime availability check hides it while the server flag is disabled. Page eligibility uses the same rules as server resolution; destination coordinates never come from the browser, and the journey endpoint rechecks published Sanity content.
+- The availability, origin and journey routes remain disabled by default; production activation has not occurred. Activation requires approved distributed protection for all three routes, verified 429 behaviour, privacy and provider-terms/attribution review, a localized privacy disclosure and browser acceptance testing.
 - The owner reports Vercel Hobby's single rate-limit rule is already used for Event and Directory submissions. Preserve it unchanged; do not reuse it for Entur. No paid service or Vercel upgrade has been approved.
+- Fixture: `/dev/travel-help-test/` with `ENTUR_TRAVEL_API_ENABLED=true` locally; all travel requests on that fixture are mocked. See `src/lib/entur/README.md` for contracts, privacy drafts, testing, and rollback.
+- News integration and editorial polishing of the initial English, Norwegian and Nepali interface wording remain future work.
 
 ### News
 

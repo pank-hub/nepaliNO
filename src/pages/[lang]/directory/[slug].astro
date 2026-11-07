@@ -6,6 +6,7 @@ import SiteHeader from '../../../components/SiteHeader.astro'
 import ContentContextRail from '../../../components/content/ContentContextRail.astro'
 import ContextRailPanel from '../../../components/content/ContextRailPanel.astro'
 import LocationMap from '../../../components/content/LocationMap.astro'
+import TravelHelp from '../../../components/content/TravelHelp.astro'
 import {getTranslations} from '../../../i18n'
 import {isSectionEnabled} from '../../../config/languageSections'
 import type {SupportedLanguage} from '../../../i18n/config'
@@ -13,6 +14,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {DIRECTORY_LISTING_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
 import {isPublicDirectoryLocation, type MapLocation} from '../../../lib/maps/location'
+import {eligibleDestinationCoordinates} from '../../../lib/entur/eligibility'
 
 interface TranslationSummary {
   _id: string
@@ -34,6 +36,9 @@ interface ListingImage {
 
 interface DirectoryListingDocument {
   _id: string
+  _type: 'directoryListing'
+  travelHelpEnabled?: boolean
+  travelLocation?: unknown
   name: string
   slug: string
   language: SupportedLanguage
@@ -125,6 +130,8 @@ const listing = await sanityClient.fetch<DirectoryListingDocument | null>(
 if (!listing) {
   return Astro.redirect(`/${language}/directory/`)
 }
+const travelDestination = {type: 'directoryListing' as const, id: listing._id}
+const offerTravelHelp = !!eligibleDestinationCoordinates(travelDestination, {...listing, mapLocation: listing.travelLocation})
 
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 const publicTranslationStatuses = new Set([
@@ -339,6 +346,7 @@ const socialLinks = [
             title={listing.name}
           />
         )}
+        {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}
 
         {listing.isVerified && (
           <aside class="verification-notice" aria-labelledby="verification-heading">

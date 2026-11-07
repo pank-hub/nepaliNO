@@ -1,7 +1,6 @@
 import {createClient} from '@sanity/client'
-import {isSectionEnabled} from '../../../config/languageSections.ts'
+import {eligibleDestinationCoordinates} from '../eligibility.ts'
 import type {JourneyRequest, TravelCoordinates} from '../types.ts'
-import {isDateTime, isRecord, parseCoordinates} from '../validation.ts'
 import {RequestError} from './http.ts'
 
 // Only the public editorial dataset; never use the submissions dataset or a Viewer token.
@@ -42,23 +41,7 @@ export async function resolveDestination(
   } catch {
     throw new RequestError('destination_service_unavailable', 503)
   }
-  const unavailable = () => { throw new RequestError('destination_unavailable', 404) }
-  if (!isRecord(document) || document._id !== selector.id || document._type !== selector.type ||
-    (document.language !== 'ne' && document.language !== 'nb') ||
-    typeof document.slug !== 'string' || !document.slug.trim()) return unavailable()
-  if (document.travelHelpEnabled !== true) return unavailable()
-  if (selector.type === 'communityEvent') {
-    if (!isSectionEnabled(document.language, 'events') ||
-      !['in-person', 'hybrid'].includes(String(document.eventFormat)) ||
-      !['scheduled', 'rescheduled'].includes(String(document.eventStatus))) return unavailable()
-  } else {
-    if (!isSectionEnabled(document.language, 'directory') ||
-      !['physical', 'physical-and-online'].includes(String(document.presenceType)) ||
-      document.listingStatus !== 'active' || !isDateTime(document.publishedAt) ||
-      Date.parse(document.publishedAt) > now) return unavailable()
-  }
-  const location = document.mapLocation
-  if (!isRecord(location) || location.precision !== 'exact' || location.hasRadius !== false) return unavailable()
-  const coordinates = parseCoordinates(location.coordinates)
-  return coordinates ?? unavailable()
+  const coordinates = eligibleDestinationCoordinates(selector, document, now)
+  if (!coordinates) throw new RequestError('destination_unavailable', 404)
+  return coordinates
 }

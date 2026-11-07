@@ -1,8 +1,10 @@
 import type { DirectorySubmissionCopy } from "./directorySubmission";
 import type { EventSubmissionCopy } from "./eventSubmission";
+import { travelHelp } from "./travelHelp";
 
 export const en = {
   languageName: "English",
+  travelHelp: travelHelp.en,
   common: {
     skipToContent: "Skip to main content",
     readAlso: "Read also",

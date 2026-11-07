@@ -47,12 +47,15 @@ This document is the durable repository handover for a future developer, operato
 
 ## Operational features
 
-### Entur travel assistance (in development; release-disabled)
+### Entur travel assistance (interface implemented; release-disabled)
 
+- The backend foundation and shared Event/Directory interface are implemented. Automated Entur tests pass, and the mocked fixture's origin-selection and journey-results flow has been manually verified. No live production Entur journey has been tested; keyboard, mobile, screen-reader and DST acceptance checks remain.
 - `travelHelpEnabled` on Community Events and Directory listings is editor-controlled opt-in: both new and existing documents are ineligible unless it is explicitly `true`. Studio validates physical presence and an exact pin without a radius; editors must verify that the location is safe to expose.
-- The server resolves only eligible published exact public Event and Directory locations, never browser-supplied destination coordinates. News remains unsupported, and no public travel interface exists.
-- Both Entur routes fail closed unless server-only `ENTUR_TRAVEL_API_ENABLED` is exactly `true`. Leave it unset in production until distributed protection and 429 behaviour are approved and verified, provider-terms review and localized privacy disclosure are complete, and browser acceptance testing passes.
+- The shared collapsed interface supports eligible Events and Directory listings; News remains unsupported. Static page eligibility is checked against the shared rules and runtime availability rechecks published Sanity content. Search sends an origin and a document selector, never destination coordinates; the journey route independently resolves and authorizes the destination again. Content edits need the normal page rebuild for newly eligible controls.
+- The availability, origins and journeys routes fail closed unless server-only `ENTUR_TRAVEL_API_ENABLED` is exactly `true`; production activation has not occurred. The client renders no form until a successful runtime availability response. Keep production disabled until distributed protection for all three routes and 429 behaviour are approved and verified, privacy and provider-terms/attribution review and localized privacy disclosure are complete, and remaining browser acceptance testing passes.
 - The owner reports the Vercel Hobby project's single rate-limit rule is already protecting Event and Directory submissions. Preserve that rule unchanged and do not reuse it for Entur. No paid service or Vercel upgrade has been approved. Do not substitute an in-memory limiter. See `src/lib/entur/README.md` for outstanding protection decisions.
+- Local mock fixture: start development with `ENTUR_TRAVEL_API_ENABLED=true` and open `/dev/travel-help-test/`; its search responses never reach Entur. To roll back, remove or set the server flag to anything other than `true` and redeploy/restart the server; verify all three routes return generic no-store 404s and refresh pages to remove already-open controls.
+- The initial English, Norwegian and Nepali interface wording is present; editorial translation polishing and any News integration remain future work.
 
 ### News
 

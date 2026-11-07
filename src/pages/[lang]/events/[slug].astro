@@ -5,6 +5,7 @@ import SanityPortableImage from '../../../components/SanityPortableImage.astro'
 import ContentContextRail from '../../../components/content/ContentContextRail.astro'
 import ContextRailPanel from '../../../components/content/ContextRailPanel.astro'
 import LocationMap from '../../../components/content/LocationMap.astro'
+import TravelHelp from '../../../components/content/TravelHelp.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
@@ -16,11 +17,13 @@ import {urlFor} from '../../../lib/sanity/image'
 import {getAllDates, nextOccurrence} from '../../../lib/eventOccurrences'
 import {EVENT_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
 import {isPublicEventLocation, type MapLocation} from '../../../lib/maps/location'
+import {eligibleDestinationCoordinates} from '../../../lib/entur/eligibility'
 
 interface TranslationSummary { _id: string; title: string; slug: string; language: SupportedLanguage }
 interface EventImage { asset?: unknown; alt?: string; caption?: string; credit?: string; hotspot?: unknown; crop?: unknown }
 interface EventDocument {
   _id: string; title: string; slug: string; language: SupportedLanguage; translation?: TranslationSummary; summary: string
+  _type: 'communityEvent'; travelHelpEnabled?: boolean; travelLocation?: unknown
   eventLanguages?: string[]; otherEventLanguage?: string; eventType: string; eventFormat: string; eventStatus: string; isAllDay?: boolean
   startDateTime: string; endDateTime?: string; additionalDates?: {startDateTime: string; endDateTime?: string}[] | null; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string; mapLocation?: MapLocation
   accessibilityInformation?: string; transportInformation?: string; onlinePlatform?: string; onlineUrl?: string
@@ -50,6 +53,8 @@ const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const eventTimeZone = 'Europe/Oslo'
 const now = Date.now()
 const event = nextOccurrence(fetchedEvent, now)
+const travelDestination = {type: 'communityEvent' as const, id: fetchedEvent._id}
+const offerTravelHelp = !!eligibleDestinationCoordinates(travelDestination, {...fetchedEvent, mapLocation: fetchedEvent.travelLocation}, now)
 const allDates = getAllDates(fetchedEvent)
 const start = new Date(event.startDateTime).getTime()
 const end = new Date(event.endDateTime || event.startDateTime).getTime()
@@ -152,6 +157,7 @@ const heroTime = event.isAllDay
             title={event.venueName || eventLabels.venue}
           />
         )}
+        {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}
         {event.sourceUrl && <aside class="source-note"><div><strong>{eventLabels.originalSource}</strong><p>{eventLabels.lastVerified}: <time datetime={event.lastVerifiedAt}>{formatDate(event.lastVerifiedAt)}</time></p></div><a class="button button-secondary" href={event.sourceUrl} target="_blank" rel="noopener noreferrer">{eventLabels.originalSource} <span aria-hidden="true">↗</span></a></aside>}
       </main>
 
