@@ -363,10 +363,10 @@ test("article link renders only when enabled and the localized page is published
 test("queries add only the flag and an availability check to News and Guides", async () => {
   const query = await read("../../src/lib/sanity/queries.ts");
   for (const name of [
-    "NEWS_ARTICLE_BY_SLUG_QUERY",
-    "PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY",
+    "NEWS_ARTICLE_PROJECTION",
+    "PUBLIC_INFORMATION_GUIDE_PROJECTION",
   ]) {
-    const start = query.indexOf(`export const ${name}`);
+    const start = query.indexOf(`const ${name}`);
     const text = query.slice(start, query.indexOf("`;", start));
     assert.match(text, /showAiInformationLink,/);
     assert.match(text, /"aiInformationAvailable": count\(\*\[/);
@@ -378,8 +378,8 @@ test("queries add only the flag and an availability check to News and Guides", a
 });
 
 test("link is placed after the body and before Forum content in News and Guides", async () => {
-  const news = await read("../../src/pages/[lang]/news/[slug].astro");
-  const guide = await read("../../src/pages/[lang]/info/[slug].astro");
+  const news = await read("../../src/components/articles/NewsArticleView.astro");
+  const guide = await read("../../src/components/articles/GuideView.astro");
   const at = (source, text) => source.indexOf(text);
   assert.ok(at(news, "<AiInformationLink") > at(news, "<PortableText"));
   assert.ok(at(news, "<AiInformationLink") > at(news, "source-note"));

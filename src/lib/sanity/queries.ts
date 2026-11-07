@@ -218,14 +218,8 @@ export const FEATURED_NEWS_ARTICLES_QUERY = `
   }
 `;
 
-export const NEWS_ARTICLE_BY_SLUG_QUERY = `
-  *[
-    _type == "newsArticle" &&
-    slug.current == $slug &&
-    language == $language &&
-    defined(publishedAt) &&
-    publishedAt <= now()
-  ][0] {
+// Shared News projection. Public and preview queries differ only in their filters.
+const NEWS_ARTICLE_PROJECTION = `{
     _id,
     title,
     "slug": slug.current,
@@ -300,8 +294,35 @@ ${READ_ALSO_BODY_PROJECTION}
     publishedAt,
     sourceUrl,
     isFeatured
-  }
+  }`;
+
+export const NEWS_ARTICLE_BY_SLUG_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    slug.current == $slug &&
+    language == $language &&
+    defined(publishedAt) &&
+    publishedAt <= now()
+  ][0] ${NEWS_ARTICLE_PROJECTION}
 `;
+
+// Preview-only filters: drafts and scheduled articles are allowed. Used solely by the
+// authenticated preview loader with the drafts perspective.
+export const NEWS_ARTICLE_PREVIEW_BY_SLUG_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    slug.current == $slug &&
+    language == $language
+  ][0] ${NEWS_ARTICLE_PROJECTION}
+`;
+
+export const NEWS_ARTICLE_PREVIEW_BY_ID_QUERY = `
+  *[
+    _type == "newsArticle" &&
+    _id == $id
+  ][0] ${NEWS_ARTICLE_PROJECTION}
+`;
+
 export const UPCOMING_EVENTS_BY_LANGUAGE_QUERY = `
   *[
     _type == "communityEvent" &&
@@ -840,14 +861,10 @@ export const URGENT_PUBLIC_INFORMATION_GUIDES_QUERY = `
   }
 `;
 
-export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
-  *[
-    _type == "publicInformationGuide" &&
-    slug.current == $slug &&
-    language == $language &&
-    status == "active"
-  ][0] {
+// Shared Guide projection. Public and preview queries differ only in their filters.
+const PUBLIC_INFORMATION_GUIDE_PROJECTION = `{
     _id,
+    status,
     title,
     "slug": slug.current,
     language,
@@ -925,7 +942,51 @@ ${READ_ALSO_BODY_PROJECTION}
     isFeatured,
     isUrgent,
     fundingAcknowledgement
-  }
+  }`;
+
+export const PUBLIC_INFORMATION_GUIDE_BY_SLUG_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    slug.current == $slug &&
+    language == $language &&
+    status == "active"
+  ][0] ${PUBLIC_INFORMATION_GUIDE_PROJECTION}
+`;
+
+// Preview-only filters: any status is allowed. Used solely by the authenticated preview loader.
+export const PUBLIC_INFORMATION_GUIDE_PREVIEW_BY_SLUG_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    slug.current == $slug &&
+    language == $language
+  ][0] ${PUBLIC_INFORMATION_GUIDE_PROJECTION}
+`;
+
+export const PUBLIC_INFORMATION_GUIDE_PREVIEW_BY_ID_QUERY = `
+  *[
+    _type == "publicInformationGuide" &&
+    _id == $id
+  ][0] ${PUBLIC_INFORMATION_GUIDE_PROJECTION}
+`;
+
+// Published-perspective existence checks used by preview to decide whether a real public URL exists.
+export const NEWS_PUBLIC_ROUTE_EXISTS_QUERY = `
+  count(*[
+    _type == "newsArticle" &&
+    slug.current == $slug &&
+    language == $language &&
+    defined(publishedAt) &&
+    publishedAt <= now()
+  ]) > 0
+`;
+
+export const GUIDE_PUBLIC_ROUTE_EXISTS_QUERY = `
+  count(*[
+    _type == "publicInformationGuide" &&
+    slug.current == $slug &&
+    language == $language &&
+    status == "active"
+  ]) > 0
 `;
 
 export const OVERDUE_PUBLIC_INFORMATION_GUIDES_QUERY = `

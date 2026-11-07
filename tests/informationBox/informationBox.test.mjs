@@ -147,7 +147,7 @@ test('schema variants match the frontend variants and the field is required radi
 
 test('both pages register the renderer', async () => {
   for (const file of ['news', 'info']) {
-    const source = await read(`../../src/pages/[lang]/${file}/[slug].astro`)
+    const source = await read(`../../src/components/articles/${file === 'news' ? 'NewsArticleView' : 'GuideView'}.astro`)
     assert.match(source, /informationBox: language === 'ne'/, file)
     assert.match(source, /_type: 'informationBox'/, file)
   }

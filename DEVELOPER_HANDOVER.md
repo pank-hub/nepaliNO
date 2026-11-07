@@ -161,7 +161,7 @@ Add a new chart type through: (1) the shared chart-type definition, (2) Sanity c
 
 ## Location maps
 
-The OpenStreetMap milestone is implemented on `feature/openstreetmap-mapping`; it is not merged or deployed.
+The OpenStreetMap milestone was merged in PR #107. The loading and action settings below are uncommitted on `feature/sanity-draft-preview` and have not been deployed.
 
 ### Architecture and editing
 
@@ -174,9 +174,17 @@ Editors can click the Studio map, drag the pin, or enter latitude/longitude. Exa
 
 The optional News/Guide map block accepts an optional title, caption and HTTP(S) source label/URL. Its accessible location description is required on every block so map information remains available without the visual map.
 
+- New News/Guide blocks start with `loadingBehavior: 'automatic'`, `showViewOnMapActions: false`, `showOpenStreetMapLinks: false`, `showLocationList: false`, `showOpenStreetMapControl: false` and `showFullscreenControl: true`. Editors can independently configure the actions, list, map-level external link and fullscreen button. Missing values on existing blocks resolve to click-to-load, the previous visible list and actions, and neither new map-level control; Event and Directory maps retain their existing defaults.
+- The optional map-level OpenStreetMap link appears in a separate bar above the map after tiles load, without covering controls or attribution. A single exact location without a path opens a map centred on that location; multiple locations, a path, or an approximate area use the currently displayed centre and zoom. URLs contain numeric map-view coordinates only, never editor text or a precise-marker query. They update after panning or zooming and disappear on failure or when no safe target exists.
+- The fullscreen button appears after normal successful map loading. The stage and viewport-sized modal dialog are siblings inside the map wrapper; fullscreen moves the existing Leaflet stage into the dialog and leaves a temporary placeholder at its original position. Exiting or a failed open restores the stage and removes the placeholder. Layers, centre and zoom are preserved; Escape closes it, focus and background scrolling are restored, and Leaflet is resized on enter, exit and viewport changes. In Presentation the viewport is the preview iframe. Expanding the visible area can request more OSM tiles, but does not call a routing service or reveal additional stored coordinates.
+- When `showLocationList` is false, location text is visually hidden only after tiles load successfully; it remains in the accessibility tree. Enabled location actions remain visible and keyboard accessible. Before loading, on tile or initialization failure, and without JavaScript, the textual list stays visible. Existing legacy single-location maps without the setting keep their existing presentation.
+- Automatic maps observe each block separately with a 300px viewport margin. Where IntersectionObserver is unavailable, the reader can use the load button. A visible location action also loads its map before focusing the location; exact markers open a plain-text popup. The local-only fixture `/dev/location-map-test/` includes two independent automatic maps and a click-to-load map with actions.
+
 ### Public provider, privacy and limitations
 
-- Leaflet is dynamically loaded after the visitor activates a map. No third-party map request occurs before activation. Exact locations may link to OpenStreetMap; approximate locations do not expose a centre-marker link. Both modes retain a textual description and visible OSM attribution.
+- Leaflet is dynamically loaded after a reader activates a map, or automatically when an opted-in map approaches the viewport. Server rendering makes no tile requests. Automatic mode sends OSM requests without a separate click, so the existing external-service notice remains visible in both modes. Exact locations may link to OpenStreetMap; approximate locations do not have a centre marker or precise link. Both modes retain textual information and visible OSM attribution.
+- Approximate circles are not a confidentiality mechanism: their centre coordinates are sent to the browser and can be inferred from the circle. As confirmed by the owner, existing circles are preserved; never use a confidential address as the centre.
+- The owner verified fullscreen in the draft preview with markers, labels, path and attribution, and Escape restoring the map to the article. Further checks remain for focus, scrolling, resize/orientation, tile failure and standalone use. The separately enabled external link opens OpenStreetMap in a new tab.
 - The centralized tile endpoint is `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Respect normal browser caching and Referer. Do not bulk-download/prefetch tiles, add offline use, add an anonymous proxy, or silently fail over. The community tile service has no availability guarantee; map failure must not break content. Follow the [OSMF Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/).
 - There is no embedded public Nominatim integration or visitor geocoding. The Studio search action opens `https://www.openstreetmap.org/search?query=...` in a new tab; it does not implement autocomplete or call Nominatim from nepali.no. This avoids the public Nominatim application's strict one-request-per-second aggregate limit and autocomplete prohibition without adding a shared backend. Editors must not search confidential addresses. See the [Nominatim Usage Policy](https://operations.osmfoundation.org/policies/nominatim/).
 - The pre-activation notice states that the external service receives the visitor's IP address and a request for the map area. This is a transparency notice, not a complete legal/privacy review. Privacy-page wording is Sanity-owned; editors should review and update both localized Privacy documents before publishing map content.
@@ -214,6 +222,52 @@ The optional News/Guide map block accepts an optional title, caption and HTTP(S)
 ### Deployment and rollback
 
 Deploy the public Astro app before making the block available in the canonical Studio. Check existing News, Guide, Event and Directory pages, then create controlled draft examples for exact and approximate maps and test on mobile and desktop before publication. A frontend without the `locationMap` renderer must not be restored while any published map blocks remain; remove/replace those blocks first. Optional Event/Directory coordinates require no migration and older clients ignore them.
+
+## Draft preview (Presentation Tool)
+
+Status: implemented on `feature/sanity-draft-preview`; not deployed. The owner verified local secure Presentation authentication, a completely unpublished News preview, live draft updates without publication, field overlays, an automatically loaded map with multiple markers and icons, a manual highlighted path, the optional hidden list, and fullscreen with labels and attribution; Escape returned the map to the article.
+
+### Architecture and files
+
+- `sanity/presentation/previewConfig.ts` (`createPresentationTool`) is added only to the public-content workspace in `sanity/sanity.config.ts`, never to submission moderation. Origin `https://nepali.no`, `preview: '/preview/'`, enable/disable endpoints, News and Guide document resolvers and locations. `GUIDE_PREVIEW_LANGUAGES = ['ne']` mirrors `src/config/languageSections.ts`; keep them in sync.
+- `src/pages/api/preview/enable.ts` / `disable.ts`: session endpoints. `src/pages/preview/**`: on-demand routes `/preview/[lang]/news/[slug]`, `/preview/[lang]/info/[slug]`, `/preview/news/id/[id]`, `/preview/info/id/[id]` and a cookie-gated `/preview/` landing page.
+- The landing page and document views enable `@sanity/astro/visual-editing` only after a validated preview session. `@astrojs/react` supplies the React renderer required for its client-only island; the integration provides the default history adapter.
+- Astro's Vite configuration pre-optimizes `lodash/isObject.js`, `lodash/groupBy.js` and `react/compiler-runtime`: Visual Editing and its `@sanity/mutate` dependency import these CommonJS subpaths from ESM. Restart Astro after changing this configuration.
+- Studio selects its local preview origin only in a development-only conditional, allowing the production bundler to eliminate the local value. Do not pass the development origin unconditionally to the resolver: doing so embeds the local hostname in the production Studio bundle even if it is not used.
+- `src/lib/preview/config.ts` (pure helpers, cookie signing, redirect sanitiser, headers), `loaderCore.ts` (injectable loader), `loader.ts` (server wrapper). Views: `src/components/articles/NewsArticleView.astro`, `GuideView.astro` (single renderer for public and preview).
+- The `sanity:client` stays `perspective: 'published'`. The preview client is derived per request with the token, `perspective: 'drafts'`, `useCdn: false`, source maps and restricted stega.
+
+### Environment variables (frontend Vercel project only, server-only, never `PUBLIC_*`)
+
+- `SANITY_API_READ_TOKEN`: Sanity **Viewer** token. `PREVIEW_COOKIE_SECRET`: random string, 32+ characters (e.g. `openssl rand -base64 48`). Either missing means preview fails closed (404). Production reads them from `process.env` at request time; they are not inlined in the build.
+- Rotation/revocation: create a new Viewer token in Sanity manage, update the Vercel variable, redeploy, delete the old token. Changing `PREVIEW_COOKIE_SECRET` invalidates all existing preview sessions immediately.
+
+### Session behaviour
+
+- Studio calls `/api/preview/enable?sanity-preview-secret=...&sanity-preview-pathname=...`. The secret is validated with `@sanity/preview-url-secret` (it does not consume the secret; Sanity issues short-lived secrets, so reuse/expiry cannot be tested offline). The redirect must be a relative `/preview/...` path; anything else is rejected.
+- Cookie `nepali_preview`: signed (HMAC-SHA256, expiry and nonce), HttpOnly, Secure, Path=/, Max-Age 3600. SameSite=Lax when Studio is `studio.nepali.no` (same site as nepali.no). For the temporary `nepali-no-studio.vercel.app` Studio (cross-site) it is `SameSite=None; Secure; Partitioned`; Safari or third-party-cookie blocking may still prevent the iframe preview, in which case open the preview in a new tab or use the custom domain. Other Studio origins get 403 (localhost:3333 only in `astro dev`).
+- `/api/preview/disable` clears both cookie variants and redirects to `/ne/`; it makes no draft query.
+- All preview responses: `Cache-Control: private, no-store, max-age=0`, `X-Robots-Tag: noindex, nofollow`, `frame-ancestors` limited to approved Studio origins, `Vary: Cookie`, BaseLayout noindex, no analytics, no forum card or structured data. Missing cookie/config/document, disabled Norwegian Guides and revoked tokens all give a plain 404.
+- `/preview/` is excluded from the sitemap (`src/config/sitemapFilter.mjs`) and disallowed in `public/robots.txt` (not access control; the cookie is).
+- Scheduled News and unpublished changes are previewable. Canonical/og:url are emitted only when a real public page exists. Norwegian Guides stay unavailable.
+
+### Owner actions (none performed yet)
+
+1. Create the Viewer token; set both env vars in the frontend Vercel project (Production and Preview as needed).
+2. Add custom domain `studio.nepali.no` to the Studio Vercel project and DNS; keep the vercel.app URL working.
+3. Sanity CORS origins (exact, no wildcards): `https://studio.nepali.no`, `https://nepali-no-studio.vercel.app`, `https://nepali.no`; credentials only where required.
+4. Deployment order: env vars and CORS, deploy frontend, then deploy Studio.
+5. Rollback: delete/rotate the token or cookie secret (preview stops at once), then revert the PR. Public pages are unaffected.
+
+### Local testing
+
+Studio dev must point Presentation at the local Astro server, otherwise it uses `https://nepali.no` (which has no preview endpoints until deployed). Create the uncommitted `sanity/.env.local` with `SANITY_STUDIO_PREVIEW_ORIGIN=<local Astro origin>` (e.g. `http://localhost:4321`, or the private forwarded Codespaces URL for port 4321) and restart `sanity dev`. It is read only when `NODE_ENV` is `development`; Studio fails with a clear error if it is missing. Production builds always use `https://nepali.no`. Never put the Viewer token or cookie secret in `sanity/.env.local`. In GitHub Codespaces the browser opens Studio on its forwarded HTTPS URL for port 3333, not `localhost`. Add that exact origin (scheme + host only, no path/query/wildcard; do not make ports public) to the uncommitted root `.env` as `PREVIEW_DEV_STUDIO_ORIGIN=<Studio forwarded origin>` and restart `astro dev`. It is read only under `astro dev` (ignored in production builds), is validated as a strict http(s) origin, is added alongside `http://localhost:3333`, and an unapproved Studio origin gets a 403 whose body names the origin to approve. The same origin must also be in the dev Sanity CORS origins. Because the Codespaces Studio and frontend are on different forwarded hosts, the dev cookie is issued as `SameSite=None; Secure; Partitioned`.
+
+The temporary authentication diagnostic logs have been removed. Do not log or share the request URL, secret, token, cookie, or authorization headers. Production failure responses remain generic.
+
+Put a Viewer token and a 32+ char secret in a local `.env` (uncommitted), run `astro dev`, run Studio on `localhost:3333`, and open the Presentation tool. Remaining interactive checks: scheduled News, unpublished changes to published documents, Guide preview and disabled Norwegian Guides; iframe cookies on both hosted Studio origins; mobile/desktop; disable endpoint; CORS. The owner verified automatic near-viewport map loading. For the new list option, check that its hidden/visible states match Studio, screen readers can still read the hidden text, optional actions remain visible and usable, exact markers respond to keyboard, approximate circles have no precise link, and no-JavaScript and blocked-tile fallbacks show the text on desktop and mobile.
+
+Final branch validation: all 25 root test scripts passed; Astro check, root build, Studio-local TypeScript, Studio build and `git diff --check` passed. Production browser assets and public HTML were scanned for preview secret variable names, the preview cookie name and forwarded-host patterns; the temporary Viewer token was not available in the process environment for a value comparison. The Studio build warns about the missing `appId` and local/runtime version mismatch. This remains uncommitted and undeployed.
 
 ## Information boxes
 

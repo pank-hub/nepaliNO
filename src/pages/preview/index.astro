@@ -1,0 +1,32 @@
+---
+export const prerender = false
+
+import {PREVIEW_COOKIE_NAME, getPreviewConfig, verifyPreviewCookieValue} from '../../lib/preview/config.ts'
+import {applyPreviewHeaders, getPreviewEnv, previewNotFound} from '../../lib/preview/loader.ts'
+import {VisualEditing} from '@sanity/astro/visual-editing'
+
+// Landing page for a new Presentation session. It needs the same validated cookie as every preview route.
+const config = getPreviewConfig(getPreviewEnv())
+const active =
+  config !== null &&
+  (await verifyPreviewCookieValue(config.cookieSecret, Astro.cookies.get(PREVIEW_COOKIE_NAME)?.value))
+
+if (!active) return previewNotFound()
+
+applyPreviewHeaders(Astro.response)
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Draft preview | nepali.no</title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; padding: 2rem; color: #172534;">
+    <h1>Draft preview is active</h1>
+    <p>Open a News article or Public Information Guide in the Studio to preview it here.</p>
+    <VisualEditing enabled />
+  </body>
+</html>

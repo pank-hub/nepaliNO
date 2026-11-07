@@ -157,7 +157,7 @@ test('Sanity client uses the published perspective explicitly', async () => {
 
 test('both pages register the renderer', async () => {
   for (const file of ['news', 'info']) {
-    const source = await read(`../../src/pages/[lang]/${file}/[slug].astro`)
+    const source = await read(`../../src/components/articles/${file === 'news' ? 'NewsArticleView' : 'GuideView'}.astro`)
     assert.match(source, /readAlsoCard: language === 'ne' \? ReadAlsoCardNe : ReadAlsoCardNb/, file)
     assert.match(source, /_type: 'readAlsoCard'/, file)
   }

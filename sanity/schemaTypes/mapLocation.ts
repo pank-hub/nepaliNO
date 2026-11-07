@@ -321,6 +321,14 @@ export const locationMap = defineType({
   name: 'locationMap',
   title: 'Location Map',
   type: 'object',
+  initialValue: {
+    loadingBehavior: 'automatic',
+    showViewOnMapActions: false,
+    showOpenStreetMapLinks: false,
+    showLocationList: false,
+    showOpenStreetMapControl: false,
+    showFullscreenControl: true,
+  },
   fields: [
     defineField({
       name: 'title',
@@ -359,6 +367,57 @@ export const locationMap = defineType({
             ? true
             : `Enter a zoom from ${LOCATION_DEFAULTS.minimumZoom} to ${LOCATION_DEFAULTS.maximumZoom}.`,
         ),
+    }),
+    defineField({
+      name: 'loadingBehavior',
+      title: 'Map loading behaviour',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Load automatically near the map', value: 'automatic'},
+          {title: 'Require the reader to load the map', value: 'click'},
+        ],
+        layout: 'radio',
+      },
+      description: 'Existing maps without a setting require the reader to load the map.',
+      validation: (rule) =>
+        rule.custom((value) =>
+          value === undefined || value === 'automatic' || value === 'click'
+            ? true
+            : 'Choose a map loading behaviour.',
+        ),
+    }),
+    defineField({
+      name: 'showViewOnMapActions',
+      title: 'Show “View on map” actions',
+      type: 'boolean',
+      description: 'Existing maps without a setting retain their location actions.',
+    }),
+    defineField({
+      name: 'showOpenStreetMapLinks',
+      title: 'Show “Open in OpenStreetMap” links',
+      type: 'boolean',
+      description: 'Existing maps without a setting retain their OpenStreetMap links. Approximate areas never have precise links.',
+    }),
+    defineField({
+      name: 'showLocationList',
+      title: 'Show location list below the map',
+      type: 'boolean',
+      description:
+        'When disabled, the list remains available to screen readers and appears if the map cannot load. Existing maps retain their list.',
+    }),
+    defineField({
+      name: 'showOpenStreetMapControl',
+      title: 'Show “Open this map in OpenStreetMap” control',
+      type: 'boolean',
+      description:
+        'Show one link for the map view. Existing blocks without this setting do not show it.',
+    }),
+    defineField({
+      name: 'showFullscreenControl',
+      title: 'Show fullscreen map control',
+      type: 'boolean',
+      description: 'Expand the embedded map. Existing blocks without this setting do not show the control.',
     }),
     defineField({
       name: 'editorialPath',

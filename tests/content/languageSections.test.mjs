@@ -41,7 +41,7 @@ test('pages and shared components consult the section configuration', async () =
       read('../../src/components/SiteHeader.astro'),
       read('../../src/components/SiteFooter.astro'),
       read('../../src/pages/[lang]/index.astro'),
-      read('../../src/pages/[lang]/news/[slug].astro'),
+      read('../../src/components/articles/NewsArticleView.astro'),
       read('../../src/pages/[lang]/news/index.astro'),
       read('../../src/pages/[lang]/contact.astro'),
       read('../../src/pages/[lang]/info/index.astro'),

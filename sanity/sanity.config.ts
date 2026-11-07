@@ -1,6 +1,7 @@
 import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
+import {createPresentationTool} from './presentation/previewConfig'
 import {schemaTypes} from './schemaTypes'
 import {submissionSchemaTypes} from './schemaTypes/submissionSchemaTypes'
 
@@ -113,6 +114,7 @@ export default defineConfig([
             ]),
       }),
       visionTool(),
+      createPresentationTool(),
     ],
     schema: {
       types: schemaTypes,

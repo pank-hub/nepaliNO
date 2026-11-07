@@ -1,0 +1,25 @@
+---
+export const prerender = false
+
+import NewsArticleView from '../../../../components/articles/NewsArticleView.astro'
+import type {NewsArticle} from '../../../../components/articles/NewsArticleView.astro'
+import {
+  applyPreviewHeaders,
+  loadPreviewPage,
+  previewNotFound,
+  resolvePublicCanonical,
+} from '../../../../lib/preview/loader.ts'
+
+// Fallback for News without a slug yet. The ID is validated and only newsArticle documents match.
+const result = await loadPreviewPage<NewsArticle>(Astro.cookies, {
+  kind: 'news',
+  id: Astro.params.id,
+})
+
+if (result.status !== 'ok') return previewNotFound()
+
+applyPreviewHeaders(Astro.response)
+const canonicalUrl = await resolvePublicCanonical('news', result.data)
+---
+
+<NewsArticleView article={result.data} language={result.language} canonicalUrl={canonicalUrl} preview />

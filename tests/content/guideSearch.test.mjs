@@ -68,7 +68,7 @@ test('the archive query must keep selecting searchKeywords', async () => {
 test('search keywords are not rendered as visible text or in other guide queries', async () => {
   const [page, detailPage, queries] = await Promise.all([
     read('../../src/pages/[lang]/info/index.astro'),
-    read('../../src/pages/[lang]/info/[slug].astro'),
+    read('../../src/components/articles/GuideView.astro'),
     read('../../src/lib/sanity/queries.ts'),
   ])
   assert.doesNotMatch(page, /\.searchKeywords/)

@@ -15,6 +15,8 @@ interface Props {
   contentType?: "website" | "article";
   publishedAt?: string;
   noIndex?: boolean;
+  // Draft preview: always noindex, no canonical unless one is passed, no analytics.
+  preview?: boolean;
   structuredData?: Record<string, unknown>;
   bodyClass?: string;
 }
@@ -29,10 +31,13 @@ const {
   contentType = "website",
   publishedAt,
   noIndex = false,
+  preview = false,
   structuredData,
   bodyClass = "",
 } = Astro.props;
 
+const robotsNoIndex = noIndex || preview;
+const emitCanonical = !preview || canonicalUrl !== undefined;
 const labels = getTranslations(language);
 const siteOrigin = Astro.site ?? new URL("https://nepali.no");
 const resolvedCanonicalUrl = canonicalUrl ?? new URL(Astro.url.pathname, siteOrigin);
@@ -59,13 +64,13 @@ const openGraphLocale = language === "ne" ? "ne_NP" : "nb_NO";
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    {noIndex && <meta name="robots" content="noindex, nofollow" />}
-    <link rel="canonical" href={resolvedCanonicalUrl} />
+    {robotsNoIndex && <meta name="robots" content="noindex, nofollow" />}
+    {emitCanonical && <link rel="canonical" href={resolvedCanonicalUrl} />}
 
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={contentType} />
-    <meta property="og:url" content={resolvedCanonicalUrl} />
+    {emitCanonical && <meta property="og:url" content={resolvedCanonicalUrl} />}
     <meta property="og:site_name" content="nepali.no" />
     <meta property="og:locale" content={openGraphLocale} />
     {resolvedSocialImage && <meta property="og:image" content={resolvedSocialImage} />}
@@ -104,6 +109,6 @@ const openGraphLocale = language === "ne" ? "ne_NP" : "nb_NO";
 
     <slot name="footer" />
 
-    <Analytics />
+    {!preview && <Analytics />}
   </body>
 </html>
