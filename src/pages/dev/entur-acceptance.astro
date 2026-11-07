@@ -23,10 +23,12 @@ if (import.meta.env.VERCEL_ENV !== 'preview') return new Response(null, {status:
       <h2>Temporary controlled rate-limit test</h2>
       <p>
         Sends up to 21 sequential POST requests to /api/entur/origins with the query "Oslo S", only after
-        you click, and stops at the first HTTP 429. Recovery is available once Retry-After has elapsed.
+        you click, and stops at the first HTTP 429. It starts only 5-25 s into a clock minute so the burst
+        cannot cross a 60-second rate-limit window boundary. Recovery is available once Retry-After has elapsed.
       </p>
-      <button type="button" data-probe="run">Run controlled origin rate-limit test</button>
-      <button type="button" data-probe="recover" disabled>Test recovery</button>
+      <button type="button" class="probe-button" data-probe="run">Run controlled origin rate-limit test</button>
+      <button type="button" class="probe-button" data-probe="recover" disabled>Test recovery</button>
+      <p data-probe="window-status" aria-live="polite"></p>
       <p data-probe="summary" aria-live="polite"></p>
       <ol data-probe="log"></ol>
       <p data-probe="first-429"></p>
@@ -35,6 +37,35 @@ if (import.meta.env.VERCEL_ENV !== 'preview') return new Response(null, {status:
     </section>
   </div>
 </BaseLayout>
+
+<style>
+  /* TEMPORARY (PR #112): visible buttons for the acceptance probe. */
+  .probe-button {
+    display: inline-block;
+    margin: 0.25rem 0.5rem 0.25rem 0;
+    padding: 0.6rem 1.1rem;
+    border: 2px solid #1a4f8b;
+    border-radius: 0.4rem;
+    background: #1a4f8b;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .probe-button:hover:not(:disabled) {
+    background: #123a68;
+  }
+  .probe-button:focus-visible {
+    outline: 3px solid #f5a623;
+    outline-offset: 2px;
+  }
+  .probe-button:disabled {
+    background: #e6e6e6;
+    border-color: #999;
+    color: #555;
+    cursor: not-allowed;
+  }
+</style>
 
 <script>
   // TEMPORARY (PR #112): wires the probe above; nothing runs until a button is clicked.

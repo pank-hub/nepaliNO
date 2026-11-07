@@ -5,6 +5,13 @@ import test from "node:test";
 import { JSDOM } from "jsdom";
 import {
   MAX_REQUESTS,
+  REQUEST_TIMEOUT_MS,
+  RUN_DEADLINE_MS,
+  SAFE_START_MAX_MS,
+  SAFE_START_MIN_MS,
+  WINDOW_MS,
+  isSafeStart,
+  msUntilSafeStart,
   mountRateLimitProbe,
   runRateLimitProbe,
 } from "../../src/lib/entur/previewAcceptance/rateLimitProbe";
@@ -12,7 +19,12 @@ import {
 const markup = `<section>
   <button data-probe="run">Run</button><button data-probe="recover" disabled>Recover</button>
   <p data-probe="summary"></p><ol data-probe="log"></ol><p data-probe="first-429"></p>
-  <p data-probe="retry-after"></p><p data-probe="recovery-result"></p></section>`;
+  <p data-probe="retry-after"></p><p data-probe="recovery-result"></p><p data-probe="window-status"></p></section>`;
+
+// A fixed epoch minute; `at(position)` is the given millisecond position inside it.
+const MINUTE_START = 1_700_000_040_000 - (1_700_000_040_000 % WINDOW_MS);
+const at = (position, minutes = 0) => MINUTE_START + minutes * WINDOW_MS + position;
+const SAFE = () => at(10_000);
 
 const ok = () =>
   new Response(JSON.stringify({ ok: true, suggestions: [{ label: "SECRET-COORDS", coordinates: { lat: 1, lng: 2 } }] }), {
@@ -35,7 +47,7 @@ const scripted = (factories) => {
   return { fetchImpl, calls };
 };
 
-const setup = (fetchImpl) => {
+const setup = (fetchImpl, now = SAFE) => {
   const dom = new JSDOM(markup);
   const ticks = { callback: undefined, cleared: false };
   const timers = {
@@ -43,7 +55,7 @@ const setup = (fetchImpl) => {
     clearInterval: () => (ticks.cleared = true),
   };
   const query = (name) => dom.window.document.querySelector(`[data-probe="${name}"]`);
-  mountRateLimitProbe(dom.window.document, fetchImpl, timers);
+  mountRateLimitProbe(dom.window.document, fetchImpl, timers, now);
   const click = async (name) => {
     query(name).dispatchEvent(new dom.window.Event("click"));
     await new Promise((resolve) => setImmediate(resolve));
@@ -73,7 +85,7 @@ test("a click sends requests to the real same-origin endpoint with the harmless 
 
 test("never sends more than 21 requests", async () => {
   const { fetchImpl, calls } = scripted([ok]);
-  const run = await runRateLimitProbe(fetchImpl);
+  const run = await runRateLimitProbe(fetchImpl, undefined, SAFE);
   assert.equal(MAX_REQUESTS, 21);
   assert.equal(calls.length, 21);
   assert.equal(run.sent, 21);
@@ -83,13 +95,13 @@ test("never sends more than 21 requests", async () => {
 test("stops at the first 429 and records its status", async () => {
   const factories = [...Array(20).fill(ok), limited, ok];
   const { fetchImpl, calls } = scripted(factories);
-  const run = await runRateLimitProbe(fetchImpl);
+  const run = await runRateLimitProbe(fetchImpl, undefined, SAFE);
   assert.equal(calls.length, 21);
   assert.equal(run.sent, 21);
   assert.equal(run.statuses.at(-1), 429);
 
   const early = scripted([ok, ok, limited, ok]);
-  const stopped = await runRateLimitProbe(early.fetchImpl);
+  const stopped = await runRateLimitProbe(early.fetchImpl, undefined, SAFE);
   assert.equal(early.calls.length, 3);
   assert.deepEqual(stopped.statuses, [200, 200, 429]);
   assert.equal(stopped.limited.code, "rate_limited");
@@ -98,7 +110,7 @@ test("stops at the first 429 and records its status", async () => {
 
 test("stops at an unexpected status without further requests", async () => {
   const { fetchImpl, calls } = scripted([ok, () => new Response("{}", { status: 503 }), ok]);
-  const run = await runRateLimitProbe(fetchImpl);
+  const run = await runRateLimitProbe(fetchImpl, undefined, SAFE);
   assert.equal(calls.length, 2);
   assert.deepEqual(run.statuses, [200, 503]);
 });
@@ -172,6 +184,102 @@ const probe = await readFile(
   new URL("../../src/lib/entur/previewAcceptance/rateLimitProbe.ts", import.meta.url),
   "utf8",
 );
+
+test("the safe start interval is 5-25 s into the minute and the countdown targets it", () => {
+  for (const [position, safe, wait] of [
+    [0, false, 5_000], [4_999, false, 1], [5_000, true, 0], [10_000, true, 0], [25_000, true, 0],
+    [25_001, false, 39_999],
+    [30_000, false, 35_000], [59_999, false, 5_001],
+  ]) {
+    assert.equal(isSafeStart(at(position)), safe, String(position));
+    assert.equal(msUntilSafeStart(at(position, 7)), wait, String(position));
+  }
+  assert.equal(SAFE_START_MIN_MS, 5_000);
+  assert.equal(SAFE_START_MAX_MS, 25_000);
+});
+
+test("outside the safe interval nothing is sent and a countdown to the next safe interval is shown", async () => {
+  for (const [position, seconds] of [[30_000, 35], [2_000, 3], [59_000, 6], [25_001, 40]]) {
+    const { fetchImpl, calls } = scripted([ok]);
+    const { query, click } = setup(fetchImpl, () => at(position));
+    await click("run");
+    assert.equal(calls.length, 0, `position ${position}`);
+    assert.match(query("window-status").textContent, new RegExp(`Safe to start in ${seconds} s`));
+    assert.equal(query("run").disabled, true);
+    assert.equal(query("summary").textContent, "");
+  }
+});
+
+test("the button re-enables when the safe interval opens, and never starts by itself", async () => {
+  const { fetchImpl, calls } = scripted([limited]);
+  let clock = at(30_000);
+  const { query, click, ticks } = setup(fetchImpl, () => clock);
+  await click("run");
+  clock = at(40_000);
+  ticks.callback();
+  assert.match(query("window-status").textContent, /Safe to start in 25 s/);
+  assert.equal(query("run").disabled, true);
+  clock = at(5_000, 1);
+  ticks.callback();
+  assert.equal(ticks.cleared, true);
+  assert.match(query("window-status").textContent, /Safe to start now/);
+  assert.equal(query("run").disabled, false);
+  assert.equal(calls.length, 0, "opening the interval does not start the run");
+  await click("run");
+  assert.equal(calls.length, 1);
+  assert.equal(query("window-status").textContent, "");
+});
+
+test("requests can start at both edges of the safe interval", async () => {
+  for (const position of [5_000, 25_000]) {
+    const { fetchImpl, calls } = scripted([limited]);
+    const { click } = setup(fetchImpl, () => at(position));
+    await click("run");
+    assert.equal(calls.length, 1, `position ${position}`);
+  }
+});
+
+test("a run started in the safe interval cannot cross the next 60-second boundary", async () => {
+  assert.ok(SAFE_START_MAX_MS + MAX_REQUESTS * 1_000 < WINDOW_MS, "expected duration (about 1 s per request) ends inside the minute");
+  assert.ok(RUN_DEADLINE_MS + REQUEST_TIMEOUT_MS < WINDOW_MS, "the last request is sent before the deadline and times out before the boundary");
+
+  // Expected conditions: 1 s per request, started at the latest permitted moment.
+  let clock = at(SAFE_START_MAX_MS);
+  const sentAt = [];
+  const normal = await runRateLimitProbe(async () => (sentAt.push(clock), (clock += 1_000), ok()), undefined, () => clock);
+  assert.equal(normal.sent, 21);
+  assert.ok(Math.max(...sentAt) + 1_000 < at(WINDOW_MS));
+
+  // Slow responses: the guard stops sending after 50 s into the minute.
+  clock = at(SAFE_START_MAX_MS);
+  const slowSentAt = [];
+  const slow = await runRateLimitProbe(async () => (slowSentAt.push(clock), (clock += 3_000), ok()), undefined, () => clock);
+  assert.equal(slow.stoppedByDeadline, true);
+  assert.ok(slow.sent < MAX_REQUESTS);
+  assert.ok(slowSentAt.every((time) => time % WINDOW_MS < RUN_DEADLINE_MS));
+
+  // A clock that rolls into the next minute stops the run before any further request.
+  clock = at(24_000);
+  const rolled = [];
+  const crossed = await runRateLimitProbe(async () => (rolled.push(clock), (clock += 20_000), ok()), undefined, () => clock);
+  assert.equal(crossed.sent, 2);
+  assert.equal(crossed.stoppedByDeadline, true);
+  assert.ok(rolled.every((time) => Math.floor(time / WINDOW_MS) === Math.floor(at(24_000) / WINDOW_MS)));
+});
+
+test("every probe request carries a timeout signal", async () => {
+  const { fetchImpl, calls } = scripted([limited]);
+  await runRateLimitProbe(fetchImpl, undefined, SAFE);
+  assert.ok(calls[0].init.signal instanceof AbortSignal);
+});
+
+test("the controls are styled as visible buttons", () => {
+  assert.equal([...page.matchAll(/class="probe-button" data-probe="(run|recover)"/g)].length, 2);
+  const rule = /\.probe-button\s*\{([^}]*)\}/.exec(page)?.[1] ?? "";
+  for (const property of ["padding", "border", "background", "cursor"]) assert.match(rule, new RegExp(`${property}:`));
+  assert.match(page, /\.probe-button:disabled/);
+  assert.match(page, /<style>/);
+});
 
 test("the page is Preview-only and gated before any markup", () => {
   const guard = page.indexOf("if (import.meta.env.VERCEL_ENV !== 'preview') return new Response(null, {status: 404})");
