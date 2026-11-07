@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
+import {validateTravelHelp} from './travelHelpValidation'
 
 export const communityEvent = defineType({
   name: 'communityEvent',
@@ -333,6 +334,17 @@ export const communityEvent = defineType({
       hidden: ({document}) => document?.eventFormat === 'online',
       description:
         'Optional public map position. Add only for an in-person or hybrid event; existing addresses and map links remain unchanged.',
+    }),
+
+    defineField({
+      name: 'travelHelpEnabled',
+      title: 'Offer travel help / How to get there',
+      type: 'boolean',
+      initialValue: false,
+      description:
+        'Allows nepali.no to offer public-transport journey help to this exact public location. Enable only after confirming that the coordinates are appropriate to expose publicly.',
+      validation: (rule) =>
+        rule.custom((value, context) => validateTravelHelp(value, context.document, 'event')),
     }),
 
     defineField({

@@ -47,6 +47,13 @@ This document is the durable repository handover for a future developer, operato
 
 ## Operational features
 
+### Entur travel assistance (in development; release-disabled)
+
+- `travelHelpEnabled` on Community Events and Directory listings is editor-controlled opt-in: both new and existing documents are ineligible unless it is explicitly `true`. Studio validates physical presence and an exact pin without a radius; editors must verify that the location is safe to expose.
+- The server resolves only eligible published exact public Event and Directory locations, never browser-supplied destination coordinates. News remains unsupported, and no public travel interface exists.
+- Both Entur routes fail closed unless server-only `ENTUR_TRAVEL_API_ENABLED` is exactly `true`. Leave it unset in production until distributed protection and 429 behaviour are approved and verified, provider-terms review and localized privacy disclosure are complete, and browser acceptance testing passes.
+- The owner reports the Vercel Hobby project's single rate-limit rule is already protecting Event and Directory submissions. Preserve that rule unchanged and do not reuse it for Entur. No paid service or Vercel upgrade has been approved. Do not substitute an in-memory limiter. See `src/lib/entur/README.md` for outstanding protection decisions.
+
 ### News
 
 Bilingual archives, article pages, homepage presentation, publication scheduling, featured stories, social metadata, and Portable Text rendering are operational. News can store controlled relationships to Public Information Guides and Forum topics. Editors can also curate up to three same-language Related News links on an article; these render on its public article page.
