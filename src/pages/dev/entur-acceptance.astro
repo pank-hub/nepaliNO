@@ -17,5 +17,29 @@ if (import.meta.env.VERCEL_ENV !== 'preview') return new Response(null, {status:
       endpoints against a fixed public destination (Oslo S). It must be removed before PR #112 is merged.
     </p>
     <TravelHelp destination={{type: 'directoryListing', id: PREVIEW_ACCEPTANCE_DESTINATION_ID}} language="ne" />
+
+    <!-- TEMPORARY (PR #112): controlled rate-limit probe; remove before merge. -->
+    <section data-temporary-rate-limit-probe style="margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem">
+      <h2>Temporary controlled rate-limit test</h2>
+      <p>
+        Sends up to 21 sequential POST requests to /api/entur/origins with the query "Oslo S", only after
+        you click, and stops at the first HTTP 429. Recovery is available once Retry-After has elapsed.
+      </p>
+      <button type="button" data-probe="run">Run controlled origin rate-limit test</button>
+      <button type="button" data-probe="recover" disabled>Test recovery</button>
+      <p data-probe="summary" aria-live="polite"></p>
+      <ol data-probe="log"></ol>
+      <p data-probe="first-429"></p>
+      <p data-probe="retry-after"></p>
+      <p data-probe="recovery-result" aria-live="polite"></p>
+    </section>
   </div>
 </BaseLayout>
+
+<script>
+  // TEMPORARY (PR #112): wires the probe above; nothing runs until a button is clicked.
+  import {mountRateLimitProbe} from '../../lib/entur/previewAcceptance/rateLimitProbe'
+
+  const root = document.querySelector('[data-temporary-rate-limit-probe]')
+  if (root) mountRateLimitProbe(root, (input, init) => fetch(input, init))
+</script>
