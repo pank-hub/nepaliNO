@@ -421,7 +421,7 @@ test("article link is an accessible anchor with a decorative icon", async () => 
 
 test("Translation Editor discovers, validates and targets the article-link label", async () => {
   const expected = {
-    ne: "nepali.no मा एआईको प्रयोगबारे जानकारी",
+    ne: "nepali.no मा AI को प्रयोगबारे जानकारी",
     nb: "Informasjon om KI-bruk i nepali.no",
   };
   for (const language of ["ne", "nb"]) {

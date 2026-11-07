@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
+import {validateTravelHelp} from './travelHelpValidation'
 
 const countyOptions = [
   {title: 'Agder', value: 'agder'},
@@ -406,6 +407,17 @@ export const directoryListing = defineType({
       hidden: ({document}) => !physicalPresence(document),
       description:
         'Optional public map position for a physical presence. Use a safe approximate centre; never publish a private home location.',
+    }),
+    defineField({
+      name: 'travelHelpEnabled',
+      title: 'Offer travel help / How to get there',
+      type: 'boolean',
+      group: 'location',
+      initialValue: false,
+      description:
+        'Allows nepali.no to offer public-transport journey help to this exact public location. Enable only after confirming that the coordinates are appropriate to expose publicly.',
+      validation: (rule) =>
+        rule.custom((value, context) => validateTravelHelp(value, context.document, 'directory')),
     }),
     defineField({
       name: 'coverageModes',
