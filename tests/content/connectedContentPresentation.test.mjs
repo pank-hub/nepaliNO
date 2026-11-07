@@ -18,8 +18,8 @@ const [
   forumCard,
 ] =
   await Promise.all([
-    read('../../src/pages/[lang]/news/[slug].astro'),
-    read('../../src/pages/[lang]/info/[slug].astro'),
+    read('../../src/components/articles/NewsArticleView.astro'),
+    read('../../src/components/articles/GuideView.astro'),
     read('../../src/components/content/SupportingGuideCard.astro'),
     read('../../src/components/content/RelatedNewsList.astro'),
     read('../../src/i18n/ne.ts'),

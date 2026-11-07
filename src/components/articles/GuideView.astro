@@ -1,0 +1,740 @@
+---
+import type {SanityImageSource} from '@sanity/image-url'
+import {PortableText} from 'astro-portabletext'
+import {sanityClient} from 'sanity:client'
+import {stegaClean} from '@sanity/client/stega'
+import {VisualEditing} from '@sanity/astro/visual-editing'
+import SanityPortableImage from '../../components/SanityPortableImage.astro'
+import EditorialChartNe from '../../components/content/EditorialChartNe.astro'
+import EditorialChartNb from '../../components/content/EditorialChartNb.astro'
+import ExpandableSectionNe from '../../components/content/ExpandableSectionNe.astro'
+import ExpandableSectionNb from '../../components/content/ExpandableSectionNb.astro'
+import InformationBoxNe from '../../components/content/InformationBoxNe.astro'
+import InformationBoxNb from '../../components/content/InformationBoxNb.astro'
+import LocationMapNe from '../../components/content/LocationMapNe.astro'
+import LocationMapNb from '../../components/content/LocationMapNb.astro'
+import AiInformationLink from '../../components/content/AiInformationLink.astro'
+import ArticleSummary from '../../components/content/ArticleSummary.astro'
+import ReadAlsoCardNe from '../../components/content/ReadAlsoCardNe.astro'
+import ReadAlsoCardNb from '../../components/content/ReadAlsoCardNb.astro'
+import ForumDiscussionCard from '../../components/content/ForumDiscussionCard.astro'
+import RelatedGuidesList from '../../components/content/RelatedGuidesList.astro'
+import RelatedNewsList from '../../components/content/RelatedNewsList.astro'
+import SiteFooter from '../../components/SiteFooter.astro'
+import SiteHeader from '../../components/SiteHeader.astro'
+import {getTranslations} from '../../i18n'
+import {isSectionEnabled} from '../../config/languageSections'
+import type {SupportedLanguage} from '../../i18n/config'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import {urlFor} from '../../lib/sanity/image'
+import {RECENT_NEWS_FOR_GUIDE_QUERY} from '../../lib/sanity/queries'
+import type {EditorialChartInput} from '../../lib/editorialChart/types'
+import type {InformationBoxInput} from '../../lib/informationBox/normalize.ts'
+import type {ArticleSummaryInput} from '../../lib/articleSummary/normalize.ts'
+import type {ReadAlsoInput} from '../../lib/readAlso/normalize.ts'
+import type {ExpandableSectionInput} from '../../lib/expandableSection/normalize.ts'
+import type {LocationMapBlock} from '../../lib/maps/location'
+
+interface TranslationSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  status?: string
+}
+
+interface OfficialLink {
+  label: string
+  url: string
+}
+
+interface ImportantTerm {
+  term: string
+  pronunciation?: string
+  explanation: string
+}
+
+interface RelatedNewsSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  summary: string
+  newsRegion: string
+  category: string
+  publishedAt: string
+}
+
+interface RelatedGuideSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+}
+
+export interface GuideDocument {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  socialImage?: SanityImageSource & {asset?: {_ref: string; _type?: 'reference'}}
+  translation?: TranslationSummary
+  relatedGuides?: RelatedGuideSummary[]
+  summary: string
+  articleSummary?: ArticleSummaryInput | null
+  showAiInformationLink?: boolean
+  aiInformationAvailable?: boolean
+  topic: string
+  intendedAudience?: string[]
+  body?: (
+    | {
+        _type: 'block'
+        _key?: string
+        style?: string
+        children?: {text?: string; _type?: string; _key?: string}[]
+        markDefs?: {_key?: string; _type?: string; href?: string}[]
+        listItem?: string
+      }
+    | {
+        _type: 'image'
+        _key?: string
+        asset?: unknown
+        alt?: string
+        caption?: string
+        credit?: string
+        hotspot?: unknown
+        crop?: unknown
+      }
+    | (EditorialChartInput & {_type: 'editorialChart'; _key?: string})
+    | (InformationBoxInput & {_type: 'informationBox'; _key?: string})
+    | (LocationMapBlock & {_type: 'locationMap'; _key?: string})
+    | (ExpandableSectionInput & {_type: 'expandableSection'; _key?: string})
+    | (ReadAlsoInput & {_type: 'readAlsoCard'; _key?: string})
+  )[]
+  responsibleAgency: string
+  officialSourceUrl: string
+  additionalOfficialLinks?: OfficialLink[]
+  importantTerms?: ImportantTerm[]
+  editorialReviewer: string
+  publishedAt: string
+  lastReviewedAt: string
+  nextReviewAt: string
+  isFeatured?: boolean
+  isUrgent?: boolean
+  fundingAcknowledgement?: string
+}
+
+interface Props {
+  guide: GuideDocument
+  language: SupportedLanguage
+  // Draft preview: noindex, no analytics, preview-aware links, Visual Editing overlays.
+  preview?: boolean
+  // Omitted when there is no real public URL.
+  canonicalUrl?: URL
+}
+
+const {guide, language, preview = false, canonicalUrl} = Astro.props
+const labels = getTranslations(language)
+
+const relatedNews = await sanityClient.fetch<RelatedNewsSummary[]>(
+  RECENT_NEWS_FOR_GUIDE_QUERY,
+  {guideId: guide._id, language},
+)
+
+const relatedGuides = guide.relatedGuides?.filter(Boolean) ?? []
+const socialImageUrl =
+  guide.socialImage?.asset
+    ? urlFor(guide.socialImage).width(1200).height(630).fit('crop').auto('format').url()
+    : undefined
+
+const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+
+const formatDate = (date?: string) =>
+  !date ? '' : new Date(`${date}T00:00:00`).toLocaleDateString(dateLocale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+const formatDateTime = (date?: string) =>
+  !date ? '' : new Date(date).toLocaleDateString(dateLocale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+const portableTextComponents = {
+  type: {
+    image: SanityPortableImage,
+    editorialChart: language === 'ne' ? EditorialChartNe : EditorialChartNb,
+    informationBox: language === 'ne' ? InformationBoxNe : InformationBoxNb,
+    locationMap: language === 'ne' ? LocationMapNe : LocationMapNb,
+    expandableSection: language === 'ne' ? ExpandableSectionNe : ExpandableSectionNb,
+    readAlsoCard: language === 'ne' ? ReadAlsoCardNe : ReadAlsoCardNb,
+  },
+}
+
+const activeTranslation =
+  guide.translation?.status === 'active' ? guide.translation : undefined
+const alternatePath = activeTranslation
+  ? `/${activeTranslation.language}/info/${activeTranslation.slug}/`
+  : `/${alternateLanguage}/info/`
+
+const audienceLabels = labels.information.audiences as Record<string, string>
+const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audience
+---
+
+<BaseLayout
+  language={language}
+  title={`${stegaClean(guide.title)} | nepali.no`}
+  description={stegaClean(guide.summary)}
+  socialImage={socialImageUrl}
+  socialImageAlt={stegaClean(guide.title)}
+  canonicalUrl={canonicalUrl}
+  preview={preview}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={alternatePath}
+  />
+
+  <article class="guide-page">
+    <header class="guide-hero">
+      <div class="container guide-hero__inner">
+        <nav class="breadcrumbs" aria-label={labels.navigation.information}>
+          <a href={`/${language}/`}>{labels.navigation.home}</a>
+          <span aria-hidden="true">/</span>
+          <a href={`/${language}/info/`}>{labels.navigation.information}</a>
+        </nav>
+
+        <div class="guide-hero__badges">
+          <span class="badge badge-success">{guide.responsibleAgency}</span>
+          {guide.isUrgent && (
+            <span class="badge badge-brand">{labels.information.urgentLabel}</span>
+          )}
+          {guide.isFeatured && (
+            <span class="badge">{labels.information.featuredLabel}</span>
+          )}
+        </div>
+
+        <div class="reading-width guide-hero__content">
+          <h1>{guide.title}</h1>
+          <p class="lead">{guide.summary}</p>
+        </div>
+
+        <dl class="guide-summary-meta">
+          <div>
+            <dt>{labels.information.responsibleAgency}</dt>
+            <dd>{guide.responsibleAgency}</dd>
+          </div>
+          <div>
+            <dt>{labels.common.publishedOn}</dt>
+            <dd>
+              <time datetime={guide.publishedAt}>{formatDateTime(guide.publishedAt)}</time>
+            </dd>
+          </div>
+          <div>
+            <dt>{labels.information.lastReviewed}</dt>
+            <dd>
+              <time datetime={guide.lastReviewedAt}>{formatDate(guide.lastReviewedAt)}</time>
+            </dd>
+          </div>
+          <div>
+            <dt>{labels.information.nextReview}</dt>
+            <dd>
+              <time datetime={guide.nextReviewAt}>{formatDate(guide.nextReviewAt)}</time>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </header>
+
+    <div class="container guide-layout">
+      <div class="guide-main">
+        <aside class="trust-notice" aria-labelledby="guide-disclaimer-title">
+          <div class="trust-notice__symbol" aria-hidden="true">i</div>
+          <div>
+            <h2 id="guide-disclaimer-title">{labels.information.disclaimerTitle}</h2>
+            <p>{labels.information.disclaimer}</p>
+          </div>
+        </aside>
+
+        <ArticleSummary summary={guide.articleSummary} language={language} documentId={guide._id} />
+
+        {guide.body && guide.body.length > 0 && (
+          <section class="prose guide-content" aria-label={guide.title}>
+            <PortableText value={guide.body} components={portableTextComponents} />
+          </section>
+        )}
+
+        {guide.importantTerms && guide.importantTerms.length > 0 && (
+          <section class="guide-panel terms-panel" aria-labelledby="important-terms-heading">
+            <p class="eyebrow">Norsk</p>
+            <h2 id="important-terms-heading">{labels.information.importantTerms}</h2>
+            <dl>
+              {guide.importantTerms.map((item) => (
+                <div>
+                  <dt lang="nb">
+                    <strong>{item.term}</strong>
+                    {item.pronunciation && (
+                      <span class="term-pronunciation"> ({item.pronunciation})</span>
+                    )}
+                  </dt>
+                  <dd>{item.explanation}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
+
+        {guide.additionalOfficialLinks && guide.additionalOfficialLinks.length > 0 && (
+          <section class="guide-panel" aria-labelledby="additional-links-heading">
+            <h2 id="additional-links-heading">
+              {labels.information.additionalOfficialLinks}
+            </h2>
+            <ul class="official-links">
+              {guide.additionalOfficialLinks.map((link) => (
+                <li>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <span>{link.label}</span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {guide.intendedAudience && guide.intendedAudience.length > 0 && (
+          <section class="guide-panel" aria-labelledby="intended-audience-heading">
+            <h2 id="intended-audience-heading">{labels.information.intendedAudience}</h2>
+            <ul class="audience-list">
+              {guide.intendedAudience.map((audience) => (
+                <li>{getAudienceLabel(audience)}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {guide.fundingAcknowledgement && (
+          <section class="guide-panel" aria-labelledby="funding-heading">
+            <h2 id="funding-heading">{labels.information.fundingAcknowledgement}</h2>
+            <p>{guide.fundingAcknowledgement}</p>
+          </section>
+        )}
+
+        <AiInformationLink
+          enabled={guide.showAiInformationLink}
+          available={guide.aiInformationAvailable}
+          language={language}
+        />
+
+        {!preview && (
+          <ForumDiscussionCard
+            contentType="publicInformationGuide"
+            language={language}
+            slug={guide.slug}
+            labels={labels.forum}
+          />
+        )}
+      </div>
+
+      <aside class="guide-sidebar" aria-label={labels.information.officialSource}>
+        <section class="official-source-card">
+          <p class="eyebrow">{labels.information.officialSource}</p>
+          <h2>{guide.responsibleAgency}</h2>
+          <p>{labels.footer.disclaimer}</p>
+          <a
+            class="button button-primary"
+            href={guide.officialSourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {labels.information.officialSource}
+            <span aria-hidden="true">↗</span>
+          </a>
+        </section>
+
+        {relatedGuides.length > 0 && (
+          <RelatedGuidesList
+            guides={relatedGuides}
+            heading={labels.information.relatedGuides}
+          />
+        )}
+
+        {relatedNews.length > 0 && (
+          <RelatedNewsList
+            articles={relatedNews}
+            heading={labels.information.relatedNews}
+          />
+        )}
+
+        <section class="review-card">
+          <h2>{labels.information.lastReviewed}</h2>
+          <p class="review-card__date">{formatDate(guide.lastReviewedAt)}</p>
+          <dl>
+            <div>
+              <dt>{labels.information.nextReview}</dt>
+              <dd>{formatDate(guide.nextReviewAt)}</dd>
+            </div>
+            <div>
+              <dt>{labels.information.editorialReviewer}</dt>
+              <dd>{guide.editorialReviewer}</dd>
+            </div>
+          </dl>
+        </section>
+
+        {activeTranslation && (
+          <a class="translation-card" href={alternatePath} hreflang={activeTranslation.language}>
+            <span>{getTranslations(activeTranslation.language).languageName}</span>
+            <strong>{activeTranslation.title}</strong>
+          </a>
+        )}
+      </aside>
+    </div>
+  </article>
+
+  <SiteFooter slot="footer" language={language} />
+  {preview && <VisualEditing enabled />}
+</BaseLayout>
+
+<style>
+  .guide-page {
+    min-width: 0;
+  }
+
+  .guide-hero {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 88% 12%, rgb(198 42 31 / 0.1), transparent 18rem),
+      linear-gradient(135deg, #f5f8fb 0%, #fdfcf9 64%, #fff5f4 100%);
+  }
+
+  .guide-hero__inner {
+    padding-block: clamp(2.5rem, 7vw, 5.5rem);
+  }
+
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+  }
+
+  .breadcrumbs a {
+    color: var(--civic);
+    font-weight: 650;
+  }
+
+  .guide-hero__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block-start: 1.5rem;
+  }
+
+  .guide-hero__content {
+    margin-block-start: 1.25rem;
+  }
+
+  .guide-hero__content h1 {
+    max-width: 18ch;
+    font-size: clamp(2rem, 5vw, 4rem);
+  }
+
+  html[lang="ne"] .guide-hero__content h1 {
+    max-width: none;
+    font-family: Mukta, "Noto Sans Devanagari Variable", "Inter Variable", system-ui, sans-serif;
+    font-weight: 600;
+  }
+
+  .guide-hero__content .lead {
+    margin-block-start: 1.15rem;
+  }
+
+  .guide-summary-meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-block-start: clamp(2rem, 5vw, 3.25rem);
+    padding-block-start: 1.25rem;
+    border-top: 1px solid var(--border-strong);
+  }
+
+  .guide-summary-meta dt,
+  .review-card dt {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 760;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  html[lang="ne"] .guide-summary-meta dt,
+  html[lang="ne"] .review-card dt {
+    font-size: 0.82rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .guide-summary-meta dd {
+    margin: 0.3rem 0 0;
+    color: var(--civic-deep);
+    font-size: 0.92rem;
+    font-weight: 680;
+  }
+
+  .guide-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem);
+    gap: clamp(2rem, 7vw, 5rem);
+    align-items: start;
+    padding-block: clamp(2.5rem, 7vw, 6rem);
+  }
+
+  .guide-main {
+    min-width: 0;
+  }
+
+  .terms-panel dt {
+    color: var(--civic-deep);
+  }
+
+  .term-pronunciation {
+    color: var(--text-soft);
+    font-synthesis: style;
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .trust-notice {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    padding: clamp(1.1rem, 3vw, 1.5rem);
+    border: 1px solid #a5bdd4;
+    border-radius: var(--radius-lg);
+    background: #f5f8fb;
+  }
+
+  .trust-notice__symbol {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--civic);
+    color: #ffffff;
+    font-family: Georgia, serif;
+    font-weight: 700;
+  }
+
+  .trust-notice h2 {
+    font-size: 1.05rem;
+  }
+
+  .trust-notice p {
+    margin-block-start: 0.4rem;
+    color: var(--text-muted);
+  }
+
+  .guide-content {
+    margin-block-start: clamp(2rem, 6vw, 4rem);
+  }
+
+  .guide-panel {
+    margin-block-start: clamp(2rem, 6vw, 4rem);
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .guide-panel h2 {
+    font-size: clamp(1.35rem, 3vw, 1.8rem);
+  }
+
+  .terms-panel {
+    background: var(--surface-warm);
+  }
+
+  .terms-panel h2 {
+    margin-block-start: 0.5rem;
+  }
+
+  .terms-panel dl {
+    display: grid;
+    gap: 1rem;
+    margin-block-start: 1.25rem;
+  }
+
+  .terms-panel dl > div {
+    padding-block-start: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .terms-panel dt {
+    color: var(--brand);
+    font-family: "Inter Variable", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 780;
+  }
+
+  .terms-panel dd {
+    margin: 0.4rem 0 0;
+    color: var(--text-muted);
+  }
+
+  .official-links,
+  .audience-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-block-start: 1.25rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .official-links a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--civic-deep);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .official-links a:hover {
+    border-color: var(--civic);
+    background: var(--surface-muted);
+  }
+
+  .audience-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .audience-list li {
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    color: var(--civic-deep);
+    font-weight: 650;
+  }
+
+  .guide-sidebar {
+    display: grid;
+    gap: 1rem;
+    position: sticky;
+    inset-block-start: 1.5rem;
+  }
+
+  .official-source-card,
+  .review-card,
+  .translation-card {
+    padding: 1.35rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .official-source-card h2 {
+    margin-block-start: 0.5rem;
+    font-size: 1.5rem;
+  }
+
+  .official-source-card p:not(.eyebrow) {
+    margin-block: 0.8rem 1.2rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .official-source-card .button {
+    width: 100%;
+  }
+
+  .review-card h2 {
+    font-size: 1rem;
+  }
+
+  .review-card__date {
+    margin-block-start: 0.35rem;
+    color: var(--civic-deep);
+    font-size: 1.2rem;
+    font-weight: 760;
+  }
+
+  .review-card dl {
+    display: grid;
+    gap: 1rem;
+    margin-block-start: 1.1rem;
+    padding-block-start: 1.1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .review-card dd {
+    margin: 0.25rem 0 0;
+    color: var(--text-muted);
+  }
+
+  .translation-card {
+    display: grid;
+    gap: 0.35rem;
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .translation-card span {
+    color: var(--brand);
+    font-size: 0.8rem;
+    font-weight: 760;
+  }
+
+  .translation-card:hover {
+    border-color: var(--civic);
+    color: var(--civic-deep);
+  }
+
+  @media (max-width: 58rem) {
+    .guide-summary-meta {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .guide-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .guide-sidebar {
+      position: static;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .translation-card {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 38rem) {
+    .guide-hero__inner {
+      padding-block: 2.25rem 2.75rem;
+    }
+
+    .guide-summary-meta,
+    .guide-sidebar,
+    .audience-list {
+      grid-template-columns: 1fr;
+    }
+
+    .guide-layout {
+      padding-block: 2rem 3.5rem;
+    }
+  }
+</style>

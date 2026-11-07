@@ -257,7 +257,7 @@ test("keeps the shared block, safe links, and renderer registered in News and Gu
     );
   }
   for (const file of ["news", "info"]) {
-    const page = await read(`../../src/pages/[lang]/${file}/[slug].astro`);
+    const page = await read(`../../src/components/articles/${file === 'news' ? 'NewsArticleView' : 'GuideView'}.astro`);
     assert.match(page, /expandableSection: language === 'ne'/);
     assert.match(page, /_type: 'expandableSection'/);
   }

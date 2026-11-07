@@ -225,6 +225,6 @@ test("automatic route editor is hidden while the flag is false; stored data stil
 });
 
 test("sitemap excludes the dev-only fixture path", async () => {
-  const config = await read("../../astro.config.mjs");
-  assert.match(config, /translations\|api\|dev/);
+  const filter = await read("../../src/config/sitemapFilter.mjs");
+  assert.match(filter, /translations\|api\|dev\|preview/);
 });

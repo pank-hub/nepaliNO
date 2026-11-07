@@ -1,11 +1,13 @@
 // @ts-check
 
 import sanity from "@sanity/astro";
+import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { loadEnv } from "vite";
+import { isSitemapPage } from "./src/config/sitemapFilter.mjs";
 
 const env = loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), "");
 
@@ -13,6 +15,7 @@ export default defineConfig({
   site: "https://nepali.no",
 
   integrations: [
+    react(),
     sanity({
       projectId: env.PUBLIC_SANITY_PROJECT_ID,
       dataset: env.PUBLIC_SANITY_DATASET,
@@ -22,10 +25,7 @@ export default defineConfig({
       perspective: "published",
     }),
     sitemap({
-      filter: (page) =>
-        new URL(page).pathname !== "/" &&
-        !/^\/(translations|api|dev)(\/|$)/.test(new URL(page).pathname) &&
-        !/\/(directory|events)\/submit\/?$/.test(page),
+      filter: isSitemapPage,
       // On-demand (SSR) public pages are not discovered by the integration.
       customPages: ["ne", "nb"].flatMap((lang) =>
         ["about", "contact", "privacy", "transparency"].map(
@@ -43,5 +43,9 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    // Visual Editing imports these CommonJS subpaths from ESM dependencies.
+    optimizeDeps: {
+      include: ["lodash/isObject.js", "lodash/groupBy.js", "react/compiler-runtime"],
+    },
   },
 });

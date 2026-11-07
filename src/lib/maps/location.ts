@@ -128,10 +128,58 @@ export interface LocationMapBlock {
   initialZoom?: number;
   route?: MapRoute;
   editorialPath?: MapEditorialPath;
+  loadingBehavior?: "automatic" | "click";
+  showViewOnMapActions?: boolean;
+  showOpenStreetMapLinks?: boolean;
+  showLocationList?: boolean;
+  showOpenStreetMapControl?: boolean;
+  showFullscreenControl?: boolean;
   caption?: string;
   sourceLabel?: string;
   sourceUrl?: string;
   accessibleDescription?: string;
+}
+
+// Missing fields belong to existing content and retain the original presentation.
+export function resolveMapDisplaySettings(settings: Pick<
+  LocationMapBlock,
+  "loadingBehavior" | "showViewOnMapActions" | "showOpenStreetMapLinks" | "showLocationList" | "showOpenStreetMapControl" | "showFullscreenControl"
+>) {
+  return {
+    loadingBehavior: settings.loadingBehavior === "automatic" ? "automatic" : "click",
+    showViewOnMapActions: settings.showViewOnMapActions !== false,
+    showOpenStreetMapLinks: settings.showOpenStreetMapLinks !== false,
+    showLocationList: settings.showLocationList !== false,
+    showOpenStreetMapControl: settings.showOpenStreetMapControl === true,
+    showFullscreenControl: settings.showFullscreenControl === true,
+  } as const;
+}
+
+// A map-view URL has no marker, search query or editor-supplied text.
+export function openStreetMapViewUrl(
+  center: MapCoordinates,
+  zoom: number,
+  places: { lat: number; lng: number; precision: LocationPrecision }[],
+  hasPathOrRoute: boolean,
+): string | undefined {
+  if (!places.length) return undefined;
+  const exact = places.length === 1 && places[0].precision === "exact" && !hasPathOrRoute
+    ? places[0]
+    : undefined;
+  if (exact && validateCoordinates(exact)) return undefined;
+  const point = exact ?? center;
+  if (
+    !point ||
+    !Number.isFinite(point.lat) ||
+    !Number.isFinite(point.lng) ||
+    point.lat < -90 ||
+    point.lat > 90 ||
+    !Number.isFinite(zoom) ||
+    zoom < 0 ||
+    zoom > MAP_PROVIDER.maxZoom
+  ) return undefined;
+  const lng = ((point.lng + 180) % 360 + 360) % 360 - 180;
+  return `https://www.openstreetmap.org/#map=${Math.round(zoom)}/${point.lat.toFixed(5)}/${lng.toFixed(5)}`;
 }
 
 export function validateCoordinates(

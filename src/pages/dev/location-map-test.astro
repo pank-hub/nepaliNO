@@ -69,6 +69,44 @@ const iconPlaces = [
     <h1>Location map test (local only)</h1>
     <p>Fixture data only. Not published content.</p>
 
+    <h2>Automatic map with the location list hidden after loading</h2>
+    <LocationMap
+      title="Automatic fixture A"
+      description="Automatically loads near the viewport, with no location actions."
+      labels={labels}
+      locations={routePlaces}
+      loadingBehavior="automatic"
+      showViewOnMapActions={false}
+      showOpenStreetMapLinks={false}
+      showLocationList={false}
+      showFullscreenControl={true}
+    />
+    <p style="margin-block: 100vh">Scroll down to the next independent map.</p>
+    <h2>Second independently loading automatic map</h2>
+    <LocationMap
+      title="Automatic fixture B"
+      description="A second map loads only when it approaches the viewport."
+      labels={labels}
+      locations={iconPlaces}
+      loadingBehavior="automatic"
+      showViewOnMapActions={false}
+      showOpenStreetMapLinks={false}
+    />
+    <p style="margin-block: 30vh">Scroll spacer.</p>
+    <h2>Reader-triggered map with the location list and actions visible</h2>
+    <LocationMap
+      title="Click-to-load fixture"
+      description="Use a location action or load button to show the map."
+      labels={labels}
+      locations={routePlaces}
+      loadingBehavior="click"
+      showViewOnMapActions={true}
+      showOpenStreetMapLinks={true}
+      showLocationList={true}
+      showOpenStreetMapControl={true}
+      showFullscreenControl={true}
+    />
+    <p style="margin-block: 30vh">Scroll spacer.</p>
     <h2>1. Legacy single exact location</h2>
     <LocationMap
       title="Legacy exact fixture"
@@ -80,6 +118,7 @@ const iconPlaces = [
         initialZoom: 16,
       }}
       caption="Exact pin fixture."
+      showOpenStreetMapControl={true}
     />
     <p style="margin-block: 30vh">Scroll spacer.</p>
 
@@ -95,6 +134,7 @@ const iconPlaces = [
         initialZoom: 13,
       }}
       caption="Approximate area fixture."
+      showOpenStreetMapControl={true}
     />
     <p style="margin-block: 30vh">Scroll spacer.</p>
 
@@ -215,6 +255,8 @@ const iconPlaces = [
           point(60.0, 11.02),
         ],
       }}
+      showOpenStreetMapControl={true}
+      showFullscreenControl={true}
       caption="Caption beneath the map: a synthetic editorial path."
     />
     <p style="margin-block: 30vh">End of page.</p>

@@ -212,8 +212,8 @@ test("GROQ projects only the needed fields in both by-slug queries", async () =>
 });
 
 test("pages render the summary before the body", async () => {
-  const news = await read("../../src/pages/[lang]/news/[slug].astro");
-  const guide = await read("../../src/pages/[lang]/info/[slug].astro");
+  const news = await read("../../src/components/articles/NewsArticleView.astro");
+  const guide = await read("../../src/components/articles/GuideView.astro");
   assert.ok(
     news.indexOf("<ArticleSummary") <
       news.indexOf('class="prose article-body"'),

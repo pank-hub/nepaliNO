@@ -1,0 +1,25 @@
+---
+export const prerender = false
+
+import GuideView from '../../../../components/articles/GuideView.astro'
+import type {GuideDocument} from '../../../../components/articles/GuideView.astro'
+import {
+  applyPreviewHeaders,
+  loadPreviewPage,
+  previewNotFound,
+  resolvePublicCanonical,
+} from '../../../../lib/preview/loader.ts'
+
+// Fallback for Guides without a slug yet. The ID is validated and only publicInformationGuide matches.
+const result = await loadPreviewPage<GuideDocument>(Astro.cookies, {
+  kind: 'guide',
+  id: Astro.params.id,
+})
+
+if (result.status !== 'ok') return previewNotFound()
+
+applyPreviewHeaders(Astro.response)
+const canonicalUrl = await resolvePublicCanonical('guide', result.data)
+---
+
+<GuideView guide={result.data} language={result.language} canonicalUrl={canonicalUrl} preview />

@@ -327,8 +327,8 @@ test("only the Studio route action contacts the routing provider", async () => {
     studio.includes("referrerPolicy: 'strict-origin-when-cross-origin'"),
   );
   for (const file of [
-    "../../src/pages/[lang]/news/[slug].astro",
-    "../../src/pages/[lang]/info/[slug].astro",
+    "../../src/components/articles/NewsArticleView.astro",
+    "../../src/components/articles/GuideView.astro",
     "../../src/pages/[lang]/events/[slug].astro",
     "../../src/pages/[lang]/directory/[slug].astro",
   ]) {

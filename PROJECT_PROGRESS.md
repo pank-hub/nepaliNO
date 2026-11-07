@@ -533,3 +533,53 @@ Uncommitted on `feature/openstreetmap-mapping`; not merged, deployed or publishe
 ### 27a. Owner-verified Studio save/reopen (2026-11-02)
 
 Manually verified by the owner after leaving and reopening the document: multiple locations and their order; coordinates, icons and label settings; approximate-area settings; the manual editorial path, its points, colour, style and editorial fields; the saved path remained editable; moving a location displayed the path-review warning. Still unverified: real keyboard/touch devices, native-speaker wording review, Privacy page review.
+
+## 28. 2026-11-03 Secure Sanity draft preview (implemented on `feature/sanity-draft-preview`, not deployed)
+
+- Sanity Presentation Tool + cookie-gated on-demand preview routes. Public pages stay static and published-only; only `/preview/**` and `/api/preview/**` are `prerender = false`.
+- News and Guide markup moved (git mv) into shared `src/components/articles/NewsArticleView.astro` and `GuideView.astro`; public and preview pages both render them. Shared GROQ projections in `src/lib/sanity/queries.ts`; public filters unchanged (regression-tested).
+- Tests: `npm run test:preview` (25 pass). Every `test:*` script passes. `test:display-headline-typography` previously asserted `src/pages/dev` was absent; that was outdated after #107 added the guarded dev map fixture, so it now asserts the fixture is `prerender = false` with a production 404 guard, `/dev` stays in the sitemap exclusion, and no `dist/client/dev` output exists. `astro check` 0 errors, root build, Studio `tsc` and Studio build pass. Built with fake secrets: neither names nor values appear in client assets or the server bundle; public HTML has no Visual Editing code; sitemap has no `/preview` or `/dev` entries. (`astro check` scans `sanity/dist`; delete that ignored folder before running it.)
+- Lockfile: `@sanity/preview-url-secret` 4.1.5 requires `@sanity/client ^7.26.2`; root range `^7.25.0` allows it, so npm deduped everything to 7.28.0 (retained, no manual edit). `sanity/package-lock.json` is unchanged (Studio still 7.25.0). `get-it` and `nanoid` moved as transitive patch updates.
+- Not deployed; Vercel environment, Studio domain and hosted CORS owner actions remain pending (see DEVELOPER_HANDOVER "Draft preview"). Local Presentation authentication and the News workflow below were verified by the owner.
+
+## 29. Owner-verified preview and editorial map presentation
+
+- The owner verified secure local Presentation authentication, a completely unpublished News article, live draft updates without publication, field overlays, and a Location Map with multiple exact locations, different icons, a manual highlighted editorial path, OSM tiles and attribution. This does not imply Guide, scheduled-News or hosted-origin acceptance.
+- New `locationMap` blocks default to `loadingBehavior: 'automatic'`, `showViewOnMapActions: false`, `showOpenStreetMapLinks: false`. Missing settings on existing blocks preserve click-to-load and prior actions. Event and Directory retain their defaults.
+- Automatic maps load independently with IntersectionObserver 300px before the viewport; click-to-load stays available, including as fallback without IntersectionObserver. The external-service notice and textual list remain visible, and the server makes no tile requests. Reader-triggered mode can load and focus an exact marker from a visible location action.
+- Approximate maps retain existing circles without centre markers or precise links. The owner chose to preserve these circles: their coordinates are still sent to the browser and their centre is inferable, so they must not contain confidential locations.
+- Checks: `test:preview` 29/29 and `test:maps` 52/52; language sections, Guide search, connected content, content relationships, headline typography, article summary, information boxes, expandable sections, read-also, Event labels and Event occurrences all passed. Astro check: 0 errors, 0 warnings, 22 hints; root build, Studio-local TypeScript check, Studio build and `git diff --check` passed. The dev fixture's server-rendered HTML was checked for two automatic maps without actions, a click map with both actions, no approximate-area link and no tile images.
+- Remaining manual browser checks: separate automatic maps and distant-map network activity, both settings independently, click-to-load and focus, marker popups, approximate areas, keyboard/mobile, no-JavaScript text, and blocked-tile recovery; preview acceptance for Guides, scheduled News, unpublished changes to published documents, and hosted Studio origins.
+
+## 30. Location list presentation
+
+- The owner verified automatic near-viewport loading. New News/Guide Location Map blocks now default `showLocationList` to false; missing values retain the existing visible list. Existing legacy single-location, Event and Directory presentation is unchanged.
+- The list remains visible until tiles load, and is restored after map failure. When collapsed after successful loading, its text stays in the accessibility tree, while any enabled location actions remain visible. With JavaScript disabled the server-rendered list remains visible.
+- Checks passed: 53 map tests, 29 preview tests, 106 relevant language/content/Event tests, Astro check (0 errors, 0 warnings, 22 hints), root build, Studio-local TypeScript, Studio build and `git diff --check`. The local fixture's server-rendered fallback markup was inspected; browser interaction is still pending.
+- Remaining browser acceptance: confirm hidden and visible settings, screen-reader list text, enabled actions, keyboard marker popups, approximate-area safeguards, no-JavaScript fallback and blocked-tile recovery on desktop and mobile.
+
+## 31. Map-level OpenStreetMap control
+
+- The owner verified automatic loading and the optional visible location list. The uncommitted `showOpenStreetMapControl` now defaults to false for new News/Guide blocks as well as absent values on existing blocks. Per-location OpenStreetMap links remain independently controlled and hidden by default for new blocks.
+- After successful tile loading, a separate link bar above the map opens OpenStreetMap in a new tab. One exact location without a path uses that location; multiple locations, a path or an approximate area use the current displayed centre and zoom, updated on movement. URLs contain no editor text or precise-marker query. The link is hidden on failure or for an invalid target; existing textual fallbacks remain.
+- The local-only map fixture includes exact, multiple, path and approximate examples with the control enabled. Remaining browser checks: verify targets after pan/zoom, no marker on approximate links, link separation from map interactions, keyboard/mobile use, blocked-tile recovery and absent controls on legacy maps.
+
+## 32. Embedded fullscreen map
+
+- On the owner's correction, new News/Guide blocks default `showFullscreenControl` to true, while missing values remain false. The OpenStreetMap link remains optional and separately disabled by default.
+- After successful normal loading, fullscreen opens the same Leaflet stage in a viewport-sized modal dialog; no extra map or routing request is created. Centre, zoom and layers remain intact, attribution stays on the map, Escape or the exit button closes it, focus and page scrolling are restored, and viewport changes invalidate map size. The enlarged visible map can request additional tiles. In Presentation, fullscreen fills the preview iframe, not the surrounding Studio.
+- The dev-only editorial-path fixture combines multiple exact markers and direct labels with an approximate area and a highlighted path. Manual browser acceptance is still required for standalone and Presentation views, keyboard/focus, touch and orientation, scrolling, attribution, failure recovery and independent maps.
+- Checks passed: 58 map tests, 29 preview tests, 103 related language/content tests, Astro check (0 errors, 0 warnings, 22 hints), root build, Studio-local TypeScript, Studio build and `git diff --check`. Fullscreen lifecycle tests use simulated DOM/map objects; they do not replace browser or device acceptance.
+
+## 33. Fullscreen hierarchy correction
+
+- The owner reported `HierarchyRequestError`: the dialog was nested inside the stage that was being appended to it. The dialog is now a sibling of the stage, and a placeholder restores the original position on exit or failed opening. Lifecycle tests enforce DOM ancestry and rollback. Browser retesting remains pending.
+
+## 34. Final owner-performed browser verification
+
+- The owner verified secure Presentation preview of a completely unpublished News article, live draft edits without publishing, Visual Editing overlays, and Location Map rendering. Automatic near-viewport loading, multiple markers and controlled icons, a manual editorial path and the optional hidden list also worked.
+- Fullscreen displayed the same markers, labels, path and attribution; Escape closed it and restored the map to the article. This does not establish Guide or hosted-origin acceptance, mobile/orientation behaviour, focus restoration or blocked-tile recovery.
+- Temporary development-only authentication diagnostic logging was removed; preview validation and generic production responses remain.
+- All 25 repository test scripts passed. Astro check reported 0 errors, 0 warnings and 22 hints; root build, Studio-local TypeScript, Studio build and `git diff --check` passed. Studio build still reports its `appId` and local/runtime version warnings.
+- A production Studio bundle initially contained the local forwarded origin because it was passed to the resolver unconditionally; the development-only branch now permits build-time elimination, and the rebuilt Studio bundle and public assets have no forwarded hostname. Browser assets and public HTML also contained none of the preview secret variable names or cookie name. The temporary Viewer token was not in the process environment, so its value could not be compared.
+- Public queries retain published-only filters and the shared client uses the published perspective; unconfigured preview fails closed, `/preview` and `/dev` are excluded from the sitemap, and automatic FOSSGIS routing remains disabled.

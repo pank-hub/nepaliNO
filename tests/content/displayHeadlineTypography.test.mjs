@@ -5,8 +5,8 @@ import test from 'node:test'
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8')
 const [css, newsPage, guidePage, pkg, astroConfig, vercelJson, portableTextMark] = await Promise.all([
   read('../../src/styles/global.css'),
-  read('../../src/pages/[lang]/news/[slug].astro'),
-  read('../../src/pages/[lang]/info/[slug].astro'),
+  read('../../src/components/articles/NewsArticleView.astro'),
+  read('../../src/components/articles/GuideView.astro'),
   read('../../package.json'),
   read('../../astro.config.mjs'),
   read('../../vercel.json'),
@@ -96,8 +96,15 @@ test('strong stays bold and em stays semantic em, not strong', () => {
 })
 
 test('temporary typography-lab artefacts are absent', async () => {
-  const {existsSync} = await import('node:fs')
-  assert.equal(existsSync(new URL('../../src/pages/dev', import.meta.url)), false)
+  // Originally asserted that src/pages/dev did not exist. PR #107 added the intentional
+  // location-map fixture there, so the requirement is now that it is guarded and never public.
+  const {readFileSync, existsSync} = await import('node:fs')
+  const fixture = readFileSync(new URL('../../src/pages/dev/location-map-test.astro', import.meta.url), 'utf8')
+  assert.match(fixture, /export const prerender = false/)
+  assert.match(fixture, /if \(!import\.meta\.env\.DEV\) \{\s*return new Response\(null, \{ status: 404 \}\)/)
+  const sitemapFilter = readFileSync(new URL('../../src/config/sitemapFilter.mjs', import.meta.url), 'utf8')
+  assert.match(sitemapFilter, /translations\|api\|dev\|preview/)
+  assert.equal(existsSync(new URL('../../dist/client/dev', import.meta.url)), false)
   assert.doesNotMatch(astroConfig, /\/dev/)
   assert.doesNotMatch(vercelJson, /X-Robots-Tag|\/dev/)
   assert.doesNotMatch(pkg, /anek|tiro/i)

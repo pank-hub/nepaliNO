@@ -262,6 +262,7 @@ test("Nepali, Norwegian and English fallback map controls are available", async 
   for (const source of [ne, nb, en]) {
     assert.match(source, /maps:\s*\{/);
     assert.match(source, /externalNotice:/);
+    assert.match(source, /openMapInOsm:/);
     assert.match(source, /approximateRadius:/);
     assert.match(source, /zoomIn:/);
     assert.match(source, /zoomOut:/);

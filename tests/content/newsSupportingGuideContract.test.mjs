@@ -16,7 +16,7 @@ const supportingGuideField = schema.slice(
   schema.indexOf("name: 'summary'", schema.indexOf("name: 'supportingGuide'")),
 )
 const articleQuery = queries.slice(
-  queries.indexOf('export const NEWS_ARTICLE_BY_SLUG_QUERY'),
+  queries.indexOf('const NEWS_ARTICLE_PROJECTION'),
   queries.indexOf('export const UPCOMING_EVENTS_BY_LANGUAGE_QUERY'),
 )
 const reverseQuery = queries.slice(

@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /translations/
 Disallow: /api/
+Disallow: /preview/
 
 Sitemap: https://nepali.no/sitemap-index.xml

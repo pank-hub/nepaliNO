@@ -26,7 +26,8 @@
     "test:news-author-type": "node --experimental-strip-types --test tests/sanity/newsAuthorType.test.mjs",
     "test:news-article-structured-data": "node --experimental-strip-types --test tests/structuredData/newsArticle.test.mjs",
     "test:event-occurrences": "node --experimental-strip-types --test tests/content/eventOccurrences.test.mjs",
-    "test:maps": "node --experimental-strip-types --test tests/maps/location.test.mjs tests/maps/places.test.mjs tests/maps/editorialPath.test.mjs",
+    "test:maps": "node --experimental-strip-types --test tests/maps/location.test.mjs tests/maps/places.test.mjs tests/maps/editorialPath.test.mjs tests/maps/loading.test.mjs",
+    "test:preview": "node --experimental-strip-types --test tests/preview/preview.test.mjs",
     "test:information-box": "node --experimental-strip-types --test tests/informationBox/informationBox.test.mjs",
     "test:article-summary": "node --experimental-strip-types --test tests/articleSummary/articleSummary.test.mjs && npx tsx --test tests/articleSummary/translationEditor.test.mjs",
     "test:expandable-section": "npx tsx --test tests/expandableSection/expandableSection.test.mjs",
@@ -36,6 +37,7 @@
     "test:seo-redirects": "node --experimental-strip-types --test tests/content/seoRedirects.test.mjs"
   },
   "dependencies": {
+    "@astrojs/react": "^6.0.6",
     "@astrojs/sitemap": "^3.7.4",
     "@astrojs/vercel": "^11.0.4",
     "@fontsource-variable/inter": "^5.3.0",
@@ -44,6 +46,7 @@
     "@sanity/astro": "^3.5.0",
     "@sanity/client": "^7.25.0",
     "@sanity/image-url": "^2.1.1",
+    "@sanity/preview-url-secret": "^4.1.5",
     "@sanity/webhook": "^4.0.4",
     "@tailwindcss/vite": "^4.3.3",
     "@types/leaflet": "^1.9.22",
