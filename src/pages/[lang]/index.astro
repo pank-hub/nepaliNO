@@ -2039,7 +2039,9 @@ const directoryLogoUrl = (logo?: HomeArticleImage) =>
     @media (min-width: 63.001rem) {
       .home-hero__grid {
         gap: clamp(2.5rem, 6vw, 5.5rem);
-        padding-block: clamp(3.5rem, 6vw, 5.75rem);
+        /* Desktop only: content-driven height; no min-height. Smaller than the tablet padding above. */
+        padding-block-start: clamp(2.25rem, 3.4vw, 3.4rem);
+        padding-block-end: clamp(1.25rem, 1.6vw, 1.5rem);
       }
 
       .home-news {
