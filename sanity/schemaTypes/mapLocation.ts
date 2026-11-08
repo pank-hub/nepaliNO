@@ -320,6 +320,31 @@ export const mapEditorialPath = defineType({
   },
 })
 
+export const mapPresentation = defineType({
+  name: 'mapPresentation',
+  title: 'Map Presentation',
+  type: 'object',
+  description: 'These settings use the existing Map Coordinates. Public maps load immediately and always offer fullscreen.',
+  fields: [
+    defineField({name: 'title', title: 'Public map title', type: 'string', validation: (rule) => rule.max(120)}),
+    defineField({name: 'markerLabel', title: 'Public place or pin label', type: 'string', validation: (rule) => rule.max(80)}),
+    defineField({name: 'caption', title: 'Caption', type: 'text', rows: 2, validation: (rule) => rule.max(500)}),
+    defineField({
+      name: 'markerIcon',
+      title: 'Marker icon (exact locations)',
+      type: 'string',
+      options: {list: PLACE_ICONS.map((value) => ({title: ICON_TITLES[value], value}))},
+    }),
+    defineField({name: 'markerShowLabel', title: 'Always show marker label', type: 'boolean', initialValue: true}),
+    defineField({
+      name: 'editorialPath',
+      title: 'Optional highlighted editorial path',
+      type: 'mapEditorialPath',
+      validation: (rule) => rule.custom((path) => validateEditorialPath(path as never) ?? true),
+    }),
+  ],
+})
+
 export const locationMap = defineType({
   name: 'locationMap',
   title: 'Location Map',

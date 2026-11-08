@@ -95,7 +95,23 @@ for (const type of ['newsArticle', 'publicInformationGuide']) {
     assert.equal(result[0], body[0])
     assert.deepEqual(result[1].travelDestination, selector(type))
     assert.equal(result[2].travelDestination, undefined)
-    assert.equal(withMapTravelDestination(body, type, 'article-1', true)[1].travelDestination, undefined)
+    const preview = withMapTravelDestination(body, type, 'drafts.article-1', true)
+    assert.equal(preview[1].travelDestination, undefined)
+    assert.equal(preview[1].travelPreview, true)
+    assert.equal(preview[2].travelPreview, false)
+  })
+
+  test('preview follows the same stable-key eligibility without creating selectors', () => {
+    const many = {...block, locations: [museum, other]}
+    assert.equal(withMapTravelDestination([many], 'newsArticle', 'drafts.article-1', true)[0].travelPreview, false)
+    assert.equal(withMapTravelDestination([{...many, travelHelpPlaceKey: 'station'}], 'newsArticle', 'drafts.article-1', true)[0].travelPreview, true)
+    for (const invalid of [
+      {...block, travelHelpEnabled: false},
+      {...block, locations: [{...museum, precision: 'approximate', radiusMeters: 100}]},
+      {...block, locations: [{...museum, radiusMeters: 1}]},
+      {...block, locations: [{...museum, coordinates: {lat: 91, lng: 10}}]},
+      {...block, locations: [], location: museum},
+    ]) assert.equal(withMapTravelDestination([invalid], 'newsArticle', 'drafts.article-1', true)[0].travelPreview, false)
   })
 }
 

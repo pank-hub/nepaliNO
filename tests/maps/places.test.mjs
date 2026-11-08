@@ -365,14 +365,7 @@ test("approximate places render as circles with no centre marker, link or toolti
   );
   assert.ok(circleBranch.includes("L.circle"));
   assert.ok(!/L\.marker|bindTooltip/.test(circleBranch));
-  assert.ok(
-    renderer.includes('place.precision === "exact" && ('),
-    "per-item link only for exact",
-  );
-  assert.ok(
-    renderer.includes("legacy && single && single.precision"),
-    "block link only for single legacy exact",
-  );
+  assert.doesNotMatch(renderer, /openStreetMapLocationUrl|labels\.openInOsm/);
 });
 
 test("schema registers the new types, icon list, route and legacy-safe location field", async () => {

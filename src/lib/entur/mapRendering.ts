@@ -13,10 +13,10 @@ export function withMapTravelDestination<T extends {_type: string}>(
   return body.map((node) => {
     if (node._type !== 'locationMap') return node
     const block = node as T & LocationMapBlock
-    const place = preview ? undefined : selectedMapPlace(block)
-    const travelDestination: DestinationSelector | undefined = place
+    const place = selectedMapPlace(block)
+    const travelDestination: DestinationSelector | undefined = place && !preview
       ? parseDestinationSelector({type, id, mapKey: block._key, placeKey: place._key})
       : undefined
-    return {...node, travelDestination}
+    return {...node, travelDestination, travelPreview: preview && !!place}
   })
 }

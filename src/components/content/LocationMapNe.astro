@@ -6,7 +6,7 @@ import type { LocationMapBlock } from "../../lib/maps/location";
 import type { DestinationSelector } from "../../lib/entur/types";
 
 interface Props {
-  node: LocationMapBlock & {travelDestination?: DestinationSelector};
+  node: LocationMapBlock & {travelDestination?: DestinationSelector; travelPreview?: boolean};
   index?: number;
   isInline?: boolean;
 }
@@ -33,4 +33,6 @@ const { node } = Astro.props;
   sourceLabel={node.sourceLabel}
   sourceUrl={node.sourceUrl}
 />
-{node.travelDestination && <TravelHelp destination={node.travelDestination} language="ne" />}
+{node.travelPreview
+  ? <p class="location-map__travel-preview" role="note">{getTranslations("ne").travelHelp.previewNotice}</p>
+  : node.travelDestination && <TravelHelp destination={node.travelDestination} language="ne" />}

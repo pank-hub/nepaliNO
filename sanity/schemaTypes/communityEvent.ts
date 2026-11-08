@@ -337,6 +337,13 @@ export const communityEvent = defineType({
     }),
 
     defineField({
+      name: 'mapPresentation',
+      title: 'Map Presentation',
+      type: 'mapPresentation',
+      hidden: ({document}) => document?.eventFormat === 'online',
+    }),
+
+    defineField({
       name: 'travelHelpEnabled',
       title: 'Offer travel help / How to get there',
       type: 'boolean',

@@ -2,14 +2,15 @@
 import {
   MAP_PROVIDER,
   ROUTING_PROVIDER,
-  openStreetMapLocationUrl,
   resolveMapDisplaySettings,
   validateMapLocation,
   type MapEditorialPath,
   type MapLocation,
   type MapPlace,
   type MapRoute,
+  type PlaceIcon,
 } from "../../lib/maps/location";
+import {isOpenStreetMapUrl} from "../../lib/maps/publicMapUrl";
 import {
   iconForPlace,
   isLegacyBlock,
@@ -27,6 +28,10 @@ interface Props {
   route?: MapRoute;
   editorialPath?: MapEditorialPath;
   loadingBehavior?: "automatic" | "click";
+  immediate?: boolean;
+  markerLabel?: string;
+  markerIcon?: PlaceIcon;
+  markerShowLabel?: boolean;
   showViewOnMapActions?: boolean;
   showOpenStreetMapLinks?: boolean;
   showLocationList?: boolean;
@@ -72,6 +77,10 @@ const {
   route: routeInput,
   editorialPath: pathInput,
   loadingBehavior,
+  immediate = false,
+  markerLabel,
+  markerIcon,
+  markerShowLabel,
   showViewOnMapActions,
   showOpenStreetMapLinks,
   showLocationList,
@@ -93,8 +102,12 @@ const display = resolveMapDisplaySettings({
   showOpenStreetMapControl,
   showFullscreenControl,
 });
+const normalizedPlaces =
+  normalizePlaces({ location, locations, title }, labels.defaultPlaceLabel);
 const places = validPlaces(
-  normalizePlaces({ location, locations, title }, labels.defaultPlaceLabel),
+  isLegacyBlock({location, locations}) && normalizedPlaces.length
+    ? [{...normalizedPlaces[0], label: markerLabel?.trim() || normalizedPlaces[0].label, icon: markerIcon ?? normalizedPlaces[0].icon, showLabel: markerShowLabel}]
+    : normalizedPlaces,
 );
 const legacy = isLegacyBlock({ location, locations });
 const error =
@@ -117,7 +130,7 @@ const fixedZoom =
         ? (initialZoom ?? 15)
         : undefined;
 const safeSourceUrl = (() => {
-  if (!sourceUrl) return undefined;
+  if (!sourceUrl || isOpenStreetMapUrl(sourceUrl)) return undefined;
   try {
     const url = new URL(sourceUrl);
     return url.protocol === "http:" || url.protocol === "https:"
@@ -127,11 +140,6 @@ const safeSourceUrl = (() => {
     return undefined;
   }
 })();
-// Only a single legacy exact place keeps the block-level link; never one link for many places.
-const mapUrl =
-  !error && display.showOpenStreetMapLinks && legacy && single && single.precision === "exact"
-    ? openStreetMapLocationUrl(single.coordinates!, location?.initialZoom ?? 15)
-    : undefined;
 const radiusText = (place: MapPlace) =>
   labels.approximateRadius.replace(
     "{radius}",
@@ -190,6 +198,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       data-location-map
       data-map-id={mapId}
       data-loading-behavior={display.loadingBehavior}
+      data-map-immediate={immediate ? "true" : undefined}
       data-show-location-list={String(display.showLocationList)}
       data-places={JSON.stringify(clientPlaces)}
       data-route={route ? routeData : undefined}
@@ -211,13 +220,6 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       {title && <h2 class="location-map__title">{title}</h2>}
       <p class="location-map__description">{description}</p>
       <p class="location-map__external-notice">{labels.externalNotice}</p>
-      {display.showOpenStreetMapControl && (
-        <div class="location-map__map-link-bar">
-          <a data-map-osm-link hidden target="_blank" rel="noopener noreferrer">
-            {labels.openMapInOsm} <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-      )}
       {display.showFullscreenControl && (
         <button type="button" class="location-map__fullscreen-open" data-map-fullscreen-open aria-haspopup="dialog" aria-controls={`${mapId}-fullscreen`} hidden>
           {labels.viewMapFullscreen}
@@ -253,14 +255,10 @@ const mapId = `location-map-${crypto.randomUUID()}`;
         aria-live="polite"
       />
       <div class="location-map__actions">
-        <button type="button" class="location-map__load" data-map-load>
+        <button type="button" class="location-map__load" data-map-load hidden={immediate}>
           {labels.load}
         </button>
-        {mapUrl && (
-          <a href={mapUrl} target="_blank" rel="noopener noreferrer">
-            {labels.openInOsm}
-          </a>
-        )}
+        {immediate && <noscript><p>{labels.failed}</p></noscript>}
       </div>
       {showList && (
         <section class="location-map__places">
@@ -277,7 +275,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
                   </span>
                   {place.description && <p>{place.description}</p>}
                 </div>
-                {(display.showViewOnMapActions || (display.showOpenStreetMapLinks && place.precision === "exact")) && (
+                {display.showViewOnMapActions && (
                   <span class="location-map__place-actions">
                     {display.showViewOnMapActions && <button
                       type="button"
@@ -287,16 +285,6 @@ const mapId = `location-map-${crypto.randomUUID()}`;
                     >
                       {labels.showOnMap}
                     </button>}
-                    {display.showOpenStreetMapLinks && place.precision === "exact" && (
-                      <a
-                        href={openStreetMapLocationUrl(place.coordinates!, 17)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${labels.openInOsm}: ${place.label}`}
-                      >
-                        {labels.openInOsm}
-                      </a>
-                    )}
                   </span>
                 )}
               </li>
@@ -323,14 +311,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
                 "{provider}",
                 route.providerName ?? ROUTING_PROVIDER.name,
               )}{" "}
-            {labels.routeAttribution}{" "}
-            <a
-              href={ROUTING_PROVIDER.fixTheMapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {labels.reportMapError}
-            </a>
+            {labels.routeAttribution}
           </p>
         </section>
       )}
@@ -363,7 +344,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     labelContent,
     placeContent,
   } from "../../lib/maps/markerIcons";
-  import { openStreetMapViewUrl, type PlaceIcon } from "../../lib/maps/location";
+  import type { PlaceIcon } from "../../lib/maps/location";
   import { decodePolyline6 } from "../../lib/maps/places";
   import { createMapActivator, observeAutomaticMaps, setMapListLoaded } from "../../lib/maps/mapLoading";
   import { createMapFullscreen } from "../../lib/maps/mapFullscreen";
@@ -450,11 +431,6 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     setMapListLoaded(root, false);
     const fullscreenButton = root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
     if (fullscreenButton) fullscreenButton.hidden = true;
-    const mapLink = root.querySelector<HTMLAnchorElement>("[data-map-osm-link]");
-    if (mapLink) {
-      mapLink.hidden = true;
-      mapLink.removeAttribute("href");
-    }
     const id = root.dataset.mapId;
     if (!id) return;
     activeMaps.get(id)?.map.remove();
@@ -474,6 +450,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     const zoom = Number(root.dataset.zoom);
     if (!canvas || !button || !controls || places.length === 0) {
       announce(root, root.dataset.failedLabel ?? "");
+      if (button) button.hidden = false;
       return;
     }
 
@@ -571,6 +548,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
             offset: [8, 0],
           });
           marker.getElement()?.setAttribute("aria-label", place.label);
+          if (root.dataset.mapImmediate === "true") marker.openPopup();
           record.layers.set(place.key, marker);
           bounds.extend(latlng);
         }
@@ -609,17 +587,6 @@ const mapId = `location-map-${crypto.randomUUID()}`;
         setMapListLoaded(root, true);
         const fullscreenButton = root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
         if (fullscreenButton) fullscreenButton.hidden = false;
-        const mapLink = root.querySelector<HTMLAnchorElement>("[data-map-osm-link]");
-        if (mapLink) {
-          const updateLink = () => {
-            const href = openStreetMapViewUrl(map.getCenter(), map.getZoom(), places, !!editorialPath || routePoints.length > 1);
-            if (href) mapLink.href = href;
-            else mapLink.removeAttribute("href");
-            mapLink.hidden = !href;
-          };
-          updateLink();
-          map.on("moveend zoomend", updateLink);
-        }
         announce(root, "");
       });
       button.textContent = root.dataset.loadLabel ?? "";
@@ -706,6 +673,11 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     stopObserving();
     const roots = document.querySelectorAll<HTMLElement>("[data-location-map]");
     roots.forEach((root) => {
+      if (root.dataset.mapImmediate === "true") {
+        const button = root.querySelector<HTMLButtonElement>("[data-map-load]");
+        if (button) button.hidden = true;
+        void ensureActive(root);
+      }
       root
         .querySelectorAll<HTMLElement>("[data-map-focus]")
         .forEach((control) => (control.hidden = false));
@@ -720,11 +692,6 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       setMapListLoaded(record.root, false);
       const fullscreenButton = record.root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
       if (fullscreenButton) fullscreenButton.hidden = true;
-      const mapLink = record.root.querySelector<HTMLAnchorElement>("[data-map-osm-link]");
-      if (mapLink) {
-        mapLink.hidden = true;
-        mapLink.removeAttribute("href");
-      }
       record.map.remove();
       const canvas = record.root.querySelector<HTMLElement>("[data-map-canvas]");
       if (canvas) {

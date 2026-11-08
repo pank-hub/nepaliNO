@@ -333,14 +333,9 @@ test("map-level OSM target uses exact pin or current map view without marker or 
   assert.equal(openStreetMapViewUrl(center, 12, [{ ...exact, label: "<script>unsafe</script>" }], false).includes("unsafe"), false);
 });
 
-test("map-level link follows live bounds for multiple places and editorial paths, and hides on failure", async () => {
+test("map-level navigation link is absent while map controls remain", async () => {
   const renderer = await read("../../src/components/content/LocationMap.astro");
-  assert.match(renderer, /openStreetMapViewUrl\(map\.getCenter\(\), map\.getZoom\(\), places, !!editorialPath \|\| routePoints\.length > 1\)/);
-  assert.match(renderer, /map\.on\("moveend zoomend", updateLink\)/);
-  assert.match(renderer, /mapLink\.hidden = !href/);
-  assert.match(renderer, /mapLink\.hidden = true;\s*mapLink\.removeAttribute\("href"\)/);
-  assert.match(renderer, /<a data-map-osm-link hidden target="_blank" rel="noopener noreferrer">/);
-  assert.ok(renderer.indexOf('data-map-osm-link') < renderer.indexOf('class="location-map__stage"'));
+  assert.doesNotMatch(renderer, /data-map-osm-link|openStreetMapViewUrl/);
   assert.match(renderer, /tiles\.once\("load", \(\) => \{/);
   assert.match(renderer, /data-map-zoom-in/);
 });
@@ -455,10 +450,7 @@ test("renderer keeps text and privacy notice, defers tiles, and supports focus a
   assert.match(server, /class="location-map__place-details"/);
   assert.doesNotMatch(server, /data-map-list-collapsed/);
   assert.match(server, /display\.showViewOnMapActions && <button/);
-  assert.match(
-    server,
-    /display\.showOpenStreetMapLinks && place\.precision === "exact"/,
-  );
+  assert.doesNotMatch(server, /openStreetMapLocationUrl|labels\.openInOsm/);
   assert.match(server, /target="_blank" rel="noopener noreferrer"/);
   assert.doesNotMatch(server, /L\.tileLayer|<iframe|<img[^>]*tile/i);
   assert.match(script, /import\("leaflet"\)/);

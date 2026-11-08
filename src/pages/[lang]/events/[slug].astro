@@ -16,7 +16,8 @@ import {getEventAccessLabels} from '../../../lib/eventAccess'
 import {urlFor} from '../../../lib/sanity/image'
 import {getAllDates, nextOccurrence} from '../../../lib/eventOccurrences'
 import {EVENT_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
-import {isPublicEventLocation, type MapLocation} from '../../../lib/maps/location'
+import {isPublicEventLocation, type MapLocation, type MapPresentation} from '../../../lib/maps/location'
+import {isOpenStreetMapUrl} from '../../../lib/maps/publicMapUrl'
 import {eligibleDestinationCoordinates} from '../../../lib/entur/eligibility'
 
 interface TranslationSummary { _id: string; title: string; slug: string; language: SupportedLanguage }
@@ -25,7 +26,7 @@ interface EventDocument {
   _id: string; title: string; slug: string; language: SupportedLanguage; translation?: TranslationSummary; summary: string
   _type: 'communityEvent'; travelHelpEnabled?: boolean; travelLocation?: unknown
   eventLanguages?: string[]; otherEventLanguage?: string; eventType: string; eventFormat: string; eventStatus: string; isAllDay?: boolean
-  startDateTime: string; endDateTime?: string; additionalDates?: {startDateTime: string; endDateTime?: string}[] | null; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string; mapLocation?: MapLocation
+  startDateTime: string; endDateTime?: string; additionalDates?: {startDateTime: string; endDateTime?: string}[] | null; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string; mapLocation?: MapLocation; mapPresentation?: MapPresentation
   accessibilityInformation?: string; transportInformation?: string; onlinePlatform?: string; onlineUrl?: string
   organizerName: string; organizerUrl?: string; organizerEmail?: string; organizerPhone?: string
   registrationRequirement: string; registrationStatus: string; registrationUrl?: string; registrationDeadline?: string
@@ -91,6 +92,7 @@ const publicMapLocation =
     ? event.mapLocation
     : undefined
 const mapDescription = [event.venueName, address || event.city].filter(Boolean).join(', ') || eventLabels.venue
+const mapUrl = isOpenStreetMapUrl(event.mapUrl) ? undefined : event.mapUrl
 const priceLabel = event.isFree ? eventLabels.freeEvent : event.priceDescription || (typeof event.priceNok === 'number' ? `${event.priceNok} NOK` : eventLabels.price)
 const startDate = new Date(event.startDateTime)
 const dateCardDay = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, day: '2-digit'}).format(startDate)
@@ -135,7 +137,7 @@ const heroTime = event.isAllDay
 
             <div class="event-hero-actions">
               {canRegister && <a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{access.actionLabel} <span aria-hidden="true">↗</span></a>}
-              {event.mapUrl && <a class="button button-secondary" href={event.mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} <span aria-hidden="true">↗</span></a>}
+              {mapUrl && <a class="button button-secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} <span aria-hidden="true">↗</span></a>}
             </div>
 
             {!canRegister && event.registrationRequirement !== 'not-required' && <p class="event-hero-registration-state">{isPast || event.eventStatus === 'cancelled' ? eventLabels.registrationUnavailable : access.statusLabel}</p>}
@@ -149,16 +151,6 @@ const heroTime = event.isAllDay
     <div class="container event-layout">
       <main class="event-content">
         {event.description && event.description.length > 0 && <section class="prose"><PortableText value={event.description} components={portableTextComponents} /></section>}
-        {publicMapLocation && (
-          <LocationMap
-            location={publicMapLocation}
-            description={mapDescription}
-            labels={labels.common.maps}
-            title={event.venueName || eventLabels.venue}
-            showFullscreenControl={true}
-          />
-        )}
-        {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}
         {event.sourceUrl && <aside class="source-note"><div><strong>{eventLabels.originalSource}</strong><p>{eventLabels.lastVerified}: <time datetime={event.lastVerifiedAt}>{formatDate(event.lastVerifiedAt)}</time></p></div><a class="button button-secondary" href={event.sourceUrl} target="_blank" rel="noopener noreferrer">{eventLabels.originalSource} <span aria-hidden="true">↗</span></a></aside>}
       </main>
 
@@ -185,15 +177,34 @@ const heroTime = event.isAllDay
           </ContextRailPanel>
         )}
 
-        {(event.venueName || address || event.mapUrl || event.onlinePlatform || event.accessibilityInformation || event.transportInformation) && (
+        {(event.venueName || address || mapUrl || event.onlinePlatform || event.accessibilityInformation || event.transportInformation) && (
           <ContextRailPanel title={eventLabels.venue} accent="civic">
             <dl>
               <div><dt>{eventLabels.venue}</dt><dd>{event.venueName || formats[event.eventFormat] || event.eventFormat}{address && <><br />{address}</>}{event.onlinePlatform && <><br />{event.onlinePlatform}</>}</dd></div>
-              {event.mapUrl && <div><dt>{eventLabels.address}</dt><dd><a href={event.mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} ↗</a></dd></div>}
+              {mapUrl && <div><dt>{eventLabels.address}</dt><dd><a href={mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} ↗</a></dd></div>}
               {event.accessibilityInformation && <div><dt>{eventLabels.accessibility}</dt><dd>{event.accessibilityInformation}</dd></div>}
               {event.transportInformation && <div><dt>{eventLabels.transport}</dt><dd>{event.transportInformation}</dd></div>}
             </dl>
           </ContextRailPanel>
+        )}
+
+        {publicMapLocation && (
+          <div class="context-map">
+            <LocationMap
+              location={publicMapLocation}
+              description={mapDescription}
+              labels={labels.common.maps}
+              title={event.mapPresentation?.title || event.venueName || eventLabels.venue}
+              markerLabel={event.mapPresentation?.markerLabel || event.venueName || eventLabels.venue}
+              markerIcon={event.mapPresentation?.markerIcon}
+              markerShowLabel={event.mapPresentation?.markerShowLabel}
+              caption={event.mapPresentation?.caption}
+              editorialPath={event.mapPresentation?.editorialPath}
+              immediate={true}
+              showFullscreenControl={true}
+            />
+            {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}
+          </div>
         )}
 
         <ContextRailPanel title={eventLabels.organizer} accent="brand">

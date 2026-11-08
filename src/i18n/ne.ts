@@ -4,6 +4,7 @@ import { eventSubmissionNe } from "./eventSubmission.ne";
 export const ne = {
   languageName: "नेपाली",
   travelHelp: {
+    previewNotice: "प्रकाशनपछि वास्तविक यात्रा खोज उपलब्ध हुन्छ।",
     title: "यहाँ कसरी पुग्ने",
     origin: "कहाँबाट जाने?",
     originHelper: "ठेगाना वा स्टप खोज्नुहोस्",

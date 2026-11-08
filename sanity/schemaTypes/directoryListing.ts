@@ -409,6 +409,13 @@ export const directoryListing = defineType({
         'Optional public map position for a physical presence. Use a safe approximate centre; never publish a private home location.',
     }),
     defineField({
+      name: 'mapPresentation',
+      title: 'Map Presentation',
+      type: 'mapPresentation',
+      group: 'location',
+      hidden: ({document}) => !physicalPresence(document),
+    }),
+    defineField({
       name: 'travelHelpEnabled',
       title: 'Offer travel help / How to get there',
       type: 'boolean',

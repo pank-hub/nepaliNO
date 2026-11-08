@@ -5,6 +5,7 @@ export const en = {
   languageName: "English",
   travelHelp: {
     title: "How to get there",
+    previewNotice: "Live journey search becomes available after publication.",
     origin: "Starting place",
     originHelper: "Search for an address or stop",
     search: "Search",
