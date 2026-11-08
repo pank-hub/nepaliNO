@@ -1,8 +1,10 @@
+import type {RateLimitCategory, RateLimitDecision, RateLimiter} from '../../rateLimit/server/limiter.ts'
 import {ENTUR, isEnturApiEnabled} from './config.ts'
 
 export type ErrorCode = 'method_not_allowed' | 'unsupported_media_type' | 'request_too_large' |
   'invalid_request' | 'timeout' | 'upstream_unavailable' | 'upstream_invalid_response' |
-  'upstream_graphql_error' | 'rate_limited' | 'no_journeys' | 'destination_unavailable' | 'destination_service_unavailable'
+  'upstream_graphql_error' | 'rate_limited' | 'no_journeys' | 'destination_unavailable' | 'destination_service_unavailable' |
+  'temporarily_unavailable'
 
 export class RequestError extends Error {
   readonly code: ErrorCode
@@ -15,11 +17,12 @@ export class RequestError extends Error {
   }
 }
 
-export function jsonResponse(status: number, body: unknown): Response {
+export function jsonResponse(status: number, body: unknown, headers: Record<string, string> = {}): Response {
   return Response.json(body, {status, headers: {
     'cache-control': 'private, no-store',
     'x-content-type-options': 'nosniff',
     ...(status === 405 ? {allow: 'POST'} : {}),
+    ...headers,
   }})
 }
 
@@ -61,10 +64,36 @@ async function readLimitedBody(response: Request | Response, maximum: number): P
   return new TextDecoder('utf-8', {fatal: true}).decode(bytes)
 }
 
-export async function readRequestJson(request: Request): Promise<unknown> {
+// Cheap checks that need no body, provider or network. They run before rate limiting.
+export function checkJsonRequest(request: Request): void {
   if (request.method !== 'POST') throw new RequestError('method_not_allowed', 405)
   const contentType = request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase()
   if (contentType !== 'application/json') throw new RequestError('unsupported_media_type', 415)
+  const length = request.headers.get('content-length')
+  if (length && /^\d+$/.test(length) && Number(length) > ENTUR.maxRequestBytes) throw new RequestError('request_too_large', 413)
+}
+
+// Returns a response when the request must not proceed to parsing, Sanity or Entur.
+export async function rateLimitRejection(
+  limit: RateLimiter,
+  request: Request,
+  category: RateLimitCategory,
+): Promise<Response | undefined> {
+  let decision: RateLimitDecision
+  try {
+    decision = await limit(request, category)
+  } catch {
+    decision = {status: 'unavailable', reason: 'provider_error'}
+  }
+  if (decision.status === 'allowed') return
+  if (decision.status === 'limited') {
+    return jsonResponse(429, {ok: false, code: 'rate_limited'}, {'retry-after': String(decision.retryAfterSeconds)})
+  }
+  return jsonResponse(503, {ok: false, code: 'temporarily_unavailable'})
+}
+
+export async function readRequestJson(request: Request): Promise<unknown> {
+  checkJsonRequest(request)
   try {
     return JSON.parse(await readLimitedBody(request, ENTUR.maxRequestBytes))
   } catch (error) {

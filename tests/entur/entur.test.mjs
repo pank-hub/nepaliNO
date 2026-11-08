@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {readFile} from 'node:fs/promises'
-import {POST as origins, ALL as originAll} from '../../src/pages/api/entur/origins.ts'
+import {createOriginHandler, ALL as originAll} from '../../src/pages/api/entur/origins.ts'
 import {POST as productionJourneys, createJourneyHandler, ALL as journeyAll} from '../../src/pages/api/entur/journeys.ts'
 import {resolveDestination} from '../../src/lib/entur/server/destination.ts'
 import {isDateTime, MAX_HORIZON_MS, PAST_TOLERANCE_MS, parseJourneyRequest} from '../../src/lib/entur/validation.ts'
@@ -16,6 +16,9 @@ test.after(() => {
   else process.env.ENTUR_TRAVEL_API_ENABLED = originalFlag
 })
 
+// Rate limiting has its own suite; these tests exercise endpoint behavior behind an allowing limiter.
+const allow = async () => ({status: 'allowed'})
+const origins = createOriginHandler(allow)
 const future = () => new Date(Date.now() + 60 * 60 * 1000).toISOString()
 const input = () => ({
   origin: {lat: 59.9, lng: 10.7},
@@ -43,7 +46,7 @@ const pattern = {
 }
 const result = {data: {trip: {tripPatterns: [pattern]}}}
 const destinationCoordinates = {lat: 59.92, lng: 10.75}
-const journeys = createJourneyHandler(async () => destinationCoordinates)
+const journeys = createJourneyHandler(async () => destinationCoordinates, allow)
 const request = (body, options = {}) => new Request('https://nepali.no/api/entur/test', {
   method: options.method ?? 'POST',
   headers: {'content-type': options.contentType ?? 'application/json', ...options.headers},
@@ -418,7 +421,7 @@ test('resolves eligible published event and directory coordinates from fixed que
 })
 
 test('journey sends only the resolved published coordinates to Entur', async () => {
-  const handler = createJourneyHandler((selector) => resolveDestination(selector, readerFor(publicEvent)))
+  const handler = createJourneyHandler((selector) => resolveDestination(selector, readerFor(publicEvent)), allow)
   await withFetch(async (url, init) => {
     assert.equal(url, 'https://api.entur.io/journey-planner/v3/graphql')
     assert.deepEqual(JSON.parse(init.body).variables.to, {coordinates: {latitude: 59.92, longitude: 10.75}})
@@ -469,7 +472,7 @@ test('missing and ineligible destinations produce identical responses without En
   for (const document of [null, {...publicEvent, eventFormat: 'online'},
     {...publicEvent, travelHelpEnabled: false}, {...publicEvent, travelHelpEnabled: undefined},
     {...publicEvent, travelHelpEnabled: 'yes'}]) {
-    const handler = createJourneyHandler((selector) => resolveDestination(selector, readerFor(document)))
+    const handler = createJourneyHandler((selector) => resolveDestination(selector, readerFor(document)), allow)
     await withFetch(neverFetch, async () => {
       const {response, data} = await invoke(handler, input())
       assert.equal(response.status, 404)
@@ -515,7 +518,7 @@ test('Studio fields default false and submitters cannot set travel help', async 
 test('release gate defaults closed for both routes and all methods without upstream work', async () => {
   const original = process.env.ENTUR_TRAVEL_API_ENABLED
   let resolved = false
-  const handler = createJourneyHandler(async () => { resolved = true; return destinationCoordinates })
+  const handler = createJourneyHandler(async () => { resolved = true; return destinationCoordinates }, allow)
   try {
     for (const value of [undefined, 'false', 'TRUE', '1', '']) {
       if (value === undefined) delete process.env.ENTUR_TRAVEL_API_ENABLED
@@ -544,7 +547,7 @@ test('release gate defaults closed for both routes and all methods without upstr
 test('Sanity failure is sanitized and does not request Entur', async () => {
   const handler = createJourneyHandler((selector) => resolveDestination(selector, {
     fetch: async () => { throw new Error('private upstream details') },
-  }))
+  }), allow)
   await withFetch(neverFetch, async () => {
     const {response, data} = await invoke(handler, input())
     assert.equal(response.status, 503)

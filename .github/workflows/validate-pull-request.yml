@@ -82,6 +82,9 @@ jobs:
       - name: Test Topic slug validation
         run: npm run test:topic-slug
 
+      - name: Test Entur distributed rate limiting
+        run: npm run test:rate-limit
+
       - name: Run Astro Check
         run: npx astro check
 
