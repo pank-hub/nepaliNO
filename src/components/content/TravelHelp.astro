@@ -8,13 +8,15 @@ import { getTranslations } from "../../i18n";
 interface Props {
   destination: JourneyRequest["destination"];
   language: SupportedLanguage;
+  defaultOpen?: boolean;
 }
-const { destination, language } = Astro.props;
+const { destination, language, defaultOpen = false } = Astro.props;
 ---
 
 <TravelHelp
   client:load
   destination={destination}
   language={language}
+  defaultOpen={defaultOpen}
   labels={getTranslations(language).travelHelp}
 />

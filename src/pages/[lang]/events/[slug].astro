@@ -92,6 +92,8 @@ const publicMapLocation =
     ? event.mapLocation
     : undefined
 const mapDescription = [event.venueName, address || event.city].filter(Boolean).join(', ') || eventLabels.venue
+const mapTitle = event.mapPresentation?.title?.trim()
+const additionalMapTitle = mapTitle && ![event.venueName?.trim(), address, mapDescription, eventLabels.venue].includes(mapTitle) ? mapTitle : undefined
 const mapUrl = isOpenStreetMapUrl(event.mapUrl) ? undefined : event.mapUrl
 const priceLabel = event.isFree ? eventLabels.freeEvent : event.priceDescription || (typeof event.priceNok === 'number' ? `${event.priceNok} NOK` : eventLabels.price)
 const startDate = new Date(event.startDateTime)
@@ -194,16 +196,17 @@ const heroTime = event.isAllDay
               location={publicMapLocation}
               description={mapDescription}
               labels={labels.common.maps}
-              title={event.mapPresentation?.title || event.venueName || eventLabels.venue}
+              title={additionalMapTitle}
               markerLabel={event.mapPresentation?.markerLabel || event.venueName || eventLabels.venue}
               markerIcon={event.mapPresentation?.markerIcon}
               markerShowLabel={event.mapPresentation?.markerShowLabel}
               caption={event.mapPresentation?.caption}
               editorialPath={event.mapPresentation?.editorialPath}
               immediate={true}
+              contextSidebar={true}
               showFullscreenControl={true}
             />
-            {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}
+            {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} defaultOpen={true} />}
           </div>
         )}
 

@@ -29,6 +29,7 @@ interface Props {
   editorialPath?: MapEditorialPath;
   loadingBehavior?: "automatic" | "click";
   immediate?: boolean;
+  contextSidebar?: boolean;
   markerLabel?: string;
   markerIcon?: PlaceIcon;
   markerShowLabel?: boolean;
@@ -78,6 +79,7 @@ const {
   editorialPath: pathInput,
   loadingBehavior,
   immediate = false,
+  contextSidebar = false,
   markerLabel,
   markerIcon,
   markerShowLabel,
@@ -150,7 +152,7 @@ const precisionLabel =
     ? ""
     : precision === "approximate"
       ? `${labels.approximate} · ${radiusText(single!)}`
-      : labels.exact;
+      : contextSidebar ? "" : labels.exact;
 const clientPlaces = places.map((place) => ({
   key: place._key,
   label: place.label,
@@ -181,8 +183,9 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       class={`location-map location-map--fallback ${className}`}
       role="note"
     >
-      {title && <h2>{title}</h2>}
-      <p>{description || error}</p>
+      {!contextSidebar && title && <h2>{title}</h2>}
+      <p>{contextSidebar ? labels.failed : description || error}</p>
+      {contextSidebar && title && <p>{title}</p>}
       {caption && <p>{caption}</p>}
       {safeSourceUrl && (
         <p>
@@ -194,7 +197,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     </aside>
   ) : (
     <figure
-      class={`location-map ${className}`}
+      class={`location-map ${contextSidebar ? "location-map--context" : ""} ${className}`}
       data-location-map
       data-map-id={mapId}
       data-loading-behavior={display.loadingBehavior}
@@ -217,10 +220,10 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       data-radius-label={labels.approximateRadius}
       data-fullscreen-failed-label={labels.fullscreenFailed}
     >
-      {title && <h2 class="location-map__title">{title}</h2>}
-      <p class="location-map__description">{description}</p>
-      <p class="location-map__external-notice">{labels.externalNotice}</p>
-      {display.showFullscreenControl && (
+      {!contextSidebar && title && <h2 class="location-map__title">{title}</h2>}
+      {!contextSidebar && <p class="location-map__description">{description}</p>}
+      {!contextSidebar && <p class="location-map__external-notice">{labels.externalNotice}</p>}
+      {display.showFullscreenControl && !contextSidebar && (
         <button type="button" class="location-map__fullscreen-open" data-map-fullscreen-open aria-haspopup="dialog" aria-controls={`${mapId}-fullscreen`} hidden>
           {labels.viewMapFullscreen}
         </button>
@@ -241,6 +244,11 @@ const mapId = `location-map-${crypto.randomUUID()}`;
           </button>
         </div>
       </div>
+      {display.showFullscreenControl && contextSidebar && (
+        <button type="button" class="location-map__fullscreen-open" data-map-fullscreen-open aria-haspopup="dialog" aria-controls={`${mapId}-fullscreen`} hidden>
+          {labels.viewMapFullscreen}
+        </button>
+      )}
       {display.showFullscreenControl && (
         <dialog id={`${mapId}-fullscreen`} class="location-map__fullscreen" data-map-fullscreen-dialog aria-label={labels.viewMapFullscreen}>
           <div class="location-map__fullscreen-header">
@@ -315,7 +323,8 @@ const mapId = `location-map-${crypto.randomUUID()}`;
           </p>
         </section>
       )}
-      <figcaption class="location-map__caption">
+      {(caption || safeSourceUrl || precisionLabel || (contextSidebar && title)) && <figcaption class="location-map__caption">
+        {contextSidebar && title && <span>{title}</span>}
         {caption && <span>{caption}</span>}
         {safeSourceUrl && (
           <span>
@@ -326,7 +335,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
           </span>
         )}
         {precisionLabel && <span>{precisionLabel}</span>}
-      </figcaption>
+      </figcaption>}
     </figure>
   )
 }
@@ -548,7 +557,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
             offset: [8, 0],
           });
           marker.getElement()?.setAttribute("aria-label", place.label);
-          if (root.dataset.mapImmediate === "true") marker.openPopup();
+          if (root.dataset.mapImmediate === "true" && place.showLabel !== false) marker.openPopup();
           record.layers.set(place.key, marker);
           bounds.extend(latlng);
         }
@@ -784,6 +793,10 @@ const mapId = `location-map-${crypto.randomUUID()}`;
 
   .location-map__fullscreen-open {
     margin: 0 0 0.5rem;
+  }
+
+  .location-map--context > .location-map__fullscreen-open {
+    margin: 0.5rem 0 0;
   }
 
   .location-map__fullscreen[open] {

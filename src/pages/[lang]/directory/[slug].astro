@@ -213,6 +213,8 @@ const publicMapLocation =
     ? listing.mapLocation
     : undefined
 const mapUrl = isOpenStreetMapUrl(listing.mapUrl) ? undefined : listing.mapUrl
+const mapTitle = listing.mapPresentation?.title?.trim()
+const additionalMapTitle = mapTitle && ![listing.name.trim(), address, locationLabel].includes(mapTitle) ? mapTitle : undefined
 const isClosed = ['temporarily-closed', 'permanently-closed'].includes(
   listing.listingStatus,
 )
@@ -400,16 +402,17 @@ const socialLinks = [
               location={publicMapLocation}
               description={locationLabel}
               labels={labels.common.maps}
-              title={listing.mapPresentation?.title || listing.name}
+              title={additionalMapTitle}
               markerLabel={listing.mapPresentation?.markerLabel || listing.name}
               markerIcon={listing.mapPresentation?.markerIcon}
               markerShowLabel={listing.mapPresentation?.markerShowLabel}
               caption={listing.mapPresentation?.caption}
               editorialPath={listing.mapPresentation?.editorialPath}
               immediate={true}
+              contextSidebar={true}
               showFullscreenControl={true}
             />
-            {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}
+            {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} defaultOpen={true} />}
           </div>
         )}
 
