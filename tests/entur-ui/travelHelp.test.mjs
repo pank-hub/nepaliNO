@@ -5,6 +5,8 @@ import { JSDOM } from "jsdom";
 import React, { act } from "react";
 import TravelHelp from "../../src/components/content/TravelHelp";
 import { travelHelp } from "../../src/i18n/travelHelp";
+import { getTravelHelpLabels, interpolate } from "../../src/i18n/travelHelp";
+import { formatJourneyTimes } from "../../src/lib/entur/journeyDisplay";
 import { osloLocalToInstant } from "../../src/lib/entur/osloTime";
 import { eligibleDestinationCoordinates } from "../../src/lib/entur/eligibility";
 import { createAvailabilityHandler } from "../../src/pages/api/entur/availability";
@@ -24,6 +26,60 @@ const event = {
     coordinates: { lat: 59.9, lng: 10.7 },
   },
 };
+
+test("journey dates use Oslo locale, 24-hour time and the correct local calendar day", () => {
+  for (const [language, locale] of [["ne", "ne-NP"], ["nb", "nb-NO"], ["en", "en-GB"], ["unknown", "en-GB"], ["__proto__", "en-GB"]]) {
+    const same = formatJourneyTimes("2026-11-08T11:51:00Z", "2026-11-08T12:17:00Z", language);
+    const expectedDate = new Intl.DateTimeFormat(locale, {timeZone: "Europe/Oslo", day: "numeric", month: "long", year: "numeric"}).format(new Date("2026-11-08T11:51:00Z"));
+    const expectedTime = new Intl.DateTimeFormat(locale, {timeZone: "Europe/Oslo", hour12: false, hour: "2-digit", minute: "2-digit"}).format(new Date("2026-11-08T11:51:00Z"));
+    assert.equal(same.sameDay, true);
+    assert.equal(same.departureDate, expectedDate);
+    assert.equal(same.departureTime, expectedTime);
+    assert.doesNotMatch(`${same.departureDate} ${same.departureTime} ${same.arrivalTime}`, /\b(?:AM|PM)\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/i);
+    for (const [start, end] of [
+      ["2026-11-08T22:30:00Z", "2026-11-08T23:30:00Z"],
+      ["2026-12-31T22:30:00Z", "2026-12-31T23:30:00Z"],
+      ["2026-01-31T22:30:00Z", "2026-01-31T23:30:00Z"],
+      ["2026-03-28T22:30:00Z", "2026-03-28T23:30:00Z"],
+    ]) {
+      const cross = formatJourneyTimes(start, end, language);
+      assert.equal(cross.sameDay, false);
+      assert.notEqual(cross.departureDate, cross.arrivalDate);
+    }
+    const daylight = formatJourneyTimes("2026-03-29T00:30:00Z", "2026-03-29T01:30:00Z", language);
+    assert.equal(daylight.sameDay, true);
+    assert.notEqual(daylight.departureTime, daylight.arrivalTime);
+    const autumn = formatJourneyTimes("2026-10-25T00:30:00Z", "2026-10-25T01:30:00Z", language);
+    assert.equal(autumn.sameDay, true);
+    assert.equal(autumn.departureTime, autumn.arrivalTime);
+  }
+});
+
+test("journey cards and dialog retain neutral responsive styles and focus treatment", async () => {
+  const css = await readFile(new URL("../../src/components/content/travelHelp.css", import.meta.url), "utf8");
+  assert.match(css, /\.travel-help__journey--odd\s*\{[^}]*--surface-warm/);
+  assert.match(css, /\.travel-help__journey--even\s*\{[^}]*--surface-muted/);
+  assert.match(css, /\.travel-help__dialog\s*\{[^}]*max-block-size:\s*calc\(100dvh - 2rem\)[^}]*overflow:\s*auto/);
+  assert.match(css, /\.travel-help__dialog-content\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  assert.match(css, /\.travel-help__leg\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  assert.match(css, /:focus-visible/);
+  assert.match(css, /prefers-reduced-motion:\s*reduce/);
+});
+
+test("TravelHelp copy comes from language files with English fallback and interpolated options", async () => {
+  for (const [language, option] of [["ne", "यात्रा विकल्प 2"], ["nb", "Reisealternativ 2"], ["en", "Journey option 2"]]) {
+    assert.equal(interpolate(travelHelp[language].alternative, {number: 2}), option);
+    const source = await readFile(new URL(`../../src/i18n/${language}.ts`, import.meta.url), "utf8");
+    for (const key of ["disclosure", "privacyPolicy", "closeDisclosure", "alternative", "privacy", "attribution"]) {
+      assert.match(source, new RegExp(`\\b${key}:`));
+    }
+  }
+  assert.equal(getTravelHelpLabels("unsupported").disclosure, travelHelp.en.disclosure);
+  assert.equal(getTravelHelpLabels("unsupported", {disclosure: undefined}).disclosure, travelHelp.en.disclosure);
+  const component = await readFile(new URL("../../src/components/content/TravelHelp.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(component, /[\u0900-\u097f]|Reisealternativ|Reisehjelp/);
+  assert.match(component, /interpolate\(labels\.alternative, \{number: index \+ 1\}\)/);
+});
 
 test("map selector changes trigger a fresh availability check and ignore stale responses", async () => {
   const dom = new JSDOM('<!doctype html><div id="root"></div>', {url: "https://nepali.no/"});
@@ -265,6 +321,7 @@ test("interactive workflow uses only server selectors and deliberate searches", 
           startTime: "2026-11-07T12:00:00Z",
           endTime: "2026-11-07T12:30:00Z",
           durationSeconds: 1800,
+          walkingDurationSeconds: 300,
           transfers: 0,
           legs: [
             {
@@ -279,6 +336,18 @@ test("interactive workflow uses only server selectors and deliberate searches", 
               lineName: "30",
             },
           ],
+        },
+        {
+          startTime: "2026-11-07T22:30:00Z", endTime: "2026-11-07T23:30:00Z",
+          durationSeconds: 3600, transfers: 1, walkingDurationSeconds: 600,
+          legs: [{startTime: "2026-11-07T22:30:00Z", endTime: "2026-11-07T23:30:00Z",
+            durationSeconds: 3600, mode: "bus", isPublicTransport: true, realtime: false}],
+        },
+        {
+          startTime: "2026-11-08T00:30:00Z", endTime: "2026-11-08T01:30:00Z",
+          durationSeconds: 3600, transfers: 0,
+          legs: [{startTime: "2026-11-08T00:30:00Z", endTime: "2026-11-08T01:30:00Z",
+            durationSeconds: 3600, mode: "bus", isPublicTransport: true, realtime: false}],
         },
       ],
     });
@@ -371,6 +440,22 @@ test("interactive workflow uses only server selectors and deliberate searches", 
     assert.ok(rootElement.querySelector("article[aria-labelledby]"));
     assert.ok(rootElement.querySelector("dl"));
     assert.ok(rootElement.querySelector(".travel-help__legs"));
+    const cards = [...rootElement.querySelectorAll(".travel-help__journey")];
+    assert.equal(cards.length, 3);
+    assert.deepEqual(cards.map((card) => card.querySelector("time").dateTime), [
+      "2026-11-07T12:00:00Z", "2026-11-07T22:30:00Z", "2026-11-08T00:30:00Z",
+    ]);
+    assert.deepEqual(cards.map((card) => card.querySelector("h4").textContent), [1, 2, 3].map((number) => interpolate(travelHelp.ne.alternative, {number})));
+    assert.ok(cards[0].classList.contains("travel-help__journey--odd"));
+    assert.ok(cards[1].classList.contains("travel-help__journey--even"));
+    assert.ok(cards[2].classList.contains("travel-help__journey--odd"));
+    assert.equal(cards[0].querySelectorAll(".travel-help__journey-date").length, 1);
+    assert.equal(cards[0].querySelectorAll(".travel-help__journey-times p > span").length, 2);
+    assert.equal(cards[1].querySelectorAll(".travel-help__journey-date").length, 0);
+    assert.equal(cards[1].querySelectorAll(".travel-help__journey-times p > span").length, 4);
+    const stats = [...cards[0].querySelectorAll("dt")].map((node) => node.textContent);
+    assert.deepEqual(stats, [travelHelp.ne.duration, travelHelp.ne.transfers, travelHelp.ne.walk]);
+    assert.doesNotMatch(cards.map((card) => card.textContent).join(" "), /\b(?:AM|PM)\b|\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/i);
     assert.equal(
       dom.window.document.activeElement,
       rootElement.querySelector("h3"),

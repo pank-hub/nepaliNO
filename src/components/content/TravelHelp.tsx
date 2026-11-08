@@ -11,19 +11,15 @@ import type {
   Journey,
   JourneyRequest,
   OriginSuggestion,
-  TransportMode,
 } from "../../lib/entur/types";
-import type { travelHelp } from "../../i18n/travelHelp";
+import { getTravelHelpLabels, interpolate, type TravelHelpLabels } from "../../i18n/travelHelp";
+import { formatJourneyTimes } from "../../lib/entur/journeyDisplay";
 
-type Labels = {
-  [K in keyof typeof travelHelp.en]: K extends "modes"
-    ? Record<TransportMode, string>
-    : string;
-};
+type Labels = TravelHelpLabels;
 type Props = {
   destination: JourneyRequest["destination"];
-  language: "ne" | "nb";
-  labels: Labels;
+  language: string;
+  labels?: Partial<Labels>;
 };
 type ErrorKind = "failure" | "timeout" | "rateLimited" | "noJourneys";
 
@@ -76,7 +72,7 @@ function isJourney(value: unknown, labels: Labels): value is Journey {
 }
 
 const ATTRIBUTION_LINKS = {
-  entur: "https://entur.no",
+  entur: "https://entur.no/",
   nlod: "https://data.norge.no/nlod/en/2.0",
   osm: "https://www.openstreetmap.org/copyright",
 } as const;
@@ -140,7 +136,8 @@ async function post(
   return data;
 }
 
-export default function TravelHelp({ destination, language, labels }: Props) {
+export default function TravelHelp({ destination, language, labels: suppliedLabels }: Props) {
+  const labels = getTravelHelpLabels(language, suppliedLabels);
   const id = useId();
   const [available, setAvailable] = useState(false);
   const [query, setQuery] = useState("");
@@ -158,12 +155,17 @@ export default function TravelHelp({ destination, language, labels }: Props) {
   const originSequence = useRef(0);
   const journeySequence = useRef(0);
   const resultsHeading = useRef<HTMLHeadingElement>(null);
+  const disclosureButton = useRef<HTMLButtonElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const [disclosureOpen, setDisclosureOpen] = useState(false);
   const mapKey = "mapKey" in destination ? destination.mapKey : undefined;
   const placeKey = "placeKey" in destination ? destination.placeKey : undefined;
 
   useEffect(() => {
     const controller = new AbortController();
     setAvailable(false);
+    setDisclosureOpen(false);
     setQuery("");
     setSuggestions([]);
     setOrigin(undefined);
@@ -191,6 +193,25 @@ export default function TravelHelp({ destination, language, labels }: Props) {
   useEffect(() => {
     if (journeys.length) resultsHeading.current?.focus();
   }, [journeys]);
+
+  useEffect(() => {
+    const element = dialog.current;
+    if (!disclosureOpen || !available || !element) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    element.showModal();
+    closeButton.current?.focus();
+    const keepFocus = (event: FocusEvent) => {
+      if (event.target instanceof window.Node && !element.contains(event.target)) closeButton.current?.focus();
+    };
+    document.addEventListener("focusin", keepFocus);
+    return () => {
+      document.removeEventListener("focusin", keepFocus);
+      if (element.open) element.close();
+      document.body.style.overflow = previousOverflow;
+      if (disclosureButton.current?.isConnected) disclosureButton.current.focus();
+    };
+  }, [disclosureOpen, available]);
 
   const message = (error: unknown) => {
     const kind =
@@ -328,13 +349,10 @@ export default function TravelHelp({ destination, language, labels }: Props) {
   };
 
   if (!available) return null;
-  const locale = language === "ne" ? "ne-NP" : "nb-NO";
-  const time = (value: string) =>
-    new Intl.DateTimeFormat(locale, {
-      timeZone: "Europe/Oslo",
-      dateStyle: "short",
-      timeStyle: "short",
-    }).format(new Date(value));
+  const time = (value: string) => {
+    const formatted = formatJourneyTimes(value, value, language);
+    return `${formatted.departureDate}, ${formatted.departureTime}`;
+  };
   const minutes = (seconds: number) =>
     `${Math.round(seconds / 60)} ${labels.minutes}`;
   const changeTime = () => {
@@ -358,10 +376,11 @@ export default function TravelHelp({ destination, language, labels }: Props) {
         ? "travel-help__status travel-help__status--error"
         : "travel-help__status";
   return (
-    <details className="travel-help">
+    <details className="travel-help" onToggle={(event) => {
+      if (!event.currentTarget.open) setDisclosureOpen(false);
+    }}>
       <summary>{labels.title}</summary>
       <div className="travel-help__body">
-        <p className="travel-help__privacy">{labels.privacy}</p>
         <form
           className="travel-help__origin-form"
           onSubmit={searchOrigins}
@@ -507,9 +526,11 @@ export default function TravelHelp({ destination, language, labels }: Props) {
             <h3 id={`${id}-results-heading`} ref={resultsHeading} tabIndex={-1}>
               {labels.results}
             </h3>
-            {journeys.map((journey, index) => (
+            {journeys.map((journey, index) => {
+              const formatted = formatJourneyTimes(journey.startTime, journey.endTime, language);
+              return (
               <article
-                className="travel-help__journey"
+                className={`travel-help__journey travel-help__journey--${index % 2 === 0 ? "odd" : "even"}`}
                 key={`${journey.startTime}-${index}`}
                 aria-labelledby={`${id}-journey-${index}`}
               >
@@ -517,12 +538,14 @@ export default function TravelHelp({ destination, language, labels }: Props) {
                   id={`${id}-journey-${index}`}
                   className="travel-help__journey-heading"
                 >
-                  {labels.alternative} {index + 1}
+                  {interpolate(labels.alternative, {number: index + 1})}
                 </h4>
+                {formatted.sameDay && <p className="travel-help__journey-date">{formatted.departureDate}</p>}
                 <div className="travel-help__journey-times">
                   <p>
                     <span>{labels.departure}</span>
-                    <strong>{time(journey.startTime)}</strong>
+                    {!formatted.sameDay && <span>{formatted.departureDate}</span>}
+                    <strong><time dateTime={journey.startTime}>{formatted.departureTime}</time></strong>
                   </p>
                   <span
                     className="travel-help__journey-arrow"
@@ -532,7 +555,8 @@ export default function TravelHelp({ destination, language, labels }: Props) {
                   </span>
                   <p>
                     <span>{labels.arrival}</span>
-                    <strong>{time(journey.endTime)}</strong>
+                    {!formatted.sameDay && <span>{formatted.arrivalDate}</span>}
+                    <strong><time dateTime={journey.endTime}>{formatted.arrivalTime}</time></strong>
                   </p>
                 </div>
                 <dl className="travel-help__journey-stats">
@@ -593,13 +617,42 @@ export default function TravelHelp({ destination, language, labels }: Props) {
                   </ol>
                 </details>
               </article>
-            ))}
+            )})}
           </section>
         )}
         <p className="travel-help__notice">{labels.notice}</p>
-        <p className="travel-help__attribution" data-travel-attribution>
-          {renderAttribution(labels)}
-        </p>
+        <button ref={disclosureButton} type="button" className="travel-help__disclosure"
+          aria-haspopup="dialog" aria-controls={`${id}-disclosure`} onClick={() => setDisclosureOpen(true)}>
+          {labels.disclosure}
+        </button>
+        <dialog ref={dialog} id={`${id}-disclosure`} className="travel-help__dialog"
+          role="dialog" aria-modal="true" aria-labelledby={`${id}-disclosure-title`}
+          onCancel={(event) => { event.preventDefault(); setDisclosureOpen(false); }}
+          onClick={(event) => {
+            if (event.target !== event.currentTarget) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            if (event.clientX < rect.left || event.clientX > rect.right ||
+              event.clientY < rect.top || event.clientY > rect.bottom) setDisclosureOpen(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Tab") return;
+            const focusable = event.currentTarget.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]");
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault(); last?.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault(); first?.focus();
+            }
+          }}>
+          <div className="travel-help__dialog-content">
+            <h4 id={`${id}-disclosure-title`}>{labels.disclosure}</h4>
+            <p className="travel-help__privacy">{labels.privacy}</p>
+            <p className="travel-help__attribution" data-travel-attribution>{renderAttribution(labels)}</p>
+            <a href={language === "nb" ? "/nb/privacy/" : "/ne/privacy/"}>{labels.privacyPolicy}</a>
+            <button ref={closeButton} type="button" onClick={() => setDisclosureOpen(false)}>{labels.closeDisclosure}</button>
+          </div>
+        </dialog>
       </div>
     </details>
   );

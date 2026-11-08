@@ -43,7 +43,7 @@ const renderAvailable = async (language) => {
     root.render(
       React.createElement(TravelHelp, {
         destination: selector,
-        language: language === "en" ? "ne" : language,
+        language,
         labels: travelHelp[language],
       }),
     );
@@ -62,7 +62,16 @@ for (const language of ["nb", "ne", "en"]) {
     const { rootElement, requests, restore } = await renderAvailable(language);
     try {
       assert.deepEqual(requests, ["/api/entur/availability"]);
-      const attribution = rootElement.querySelector("[data-travel-attribution]");
+      const control = rootElement.querySelector(".travel-help__disclosure");
+      const dialog = rootElement.querySelector("dialog");
+      dialog.showModal = function () { this.setAttribute("open", ""); };
+      dialog.close = function () { this.removeAttribute("open"); };
+      assert.equal(dialog.open, false);
+      assert.equal(rootElement.querySelector(".travel-help__body > .travel-help__privacy"), null);
+      assert.equal(rootElement.querySelector(".travel-help__body > [data-travel-attribution]"), null);
+      assert.equal(control.textContent, travelHelp[language].disclosure);
+      await act(async () => control.click());
+      const attribution = dialog.querySelector("[data-travel-attribution]");
       assert.ok(attribution, "attribution renders with the travel component");
       assert.equal(attribution.textContent, EXPECTED[language]);
       const links = [...attribution.querySelectorAll("a")];
@@ -79,14 +88,57 @@ for (const language of ["nb", "ne", "en"]) {
       assert.equal(byHref["https://entur.no/"].textContent, "Entur AS");
       assert.match(byHref["https://data.norge.no/nlod/en/2.0"].textContent, /NLOD/);
       assert.match(byHref["https://www.openstreetmap.org/copyright"].textContent, /OpenStreetMap/);
-      const body = rootElement.querySelector(".travel-help__body");
-      assert.equal(body.lastElementChild, attribution, "attribution is the last element, below results and notice");
+      assert.equal(dialog.querySelector(".travel-help__privacy").textContent, travelHelp[language].privacy);
+      assert.equal(dialog.querySelector('a[href$="/privacy/"]').getAttribute("href"), language === "nb" ? "/nb/privacy/" : "/ne/privacy/");
+      assert.equal(dialog.querySelector('a[href$="/privacy/"]').textContent, travelHelp[language].privacyPolicy);
+      assert.equal(dialog.querySelectorAll("p").length, 2);
+      assert.equal(rootElement.querySelector(".travel-help__notice").textContent, travelHelp[language].notice);
+      assert.equal(dialog.contains(rootElement.querySelector(".travel-help__notice")), false);
       assert.doesNotMatch(attribution.textContent, /endorse|anbefal|समर्थन/i);
     } finally {
       await restore();
     }
   });
 }
+
+test("dialog traps focus, supports Escape and backdrop, and restores focus and scrolling", async () => {
+  const {rootElement, restore} = await renderAvailable("nb");
+  try {
+    const control = rootElement.querySelector(".travel-help__disclosure");
+    const dialog = rootElement.querySelector("dialog");
+    dialog.showModal = function () { this.setAttribute("open", ""); };
+    dialog.close = function () { this.removeAttribute("open"); };
+    dialog.getBoundingClientRect = () => ({left: 100, right: 400, top: 100, bottom: 400});
+    const doc = rootElement.ownerDocument;
+    doc.body.style.overflow = "auto";
+    control.focus();
+    await act(async () => control.click());
+    assert.equal(dialog.getAttribute("role"), "dialog");
+    assert.equal(dialog.getAttribute("aria-modal"), "true");
+    assert.equal(doc.getElementById(dialog.getAttribute("aria-labelledby")).textContent, travelHelp.nb.disclosure);
+    const close = dialog.querySelector("button");
+    const first = dialog.querySelector("a");
+    const last = close;
+    assert.equal(doc.activeElement, close);
+    assert.equal(doc.body.style.overflow, "hidden");
+    await act(async () => close.dispatchEvent(new doc.defaultView.KeyboardEvent("keydown", {key: "Tab", bubbles: true, cancelable: true})));
+    assert.equal(doc.activeElement, first);
+    await act(async () => first.dispatchEvent(new doc.defaultView.KeyboardEvent("keydown", {key: "Tab", shiftKey: true, bubbles: true, cancelable: true})));
+    assert.equal(doc.activeElement, last);
+    await act(async () => dialog.querySelector("p").click());
+    assert.equal(dialog.open, true);
+    await act(async () => dialog.dispatchEvent(new doc.defaultView.Event("cancel", {bubbles: false, cancelable: true})));
+    assert.equal(dialog.open, false);
+    assert.equal(doc.activeElement, control);
+    assert.equal(doc.body.style.overflow, "auto");
+    await act(async () => control.click());
+    await act(async () => dialog.dispatchEvent(new doc.defaultView.MouseEvent("click", {bubbles: true, clientX: 200, clientY: 200})));
+    assert.equal(dialog.open, true);
+    await act(async () => dialog.dispatchEvent(new doc.defaultView.MouseEvent("click", {bubbles: true, clientX: 20, clientY: 20})));
+    assert.equal(dialog.open, false);
+    assert.equal(doc.activeElement, control);
+  } finally { await restore(); }
+});
 
 test("attribution stays hidden with the whole component while Entur is unavailable", async () => {
   const dom = new JSDOM('<!doctype html><div id="root"></div>', { url: "https://nepali.no/" });
