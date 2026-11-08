@@ -37,7 +37,8 @@
     "test:ai-transparency": "npx tsx --test tests/aiTransparency/aiTransparency.test.mjs",
     "test:read-also": "node --experimental-strip-types --test tests/readAlso/readAlso.test.mjs",
     "test:topic-slug": "node --experimental-strip-types --test tests/sanity/topicSlug.test.mjs",
-    "test:seo-redirects": "node --experimental-strip-types --test tests/content/seoRedirects.test.mjs"
+    "test:seo-redirects": "node --experimental-strip-types --test tests/content/seoRedirects.test.mjs",
+    "test:privacy": "node --experimental-strip-types --test tests/privacy/mapsTravelPrivacy.test.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.6",

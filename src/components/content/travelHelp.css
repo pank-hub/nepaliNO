@@ -41,6 +41,32 @@
   overflow-wrap: anywhere;
 }
 
+.travel-help__attribution {
+  margin: 0;
+  padding-block-start: 0.6rem;
+  border-block-start: 1px solid var(--border, #dce4ec);
+  color: var(--text-muted, #526273);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.travel-help__attribution a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.travel-help__attribution a:hover {
+  color: var(--text, #172534);
+}
+
+.travel-help__attribution a:focus-visible {
+  outline: 3px solid var(--brand, #c62a1f);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .travel-help__origin-form,
 .travel-help__journey-form {
   display: grid;

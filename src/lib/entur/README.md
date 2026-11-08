@@ -224,7 +224,49 @@ To roll back, unset the server flag or set it to a value other than `true`, then
 restart/redeploy the server. Confirm generic private no-store 404s from all
 three endpoints and reload open pages; do not change the submission firewall rule.
 
+## Attribution and official sources
+
+`TravelHelp` shows a localized, visually secondary attribution below the
+results and notice (`.travel-help__attribution`, strings `attribution`,
+`attributionEntur`, `attributionNlod` and `attributionOsm` in
+`src/i18n/travelHelp.ts`). The sentence holds `{entur}`, `{nlod}` and `{osm}`
+tokens that the component replaces with links opening in a new tab with
+`rel="noopener noreferrer"`: Entur AS (https://entur.no), the Norwegian
+Licence for Open Government Data (https://data.norge.no/nlod/en/2.0) and
+OpenStreetMap contributors (https://www.openstreetmap.org/copyright). It states
+that the travel information is arranged by nepali.no, names Entur only as the
+data source and does not imply endorsement. Official stop and line names come
+from Entur and are never rewritten. Entur's geocoder combines the national
+stop registry, the cadastre, Kartverket place names and OpenStreetMap, so the
+text also credits OpenStreetMap contributors for place data. Map tiles are
+attributed by Leaflet's in-map control (`MAP_PROVIDER.attribution`).
+
+The privacy line in the component and the "Maps and travel assistance"
+fallback section in `src/pages/[lang]/privacy.astro` describe the same facts:
+Entur receives requests from nepali.no's server, not the reader's browser;
+nothing about the reader's starting place or journeys is stored; Upstash
+receives only a short-lived pseudonymous HMAC identifier; operational logs may
+still exist. The published Privacy page comes from Sanity `trustPage` documents
+(the fallback applies only when none is published), so the same section must
+also be added there. Browser geolocation is not implemented.
+
+Official sources (reviewed November 2026):
+
+- Entur Terms of Service (API terms, NLOD attribution, privacy and 14-month
+  request-log retention): https://developer.entur.no/terms-of-service
+- Entur Privacy Policy: https://om.entur.no/personvern/
+- Entur Geocoder data sources: https://developer.entur.no/docs/open-services/geocoder
+- Norwegian Licence for Open Government Data (NLOD) 2.0:
+  https://data.norge.no/nlod/en/2.0
+- OpenStreetMap Foundation Tile Usage Policy:
+  https://operations.osmfoundation.org/policies/tiles/
+- OpenStreetMap Attribution Guidelines:
+  https://osmfoundation.org/wiki/Licence/Attribution_Guidelines
+
 ## Privacy-page draft — editorial and legal review required, not published
+
+The drafts below pre-date the implemented fallback section and are kept for
+review history; the fallback in `privacy.astro` is the current code wording.
 
 **English:** When you search for a public transport journey, nepali.no sends
 the starting place you enter to Entur to find suggestions. When you select a

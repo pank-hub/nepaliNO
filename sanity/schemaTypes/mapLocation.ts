@@ -322,7 +322,7 @@ export const locationMap = defineType({
   title: 'Location Map',
   type: 'object',
   initialValue: {
-    loadingBehavior: 'automatic',
+    loadingBehavior: 'click',
     showViewOnMapActions: false,
     showOpenStreetMapLinks: false,
     showLocationList: false,
