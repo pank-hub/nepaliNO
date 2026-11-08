@@ -534,6 +534,10 @@ export const nb = {
     showMore: "Vis mer",
     showLess: "Vis mindre",
     maps: {
+      privacyTitle: "Kart og personvern",
+      privacyExplanation: "Når kartet lastes, kontakter nettleseren din OpenStreetMaps karttjener direkte. Vanlig teknisk informasjon, blant annet IP-adressen din og hvilket kartområde som etterspørres, kan da bli behandlet. nepali.no ber ikke om enhetens posisjon og lagrer ikke hvordan du flytter eller zoomer kartet.",
+      privacyMore: "Les mer om kart og personvern",
+      privacyClose: "Lukk",
       load: "Vis kart",
       loading: "Laster inn kart …",
       failed: "Kartet kunne ikke lastes. Du finner stedsbeskrivelsen nedenfor.",

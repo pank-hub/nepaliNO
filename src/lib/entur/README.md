@@ -57,6 +57,14 @@ context. Additional editorial map titles appear below the map, not as a
 duplicated heading. The fullscreen control is directly below the map.
 Disabling persistent marker labels also prevents automatic popup opening.
 Available Event/Directory TravelHelp starts expanded and remains collapsible.
+The sidebar map card adds a quiet map-only privacy dialog below fullscreen,
+linking to the published Privacy Policy without copying the full disclosure.
+Empty loading/status rows take no space after successful map loading. Card
+bottom padding is 18px and the map-to-TravelHelp grid gap is 22px at a 16px root
+font size, without adding TravelHelp's normal standalone margins.
+Standard pins use bundled fixed SVG markup rather than Leaflet's relative PNG
+path detection; the same asset-path correction applies to shared News/Guide
+pins without changing their other presentation settings.
 Embedded News/Guide maps and TravelHelp retain their existing presentation
 and collapsed default. Published privacy content and travel disclosures are
 unchanged.

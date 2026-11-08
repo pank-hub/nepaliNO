@@ -1,4 +1,5 @@
 ---
+import MapPrivacy from "./MapPrivacy.astro";
 import {
   MAP_PROVIDER,
   ROUTING_PROVIDER,
@@ -30,6 +31,7 @@ interface Props {
   loadingBehavior?: "automatic" | "click";
   immediate?: boolean;
   contextSidebar?: boolean;
+  language?: string;
   markerLabel?: string;
   markerIcon?: PlaceIcon;
   markerShowLabel?: boolean;
@@ -80,6 +82,7 @@ const {
   loadingBehavior,
   immediate = false,
   contextSidebar = false,
+  language = "en",
   markerLabel,
   markerIcon,
   markerShowLabel,
@@ -249,6 +252,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
           {labels.viewMapFullscreen}
         </button>
       )}
+      {contextSidebar && <MapPrivacy language={language} />}
       {display.showFullscreenControl && (
         <dialog id={`${mapId}-fullscreen`} class="location-map__fullscreen" data-map-fullscreen-dialog aria-label={labels.viewMapFullscreen}>
           <div class="location-map__fullscreen-header">
@@ -797,6 +801,23 @@ const mapId = `location-map-${crypto.randomUUID()}`;
 
   .location-map--context > .location-map__fullscreen-open {
     margin: 0.5rem 0 0;
+    border: 0;
+    background: transparent;
+    padding-inline: 0;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .location-map.location-map--context {
+    padding-bottom: 1.125rem;
+  }
+
+  .location-map--context .location-map__status:empty {
+    display: none;
+  }
+
+  .location-map--context .location-map__actions {
+    display: contents;
   }
 
   .location-map__fullscreen[open] {

@@ -1,0 +1,11 @@
+---
+import MapPrivacy from "./MapPrivacy";
+import "./mapPrivacy.css";
+import {getTranslations} from "../../i18n";
+import {en} from "../../i18n/en";
+
+interface Props {language: string}
+const {language} = Astro.props;
+const labels = language === "ne" || language === "nb" ? getTranslations(language).common.maps : en.common.maps;
+---
+<MapPrivacy client:load language={language} labels={labels} />
