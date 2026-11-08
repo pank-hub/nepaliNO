@@ -25,6 +25,45 @@ const event = {
   },
 };
 
+test("map selector changes trigger a fresh availability check and ignore stale responses", async () => {
+  const dom = new JSDOM('<!doctype html><div id="root"></div>', {url: "https://nepali.no/"});
+  const old = {window: globalThis.window, document: globalThis.document, navigator: globalThis.navigator, fetch: globalThis.fetch};
+  Object.defineProperty(globalThis, "window", {value: dom.window, configurable: true});
+  Object.defineProperty(globalThis, "document", {value: dom.window.document, configurable: true});
+  Object.defineProperty(globalThis, "navigator", {value: dom.window.navigator, configurable: true});
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const calls = [];
+  let resolveFirst;
+  globalThis.fetch = async (_url, init) => {
+    calls.push(JSON.parse(String(init.body)));
+    if (calls.length === 1) return new Promise((resolve) => {resolveFirst = resolve});
+    return Response.json({ok: true});
+  };
+  const {createRoot} = await import("react-dom/client");
+  const element = dom.window.document.getElementById("root");
+  const root = createRoot(element);
+  const first = {type: "newsArticle", id: "article-1", mapKey: "map-1", placeKey: "place-1"};
+  const second = {...first, mapKey: "map-2", placeKey: "place-2"};
+  try {
+    const render = (destination) => root.render(React.createElement(TravelHelp, {
+      destination, language: "ne", labels: travelHelp.ne,
+    }));
+    await act(async () => {render(first)});
+    await act(async () => {render(second)});
+    assert.deepEqual(calls, [first, second]);
+    assert.ok(element.querySelector("details"));
+    await act(async () => {resolveFirst(Response.json({ok: false}, {status: 404}))});
+    assert.ok(element.querySelector("details"));
+  } finally {
+    await act(async () => root.unmount());
+    dom.window.close();
+    for (const [key, value] of Object.entries(old)) {
+      Object.defineProperty(globalThis, key, {value, configurable: true, writable: true});
+    }
+    delete globalThis.IS_REACT_ACT_ENVIRONMENT;
+  }
+});
+
 test("eligibility uses the same strict public rules for page and resolver", () => {
   assert.deepEqual(eligibleDestinationCoordinates(selector, event), {
     lat: 59.9,

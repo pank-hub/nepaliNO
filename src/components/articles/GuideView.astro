@@ -34,6 +34,7 @@ import type {ArticleSummaryInput} from '../../lib/articleSummary/normalize.ts'
 import type {ReadAlsoInput} from '../../lib/readAlso/normalize.ts'
 import type {ExpandableSectionInput} from '../../lib/expandableSection/normalize.ts'
 import type {LocationMapBlock} from '../../lib/maps/location'
+import {withMapTravelDestination} from '../../lib/entur/mapRendering'
 
 interface TranslationSummary {
   _id: string
@@ -265,7 +266,7 @@ const getAudienceLabel = (audience: string) => audienceLabels[audience] ?? audie
 
         {guide.body && guide.body.length > 0 && (
           <section class="prose guide-content" aria-label={guide.title}>
-            <PortableText value={guide.body} components={portableTextComponents} />
+            <PortableText value={withMapTravelDestination(guide.body, 'publicInformationGuide', guide._id, preview)} components={portableTextComponents} />
           </section>
         )}
 

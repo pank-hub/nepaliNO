@@ -32,6 +32,7 @@ import type {ArticleSummaryInput} from '../../lib/articleSummary/normalize.ts'
 import type {ReadAlsoInput} from '../../lib/readAlso/normalize.ts'
 import type {ExpandableSectionInput} from '../../lib/expandableSection/normalize.ts'
 import type {LocationMapBlock} from '../../lib/maps/location'
+import {withMapTravelDestination} from '../../lib/entur/mapRendering'
 
 interface TranslationSummary {
   _id: string
@@ -286,7 +287,7 @@ const structuredData = preview || !article.publishedAt ? undefined : buildNewsAr
 
         {article.body && article.body.length > 0 && (
           <section class="prose article-body" aria-label={article.title}>
-            <PortableText value={article.body} components={portableTextComponents} />
+            <PortableText value={withMapTravelDestination(article.body, 'newsArticle', article._id, preview)} components={portableTextComponents} />
           </section>
         )}
 

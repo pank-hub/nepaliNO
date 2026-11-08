@@ -17,12 +17,12 @@ export function eligibleDestinationCoordinates(
     if (!isSectionEnabled(document.language, 'events') ||
       !['in-person', 'hybrid'].includes(String(document.eventFormat)) ||
       !['scheduled', 'rescheduled'].includes(String(document.eventStatus))) return
-  } else {
+  } else if (selector.type === 'directoryListing') {
     if (!isSectionEnabled(document.language, 'directory') ||
       !['physical', 'physical-and-online'].includes(String(document.presenceType)) ||
       document.listingStatus !== 'active' || !isDateTime(document.publishedAt) ||
       Date.parse(document.publishedAt) > now) return
-  }
+  } else return
   const location = document.mapLocation
   if (!isRecord(location) || location.precision !== 'exact' || location.hasRadius !== false) return
   return parseCoordinates(location.coordinates)

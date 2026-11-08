@@ -1,4 +1,5 @@
 import type {MapCoordinates} from '../maps/location.ts'
+import type {DocumentDestinationType, MapDestinationType} from './destinationRegistry.ts'
 
 export type TravelCoordinates = Pick<MapCoordinates, 'lat' | 'lng'>
 export type TransportMode = 'air' | 'bicycle' | 'bus' | 'cableway' | 'water' |
@@ -15,10 +16,14 @@ export interface OriginSuggestion {
 
 export interface JourneyRequest {
   origin: TravelCoordinates
-  destination: {type: 'communityEvent' | 'directoryListing'; id: string}
+  destination: DestinationSelector
   dateTime: string
   mode: 'departAfter' | 'arriveBy'
 }
+
+export type DestinationSelector =
+  | {type: DocumentDestinationType; id: string}
+  | {type: MapDestinationType; id: string; mapKey: string; placeKey: string}
 
 export interface ResolvedJourneyRequest extends Omit<JourneyRequest, 'destination'> {
   destination: TravelCoordinates

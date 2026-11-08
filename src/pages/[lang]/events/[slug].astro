@@ -155,6 +155,7 @@ const heroTime = event.isAllDay
             description={mapDescription}
             labels={labels.common.maps}
             title={event.venueName || eventLabels.venue}
+            showFullscreenControl={true}
           />
         )}
         {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}

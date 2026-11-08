@@ -121,6 +121,8 @@ export interface MapRoute {
 export interface LocationMapBlock {
   _type?: "locationMap";
   _key?: string;
+  travelHelpEnabled?: boolean;
+  travelHelpPlaceKey?: string;
   title?: string;
   /** Legacy single location. Still rendered when `locations` is empty. */
   location?: MapLocation;
