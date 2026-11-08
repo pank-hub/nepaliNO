@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import {runInNewContext} from "node:vm";
 
 import {
   MAP_PROVIDER,
   PLACE_ICONS,
   ROUTING_PROVIDER,
 } from "../../src/lib/maps/location.ts";
-import { placeContent } from "../../src/lib/maps/markerIcons.ts";
+import { labelContent, placeContent } from "../../src/lib/maps/markerIcons.ts";
 import {
   LEGACY_PLACE_KEY,
   decodePolyline6,
@@ -27,6 +28,54 @@ import {
 } from "../../src/lib/maps/places.ts";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+
+test("immediate markers respect persistent label settings without losing their pin or popup", async () => {
+  const renderer = await read("../../src/components/content/LocationMap.astro");
+  const start = renderer.indexOf("const marker = L.marker(latlng");
+  const end = renderer.indexOf("bounds.extend(latlng);", start);
+  assert.ok(start > 0 && end > start);
+  const script = renderer.slice(start, end);
+  for (const showLabel of [false, true, undefined]) {
+    for (const immediate of [true, false]) {
+      const marker = {
+        open: false,
+        addTo() { return this; },
+        bindPopup(content) { this.popup = content; },
+        bindTooltip(content, options) { this.tooltip = content; this.permanent = options.permanent; },
+        getElement() { return {setAttribute() {}}; },
+        openPopup() { this.open = true; },
+        closePopup() { this.open = false; },
+      };
+      let options;
+      const pin = {};
+      const L = {marker(_position, value) { options = value; return marker; }};
+      const place = {key: "venue", label: "Caritas Norge", icon: "pin", showLabel};
+      const document = {
+        createElement() {
+          return {textContent: "", children: [], style: {}, append(child) { this.children.push(child); }};
+        },
+      };
+      const layers = new Map();
+      runInNewContext(script, {
+        L, place, document, latlng: [59.9, 10.7], map: {},
+        root: {dataset: {mapImmediate: immediate ? "true" : undefined}},
+        record: {layers}, createPlaceIcon: () => pin, placeContent, labelContent,
+      });
+      assert.equal(options.icon, pin);
+      assert.equal(options.keyboard, true);
+      assert.equal(layers.get("venue"), marker);
+      assert.equal(marker.popup.children[0].textContent, "Caritas Norge");
+      assert.equal(marker.tooltip.textContent, "Caritas Norge");
+      assert.equal(marker.permanent, showLabel !== false);
+      assert.equal(marker.open, immediate && showLabel !== false);
+      marker.openPopup();
+      assert.equal(marker.open, true);
+      marker.closePopup();
+      assert.equal(marker.open, false);
+      assert.equal(layers.get("venue"), marker);
+    }
+  }
+});
 const exact = (key, lat, lng, extra = {}) => ({
   _key: key,
   label: `Place ${key}`,

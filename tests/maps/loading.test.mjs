@@ -288,7 +288,7 @@ test("fullscreen rendering keeps controls and attribution in the existing map wi
     read("../../src/i18n/nb.ts"),
   ]);
   assert.match(renderer, /<dialog[^>]*data-map-fullscreen-dialog[^>]*aria-label/);
-  assert.match(renderer, /<div class="location-map__stage" data-map-stage>[\s\S]*?<\/div>\s*<\/div>\s*\{display\.showFullscreenControl && \(\s*<dialog/);
+  assert.match(renderer, /<div class="location-map__stage" data-map-stage>[\s\S]*?<\/div>\s*<\/div>\s*\{display\.showFullscreenControl && contextSidebar && \([\s\S]*?\)\}\s*\{display\.showFullscreenControl && \(\s*<dialog/);
   assert.match(renderer, /data-map-fullscreen-open[^>]*aria-haspopup="dialog"[^>]*hidden/);
   assert.match(renderer, /tiles\.once\("load"[\s\S]*?fullscreenButton\.hidden = false/);
   assert.match(renderer, /tiles\.on\("tileerror"[\s\S]*?fullscreen\.close\(root, false\)/);

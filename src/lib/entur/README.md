@@ -49,6 +49,17 @@ manually drawn editorial path. Path vertices are editorial geometry, not a secon
 destination location. The shared path editor uses the existing `mapLocation`
 as context. Maps and available TravelHelp render together in the existing
 context sidebar, with immediate public map loading and shared fullscreen.
+The original hand-coded location-information panel remains above the map.
+The Event/Directory sidebar presentation omits generated duplicate headings,
+visible addresses, the inline map privacy notice and the generic exact-location
+caption; it retains stored editorial captions and genuine approximate-area
+context. Additional editorial map titles appear below the map, not as a
+duplicated heading. The fullscreen control is directly below the map.
+Disabling persistent marker labels also prevents automatic popup opening.
+Available Event/Directory TravelHelp starts expanded and remains collapsible.
+Embedded News/Guide maps and TravelHelp retain their existing presentation
+and collapsed default. Published privacy content and travel disclosures are
+unchanged.
 
 Multi-stop route authoring is not included for Events or Directory. It is only
 a possible future extension requiring an explicit data-model decision for

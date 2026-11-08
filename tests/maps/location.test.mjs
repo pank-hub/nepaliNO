@@ -44,10 +44,51 @@ test("Event and Directory reuse their rail and render one immediate map followed
     assert.equal((rail.match(/<LocationMap/g) ?? []).length, 1);
     assert.match(rail, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*immediate=\{true\}[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
     assert.match(page, /isOpenStreetMapUrl\(/);
+    assert.match(rail, /contextSidebar=\{true\}/);
+    assert.match(rail, /<TravelHelp[^>]*defaultOpen=\{true\}/);
   }
   const rail = await read("../../src/components/content/ContentContextRail.astro");
   assert.match(rail, /max-width: 58rem[\s\S]*grid-column: 1 \/ -1/);
   assert.match(rail, /max-width: 38rem[\s\S]*grid-template-columns: 1fr/);
+});
+
+test("sidebar maps preserve original location panels and avoid generated duplicate content", async () => {
+  const event = await read("../../src/pages/[lang]/events/[slug].astro");
+  const directory = await read("../../src/pages/[lang]/directory/[slug].astro");
+  assert.match(event, /<ContextRailPanel title=\{eventLabels\.venue\} accent="civic">[\s\S]*event\.venueName[\s\S]*\{address\}[\s\S]*<\/ContextRailPanel>\s*\)\}\s*\{publicMapLocation/);
+  assert.match(directory, /<dt>\{directoryLabels\.location\}<\/dt>\s*<dd>\{locationLabel\}<\/dd>[\s\S]*<\/ContextRailPanel>\s*\{publicMapLocation/);
+  for (const page of [event, directory]) {
+    const map = page.slice(page.indexOf("<LocationMap"), page.indexOf("/>", page.indexOf("<LocationMap")));
+    assert.match(map, /title=\{additionalMapTitle\}/);
+    assert.match(map, /caption=\{(?:event|listing)\.mapPresentation\?\.caption\}/);
+    assert.match(map, /markerLabel=\{(?:event\.mapPresentation\?\.markerLabel \|\| event\.venueName \|\| eventLabels\.venue|listing\.mapPresentation\?\.markerLabel \|\| listing\.name)\}/);
+    assert.match(page, /const additionalMapTitle = mapTitle && !\[[^\]]+\]\.includes\(mapTitle\) \? mapTitle : undefined/);
+  }
+  const renderer = await read("../../src/components/content/LocationMap.astro");
+  assert.match(renderer, /!contextSidebar && title && <h2 class="location-map__title"/);
+  assert.match(renderer, /!contextSidebar && <p class="location-map__description"/);
+  assert.match(renderer, /!contextSidebar && <p class="location-map__external-notice"/);
+  assert.match(renderer, /contextSidebar \? "" : labels\.exact/);
+  assert.match(renderer, /precision === "approximate"\s*\?\s*`\$\{labels\.approximate\} · \$\{radiusText\(single!\)\}`/);
+  assert.match(renderer, /caption \|\| safeSourceUrl \|\| precisionLabel/);
+  assert.match(renderer, /\{caption && <span>\{caption\}<\/span>\}/);
+  assert.match(renderer, /data-description=\{description\}/);
+  for (const language of ["ne", "nb"]) {
+    const wrapper = await read(`../../src/components/content/LocationMap${language === "ne" ? "Ne" : "Nb"}.astro`);
+    assert.doesNotMatch(wrapper, /contextSidebar|defaultOpen|immediate=/);
+  }
+});
+
+test("fullscreen control is below sidebar maps and above embedded maps with one rendered control", async () => {
+  const renderer = await read("../../src/components/content/LocationMap.astro");
+  const stage = renderer.indexOf('<div class="location-map__stage"');
+  const before = renderer.slice(renderer.indexOf('<figure'), stage);
+  const after = renderer.slice(stage, renderer.indexOf('<p\n        class="location-map__status"'));
+  assert.match(before, /display\.showFullscreenControl && !contextSidebar && \(/);
+  assert.equal((before.match(/data-map-fullscreen-open/g) ?? []).length, 1);
+  assert.match(after, /<\/div>\s*<\/div>\s*\{display\.showFullscreenControl && contextSidebar && \(/);
+  assert.equal((after.match(/data-map-fullscreen-open/g) ?? []).length, 1);
+  assert.match(after, /\{labels\.viewMapFullscreen\}/);
 });
 
 test("shared map retains interactive controls and attribution without OSM navigation", async () => {

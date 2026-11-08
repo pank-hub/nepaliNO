@@ -20,6 +20,7 @@ type Props = {
   destination: JourneyRequest["destination"];
   language: string;
   labels?: Partial<Labels>;
+  defaultOpen?: boolean;
 };
 type ErrorKind = "failure" | "timeout" | "rateLimited" | "noJourneys";
 
@@ -136,7 +137,7 @@ async function post(
   return data;
 }
 
-export default function TravelHelp({ destination, language, labels: suppliedLabels }: Props) {
+export default function TravelHelp({ destination, language, labels: suppliedLabels, defaultOpen = false }: Props) {
   const labels = getTravelHelpLabels(language, suppliedLabels);
   const id = useId();
   const [available, setAvailable] = useState(false);
@@ -376,7 +377,7 @@ export default function TravelHelp({ destination, language, labels: suppliedLabe
         ? "travel-help__status travel-help__status--error"
         : "travel-help__status";
   return (
-    <details className="travel-help" onToggle={(event) => {
+    <details className="travel-help" open={defaultOpen || undefined} onToggle={(event) => {
       if (!event.currentTarget.open) setDisclosureOpen(false);
     }}>
       <summary>{labels.title}</summary>

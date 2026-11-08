@@ -27,6 +27,49 @@ const event = {
   },
 };
 
+test("default-open TravelHelp reveals search controls, stays collapsible, and still requires availability", async () => {
+  const dom = new JSDOM('<!doctype html><div id="root"></div>', {url: "https://nepali.no/"});
+  const old = {window: globalThis.window, document: globalThis.document, navigator: globalThis.navigator, fetch: globalThis.fetch};
+  for (const [key, value] of Object.entries({window: dom.window, document: dom.window.document, navigator: dom.window.navigator})) {
+    Object.defineProperty(globalThis, key, {value, configurable: true});
+  }
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const calls = [];
+  let available = true;
+  globalThis.fetch = async (path) => {
+    calls.push(path);
+    return Response.json({ok: available}, {status: available ? 200 : 404});
+  };
+  const {createRoot} = await import("react-dom/client");
+  const element = dom.window.document.getElementById("root");
+  const root = createRoot(element);
+  try {
+    for (const language of ["ne", "nb", "en"]) {
+      await act(async () => {root.render(React.createElement(TravelHelp, {key: language, destination: selector, language, defaultOpen: true}))});
+      const details = element.querySelector("details.travel-help");
+      assert.equal(details.open, true);
+      assert.ok(details.querySelector(".travel-help__origin-form input"));
+      await act(async () => {
+        details.querySelector("summary").click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      assert.equal(details.open, false);
+    }
+    await act(async () => {root.render(React.createElement(TravelHelp, {key: "embedded", destination: selector, language: "ne"}))});
+    assert.equal(element.querySelector("details.travel-help").open, false);
+    available = false;
+    await act(async () => {root.render(React.createElement(TravelHelp, {key: "unavailable", destination: selector, language: "ne", defaultOpen: true}))});
+    assert.equal(element.querySelector("details"), null);
+    assert.equal(calls.length, 5);
+    assert.equal(calls.every((path) => path === "/api/entur/availability"), true);
+  } finally {
+    await act(async () => root.unmount());
+    dom.window.close();
+    for (const [key, value] of Object.entries(old)) Object.defineProperty(globalThis, key, {value, configurable: true, writable: true});
+    delete globalThis.IS_REACT_ACT_ENVIRONMENT;
+  }
+});
+
 test("eligible draft maps render a localized static notice instead of the live TravelHelp island", async () => {
   assert.equal(travelHelp.en.previewNotice, "Live journey search becomes available after publication.");
   assert.equal(getTravelHelpLabels("unsupported").previewNotice, travelHelp.en.previewNotice);
