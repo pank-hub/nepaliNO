@@ -4,6 +4,8 @@ import {MapLocationInput} from '../components/MapLocationInput'
 import {MapPlacesInput} from '../components/MapPlacesInput'
 import {MapPathInput} from '../components/MapPathInput'
 import {MapRouteInput} from '../components/MapRouteInput'
+import {MapTravelPlaceInput} from '../components/MapTravelPlaceInput'
+import {eligibleMapPlaces, mapTravelValidation} from '../../src/lib/entur/mapDestination'
 import {
   EDITORIAL_PATH_LIMITS,
   LOCATION_DEFAULTS,
@@ -13,6 +15,7 @@ import {
   ROUTING_CALCULATION_ENABLED,
   validateCoordinates,
   validateMapLocation,
+  type LocationMapBlock,
 } from '../../src/lib/maps/location'
 import {
   editorialPathNeedsReview,
@@ -328,6 +331,7 @@ export const locationMap = defineType({
     showLocationList: false,
     showOpenStreetMapControl: false,
     showFullscreenControl: true,
+    travelHelpEnabled: false,
   },
   fields: [
     defineField({
@@ -352,6 +356,24 @@ export const locationMap = defineType({
           }
           return validatePlaces(places as never) ?? true
         }),
+    }),
+    defineField({
+      name: 'travelHelpEnabled',
+      title: 'Offer travel assistance',
+      type: 'boolean',
+      description: 'Optional. One exact location is used automatically; choose a destination when there are several. Approximate and legacy locations are not eligible.',
+      validation: (rule) => rule.custom((value, context) =>
+        mapTravelValidation({...context.parent as LocationMapBlock | undefined, travelHelpEnabled: value}) ?? true),
+    }),
+    defineField({
+      name: 'travelHelpPlaceKey',
+      title: 'Travel assistance destination',
+      type: 'string',
+      components: {input: MapTravelPlaceInput},
+      description: 'Choose one of this map’s existing exact locations.',
+      hidden: ({parent}) => parent?.travelHelpEnabled !== true || eligibleMapPlaces(parent).length <= 1,
+      validation: (rule) => rule.custom((_value, context) =>
+        mapTravelValidation((context.parent ?? {}) as LocationMapBlock) ?? true),
     }),
     defineField({
       name: 'initialZoom',
@@ -492,8 +514,10 @@ export const locationMap = defineType({
       description: 'accessibleDescription',
       locations: 'locations',
       precision: 'location.precision',
+      travelHelpEnabled: 'travelHelpEnabled',
+      travelHelpPlaceKey: 'travelHelpPlaceKey',
     },
-    prepare: ({title, description, locations, precision}) => {
+    prepare: ({title, description, locations, precision, travelHelpEnabled, travelHelpPlaceKey}) => {
       const places = Array.isArray(locations) ? (locations as {label?: string}[]) : []
       const summary = places.length
         ? `${places.length} location${places.length === 1 ? '' : 's'}: ${places
@@ -505,7 +529,7 @@ export const locationMap = defineType({
           : 'Exact pin (legacy)'
       return {
         title: title || 'Location map',
-        subtitle: `${summary}${description ? ` · ${description}` : ''}`,
+        subtitle: `${summary}${travelHelpEnabled ? ` · Travel assistance${travelHelpPlaceKey ? `: ${travelHelpPlaceKey}` : ''}` : ''}${description ? ` · ${description}` : ''}`,
       }
     },
   },

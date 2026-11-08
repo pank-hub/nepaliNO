@@ -1,10 +1,12 @@
 ---
 import LocationMap from "./LocationMap.astro";
+import TravelHelp from "./TravelHelp.astro";
 import { getTranslations } from "../../i18n";
 import type { LocationMapBlock } from "../../lib/maps/location";
+import type { DestinationSelector } from "../../lib/entur/types";
 
 interface Props {
-  node: LocationMapBlock;
+  node: LocationMapBlock & {travelDestination?: DestinationSelector};
   index?: number;
   isInline?: boolean;
 }
@@ -31,3 +33,4 @@ const { node } = Astro.props;
   sourceLabel={node.sourceLabel}
   sourceUrl={node.sourceUrl}
 />
+{node.travelDestination && <TravelHelp destination={node.travelDestination} language="ne" />}

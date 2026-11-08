@@ -158,18 +158,35 @@ export default function TravelHelp({ destination, language, labels }: Props) {
   const originSequence = useRef(0);
   const journeySequence = useRef(0);
   const resultsHeading = useRef<HTMLHeadingElement>(null);
+  const mapKey = "mapKey" in destination ? destination.mapKey : undefined;
+  const placeKey = "placeKey" in destination ? destination.placeKey : undefined;
 
   useEffect(() => {
     const controller = new AbortController();
+    setAvailable(false);
+    setQuery("");
+    setSuggestions([]);
+    setOrigin(undefined);
+    setOriginStatus("");
+    setJourneyStatus("");
+    setJourneys([]);
+    setLoadingOrigins(false);
+    setLoadingJourneys(false);
     post("/api/entur/availability", destination, controller.signal)
-      .then(() => setAvailable(true))
-      .catch(() => setAvailable(false));
+      .then(() => {
+        if (!controller.signal.aborted) setAvailable(true);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setAvailable(false);
+      });
     return () => {
       controller.abort();
+      originSequence.current++;
+      journeySequence.current++;
       originRequest.current?.abort();
       journeyRequest.current?.abort();
     };
-  }, [destination.type, destination.id]);
+  }, [destination.type, destination.id, mapKey, placeKey]);
 
   useEffect(() => {
     if (journeys.length) resultsHeading.current?.focus();

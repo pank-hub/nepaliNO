@@ -13,9 +13,10 @@ Entur's default public-transport modes.
 normalization and whitespace trimming). It returns `{ok: true, suggestions}`
 with label, `{lat, lng}`, and optional ID, locality and category.
 
-`POST /api/entur/journeys` accepts `{origin: {lat, lng}, destination: {type,
-id}, dateTime, mode}`. The only allowed types are `communityEvent` and
-`directoryListing`; IDs are 1–128 ASCII letters, digits, hyphens or underscores,
+`POST /api/entur/journeys` accepts `{origin: {lat, lng}, destination,
+dateTime, mode}`. Event and Directory destinations use `{type, id}`; News and
+Guide map destinations use `{type, id, mapKey, placeKey}`. Types are explicitly
+registered. IDs and keys are 1–128 ASCII letters, digits, hyphens or underscores,
 starting with a letter or digit. The server resolves coordinates with fixed
 queries against the public `production` dataset using the published perspective,
 without CDN or token. It requires a public route in an enabled language section,
@@ -26,7 +27,30 @@ The published document must have `travelHelpEnabled === true`; false, missing,
 null and malformed values are rejected. The Event and Directory Studio fields
 default to false for new documents, and their validation requires a physical
 location with an exact pin and no radius. Editors must independently verify that
-the coordinates are safe to publish. News remains unsupported.
+the coordinates are safe to publish. News and Guides use the shared Location
+Map's independent opt-in. One valid keyed exact place is chosen automatically;
+several require an editor-selected key. Legacy single locations, approximate
+places, radius-bearing places, invalid places and mismatched keys are rejected.
+News must be published by its publication time; Guides must be active. Preview
+pages do not offer travel assistance for draft content.
+
+### Adding a content type
+
+1. Register the shared `locationMap` schema in its Portable Text array and the
+   existing localized Location Map renderer in the Portable Text components.
+2. Provide document context with `withMapTravelDestination`, without rendering
+   travel assistance on draft previews.
+3. Explicitly register the selector shape in `destinationRegistry.ts` and an
+   adapter in `server/destination.ts`. Its fixed query must use the published
+   public dataset and its resolver must enforce the same route, language,
+   publication and opt-in eligibility as the public content. For a shared map,
+   check the unique block key, eligible exact place and selected place key;
+   never accept destination coordinates from the browser. Types are not
+   eligible merely because they contain coordinates.
+4. Reuse TravelHelp and the existing availability and server entitlement checks.
+5. Add content-type contract tests covering published and unpublished content,
+   selectors, invalid locations and rendering. Endpoint handlers and rate
+   limits do not need a content-type-specific branch.
 
 `dateTime` must be an ISO datetime
 with seconds and timezone, from five minutes in the past through 90 days ahead.
@@ -71,7 +95,7 @@ provider-terms review have been approved and the hosted verification has
 passed. For local tests only, set it in the server process environment; the
 automated tests set and restore it explicitly.
 
-`POST /api/entur/availability` accepts only `{type, id}` with the same selector
+`POST /api/entur/availability` accepts a destination with the same selector
 validation as journeys. When enabled it independently checks the published
 destination and returns only `{ok: true}` if eligible; errors are no-store.
 When disabled it returns the generic 404 before reading the body or contacting
@@ -84,7 +108,7 @@ including availability (which can query Sanity), are protected by the
 distributed limiter described below.
 
 The interface uses a deliberately submitted origin query and a selected result,
-then sends `{origin, destination: {type, id}, dateTime, mode: "departAfter"}`.
+then sends `{origin, destination, dateTime, mode: "departAfter"}`.
 The date input is Norway time; nonexistent and ambiguous Oslo DST times are
 rejected rather than silently shifted. The same five-minute tolerance and
 90-day elapsed horizon used by the server apply. The UI shows estimated
@@ -193,19 +217,19 @@ misconfigured because the routes return 503.
 The resolver cannot independently detect private or sensitive locations, verify
 real-world location accuracy, or establish Norway coverage; editor confirmation
 is essential.
-The backend foundation and shared Event/Directory interface are implemented.
+The backend foundation and shared Event/Directory/News/Guide interface are implemented.
 The automated Entur and rate-limit test suites pass (`npm run test:entur`,
 `npm run test:entur-ui`, `npm run test:rate-limit`), and the mocked fixture's
-origin-selection and journey-results flow has been manually verified. No live
-Upstash, no live production Entur journey, and no hosted verification has been
-performed. Keyboard, mobile, screen-reader and DST acceptance checks remain.
+origin-selection and journey-results flow has been manually verified. The
+protected Preview rate limiter and live Entur flow were verified for the earlier
+Event/Directory implementation; the new News and Guide integration still needs
+hosted and browser acceptance checks. No live production Entur journey has
+been performed. Keyboard, mobile, screen-reader and DST acceptance checks remain.
 
-Do not enable the routes until the hosted limiter verification passes. Privacy
-review, Entur provider-terms and attribution review, and
-localized Privacy-page disclosure remain required before launch. The initial
-English, Norwegian and Nepali interface wording is present; editorial
-translation polishing and News integration remain future work. Browser
-geolocation is not implemented.
+Production remains disabled. Before launch, complete translation polishing,
+provider-terms review and acceptance checks. Published Norwegian and Nepali
+Privacy pages disclose maps and travel assistance. Browser geolocation is not
+implemented.
 
 ## Local checks and rollback
 

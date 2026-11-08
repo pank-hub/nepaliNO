@@ -1,5 +1,6 @@
 import {validateCoordinates} from '../maps/location.ts'
 import type {JourneyRequest, TravelCoordinates} from './types.ts'
+import {isDestinationType, isDocumentDestinationType} from './destinationRegistry.ts'
 
 export const MAX_QUERY_LENGTH = 100
 export const MAX_HORIZON_MS = 90 * 24 * 60 * 60 * 1000
@@ -43,10 +44,18 @@ export function isDateTime(value: unknown): value is string {
 }
 
 export function parseDestinationSelector(value: unknown): JourneyRequest['destination'] | undefined {
-  if (!isRecord(value) || !hasOnlyKeys(value, ['type', 'id']) ||
-    (value.type !== 'communityEvent' && value.type !== 'directoryListing') ||
-    typeof value.id !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(value.id)) return
-  return {type: value.type, id: value.id}
+  if (!isRecord(value) || typeof value.id !== 'string' ||
+    !/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(value.id)) return
+  if (!isDestinationType(value.type)) return
+  if (isDocumentDestinationType(value.type)) {
+    if (hasOnlyKeys(value, ['type', 'id'])) return {type: value.type, id: value.id}
+    return
+  }
+  if (hasOnlyKeys(value, ['type', 'id', 'mapKey', 'placeKey']) &&
+    typeof value.mapKey === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(value.mapKey) &&
+    typeof value.placeKey === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(value.placeKey)) {
+    return {type: value.type, id: value.id, mapKey: value.mapKey, placeKey: value.placeKey}
+  }
 }
 
 export function parseJourneyRequest(value: unknown, now = Date.now()): JourneyRequest | undefined {
