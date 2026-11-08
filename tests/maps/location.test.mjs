@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import {isOpenStreetMapUrl} from "../../src/lib/maps/publicMapUrl.ts";
 
 import {
   LOCATION_DEFAULTS,
@@ -24,6 +25,57 @@ import {
 } from "../../src/lib/sanity/queries.ts";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+
+test("OpenStreetMap navigation URLs are recognized by host, not by substring", () => {
+  for (const url of ["https://openstreetmap.org/", "https://www.openstreetmap.org/a", "https://tile.openstreetmap.org/", "//openstreetmap.org/", "https://OPENSTREETMAP.ORG./"]) {
+    assert.equal(isOpenStreetMapUrl(url), true);
+  }
+  for (const url of [undefined, "/ne/events/", "https://example.org/openstreetmap.org", "https://openstreetmap.org.example.org/", "https://maps.google.com/"]) {
+    assert.equal(isOpenStreetMapUrl(url), false);
+  }
+});
+
+test("Event and Directory reuse their rail and render one immediate map followed by travel", async () => {
+  for (const path of ["../../src/pages/[lang]/events/[slug].astro", "../../src/pages/[lang]/directory/[slug].astro"]) {
+    const page = await read(path);
+    const main = page.slice(page.indexOf("<main"), page.indexOf("</main>"));
+    const rail = page.slice(page.indexOf("<ContentContextRail"), page.indexOf("</ContentContextRail>"));
+    assert.doesNotMatch(main, /<LocationMap|<TravelHelp/);
+    assert.equal((rail.match(/<LocationMap/g) ?? []).length, 1);
+    assert.match(rail, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*immediate=\{true\}[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
+    assert.match(page, /isOpenStreetMapUrl\(/);
+  }
+  const rail = await read("../../src/components/content/ContentContextRail.astro");
+  assert.match(rail, /max-width: 58rem[\s\S]*grid-column: 1 \/ -1/);
+  assert.match(rail, /max-width: 38rem[\s\S]*grid-template-columns: 1fr/);
+});
+
+test("shared map retains interactive controls and attribution without OSM navigation", async () => {
+  const map = await read("../../src/components/content/LocationMap.astro");
+  for (const control of ["data-map-zoom-in", "data-map-zoom-out", "data-map-fullscreen-open", "marker.bindPopup", "marker.bindTooltip", "data-attribution={MAP_PROVIDER.attribution}"]) assert.ok(map.includes(control));
+  assert.match(map, /data-map-immediate/);
+  assert.match(map, /dataset\.mapImmediate === "true"/);
+  assert.match(map, /isOpenStreetMapUrl\(sourceUrl\)/);
+  assert.doesNotMatch(map, /openStreetMapLocationUrl|data-map-osm-link|openStreetMapViewUrl|fixTheMapUrl/);
+  assert.match(MAP_PROVIDER.attribution, /openstreetmap\.org\/copyright/);
+});
+
+test("Event and Directory presentation has no second location model or multi-stop route authoring", async () => {
+  const schema = await read("../../sanity/schemaTypes/mapLocation.ts");
+  const presentation = schema.slice(schema.indexOf("export const mapPresentation"), schema.indexOf("export const locationMap"));
+  for (const field of ["title", "markerLabel", "caption", "markerIcon", "markerShowLabel", "editorialPath"]) {
+    assert.ok(presentation.includes(`name: '${field}'`));
+  }
+  assert.doesNotMatch(presentation, /name: '(?:coordinates|locations|location|route|initialZoom|precision|radiusMeters)'/);
+  assert.match(schema, /name: 'initialZoom'/);
+  assert.match(schema, /name: 'precision'/);
+  const editor = await read("../../sanity/components/MapPathInput.tsx");
+  assert.match(editor, /useFormValue\(\['mapLocation'\]\)/);
+  for (const query of [EVENT_BY_SLUG_QUERY, DIRECTORY_LISTING_BY_SLUG_QUERY]) {
+    assert.match(query, /mapLocation \{coordinates, precision, radiusMeters, initialZoom\}/);
+    assert.match(query, /mapPresentation \{\.\.\., editorialPath \{\.\.\.\}\}/);
+  }
+});
 
 test("coordinates accept zero and reject non-finite or out-of-range values", () => {
   assert.equal(validateCoordinates({ lat: 0, lng: 0 }), undefined);
@@ -212,7 +264,7 @@ test("location block is shared by News and Guides and the renderer defers tile l
     renderer.indexOf("} else {", approximateStart),
   );
   assert.doesNotMatch(approximateBranch, /L\.marker\(/);
-  assert.match(renderer, /legacy && single && single\.precision === "exact"/);
+  assert.doesNotMatch(renderer, /openStreetMapLocationUrl|data-map-osm-link/);
   assert.match(renderer, /data-attribution=\{MAP_PROVIDER\.attribution\}/);
   assert.match(renderer, /astro:before-swap/);
   assert.doesNotMatch(renderer, /<img[^>]+(?:tile\.openstreetmap|data-tile)/);

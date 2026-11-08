@@ -31,8 +31,28 @@ the coordinates are safe to publish. News and Guides use the shared Location
 Map's independent opt-in. One valid keyed exact place is chosen automatically;
 several require an editor-selected key. Legacy single locations, approximate
 places, radius-bearing places, invalid places and mismatched keys are rejected.
-News must be published by its publication time; Guides must be active. Preview
-pages do not offer travel assistance for draft content.
+News must be published by its publication time; Guides must be active. Draft
+News and Guide Preview pages retain the configured editorial map. An opted-in
+block with an eligible destination shows only a localized notice that live
+journey search becomes available after publication. No TravelHelp island,
+example origins, example journeys or travel API requests are rendered in draft
+Preview. Published content retains the real availability check and search flow.
+
+### Event and Directory map presentation
+
+Event venue/address and Directory address remain authoritative, and
+`mapLocation` is their only location-coordinate field. Its precision, radius
+and initial zoom govern public presentation; travel eligibility still requires
+an exact eligible location without a radius. Optional `mapPresentation` settings
+provide a public title, pin label, caption, marker icon/label visibility and a
+manually drawn editorial path. Path vertices are editorial geometry, not a second
+destination location. The shared path editor uses the existing `mapLocation`
+as context. Maps and available TravelHelp render together in the existing
+context sidebar, with immediate public map loading and shared fullscreen.
+
+Multi-stop route authoring is not included for Events or Directory. It is only
+a possible future extension requiring an explicit data-model decision for
+multiple keyed route stops, without duplicating their authoritative location.
 
 ### Adding a content type
 

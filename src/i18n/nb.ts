@@ -4,6 +4,7 @@ import { eventSubmissionNB } from "./eventSubmission.nb";
 export const nb = {
   languageName: "Norsk",
   travelHelp: {
+    previewNotice: "Reisesøk blir tilgjengelig etter publisering.",
     title: "Slik kommer du deg dit",
     origin: "Hvor reiser du fra?",
     originHelper: "Søk etter en adresse eller et stoppested",

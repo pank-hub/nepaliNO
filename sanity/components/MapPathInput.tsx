@@ -10,6 +10,7 @@ import {
   MAP_PROVIDER,
   PATH_COLORS,
   type MapEditorialPath,
+  type MapLocation,
   type MapPlace,
 } from '../../src/lib/maps/location'
 import {
@@ -322,7 +323,10 @@ export function MapPathInput(props: ObjectInputProps) {
   const {value, onChange, readOnly, path, renderDefault} = props
   const pathValue = (value ?? {}) as MapEditorialPath
   const siblingPlaces = useFormValue([...path.slice(0, -1), 'locations']) as MapPlace[] | undefined
-  const places = Array.isArray(siblingPlaces) ? siblingPlaces : []
+  const documentLocation = useFormValue(['mapLocation']) as MapLocation | undefined
+  const places = Array.isArray(siblingPlaces) ? siblingPlaces : path[0] === 'mapPresentation' && documentLocation?.coordinates
+    ? [{_key: 'legacy', label: 'Location', coordinates: documentLocation.coordinates, precision: documentLocation.precision, radiusMeters: documentLocation.radiusMeters}]
+    : []
   const points = (Array.isArray(pathValue.points) ? pathValue.points : []) as Point[]
   const problem = validateEditorialPath(pathValue)
   const review = editorialPathNeedsReview(pathValue, places)
@@ -347,7 +351,7 @@ export function MapPathInput(props: ObjectInputProps) {
       {renderDefault(props)}
       {pathValue.enabled && (
         <Stack space={3}>
-          {exactOrApproximate < 2 && (
+          {path[0] !== 'mapPresentation' && exactOrApproximate < 2 && (
             <Card padding={3} radius={2} tone="caution" border>
               <Text size={1}>
                 Add two or more locations above so the path has a start and a destination to

@@ -27,6 +27,29 @@ const event = {
   },
 };
 
+test("eligible draft maps render a localized static notice instead of the live TravelHelp island", async () => {
+  assert.equal(travelHelp.en.previewNotice, "Live journey search becomes available after publication.");
+  assert.equal(getTravelHelpLabels("unsupported").previewNotice, travelHelp.en.previewNotice);
+  for (const language of ["ne", "nb"]) {
+    const wrapper = await readFile(new URL(`../../src/components/content/LocationMap${language === "ne" ? "Ne" : "Nb"}.astro`, import.meta.url), "utf8");
+    assert.match(wrapper, /<LocationMap[\s\S]*\/>[\s\S]*node\.travelPreview\s*\?\s*<p[^>]*role="note"/);
+    assert.ok(wrapper.includes(`getTranslations("${language}").travelHelp.previewNotice`));
+    assert.match(wrapper, /:\s*node\.travelDestination && <TravelHelp destination=\{node\.travelDestination\}/);
+    assert.doesNotMatch(wrapper, /<form|<input|<button|<script|fetch\(|\/api\/entur|<TravelHelp preview/);
+    for (const prop of ["locations", "initialZoom", "route", "editorialPath", "loadingBehavior", "showFullscreenControl", "title", "caption"]) {
+      assert.ok(wrapper.includes(`${prop}={node.${prop}}`));
+    }
+  }
+  const component = await readFile(new URL("../../src/components/content/TravelHelp.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(component, /preview|exampleJourney|previewOrigin|previewDestination/);
+  for (const language of ["en", "ne", "nb"]) {
+    const labels = travelHelp[language];
+    assert.ok(labels.previewNotice);
+    assert.equal("previewOrigin" in labels, false);
+    assert.equal("previewDestination" in labels, false);
+  }
+});
+
 test("journey dates use Oslo locale, 24-hour time and the correct local calendar day", () => {
   for (const [language, locale] of [["ne", "ne-NP"], ["nb", "nb-NO"], ["en", "en-GB"], ["unknown", "en-GB"], ["__proto__", "en-GB"]]) {
     const same = formatJourneyTimes("2026-11-08T11:51:00Z", "2026-11-08T12:17:00Z", language);

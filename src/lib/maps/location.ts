@@ -53,6 +53,15 @@ export interface MapLocation {
   initialZoom?: number;
 }
 
+export interface MapPresentation {
+  title?: string;
+  markerLabel?: string;
+  caption?: string;
+  markerIcon?: PlaceIcon;
+  markerShowLabel?: boolean;
+  editorialPath?: MapEditorialPath;
+}
+
 export const PLACE_ICONS = [
   "pin",
   "home",

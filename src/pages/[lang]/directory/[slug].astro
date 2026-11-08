@@ -13,7 +13,8 @@ import type {SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
 import {urlFor} from '../../../lib/sanity/image'
 import {DIRECTORY_LISTING_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
-import {isPublicDirectoryLocation, type MapLocation} from '../../../lib/maps/location'
+import {isPublicDirectoryLocation, type MapLocation, type MapPresentation} from '../../../lib/maps/location'
+import {isOpenStreetMapUrl} from '../../../lib/maps/publicMapUrl'
 import {eligibleDestinationCoordinates} from '../../../lib/entur/eligibility'
 
 interface TranslationSummary {
@@ -67,6 +68,7 @@ interface DirectoryListingDocument {
   postalCode?: string
   mapUrl?: string
   mapLocation?: MapLocation
+  mapPresentation?: MapPresentation
   coverageModes: string[]
   serviceCounties?: string[]
   serviceMunicipalities?: string[]
@@ -210,6 +212,7 @@ const publicMapLocation =
   isPublicDirectoryLocation(listing.presenceType)
     ? listing.mapLocation
     : undefined
+const mapUrl = isOpenStreetMapUrl(listing.mapUrl) ? undefined : listing.mapUrl
 const isClosed = ['temporarily-closed', 'permanently-closed'].includes(
   listing.listingStatus,
 )
@@ -338,17 +341,6 @@ const socialLinks = [
           </section>
         )}
 
-        {publicMapLocation && (
-          <LocationMap
-            location={publicMapLocation}
-            description={locationLabel}
-            labels={labels.common.maps}
-            title={listing.name}
-            showFullscreenControl={true}
-          />
-        )}
-        {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}
-
         {listing.isVerified && (
           <aside class="verification-notice" aria-labelledby="verification-heading">
             <div class="verification-notice__symbol" aria-hidden="true">✓</div>
@@ -375,11 +367,11 @@ const socialLinks = [
               <dt>{directoryLabels.location}</dt>
               <dd>{locationLabel}</dd>
             </div>
-            {listing.mapUrl && (
+            {mapUrl && (
               <div>
                 <dt>{directoryLabels.address}</dt>
                 <dd>
-                  <a href={listing.mapUrl} target="_blank" rel="noopener noreferrer">
+                  <a href={mapUrl} target="_blank" rel="noopener noreferrer">
                     {directoryLabels.openMap} <span aria-hidden="true">↗</span>
                   </a>
                 </dd>
@@ -401,6 +393,25 @@ const socialLinks = [
             )}
           </dl>
         </ContextRailPanel>
+
+        {publicMapLocation && (
+          <div class="context-map">
+            <LocationMap
+              location={publicMapLocation}
+              description={locationLabel}
+              labels={labels.common.maps}
+              title={listing.mapPresentation?.title || listing.name}
+              markerLabel={listing.mapPresentation?.markerLabel || listing.name}
+              markerIcon={listing.mapPresentation?.markerIcon}
+              markerShowLabel={listing.mapPresentation?.markerShowLabel}
+              caption={listing.mapPresentation?.caption}
+              editorialPath={listing.mapPresentation?.editorialPath}
+              immediate={true}
+              showFullscreenControl={true}
+            />
+            {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} />}
+          </div>
+        )}
 
         {(listing.website ||
           listing.publicEmail ||

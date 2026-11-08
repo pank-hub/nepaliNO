@@ -29,6 +29,16 @@ const {label} = Astro.props
     list-style: none;
   }
 
+  .content-context-rail :global(.context-map) {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+  }
+
+  .content-context-rail :global(.context-map .location-map) {
+    margin: 0;
+  }
+
   .content-context-rail :global(.verification-scopes li) {
     position: relative;
     padding-inline-start: 1.1rem;
@@ -73,6 +83,10 @@ const {label} = Astro.props
     .content-context-rail {
       position: static;
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .content-context-rail :global(.context-map) {
+      grid-column: 1 / -1;
     }
   }
 
