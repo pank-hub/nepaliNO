@@ -85,6 +85,9 @@ jobs:
       - name: Test Entur distributed rate limiting
         run: npm run test:rate-limit
 
+      - name: Test maps and travel privacy fallback
+        run: npm run test:privacy
+
       - name: Run Astro Check
         run: npx astro check
 

@@ -41,7 +41,12 @@ export const travelHelp = {
     notice:
       "Times and connections may change. Check important journeys with an official travel service.",
     privacy:
-      "To calculate a journey, your starting place, selected time and technical request information are sent to nepali.no and Entur.",
+      "The text you type to search for a starting place is sent via nepali.no to Entur. The selected coordinates and requested time are sent to Entur to calculate the journey. Entur receives these requests from nepali.no's server, not directly from your browser. nepali.no does not store your starting place or journey history.",
+    attribution:
+      "Contains data made available by {entur} under the {nlod}. Travel information is arranged by nepali.no. Place data may include © {osm}.",
+    attributionEntur: "Entur AS",
+    attributionNlod: "Norwegian Licence for Open Government Data (NLOD)",
+    attributionOsm: "OpenStreetMap contributors",
     modes: {
       air: "Air",
       bicycle: "Bicycle",
@@ -105,7 +110,12 @@ export const travelHelp = {
     notice:
       "Tider og forbindelser kan endres. Sjekk viktige reiser hos en offisiell reisetjeneste.",
     privacy:
-      "For å beregne reisen sendes startstedet du oppgir, valgt reisetid og tekniske forespørselsdata til nepali.no og Entur.",
+      "Teksten du skriver for å søke etter startsted sendes via nepali.no til Entur. Valgte koordinater og ønsket tidspunkt sendes til Entur for å beregne reisen. Entur mottar forespørslene fra nepali.no sin tjener, ikke direkte fra nettleseren din. nepali.no lagrer ikke startstedet ditt eller reisehistorikken din.",
+    attribution:
+      "Inneholder data under {nlod} tilgjengeliggjort av {entur}. Reiseinformasjonen er sammenstilt av nepali.no. Stedsdata kan inneholde © {osm}.",
+    attributionEntur: "Entur AS",
+    attributionNlod: "Norsk lisens for offentlige data (NLOD)",
+    attributionOsm: "OpenStreetMap-bidragsytere",
     modes: {
       air: "Fly",
       bicycle: "Sykkel",
@@ -168,7 +178,12 @@ export const travelHelp = {
     notice:
       "समय र सवारी जडान परिवर्तन हुन सक्छन्। महत्त्वपूर्ण यात्रा आधिकारिक यात्रा सेवामा जाँच गर्नुहोस्।",
     privacy:
-      "यात्रा गणना गर्न तपाईंले प्रविष्ट गरेको प्रस्थान स्थान, छानेको यात्रा समय र प्राविधिक अनुरोध विवरण nepali.no र Entur लाई पठाइन्छ।",
+      "प्रस्थान स्थान खोज्न तपाईंले लेखेको पाठ nepali.no मार्फत Entur मा पठाइन्छ। यात्रा गणनाका लागि छानिएका निर्देशांक र चाहिएको समय Entur मा पठाइन्छ। Entur ले यी अनुरोध तपाईंको ब्राउजरबाट सीधै होइन, nepali.no को सर्भरबाट पाउँछ। nepali.no ले तपाईंको प्रस्थान स्थान वा यात्रा इतिहास भण्डारण गर्दैन।",
+    attribution:
+      "यसमा {entur} ले उपलब्ध गराएको {nlod} अन्तर्गतको डेटा समावेश छ। यात्रा जानकारी nepali.no ले व्यवस्थित गरेको हो। स्थान डेटामा © {osm} समावेश हुन सक्छन्।",
+    attributionEntur: "Entur AS",
+    attributionNlod: "Norsk lisens for offentlige data (NLOD)",
+    attributionOsm: "OpenStreetMap योगदानकर्ताहरू",
     modes: {
       air: "हवाई यात्रा",
       bicycle: "साइकल",

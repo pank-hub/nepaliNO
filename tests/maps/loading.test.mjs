@@ -64,7 +64,7 @@ test("new block initial value and both language renderers pass the settings", as
   ]);
   assert.match(
     schema,
-    /export const locationMap = defineType\(\{[\s\S]*?initialValue:\s*\{\s*loadingBehavior: 'automatic',\s*showViewOnMapActions: false,\s*showOpenStreetMapLinks: false,\s*showLocationList: false,\s*showOpenStreetMapControl: false,\s*showFullscreenControl: true/,
+    /export const locationMap = defineType\(\{[\s\S]*?initialValue:\s*\{\s*loadingBehavior: 'click',\s*showViewOnMapActions: false,\s*showOpenStreetMapLinks: false,\s*showLocationList: false,\s*showOpenStreetMapControl: false,\s*showFullscreenControl: true/,
   );
   for (const wrapper of [ne, nb]) {
     for (const field of [

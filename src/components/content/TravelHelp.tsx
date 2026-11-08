@@ -75,6 +75,39 @@ function isJourney(value: unknown, labels: Labels): value is Journey {
   );
 }
 
+const ATTRIBUTION_LINKS = {
+  entur: "https://entur.no",
+  nlod: "https://data.norge.no/nlod/en/2.0",
+  osm: "https://www.openstreetmap.org/copyright",
+} as const;
+
+// The localized sentence holds {entur}, {nlod} and {osm}; each becomes a safely opened link.
+function renderAttribution(labels: Labels) {
+  return labels.attribution
+    .split(/(\{(?:entur|nlod|osm)\})/)
+    .map((part, index) => {
+      const key = /^\{(entur|nlod|osm)\}$/.exec(part)?.[1] as
+        | keyof typeof ATTRIBUTION_LINKS
+        | undefined;
+      if (!key) return part;
+      const text = {
+        entur: labels.attributionEntur,
+        nlod: labels.attributionNlod,
+        osm: labels.attributionOsm,
+      }[key];
+      return (
+        <a
+          key={index}
+          href={ATTRIBUTION_LINKS[key]}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {text}
+        </a>
+      );
+    });
+}
+
 async function post(
   path: string,
   body: unknown,
@@ -547,6 +580,9 @@ export default function TravelHelp({ destination, language, labels }: Props) {
           </section>
         )}
         <p className="travel-help__notice">{labels.notice}</p>
+        <p className="travel-help__attribution" data-travel-attribution>
+          {renderAttribution(labels)}
+        </p>
       </div>
     </details>
   );
