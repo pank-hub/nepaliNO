@@ -1,0 +1,48 @@
+.map-privacy {
+  margin-block-start: 0.25rem;
+}
+
+.map-privacy__link {
+  display: inline-block;
+  min-block-size: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted, #526273);
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.map-privacy__dialog {
+  box-sizing: border-box;
+  inline-size: min(34rem, calc(100vw - 2rem));
+  max-block-size: calc(100dvh - 2rem);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: 1.25rem;
+  border: 1px solid var(--border, #dce4ec);
+  border-radius: 0.75rem;
+  background: var(--surface, #fff);
+  color: var(--text, #172534);
+}
+
+.map-privacy__dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.map-privacy button:focus-visible,
+.map-privacy a:focus-visible {
+  outline: 3px solid var(--focus, #2563eb);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-privacy *,
+  .map-privacy__dialog::backdrop {
+    animation: none;
+    transition: none;
+  }
+}

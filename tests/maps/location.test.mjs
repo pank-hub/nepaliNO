@@ -89,6 +89,18 @@ test("fullscreen control is below sidebar maps and above embedded maps with one 
   assert.match(after, /<\/div>\s*<\/div>\s*\{display\.showFullscreenControl && contextSidebar && \(/);
   assert.equal((after.match(/data-map-fullscreen-open/g) ?? []).length, 1);
   assert.match(after, /\{labels\.viewMapFullscreen\}/);
+  assert.match(after, /data-map-fullscreen-open[\s\S]*<MapPrivacy language=\{language\}/);
+});
+
+test("sidebar spacing hides only empty rows and uses compact card and travel gaps without resizing the map", async () => {
+  const renderer = await read("../../src/components/content/LocationMap.astro");
+  const rail = await read("../../src/components/content/ContentContextRail.astro");
+  assert.match(renderer, /\.location-map\.location-map--context\s*\{\s*padding-bottom: 1\.125rem/);
+  assert.match(renderer, /\.location-map--context \.location-map__status:empty/);
+  assert.match(renderer, /\.location-map--context \.location-map__actions\s*\{\s*display: contents/);
+  assert.match(rail, /\.context-map\)[\s\S]*?gap: 1\.375rem/);
+  assert.match(rail, /\.context-map \.travel-help\)[\s\S]*?margin-block: 0/);
+  assert.match(renderer, /height: clamp\(18rem, 55vw, 32rem\);\s*min-height: 18rem/);
 });
 
 test("shared map retains interactive controls and attribution without OSM navigation", async () => {

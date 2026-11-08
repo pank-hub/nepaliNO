@@ -38,15 +38,20 @@ const GLYPHS: Record<
 export const PLACE_ICON_SIZE = 32;
 
 /**
- * Returns a Leaflet icon for an exact place. `pin` (and any unknown value)
- * is Leaflet's default marker, so the verified single-location look is unchanged.
- * Always returns an icon: passing `icon: undefined` to L.marker breaks it.
+ * Fixed SVG markup avoids Leaflet's relative default-image path detection.
  */
 export function createPlaceIcon(
   L: LeafletModule,
   icon: PlaceIcon | undefined,
 ): Icon<IconOptions> | DivIcon {
-  if (!icon || icon === "pin" || !(icon in GLYPHS)) return new L.Icon.Default();
+  if (!icon || icon === "pin" || !Object.hasOwn(GLYPHS, icon)) return L.divIcon({
+    className: "map-standard-pin",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    tooltipAnchor: [16, -28],
+    html: '<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41" aria-hidden="true" focusable="false"><path d="M12.5 40C10 31 1 23 1 13a11.5 11.5 0 0 1 23 0c0 10-9 18-11.5 27Z" fill="#2b82cb" stroke="#164f80" stroke-width="1.5"/><circle cx="12.5" cy="13" r="4" fill="#fff"/></svg>',
+  });
   const glyph = GLYPHS[icon];
   return L.divIcon({
     className: "map-place-icon",

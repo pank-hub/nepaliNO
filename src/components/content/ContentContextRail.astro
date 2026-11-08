@@ -31,12 +31,16 @@ const {label} = Astro.props
 
   .content-context-rail :global(.context-map) {
     display: grid;
-    gap: 1rem;
+    gap: 1.375rem;
     min-width: 0;
   }
 
   .content-context-rail :global(.context-map .location-map) {
     margin: 0;
+  }
+
+  .content-context-rail :global(.context-map .travel-help) {
+    margin-block: 0;
   }
 
   .content-context-rail :global(.verification-scopes li) {

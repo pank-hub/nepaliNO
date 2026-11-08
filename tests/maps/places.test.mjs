@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {runInNewContext} from "node:vm";
+import {JSDOM} from "jsdom";
 
 import {
   MAP_PROVIDER,
@@ -28,6 +29,44 @@ import {
 } from "../../src/lib/maps/places.ts";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
+
+test("real Leaflet Standard pin renders its bundled SVG and activation preserves the marker", async () => {
+  const dom = new JSDOM('<!doctype html><div id="map"></div>', {url: "https://nepali.no"});
+  const saved = {window: globalThis.window, document: globalThis.document, Element: globalThis.Element};
+  Object.defineProperty(globalThis, "window", {value: dom.window, configurable: true});
+  Object.defineProperty(globalThis, "document", {value: dom.window.document, configurable: true});
+  Object.defineProperty(globalThis, "Element", {value: dom.window.Element, configurable: true});
+  let map;
+  try {
+    const {default: L} = await import("leaflet");
+    const {createPlaceIcon} = await import("../../src/lib/maps/markerIcons.ts");
+    map = L.map(dom.window.document.getElementById("map"), {zoomAnimation: false}).setView([59.9, 10.7], 15);
+    const marker = L.marker([59.9, 10.7], {icon: createPlaceIcon(L, "pin"), keyboard: true}).addTo(map);
+    marker.bindPopup("Public place");
+    marker.bindTooltip("Public place", {permanent: false});
+    const element = marker.getElement();
+    assert.ok(element.querySelector("svg"));
+    assert.equal(element.querySelector("img"), null);
+    assert.equal(element.style.width, "25px");
+    assert.equal(element.style.height, "41px");
+    assert.equal(element.style.marginTop, "-41px");
+    assert.equal(marker.isPopupOpen(), false);
+    element.dispatchEvent(new dom.window.MouseEvent("click", {bubbles: true}));
+    assert.equal(marker.isPopupOpen(), true);
+    marker.closePopup();
+    element.dispatchEvent(new dom.window.KeyboardEvent("keypress", {key: "Enter", keyCode: 13, bubbles: true}));
+    assert.equal(marker.isPopupOpen(), true);
+    marker.closePopup();
+    assert.ok(map.hasLayer(marker));
+    assert.ok(marker.getElement().querySelector("svg"));
+    assert.deepEqual([marker.getLatLng().lat, marker.getLatLng().lng], [59.9, 10.7]);
+    for (const icon of PLACE_ICONS) assert.ok(createPlaceIcon(L, icon).createIcon().querySelector("svg"));
+  } finally {
+    map?.remove();
+    dom.window.close();
+    for (const [key, value] of Object.entries(saved)) Object.defineProperty(globalThis, key, {value, configurable: true});
+  }
+});
 
 test("immediate markers respect persistent label settings without losing their pin or popup", async () => {
   const renderer = await read("../../src/components/content/LocationMap.astro");
@@ -444,14 +483,18 @@ test("dev fixture is DEV-only and loads its route data lazily", async () => {
 
 test("every icon choice yields a Leaflet icon, never undefined, and uses no editor text", async () => {
   const { createPlaceIcon } = await import("../../src/lib/maps/markerIcons.ts");
-  class DefaultIcon {}
   const L = {
-    Icon: { Default: DefaultIcon },
     divIcon: (options) => ({ divIcon: true, ...options }),
   };
-  assert.ok(createPlaceIcon(L, "pin") instanceof DefaultIcon);
-  assert.ok(createPlaceIcon(L, undefined) instanceof DefaultIcon);
-  assert.ok(createPlaceIcon(L, "<script>") instanceof DefaultIcon);
+  for (const value of ["pin", undefined, "<script>", "toString", "__proto__"]) {
+    const pin = createPlaceIcon(L, value);
+    assert.equal(pin.divIcon, true);
+    assert.equal(pin.className, "map-standard-pin");
+    assert.deepEqual(pin.iconSize, [25, 41]);
+    assert.deepEqual(pin.iconAnchor, [12, 41]);
+    assert.match(pin.html, /<svg/);
+    assert.doesNotMatch(pin.html, /<img|marker-icon\.png|<script/);
+  }
   for (const icon of PLACE_ICONS.filter((value) => value !== "pin")) {
     const result = createPlaceIcon(L, icon);
     assert.equal(result.divIcon, true, icon);
