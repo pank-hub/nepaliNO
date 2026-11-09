@@ -112,10 +112,10 @@ const homepageEvents = expandUpcomingOccurrences(fetchedHomepageEvents, now)
 >
   <SiteHeader slot="header" language={language} alternatePath={`/${alternateLanguage}/`} />
 
+  <HomeIntroduction language={language}>
+    <ContentSearch slot="search" language={language} />
+  </HomeIntroduction>
   <div class="container homepage">
-    <HomeIntroduction language={language}>
-      <ContentSearch slot="search" language={language} />
-    </HomeIntroduction>
     {showInformation && <HomeGuidanceTopics language={language} topics={topics} />}
     <HomeLatestUpdates
       language={language}
@@ -151,10 +151,10 @@ const homepageEvents = expandUpcomingOccurrences(fetchedHomepageEvents, now)
     display: grid;
     width: min(100% - (2 * var(--page-gutter)), 74rem);
     gap: 1.5rem;
-    padding-block: 1.25rem 2.5rem;
+    padding-block: 2.5rem 2.5rem;
   }
 
-  .homepage > :not(.homepage__community):not(:first-child) {
+  .homepage > :not(.homepage__community):not(:first-child):not(:where(.home-forum)) {
     padding-block-start: 1.5rem;
     border-block-start: 1px solid var(--border);
   }
@@ -171,7 +171,7 @@ const homepageEvents = expandUpcomingOccurrences(fetchedHomepageEvents, now)
   @media (min-width: 40rem) {
     .homepage {
       gap: 2rem;
-      padding-block-start: 1.75rem;
+      padding-block-start: 3rem;
     }
 
   }
@@ -179,7 +179,7 @@ const homepageEvents = expandUpcomingOccurrences(fetchedHomepageEvents, now)
   @media (min-width: 72rem) {
     .homepage {
       gap: 2.5rem;
-      padding-block-start: 2rem;
+      padding-block-start: 3.5rem;
     }
   }
 </style>

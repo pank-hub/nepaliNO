@@ -52,6 +52,14 @@ test('shared-search browser interactions and responsive production content', asy
       socket.send(JSON.stringify({id, method, params}))
     })
     let mode = 'fixture'
+    let forumMode = 'fixture'
+    const forumTopics = Array.from({length: 6}, (_, index) => ({
+      title: ['नर्वेमा स्वास्थ्य सेवाबारे अनुभव', 'काम र रोजगारीसम्बन्धी प्रश्न', 'परिवार र बालबालिकाबारे छलफल',
+        'शिक्षा र विद्यार्थी जीवन', 'नर्वेमा बसोबाससम्बन्धी अनुभव', 'समुदायका समाचारबारे छलफल'][index],
+      replyCount: index, lastPostedAt: '2026-11-07T10:00:00Z',
+      role: index % 2 ? 'newsDiscussion' : 'guideQuestions',
+      url: `https://forum.nepali.no/t/homepage-presentation-${index}/${index + 1}`,
+    }))
     let delay = 0
     let indexRequests = []
     const browserErrors = []
@@ -66,6 +74,14 @@ test('shared-search browser interactions and responsive production content', asy
       if (message.method === 'Runtime.exceptionThrown') browserErrors.push(message.params.exceptionDetails.text)
       if (message.method === 'Fetch.requestPaused') {
         const {requestId, request} = message.params
+        if (request.url.includes('/api/forum-homepage-discussions')) {
+          void send('Fetch.fulfillRequest', {
+            requestId, responseCode: forumMode === 'error' ? 503 : 200,
+            responseHeaders: [{name: 'content-type', value: 'application/json'}],
+            body: Buffer.from(JSON.stringify({topics: forumMode === 'empty' ? [] : forumTopics})).toString('base64'),
+          }).catch((error) => interceptErrors.push(error.message))
+          return
+        }
         indexRequests.push(request.url)
         const selectedMode = mode
         const handle = async () => {
@@ -95,7 +111,7 @@ test('shared-search browser interactions and responsive production content', asy
     const navigate = async (path) => {
       await evaluate('window.__previousSearchDocument = true')
       await send('Page.navigate', {url: `${base}${path}`})
-      await wait(`!window.__previousSearchDocument && document.querySelector('[data-content-search]') && document.querySelector('[data-search-browse]').hidden`)
+      await wait(`!window.__previousSearchDocument && document.readyState !== 'loading' && document.querySelector('[data-content-search]') && document.querySelector('[data-search-browse]')?.hidden`)
       await evaluate('scrollTo(0, 0)')
     }
     const query = async (value) => evaluate(`(() => {
@@ -107,7 +123,10 @@ test('shared-search browser interactions and responsive production content', asy
     const status = () => evaluate(`document.querySelector('[data-search-status]').textContent`)
     await send('Page.enable')
     await send('Runtime.enable')
-    await send('Fetch.enable', {patterns: [{urlPattern: '*search-index.json*', requestStage: 'Request'}]})
+    await send('Fetch.enable', {patterns: [
+      {urlPattern: '*search-index.json*', requestStage: 'Request'},
+      {urlPattern: '*/api/forum-homepage-discussions*', requestStage: 'Request'},
+    ]})
     await send('Emulation.setDeviceMetricsOverride', {width: 390, height: 1100, deviceScaleFactor: 1, mobile: true})
     const screenshot = async (name) => {
       const image = await send('Page.captureScreenshot', {format: 'png', fromSurface: true})
@@ -337,6 +356,76 @@ test('shared-search browser interactions and responsive production content', asy
         await screenshot(width)
       }
     })
+    await t.test('homepage polish preserves responsive search, Guidance and six-topic Forum presentation', async () => {
+      for (const width of [390, 768, 1440]) {
+        await send('Emulation.setDeviceMetricsOverride', {width, height: 1100, deviceScaleFactor: 1, mobile: width === 390})
+        await navigate('/ne/')
+        await wait(`document.querySelectorAll('.forum-activity__row').length === 6 && document.fonts.check('16px Mukta')`)
+        const layout = await evaluate(`(() => {
+          const hero = document.querySelector('.home-introduction');
+          const input = hero.querySelector('input');
+          const guidance = document.querySelector('.home-guidance');
+          const summary = guidance.querySelector('.guidance-topic__summary');
+          const forum = document.querySelector('.home-forum');
+          const notice = forum.querySelector('.forum-activity__notice');
+          const rows = [...forum.querySelectorAll('.forum-activity__row')];
+          const style = getComputedStyle(summary);
+          return {
+            heroBackground: getComputedStyle(hero).backgroundImage,
+            searchInside: hero.contains(input),
+            searchBottom: hero.getBoundingClientRect().bottom - input.getBoundingClientRect().bottom,
+            guidanceGap: guidance.getBoundingClientRect().top - hero.getBoundingClientRect().bottom,
+            leading: parseFloat(style.lineHeight) / parseFloat(style.fontSize),
+            size: style.fontSize, weight: style.fontWeight, clamp: style.webkitLineClamp,
+            decorative: hero.querySelectorAll('img, picture').length,
+            columns: getComputedStyle(forum.querySelector('.forum-activity')).gridTemplateColumns.split(' ').length,
+            background: getComputedStyle(forum).backgroundColor,
+            relationshipLabels: forum.querySelectorAll('p[data-topic-role], .forum-activity__role').length,
+            roles: rows.map(row => row.dataset.topicRole),
+            links: rows.map(row => row.querySelector('a').getAttribute('href')),
+            replies: rows.map(row => row.querySelector('[data-topic-replies]').textContent),
+            times: rows.map(row => row.querySelector('time').dateTime),
+            external: rows.every(row => row.querySelector('a').target === '_blank' && row.querySelector('a').rel === 'noopener noreferrer'),
+            notice: notice.textContent.trim(), noticeWidth: notice.getBoundingClientRect().width,
+            gridWidth: forum.querySelector('.forum-activity').getBoundingClientRect().width,
+            cardHeights: [...guidance.querySelectorAll('.guidance-topics a')].map(e => e.getBoundingClientRect().height),
+            overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth
+          };
+        })()`)
+        console.log('Homepage polish', width, JSON.stringify(layout))
+        assert.match(layout.heroBackground, /linear-gradient/)
+        assert.equal(layout.searchInside, true)
+        assert.ok(layout.searchBottom >= (width === 390 ? 28 : width === 768 ? 32 : 36) && layout.searchBottom <= 44)
+        assert.ok(layout.guidanceGap >= (width === 390 ? 36 : 48) && layout.guidanceGap <= (width === 390 ? 44 : 60))
+        assert.ok(Math.abs(layout.leading - (width === 390 ? 1.6 : 1.55)) < 0.01)
+        assert.equal(layout.size, '15px')
+        assert.equal(layout.weight, '400')
+        assert.equal(layout.clamp, '2')
+        assert.equal(layout.decorative, 0)
+        assert.equal(layout.columns, width === 390 ? 1 : width === 768 ? 2 : 3)
+        assert.equal(layout.background, 'rgb(245, 248, 251)')
+        assert.equal(layout.relationshipLabels, 0)
+        assert.deepEqual(layout.roles, forumTopics.map(topic => topic.role))
+        assert.deepEqual(layout.links, forumTopics.map(topic => topic.url))
+        assert.deepEqual(layout.replies, forumTopics.map(topic => String(topic.replyCount)))
+        assert.ok(layout.times.every(time => time === '2026-11-07T10:00:00.000Z'))
+        assert.equal(layout.external, true)
+        assert.ok(layout.notice.length > 0)
+        assert.ok(Math.abs(layout.noticeWidth - layout.gridWidth) < 1)
+        assert.ok(Math.max(...layout.cardHeights) < 150)
+        assert.equal(layout.overflow, false)
+        await screenshot(`polish-${width}`)
+      }
+      for (const failure of ['empty', 'error']) {
+        forumMode = failure
+        await navigate('/ne/')
+        await sleep(500)
+        assert.equal(await evaluate(`getComputedStyle(document.querySelector('.home-forum')).display`), 'none')
+        assert.equal(await evaluate(`document.querySelector('[data-forum-topics]').hidden`), true)
+      }
+      forumMode = 'fixture'
+    })
+
     await t.test('Norwegian search remains News-only; oversized URL queries are not silently truncated', async () => {
       mode = 'real'
       const norwegian = await (await fetch(`${base}/nb/search-index.json`)).json()

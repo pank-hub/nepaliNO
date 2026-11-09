@@ -11,22 +11,29 @@ const labels = getTranslations(language)
 ---
 
 <header class="home-introduction">
-  <div class="home-introduction__content reading-width">
-    <h1>{labels.home.title}</h1>
-    <p>{labels.home.introduction}</p>
-  </div>
-  {Astro.slots.has('search') && (
-    <div class="home-introduction__search">
-      <slot name="search" />
+  <div class="container home-introduction__inner">
+    <div class="home-introduction__content reading-width">
+      <h1>{labels.home.title}</h1>
+      <p>{labels.home.introduction}</p>
     </div>
-  )}
+    {Astro.slots.has('search') && (
+      <div class="home-introduction__search">
+        <slot name="search" />
+      </div>
+    )}
+  </div>
 </header>
 
 <style>
   .home-introduction {
     min-width: 0;
-    max-width: 58rem;
-    padding-block-end: 0.5rem;
+    padding-block: 1.25rem 2rem;
+    background: var(--surface-intro);
+    border-block-end: 1px solid var(--border);
+  }
+
+  .home-introduction__inner {
+    width: min(100% - (2 * var(--page-gutter)), 74rem);
   }
 
   h1 {
@@ -47,16 +54,21 @@ const labels = getTranslations(language)
   }
 
   .home-introduction__search {
+    max-width: 58rem;
     margin-block-start: 1.5rem;
   }
 
   @media (min-width: 40rem) {
     .home-introduction {
-      padding-block-end: 0.75rem;
+      padding-block: 1.75rem 2.25rem;
     }
   }
 
   @media (min-width: 64rem) {
+    .home-introduction {
+      padding-block: 2rem 2.5rem;
+    }
+
     .home-introduction h1 {
       max-width: 34ch;
       font-size: clamp(2.25rem, 2.8vw, 2.5rem);
