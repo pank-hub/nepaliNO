@@ -1,0 +1,146 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {getEventAccessLabels} from '../../lib/eventAccess'
+import HomeSectionHeading from './HomeSectionHeading.astro'
+import type {HomeEvent} from './types'
+
+interface Props {
+  language: SupportedLanguage
+  events: HomeEvent[]
+  now: number
+}
+
+const {language, events, now} = Astro.props
+const labels = getTranslations(language)
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const eventTimeZone = 'Europe/Oslo'
+const categories: Record<string, string> = labels.events.categories
+const statuses: Record<string, string> = labels.events.statuses
+const formats: Record<string, string> = {
+  'in-person': labels.events.inPerson,
+  online: labels.events.online,
+  hybrid: labels.events.hybrid,
+}
+const eventYear = (value: string | number) =>
+  Number(new Intl.DateTimeFormat('en', {timeZone: eventTimeZone, year: 'numeric'}).format(new Date(value)))
+const currentEventYear = eventYear(now)
+const formatDateRange = (start: string, end = start) => {
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: eventTimeZone,
+    month: 'long',
+    day: 'numeric',
+  }
+  if (eventYear(start) !== currentEventYear || eventYear(end) !== currentEventYear) {
+    options.year = 'numeric'
+  }
+  return new Intl.DateTimeFormat(dateLocale, options).formatRange(new Date(start), new Date(end))
+}
+const formatTime = (value: string) =>
+  new Date(value).toLocaleTimeString(dateLocale, {
+    timeZone: eventTimeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+const isOngoing = (event: HomeEvent) =>
+  new Date(event.startDateTime).getTime() <= now &&
+  new Date(event.endDateTime || event.startDateTime).getTime() >= now
+const eventLocation = (event: HomeEvent) =>
+  event.eventFormat === 'online'
+    ? event.onlinePlatform || labels.events.online
+    : event.city || event.venueName || formats[event.eventFormat] || event.eventFormat
+---
+
+<section aria-labelledby="home-events-heading">
+  <HomeSectionHeading
+    id="home-events-heading"
+    title={labels.home.eventsHeading}
+    actionHref={`/${language}/events/`}
+    actionLabel={labels.events.viewAllEvents}
+  />
+  <ol class="upcoming-events">
+    {events.map((event) => {
+      const access = getEventAccessLabels(event, labels.events)
+      return (
+        <li>
+          <article>
+            <div class="upcoming-events__labels">
+              {isOngoing(event) && <span class="badge badge-success">{labels.events.ongoing}</span>}
+              {event.eventStatus !== 'scheduled' && (
+                <span class="badge">{statuses[event.eventStatus] ?? event.eventStatus}</span>
+              )}
+              <span class="badge">{categories[event.eventType] ?? event.eventType}</span>
+              <span class="badge">{formats[event.eventFormat] ?? event.eventFormat}</span>
+              {event.isFree === true && <span class="badge badge-success">{labels.events.freeEvent}</span>}
+              {event.isFree === false && <span class="badge">{labels.events.paidEvent}</span>}
+              {access.needsAction && <span class="badge">{access.requirementLabel}</span>}
+            </div>
+            <h3><a href={`/${language}/events/${event.slug}/`}>{event.title}</a></h3>
+            <p>
+              <time datetime={event.startDateTime}>
+                {formatDateRange(event.startDateTime, event.endDateTime || event.startDateTime)}
+                {' · '}{event.isAllDay ? labels.events.allDay : formatTime(event.startDateTime)}
+              </time>
+            </p>
+            <p class="upcoming-events__summary">{event.summary}</p>
+            <dl>
+              <div><dt>{labels.events.venue}</dt><dd>{eventLocation(event)}</dd></div>
+              <div><dt>{labels.events.organizer}</dt><dd>{event.organizerName}</dd></div>
+            </dl>
+          </article>
+        </li>
+      )
+    })}
+  </ol>
+  <p class="upcoming-events__submit">
+    <a href={`/${language}/events/submit/`}>{labels.events.submitEvent}</a>
+  </p>
+</section>
+
+<style>
+  .upcoming-events {
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    padding-block: 1rem;
+    border-block-start: 1px solid var(--border);
+  }
+
+  .upcoming-events__labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-block-end: 0.5rem;
+  }
+
+  h3 {
+    margin-block-end: 0.4rem;
+    font-size: 1.125rem;
+  }
+
+  .upcoming-events__summary,
+  dl {
+    margin-block-start: 0.5rem;
+  }
+
+  dl {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  dl div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  .upcoming-events__submit {
+    margin-block-start: 1rem;
+  }
+</style>

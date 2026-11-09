@@ -12,6 +12,9 @@ const [
   nb,
   forumConfig,
   homepage,
+  homepageEvents,
+  homepageDirectory,
+  homepageForum,
   homepageFeed,
   homepageEndpoint,
   forumContentEndpoint,
@@ -26,6 +29,9 @@ const [
     read('../../src/i18n/nb.ts'),
     read('../../src/config/forum.ts'),
     read('../../src/pages/[lang]/index.astro'),
+    read('../../src/components/home/HomeUpcomingEvents.astro'),
+    read('../../src/components/home/HomeDirectoryHighlights.astro'),
+    read('../../src/components/home/HomeForumActivity.astro'),
     read('../../src/lib/forum/loadHomepageForumTopics.ts'),
     read('../../src/pages/api/forum-homepage-discussions.ts'),
     read('../../src/pages/api/forum-content.ts'),
@@ -74,8 +80,9 @@ test('homepage Forum feed and companion cards have separate feature controls', (
   assert.match(newsPage + guidePage, /<ForumDiscussionCard/)
   assert.match(newsPage, /contentType="newsArticle"/)
   assert.match(guidePage, /contentType="publicInformationGuide"/)
-  assert.match(homepage, /data-forum-topics/)
-  assert.match(homepage, /api\/forum-homepage-discussions/)
+  assert.match(homepage, /showForum && forumPilot\.homepageDiscussionFeedEnabled && <HomeForumActivity/)
+  assert.match(homepageForum, /data-forum-topics/)
+  assert.match(homepageForum, /api\/forum-homepage-discussions/)
   assert.doesNotMatch(homepage, /forumPilotAccess|forumInterfaceNotice/)
   assert.match(homepageFeed, /const MAX_TOPICS = 6/)
   assert.match(homepageFeed, /isHomepageDiscussionEligible/)
@@ -90,14 +97,29 @@ test('homepage Forum feed and companion cards have separate feature controls', (
   assert.doesNotMatch(forumCard, /innerHTML|related/)
 })
 
-test('homepage Forum topics render as separate readable cards', () => {
-  assert.match(homepage, /const card = document\.createElement\('article'\)/)
-  assert.match(homepage, /card\.className = 'discussions__topic-card'/)
-  assert.match(homepage, /title = document\.createElement\('h3'\)/)
-  assert.match(homepage, /meta = document\.createElement\('dl'\)/)
-  assert.match(homepage, /discussions__topic-type/)
-  assert.match(homepage, /discussions__topic-meta/)
-  assert.match(homepage, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)
-  assert.match(homepage, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/)
-  assert.match(homepage, /discussions__topic-link:focus-visible/)
+test('homepage Forum topics render as compact rows with inherited focus states', () => {
+  assert.match(homepageForum, /<template data-forum-topic-template>/)
+  assert.match(homepageForum, /class="forum-activity__row"/)
+  assert.match(homepageForum, /<h3><a data-topic-link target="_blank" rel="noopener noreferrer"><\/a><\/h3>/)
+  assert.match(homepageForum, /<dl>/)
+  assert.match(homepageForum, /labels\.home\.forumReplies/)
+  assert.match(homepageForum, /labels\.home\.forumNotice/)
+  assert.match(homepageForum, /cloneNode\(true\)/)
+  assert.match(homepageForum, /link\.textContent = topic\.title/)
+  assert.match(homepageForum, /console\.warn\('Homepage Forum discussion feed is unavailable\.'/)
+  assert.doesNotMatch(homepageForum, /innerHTML|discussions__topic-card|grid-template-columns/)
+})
+
+test('homepage omits empty Events and Directory sections and renders each real item only', () => {
+  assert.match(homepage, /showEvents && homepageEvents\.length > 0 && \(\s*<HomeUpcomingEvents/)
+  assert.match(homepage, /showDirectory && homepageDirectoryListings\.length > 0 && \(\s*<HomeDirectoryHighlights/)
+  assert.match(homepage, /\(showEvents && homepageEvents\.length > 0\) \|\|[\s\S]*\(showDirectory && homepageDirectoryListings\.length > 0\)/)
+  assert.match(homepageEvents, /events\.map\(\(event\) =>/)
+  assert.match(homepageDirectory, /listings\.map\(\(listing\) =>/)
+  assert.doesNotMatch(homepageEvents, /emptyUpcomingMessage|events\.length === 0|events\.length > 0/)
+  assert.doesNotMatch(homepageDirectory, /directory\.emptyMessage|listings\.length === 0|listings\.length > 0/)
+  for (const component of [homepageEvents, homepageDirectory]) {
+    assert.doesNotMatch(component, /repeat\(\s*3|grid-template-columns|grid-column|:has\(/)
+    assert.match(component, /<style>/)
+  }
 })

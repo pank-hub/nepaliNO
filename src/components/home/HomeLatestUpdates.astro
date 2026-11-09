@@ -1,0 +1,100 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import HomeSectionHeading from './HomeSectionHeading.astro'
+import type {HomeArticle} from './types'
+
+interface Props {
+  language: SupportedLanguage
+  importantNow: HomeArticle | null
+  featuredStory: HomeArticle | null
+  latestStories: HomeArticle[]
+}
+
+const {language, importantNow, featuredStory, latestStories} = Astro.props
+const labels = getTranslations(language)
+const stories = featuredStory ? [featuredStory, ...latestStories] : latestStories
+const regionLabels: Record<string, string> = labels.news.regions
+const categoryLabels: Record<string, string> = labels.news.categories
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString(dateLocale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+---
+
+<section aria-labelledby="home-updates-heading">
+  {importantNow && (
+    <aside class="home-important-now" aria-labelledby="home-important-now-heading">
+      <strong id="home-important-now-heading">{labels.home.importantNow}</strong>
+      <a href={`/${language}/news/${importantNow.slug}/`}>{importantNow.title}</a>
+    </aside>
+  )}
+  <HomeSectionHeading
+    id="home-updates-heading"
+    title={labels.home.newsHeading}
+    actionHref={`/${language}/news/`}
+    actionLabel={labels.home.viewAllNews}
+  />
+  {stories.length > 0 ? (
+    <ol class="latest-updates">
+      {stories.map((article) => (
+        <li>
+          <article>
+            <h3>
+              <a href={`/${language}/news/${article.slug}/`}>{article.title}</a>
+            </h3>
+            <p class="latest-updates__meta">
+              {article._id === featuredStory?._id && <span>{labels.home.featuredStory} · </span>}
+              {regionLabels[article.newsRegion] ?? article.newsRegion}
+              {' · '}{categoryLabels[article.category] ?? article.category}
+              {' · '}<time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
+            </p>
+            <p class="latest-updates__summary">{article.summary}</p>
+          </article>
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <p class="muted">{labels.home.emptyNews}</p>
+  )}
+</section>
+
+<style>
+  .home-important-now {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-block-end: 1.5rem;
+    padding: 0.75rem 1rem;
+    border-inline-start: 0.2rem solid var(--brand);
+    background: var(--surface);
+  }
+
+  .latest-updates {
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    padding-block: 1rem;
+    border-block-start: 1px solid var(--border);
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
+  .latest-updates__meta {
+    margin-block-start: 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .latest-updates__summary {
+    max-width: var(--content-reading);
+    margin-block-start: 0.5rem;
+  }
+</style>
