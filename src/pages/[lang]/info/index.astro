@@ -4,6 +4,7 @@ import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
 import {getTranslations} from '../../../i18n'
 import {getLanguagesWithSection} from '../../../config/languageSections'
+import {orderGuidanceHubTopics} from '../../../config/guidanceHub'
 import type {SupportedLanguage} from '../../../i18n/config'
 import GuidanceTopicIcon from '../../../components/content/GuidanceTopicIcon.astro'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
@@ -55,7 +56,7 @@ const {language} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 
-const [topics, guides] = await Promise.all([
+const [sanityTopics, guides] = await Promise.all([
   sanityClient.fetch<TopicSummary[]>(
     PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY,
     {language},
@@ -65,6 +66,7 @@ const [topics, guides] = await Promise.all([
   }),
 ])
 
+const topics = orderGuidanceHubTopics(sanityTopics)
 const activeTopicKeys = new Set(topics.map((topic) => topic.topicKey))
 const fallbackGuides = guides.filter((guide) => !activeTopicKeys.has(guide.topic))
 const fallbackGuideIds = new Set(fallbackGuides.map((guide) => guide._id))

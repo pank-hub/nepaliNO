@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import test from 'node:test'
+import {orderGuidanceHubTopics} from '../../src/config/guidanceHub.ts'
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8')
 const [page, icons, queries, homepageTopics, homepagePage, search, guideRoute, ne, nb] =
@@ -32,6 +33,53 @@ const iconTopicKeys = [
   'education-student-life',
   'health-services',
 ]
+
+test('public hub prioritizes eight stable keys, preserves remaining order and places other last', () => {
+  const topics = iconTopicKeys.map((topicKey, index) => ({
+    topicKey,
+    title: `Title ${index}`,
+    guideCount: index,
+    slug: `slug-${index}`,
+  }))
+  const original = [...topics]
+  const ordered = orderGuidanceHubTopics(topics)
+  assert.deepEqual(ordered.map((topic) => topic.topicKey), [
+    'immigration-residence',
+    'health-services',
+    'work-employment',
+    'family-children',
+    'rights-safety-discrimination',
+    'housing',
+    'education-student-life',
+    'tax-finance',
+    'moving-population-register',
+    'digital-services-eid',
+    'language-integration',
+    'citizenship-participation',
+    'transport-driving',
+    'other',
+  ])
+  assert.equal(ordered.length, 14)
+  assert.equal(new Set(ordered.map((topic) => topic.topicKey)).size, 14)
+  assert.deepEqual(topics, original)
+  for (const topic of topics) assert.ok(ordered.includes(topic))
+  assert.match(page, /const topics = orderGuidanceHubTopics\(sanityTopics\)/)
+})
+
+test('hub ordering retains unknown topics and their input order without relying on titles', () => {
+  const topics = [
+    {topicKey: 'other', title: 'First'},
+    {topicKey: 'future-topic-b', title: 'Z'},
+    {topicKey: 'digital-services-eid', title: 'A'},
+    {topicKey: 'future-topic-a', title: 'A'},
+    {topicKey: 'housing', title: 'Last'},
+  ]
+  assert.deepEqual(orderGuidanceHubTopics(topics).map((topic) => topic.topicKey), [
+    'housing', 'future-topic-b', 'digital-services-eid', 'future-topic-a', 'other',
+  ])
+  assert.deepEqual(orderGuidanceHubTopics([]), [])
+  assert.deepEqual(orderGuidanceHubTopics([{topicKey: 'other'}]), [{topicKey: 'other'}])
+})
 
 test('Guidance hub follows hero, Guidance-only search, trust notice and complete topic navigation', () => {
   const hero = page.indexOf('<header class="info-hero">')
