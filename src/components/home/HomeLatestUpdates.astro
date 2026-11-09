@@ -1,6 +1,7 @@
 ---
 import {getTranslations} from '../../i18n'
 import type {SupportedLanguage} from '../../i18n/config'
+import {urlFor} from '../../lib/sanity/image'
 import HomeSectionHeading from './HomeSectionHeading.astro'
 import type {HomeArticle} from './types'
 
@@ -13,8 +14,7 @@ interface Props {
 
 const {language, importantNow, featuredStory, latestStories} = Astro.props
 const labels = getTranslations(language)
-const stories = featuredStory ? [featuredStory, ...latestStories] : latestStories
-const regionLabels: Record<string, string> = labels.news.regions
+const stories = (featuredStory ? [featuredStory, ...latestStories] : latestStories).slice(0, 6)
 const categoryLabels: Record<string, string> = labels.news.categories
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const formatDate = (date: string) =>
@@ -23,9 +23,29 @@ const formatDate = (date: string) =>
     month: 'long',
     day: 'numeric',
   })
+const thumbnail = (image: HomeArticle['featuredImage']) => {
+  if (!image?.asset) return null
+  const dimensions = image.asset._ref.match(/-(\d+)x(\d+)-[a-z0-9]+$/)
+  if (!dimensions) throw new Error('Invalid homepage News image asset dimensions.')
+  const crop = image.crop
+  // Bound both responsive candidates and rendered size by the cropped source, avoiding upscaling.
+  const nativeWidth = Math.floor(Math.min(
+    Number(dimensions[1]) * (1 - (crop?.left ?? 0) - (crop?.right ?? 0)),
+    Number(dimensions[2]) * (1 - (crop?.top ?? 0) - (crop?.bottom ?? 0)) * 4 / 3,
+  ))
+  if (nativeWidth < 4) throw new Error('Homepage News image crop is too small.')
+  const widths = [...new Set([96, 128, 192, 256].map((width) => Math.min(width, nativeWidth)))]
+  const imageUrl = (width: number) =>
+    urlFor(image).width(width).height(Math.round(width * 3 / 4)).fit('max').auto('format').url()
+  return {
+    src: imageUrl(widths[0]),
+    srcset: widths.map((width) => `${imageUrl(width)} ${width}w`).join(', '),
+    nativeWidth,
+  }
+}
 ---
 
-<section aria-labelledby="home-updates-heading">
+<section class="home-latest-updates" aria-labelledby="home-updates-heading">
   {importantNow && (
     <aside class="home-important-now" aria-labelledby="home-important-now-heading">
       <strong id="home-important-now-heading">{labels.home.importantNow}</strong>
@@ -37,64 +57,171 @@ const formatDate = (date: string) =>
     title={labels.home.newsHeading}
     actionHref={`/${language}/news/`}
     actionLabel={labels.home.viewAllNews}
-  />
-  {stories.length > 0 ? (
-    <ol class="latest-updates">
-      {stories.map((article) => (
-        <li>
-          <article>
-            <h3>
-              <a href={`/${language}/news/${article.slug}/`}>{article.title}</a>
-            </h3>
-            <p class="latest-updates__meta">
-              {article._id === featuredStory?._id && <span>{labels.home.featuredStory} · </span>}
-              {regionLabels[article.newsRegion] ?? article.newsRegion}
-              {' · '}{categoryLabels[article.category] ?? article.category}
-              {' · '}<time datetime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
-            </p>
-            <p class="latest-updates__summary">{article.summary}</p>
-          </article>
-        </li>
-      ))}
-    </ol>
-  ) : (
-    <p class="muted">{labels.home.emptyNews}</p>
-  )}
+  >
+    {stories.length > 0 ? (
+      <ol class="latest-updates">
+        {stories.map((article) => {
+          const image = thumbnail(article.featuredImage)
+          return (
+            <li>
+              <a class="latest-updates__link" href={`/${language}/news/${article.slug}/`} aria-label={article.title}>
+                <article class:list={['latest-updates__row', {'latest-updates__row--image': image}]}>
+                  {image && (
+                    <img
+                      src={image.src}
+                      srcset={image.srcset}
+                      sizes="(min-width: 72rem) 33vw, 96px"
+                      width="96"
+                      height="72"
+                      style={`--thumbnail-native-width: ${image.nativeWidth}px`}
+                      alt={article.featuredImage?.alt ?? ''}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
+                  <div class="latest-updates__content">
+                    <div class="latest-updates__meta">
+                      <span>{categoryLabels[article.category] ?? article.category}</span>
+                      <time datetime={article.publishedAt}>
+                        <span aria-hidden="true">·</span> {formatDate(article.publishedAt)}
+                      </time>
+                    </div>
+                    <h3>{article.title}</h3>
+                  </div>
+                </article>
+              </a>
+            </li>
+          )
+        })}
+      </ol>
+    ) : (
+      <p class="muted">{labels.home.emptyNews}</p>
+    )}
+  </HomeSectionHeading>
 </section>
 
 <style>
+  .home-latest-updates {
+    min-width: 0;
+  }
+
   .home-important-now {
     display: flex;
+    align-items: baseline;
     flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    margin-block-end: 1.5rem;
-    padding: 0.75rem 1rem;
+    gap: 0.35rem 0.75rem;
+    margin-block-end: 1rem;
+    padding: 0.7rem 0.85rem;
     border-inline-start: 0.2rem solid var(--brand);
-    background: var(--surface);
+    background: var(--surface-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .home-important-now strong {
+    color: var(--civic-deep);
+    font-size: 0.9375rem;
+  }
+
+  .home-important-now a {
+    min-height: 2.75rem;
+    align-content: center;
+    font-weight: 700;
   }
 
   .latest-updates {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     padding: 0;
     list-style: none;
   }
 
   li {
-    padding-block: 1rem;
+    min-width: 0;
+    padding-block: 0.65rem;
     border-block-start: 1px solid var(--border);
   }
 
+  .latest-updates__link {
+    display: block;
+    min-height: 100%;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .latest-updates__link:focus-visible {
+    border-radius: 0.2rem;
+  }
+
+  .latest-updates__row {
+    display: grid;
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .latest-updates__row--image {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  img {
+    width: min(100%, var(--thumbnail-native-width));
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 0.25rem;
+  }
+
   h3 {
-    font-size: 1.125rem;
+    margin: 0;
+    font-size: var(--home-title-size);
+    font-weight: var(--home-title-weight);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .latest-updates__link h3 {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--text);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .latest-updates__link:hover h3 {
+    text-decoration: underline;
+    text-decoration-color: var(--brand);
+    text-decoration-thickness: 0.06em;
   }
 
   .latest-updates__meta {
-    margin-block-start: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.6rem;
+    margin-block-end: 0.35rem;
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
   }
 
-  .latest-updates__summary {
-    max-width: var(--content-reading);
-    margin-block-start: 0.5rem;
+  .latest-updates__meta time {
+    display: inline-flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    min-width: 0;
+  }
+
+  @media (min-width: 72rem) {
+    .latest-updates {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 1.25rem;
+    }
+
+    li {
+      padding-block: 0.85rem;
+    }
+
+    .latest-updates__row--image {
+      grid-template-columns: 112px minmax(0, 1fr);
+    }
   }
 </style>

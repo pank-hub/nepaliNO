@@ -1,0 +1,66 @@
+---
+interface Props {
+  topicKey: string
+}
+
+// Homepage navigation glyphs, independent of Sanity's optional iconKey metadata.
+const paths: Record<string, readonly string[]> = {
+  'immigration-residence': [
+    'M5 3h14v18H5z',
+    'M9 3v18',
+    'M12 8h4M12 12h4M12 16h2',
+  ],
+  'health-services': [
+    'M6 5v4a6 6 0 0 0 12 0V5',
+    'M6 3v2M18 3v2',
+    'M12 15v2a3 3 0 0 0 6 0v-1',
+    'M18 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
+  ],
+  'work-employment': [
+    'M8 7V4h8v3',
+    'M3 7h18v14H3z',
+    'M3 12c6 3 12 3 18 0M12 12v4',
+  ],
+  'family-children': [
+    'M3 11 12 3l9 8M5 10v11h14V10',
+    'M9 13a2 2 0 1 0 4 0 2 2 0 1 0-4 0',
+    'M8 21v-2a3 3 0 0 1 6 0v2M16 15v.01M16 18v3',
+  ],
+  'rights-safety-discrimination': [
+    'M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z',
+    'm8 12 3 3 5-6',
+  ],
+  'education-student-life': [
+    'M12 5C9 3 6 3 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1Z',
+    'M12 5v15',
+  ],
+}
+const {topicKey} = Astro.props
+const glyph = paths[topicKey]
+if (!glyph) throw new Error(`Unmapped homepage Guidance icon: ${topicKey}`)
+---
+
+<svg
+  viewBox="0 0 24 24"
+  width="22"
+  height="22"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+  data-topic-icon={topicKey}
+>
+  {glyph.map((d) => <path d={d} />)}
+</svg>
+
+<style>
+  svg {
+    width: 22px;
+    height: 22px;
+    margin-block-start: 0.1rem;
+    color: var(--text);
+  }
+</style>

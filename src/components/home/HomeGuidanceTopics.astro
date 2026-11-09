@@ -1,7 +1,9 @@
 ---
 import {getTranslations} from '../../i18n'
+import {selectHomepageGuidanceTopics} from '../../config/homepage'
 import type {SupportedLanguage} from '../../i18n/config'
 import HomeSectionHeading from './HomeSectionHeading.astro'
+import HomeGuidanceIcon from './HomeGuidanceIcon.astro'
 import type {HomeTopic} from './types'
 
 interface Props {
@@ -11,50 +13,98 @@ interface Props {
 
 const {language, topics} = Astro.props
 const labels = getTranslations(language)
-const shortcuts = topics.slice(0, 6)
+const shortcuts = selectHomepageGuidanceTopics(topics)
 ---
 
-<section aria-labelledby="home-guidance-heading">
+<section class="home-guidance" aria-labelledby="home-guidance-heading">
   <HomeSectionHeading
     id="home-guidance-heading"
     title={labels.home.informationHeading}
-    description={labels.home.informationDescription}
     actionHref={`/${language}/info/`}
     actionLabel={labels.home.viewAllInformation}
-  />
-  {shortcuts.length > 0 ? (
-    <ul class="guidance-topics">
-      {shortcuts.map((topic) => (
-        <li>
-          <a href={`/${language}/info/topic/${topic.slug}/`} data-icon-key={topic.iconKey}>
-            {topic.title}
-          </a>
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p class="muted">{labels.home.emptyTopics}</p>
-  )}
+  >
+    {shortcuts.length > 0 ? (
+      <ul class="guidance-topics">
+        {shortcuts.map((topic) => (
+          <li>
+            <a href={`/${language}/info/topic/${topic.slug}/`} aria-label={topic.title} data-icon-key={topic.iconKey}>
+              <HomeGuidanceIcon topicKey={topic.topicKey} />
+              <span class="guidance-topic__title">{topic.title}</span>
+              <span class="guidance-topic__arrow" aria-hidden="true">→</span>
+              <span class="guidance-topic__summary">{topic.summary}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="muted">{labels.home.emptyTopics}</p>
+    )}
+  </HomeSectionHeading>
 </section>
 
 <style>
-  .guidance-topics {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-    gap: 0.75rem;
-    padding: 0;
-    list-style: none;
+  .home-guidance {
+    min-width: 0;
   }
 
-  a {
-    display: flex;
-    align-items: center;
-    min-height: 3rem;
-    height: 100%;
-    padding: 0.75rem 1rem;
+  .guidance-topics {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+    padding: 0;
+    list-style: none;
+    align-items: start;
+  }
+
+  .guidance-topics a {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    gap: 0.2rem 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.45rem 0.65rem;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--surface);
-    font-weight: 700;
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .guidance-topics a:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+
+  .guidance-topic__title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .guidance-topic__arrow {
+    color: var(--brand);
+  }
+
+  .guidance-topic__summary {
+    grid-column: 2 / 3;
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  @media (min-width: 44rem) {
+    .guidance-topics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+  }
+
+  @media (min-width: 68rem) {
+    .guidance-topics {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 </style>

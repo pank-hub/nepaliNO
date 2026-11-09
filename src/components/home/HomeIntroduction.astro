@@ -11,7 +11,7 @@ const labels = getTranslations(language)
 ---
 
 <header class="home-introduction">
-  <div class="reading-width">
+  <div class="home-introduction__content reading-width">
     <h1>{labels.home.title}</h1>
     <p>{labels.home.introduction}</p>
   </div>
@@ -24,19 +24,48 @@ const labels = getTranslations(language)
 
 <style>
   .home-introduction {
-    padding-block-start: 2rem;
+    max-width: 58rem;
+    padding-block-end: 0.5rem;
   }
 
   h1 {
-    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    max-width: 22ch;
+    font-size: clamp(1.6rem, 5vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
   }
 
   p {
-    margin-block-start: 0.75rem;
+    max-width: 54ch;
+    margin-block-start: 0.65rem;
     color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
   }
 
   .home-introduction__search {
     margin-block-start: 1.5rem;
+  }
+
+  @media (min-width: 40rem) {
+    .home-introduction {
+      padding-block-end: 0.75rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .home-introduction h1 {
+      max-width: 34ch;
+      font-size: clamp(2.25rem, 2.8vw, 2.5rem);
+      line-height: 1.18;
+    }
+
+    p {
+      max-width: 45rem;
+      font-size: 1.125rem;
+      line-height: 1.6;
+    }
   }
 </style>

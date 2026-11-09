@@ -107,6 +107,7 @@ const homepageEvents = expandUpcomingOccurrences(fetchedHomepageEvents, now)
   title={labels.home.metaTitle}
   description={labels.home.metaDescription}
   structuredData={homepageStructuredData}
+  bodyClass="homepage-body"
 >
   <SiteHeader slot="header" language={language} alternatePath={`/${alternateLanguage}/`} />
 
@@ -133,19 +134,49 @@ const homepageEvents = expandUpcomingOccurrences(fetchedHomepageEvents, now)
     {showForum && forumPilot.homepageDiscussionFeedEnabled && <HomeForumActivity language={language} />}
   </div>
 
-  <SiteFooter slot="footer" language={language} />
+  <SiteFooter slot="footer" language={language} flush />
 </BaseLayout>
 
 <style>
+  :global(body.homepage-body) {
+    background: var(--surface);
+  }
+
   .homepage {
+    --home-title-size: 1.0625rem;
+    --home-title-weight: 600;
     display: grid;
-    gap: 2rem;
+    width: min(100% - (2 * var(--page-gutter)), 74rem);
+    gap: 1.5rem;
+    padding-block: 1.25rem 2.5rem;
+  }
+
+  .homepage > :not(.homepage__community):not(:first-child) {
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--border);
   }
 
   .homepage__community {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
-    gap: 2rem;
+    gap: 1rem;
+    padding-block-start: 1.5rem;
+    border-block-start: 1px solid var(--border);
+  }
+
+  @media (min-width: 40rem) {
+    .homepage {
+      gap: 2rem;
+      padding-block-start: 1.75rem;
+    }
+
+  }
+
+  @media (min-width: 72rem) {
+    .homepage {
+      gap: 2.5rem;
+      padding-block-start: 2rem;
+    }
   }
 </style>

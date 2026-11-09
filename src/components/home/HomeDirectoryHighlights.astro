@@ -1,8 +1,9 @@
 ---
 import {getTranslations} from '../../i18n'
 import type {SupportedLanguage} from '../../i18n/config'
+import {urlFor} from '../../lib/sanity/image'
 import HomeSectionHeading from './HomeSectionHeading.astro'
-import type {HomeDirectoryListing} from './types'
+import type {HomeDirectoryListing, HomeSanityImage} from './types'
 
 interface Props {
   language: SupportedLanguage
@@ -11,14 +12,9 @@ interface Props {
 
 const {language, listings} = Astro.props
 const labels = getTranslations(language)
-const types: Record<string, string> = labels.directory.listingTypes
 const categories: Record<string, string> = labels.directory.categories
 const counties: Record<string, string> = labels.directory.counties
 const presenceTypes: Record<string, string> = labels.directory.presenceTypes
-const typeLabel = (listing: HomeDirectoryListing) =>
-  listing.listingType === 'other'
-    ? listing.otherListingType || types.other
-    : types[listing.listingType] || listing.listingType
 const categoryLabel = (listing: HomeDirectoryListing) =>
   listing.primaryCategory === 'other'
     ? listing.otherCategory || categories.other
@@ -33,75 +29,159 @@ const locationLabel = (listing: HomeDirectoryListing) => {
       .join(' · ') || presenceTypes[listing.presenceType] || listing.presenceType
   )
 }
+const listingThumbnail = (image: HomeSanityImage | null | undefined, containsLogo: boolean) => {
+  if (!image?.asset) return null
+  const dimensions = image.asset._ref.match(/-(\d+)x(\d+)-[a-z0-9]+$/)
+  if (!dimensions) throw new Error('Invalid homepage Directory image asset dimensions.')
+  const crop = image.crop
+  const croppedWidth = Math.floor(
+    Number(dimensions[1]) * (1 - (crop?.left ?? 0) - (crop?.right ?? 0)),
+  )
+  const nativeWidth = containsLogo
+    ? croppedWidth
+    : Math.floor(Math.min(
+        croppedWidth,
+        Number(dimensions[2]) * (1 - (crop?.top ?? 0) - (crop?.bottom ?? 0)) * 4 / 3,
+      ))
+  if (nativeWidth < 4) throw new Error('Homepage Directory image crop is too small.')
+  const widths = [...new Set([128, 192, 256, 320, 480].map((width) => Math.min(width, nativeWidth)))]
+  const imageUrl = (width: number) => {
+    const builder = urlFor(image).width(width)
+    return (containsLogo
+      ? builder.fit('max')
+      : builder.height(Math.round(width * 3 / 4)).fit('crop')
+    ).auto('format').url()
+  }
+  return {
+    src: imageUrl(widths[0]),
+    srcset: widths.map((width) => `${imageUrl(width)} ${width}w`).join(', '),
+    nativeWidth,
+  }
+}
 ---
 
-<section aria-labelledby="home-directory-heading">
+<section class="home-directory" aria-labelledby="home-directory-heading">
   <HomeSectionHeading
     id="home-directory-heading"
     title={labels.home.businessesHeading}
     actionHref={`/${language}/directory/`}
     actionLabel={labels.directory.exploreListings}
-  />
+  >
   <ul class="directory-highlights">
-    {listings.map((listing) => (
-      <li>
-        <article>
-          <div class="directory-highlights__labels">
-            {listing.isFeatured && <span class="badge badge-brand">{labels.directory.featuredListing}</span>}
-            {listing.isVerified && <span class="badge badge-success">{labels.directory.verified}</span>}
-          </div>
-          <h3><a href={`/${language}/directory/${listing.slug}/`}>{listing.name}</a></h3>
-          <p class="directory-highlights__meta">
-            {categoryLabel(listing)}{' · '}{typeLabel(listing)}{' · '}{locationLabel(listing)}
-          </p>
-          <p>{listing.summary}</p>
-        </article>
-      </li>
-    ))}
+    {listings.slice(0, 3).map((listing) => {
+      const hasCover = !!listing.coverImage?.asset
+      const sourceImage = hasCover ? listing.coverImage : listing.logo
+      const image = listingThumbnail(sourceImage, !hasCover)
+      return (
+        <li>
+          <article>
+            {image && sourceImage && (
+              <div class:list={['directory-highlights__media', {'directory-highlights__media--logo': !hasCover}]}>
+                <img
+                  src={image.src}
+                  srcset={image.srcset}
+                  sizes="(min-width: 72rem) 33vw, (min-width: 44rem) 50vw, 100vw"
+                  width="320"
+                  height="240"
+                  style={`--media-native-width: ${image.nativeWidth}px`}
+                  alt={sourceImage.alt ?? listing.name}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
+            <h3><a href={`/${language}/directory/${listing.slug}/`}>{listing.name}</a></h3>
+            <p class="directory-highlights__meta">
+              {categoryLabel(listing)}{' · '}{locationLabel(listing)}
+            </p>
+            {listing.isVerified && <p class="directory-highlights__verified">{labels.directory.verified}</p>}
+          </article>
+        </li>
+      )
+    })}
   </ul>
-  <aside class="directory-highlights__submit" aria-label={labels.directory.submitListing}>
-    <a href={`/${language}/directory/submit/`}>{labels.directory.submitListing}</a>
-    <p class="muted">{labels.directory.submitListingDescription}</p>
-  </aside>
+  </HomeSectionHeading>
 </section>
 
 <style>
+  .home-directory {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+
   .directory-highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
     padding: 0;
     list-style: none;
   }
 
   li {
-    padding-block: 1rem;
+    min-width: 0;
+    max-width: 36rem;
+    margin-inline: auto;
+    padding-block: 0.75rem;
     border-block-start: 1px solid var(--border);
   }
 
-  .directory-highlights__labels {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+  .directory-highlights__media {
+    display: grid;
+    aspect-ratio: 4 / 3;
+    margin-block-end: 0.75rem;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
   }
 
-  .directory-highlights__labels:empty {
-    display: none;
+  .directory-highlights__media img {
+    width: min(100%, var(--media-native-width));
+    height: 100%;
+    margin-inline: auto;
+    object-fit: cover;
+  }
+
+  .directory-highlights__media--logo {
+    background: var(--surface);
+  }
+
+  .directory-highlights__media--logo img {
+    object-fit: contain;
   }
 
   h3 {
-    margin-block: 0.5rem;
-    font-size: 1.125rem;
+    margin-block-end: 0.25rem;
+    font-size: var(--home-title-size);
+    font-weight: var(--home-title-weight);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 
-  .directory-highlights__meta {
-    margin-block-end: 0.5rem;
+  h3 a {
+    color: var(--text);
+  }
+
+  h3 a:hover {
+    text-decoration-color: var(--brand);
+  }
+
+  .directory-highlights__meta,
+  .directory-highlights__verified {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
   }
 
-  .directory-highlights__submit {
-    margin-block-start: 1rem;
+  .directory-highlights__verified {
+    margin-block-start: 0.25rem;
   }
 
-  .directory-highlights__submit p {
-    margin-block-start: 0.5rem;
+  @media (min-width: 44rem) {
+    .home-directory {
+      padding: 1.25rem;
+    }
+
   }
 </style>

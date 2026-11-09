@@ -24,12 +24,15 @@ const rule = (source, selector) => {
 
 const declarationsOf = (source, selector) => rule(source, selector)
 
-test('Mukta Devanagari 600 is imported, and only that Mukta file', () => {
-  assert.match(css, /@import "@fontsource\/mukta\/devanagari-600\.css";/)
-  assert.equal((css.match(/@fontsource\/mukta\//g) ?? []).length, 1)
+test('Mukta Devanagari body and interface weights are imported without a dependency', () => {
+  for (const weight of [400, 500, 600, 700]) {
+    assert.match(css, new RegExp(`@import "@fontsource/mukta/devanagari-${weight}\\.css";`))
+  }
+  assert.equal((css.match(/@fontsource\/mukta\//g) ?? []).length, 4)
+  assert.match(pkg, /"@fontsource\/mukta"/)
 })
 
-test('Mukta leads the stack only in the two approved Nepali h1 selectors', () => {
+test('news and Guide display headings retain their existing Nepali Mukta stacks', () => {
   for (const [source, selector] of [
     [newsPage, 'html[lang="ne"] .article-header h1'],
     [guidePage, 'html[lang="ne"] .guide-hero__content h1'],
@@ -42,9 +45,33 @@ test('Mukta leads the stack only in the two approved Nepali h1 selectors', () =>
   assert.equal((guidePage.match(/Mukta/g) ?? []).length, 1)
 })
 
-test('Mukta is absent from global, body, prose, navigation and heading rules', () => {
-  assert.equal((css.match(/Mukta/g) ?? []).length, 0)
-  assert.doesNotMatch(css, /font-family:[^;]*mukta/i)
+test('Mukta is the Nepali language token with Inter and Noto fallbacks', () => {
+  assert.match(
+    css,
+    /--font-devanagari:\s*"Mukta",\s*"Inter Variable",\s*"Noto Sans Devanagari Variable",\s*system-ui,\s*sans-serif;/,
+  )
+  assert.match(css, /html\[lang="ne"\]\s*\{\s*font-family:\s*var\(--font-devanagari\);/)
+  assert.match(css, /font-family:\s*var\(--font-devanagari\);/)
+  assert.match(
+    css,
+    /html \{[^}]*font-family: "Inter Variable", "Noto Sans Devanagari Variable", system-ui, sans-serif;/,
+  )
+})
+
+test('homepage typography is compact without overriding the language font token', async () => {
+  const [homepage, introduction, headings] = await Promise.all([
+    read('../../src/pages/[lang]/index.astro'),
+    read('../../src/components/home/HomeIntroduction.astro'),
+    read('../../src/components/home/HomeSectionHeading.astro'),
+  ])
+  assert.match(homepage, /--home-title-size: 1\.0625rem;/)
+  assert.match(homepage, /--home-title-weight: 600;/)
+  assert.match(introduction, /labels\.home\.title/)
+  assert.match(introduction, /labels\.home\.introduction/)
+  assert.match(introduction, /font-weight: 600;/)
+  assert.match(introduction, /font-size: 1rem;/)
+  assert.match(headings, /font-weight: 600;/)
+  assert.doesNotMatch(homepage + introduction + headings, /font-family:/)
 })
 
 test('Nepali h1 selectors have no width cap and wrap naturally', () => {
@@ -63,18 +90,18 @@ test('Norwegian and default headings keep their font and 18ch rule', () => {
   )
   assert.match(
     css,
-    /html\[lang="ne"\] \{\s*font-family: "Noto Sans Devanagari Variable", "Inter Variable", system-ui, sans-serif;/,
+    /html\[lang="ne"\]\s*\{\s*font-family:\s*var\(--font-devanagari\);/,
   )
 })
 
-test('Nepali prose em inherits weight, is not bold, and leads with Inter', () => {
+test('Nepali prose em uses the language stack with inherited, non-bold weight', () => {
   const body = declarationsOf(css, 'html[lang="ne"] .prose em')
   assert.match(body, /font-weight: inherit;/)
   assert.doesNotMatch(body, /font-weight:\s*(5[0-9]{2}|6[0-9]{2}|7[0-9]{2}|8[0-9]{2}|bold)/)
   assert.doesNotMatch(css, /font-weight: 580/)
   assert.match(
     body,
-    /font-family: "Inter Variable", "Noto Sans Devanagari Variable", system-ui, sans-serif;/,
+    /font-family: var\(--font-devanagari\);/,
   )
   assert.doesNotMatch(body, /color: var\(--civic-deep\)/)
   assert.match(css, /font-synthesis: none;/)

@@ -13,38 +13,41 @@ const labels = getTranslations(language)
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 ---
 
-<section aria-labelledby="home-forum-heading" data-home-forum>
+<section class="home-forum" aria-labelledby="home-forum-heading" data-home-forum>
   <HomeSectionHeading
     id="home-forum-heading"
     title={labels.home.discussionsHeading}
     actionHref={forumPilot.url}
     actionLabel={labels.home.forumVisit}
-  />
-  <ol
-    class="forum-activity"
-    data-forum-topics
-    data-language={language}
-    data-locale={dateLocale}
-    data-news-label={labels.home.forumNewsDiscussion}
-    data-guide-label={labels.home.forumGuideDiscussion}
-    hidden
-  ></ol>
-  <template data-forum-topic-template>
-    <li class="forum-activity__row">
-      <article>
-        <p class="forum-activity__role" data-topic-role></p>
-        <h3><a data-topic-link target="_blank" rel="noopener noreferrer"></a></h3>
-        <dl>
-          <div><dt>{labels.home.forumReplies}</dt><dd data-topic-replies></dd></div>
-          <div data-topic-updated hidden>
-            <dt>{labels.home.forumUpdated}</dt>
-            <dd><time data-topic-time></time></dd>
-          </div>
-        </dl>
-      </article>
-    </li>
-  </template>
-  <p class="forum-activity__notice">{labels.home.forumNotice}</p>
+  >
+    <div class="forum-activity-content">
+      <ol
+        class="forum-activity"
+        data-forum-topics
+        data-language={language}
+        data-locale={dateLocale}
+        data-news-label={labels.home.forumNewsDiscussion}
+        data-guide-label={labels.home.forumGuideDiscussion}
+        hidden
+      ></ol>
+      <template data-forum-topic-template>
+        <li class="forum-activity__row">
+          <article>
+            <p class="forum-activity__role" data-topic-role></p>
+            <h3><a data-topic-link target="_blank" rel="noopener noreferrer"></a></h3>
+            <dl>
+              <div><dt>{labels.home.forumReplies}</dt><dd data-topic-replies></dd></div>
+              <div data-topic-updated hidden>
+                <dt>{labels.home.forumUpdated}</dt>
+                <dd><time data-topic-time></time></dd>
+              </div>
+            </dl>
+          </article>
+        </li>
+      </template>
+      <p class="forum-activity__notice">{labels.home.forumNotice}</p>
+    </div>
+  </HomeSectionHeading>
 </section>
 
 <script>
@@ -128,9 +131,22 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 </script>
 
 <style>
+  .home-forum:has([data-forum-topics][hidden]) {
+    display: none;
+  }
+
   .forum-activity {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
     padding: 0;
     list-style: none;
+  }
+
+  .forum-activity-content {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .forum-activity__row {
@@ -141,11 +157,24 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
   .forum-activity__role {
     margin-block-end: 0.25rem;
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
   }
 
   h3 {
-    font-size: 1.125rem;
+    font-size: var(--home-title-size);
+    font-weight: var(--home-title-weight);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  h3 a {
+    color: var(--text);
+    text-decoration-thickness: 0.06em;
+  }
+
+  h3 a:hover {
+    text-decoration-color: var(--brand);
   }
 
   dl {
@@ -154,7 +183,8 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
     gap: 0.5rem 1.25rem;
     margin-block-start: 0.4rem;
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
   }
 
   dl div {
@@ -171,8 +201,36 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
   }
 
   .forum-activity__notice {
-    margin-block-start: 1rem;
+    margin-block-start: 0.9rem;
+    padding-block-start: 0.75rem;
+    border-block-start: 1px solid var(--border);
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 44rem) {
+    .forum-activity {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1.25rem;
+    }
+
+    .forum-activity-content {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1.25rem;
+    }
+
+    .forum-activity__notice {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (min-width: 72rem) {
+    .forum-activity,
+    .forum-activity-content {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 1.5rem;
+    }
   }
 </style>
