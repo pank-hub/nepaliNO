@@ -76,7 +76,8 @@ test('search keywords are not rendered as visible text or in other guide queries
   assert.equal(queries.match(/searchKeywords/g)?.length, 1)
   assert.match(page, /data-search-text=\{searchText\}/)
   assert.match(page, /role="search"/)
-  assert.match(page, /<label for="guide-search-input">/)
+  assert.match(page, /<label[^>]*for="guide-search-input">/)
+  assert.match(page, /<label class="sr-only" for="guide-search-input">/)
   assert.match(page, /aria-live="polite"/)
 })
 

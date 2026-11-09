@@ -3,7 +3,7 @@ import {getTranslations} from '../../i18n'
 import {selectHomepageGuidanceTopics} from '../../config/homepage'
 import type {SupportedLanguage} from '../../i18n/config'
 import HomeSectionHeading from './HomeSectionHeading.astro'
-import HomeGuidanceIcon from './HomeGuidanceIcon.astro'
+import GuidanceTopicIcon from '../content/GuidanceTopicIcon.astro'
 import type {HomeTopic} from './types'
 
 interface Props {
@@ -28,7 +28,7 @@ const shortcuts = selectHomepageGuidanceTopics(topics)
         {shortcuts.map((topic) => (
           <li>
             <a href={`/${language}/info/topic/${topic.slug}/`} aria-label={topic.title} data-icon-key={topic.iconKey}>
-              <HomeGuidanceIcon topicKey={topic.topicKey} />
+              <GuidanceTopicIcon topicKey={topic.topicKey} />
               <span class="guidance-topic__title">{topic.title}</span>
               <span class="guidance-topic__arrow" aria-hidden="true">→</span>
               <span class="guidance-topic__summary">{topic.summary}</span>

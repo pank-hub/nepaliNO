@@ -513,8 +513,14 @@ export const nb = {
     featuredLabel: "Fremhevet informasjon",
     fundingAcknowledgement: "Støtte og samarbeid",
     searchLabel: "Søk i veiledninger",
-    searchPlaceholder: "For eksempel: oppholdstillatelse, BankID, skattekort",
+    searchPlaceholder: "Søk (for eksempel: BankID, skattekort, oppholdstillatelse)...",
     searchHint: "Du kan søke i tittel, sammendrag, ansvarlig etat og relaterte søkeord.",
+    topicHeading: "Velg temaet du trenger",
+    topicGuideCount: {
+      one: "{count} publisert veiledning",
+      other: "{count} publiserte veiledninger",
+    },
+    noPublishedTopicGuides: "Ingen veiledninger er publisert ennå",
     searchResultsHeading: "Søkeresultater",
     searchResultCount: {
       one: "{count} veiledning funnet",
