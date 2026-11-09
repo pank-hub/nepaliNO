@@ -1,0 +1,93 @@
+---
+import {isSectionEnabled} from '../../config/languageSections'
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {MAX_QUERY_LENGTH} from '../../lib/search/text'
+
+interface Props {
+  language: SupportedLanguage
+  mode?: 'inline' | 'full'
+}
+const {language, mode = 'inline'} = Astro.props
+const labels = getTranslations(language)
+const copy = labels.search
+const id = `content-search-${mode}`
+const guidance = isSectionEnabled(language, 'information')
+const directory = isSectionEnabled(language, 'directory')
+---
+
+<div class="content-search" data-content-search data-language={language} data-mode={mode} data-labels={JSON.stringify(copy)}>
+  <form role="search" action={`/${language}/search/`} method="get">
+    <label class="sr-only" for={id}>{copy.label}</label>
+    <div class="content-search__entry">
+      <svg class="content-search__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m16 16 4 4"></path>
+      </svg>
+      <input
+        id={id} type="search" name="q" maxlength={MAX_QUERY_LENGTH}
+        placeholder={copy.placeholder} autocomplete="off" autocapitalize="off" spellcheck="false"
+        aria-describedby={`${id}-help`}
+      />
+    </div>
+    <p id={`${id}-help`} class="sr-only">{guidance || directory ? copy.help : copy.newsHelp}</p>
+    <button class="content-search__clear" type="button" data-search-clear hidden>{copy.clear}</button>
+  </form>
+  <p class="content-search__status" role="status" aria-live="polite" aria-atomic="true" data-search-status></p>
+  <div class="content-search__panel" data-search-panel hidden>
+    {mode === 'full' && (
+      <div class="content-search__filters" role="group" aria-label={copy.filters} data-search-filters hidden>
+        <button type="button" aria-pressed="true" data-search-filter="all">{copy.all}</button>
+        {guidance && <button type="button" aria-pressed="false" data-search-filter="guidance">{copy.typeGuidance}</button>}
+        <button type="button" aria-pressed="false" data-search-filter="news">{copy.typeNews}</button>
+        {directory && <button type="button" aria-pressed="false" data-search-filter="directory">{copy.typeDirectory}</button>}
+      </div>
+    )}
+    <ol class="content-search__list" data-search-list></ol>
+    <button type="button" data-search-retry hidden>{copy.retry}</button>
+    <button type="button" data-search-more hidden>{copy.showMore}</button>
+    <a class="content-search__full" href={`/${language}/search/`} data-search-full hidden>{copy.fullResults} <span aria-hidden="true">→</span></a>
+  </div>
+  <nav class="content-search__browse" aria-label={copy.browse} data-search-browse>
+    {guidance && <a href={`/${language}/info/`}>{copy.typeGuidance}</a>}
+    <a href={`/${language}/news/`}>{copy.typeNews}</a>
+    {directory && <a href={`/${language}/directory/`}>{copy.typeDirectory}</a>}
+  </nav>
+  <noscript><p>{copy.noScript}</p></noscript>
+</div>
+
+<style>
+  .content-search { min-width: 0; }
+  .content-search[data-mode="full"] { max-width: 48rem; }
+  .content-search__entry { position: relative; }
+  .content-search__icon { position: absolute; inset-inline-start: 1.25rem; top: 50%; width: 1.375rem; height: 1.375rem; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+  input { display: block; width: 100%; min-width: 0; height: 3.625rem; padding: 0 1.5rem 0 3.25rem; border: 1px solid #d1d5db; border-radius: 9999px; background: #fff; box-shadow: 0 2px 6px rgb(15 23 42 / 7%); font: inherit; color: var(--civic-deep); text-overflow: ellipsis; }
+  input::placeholder { color: var(--text-muted); opacity: 1; }
+  button { min-height: 2.75rem; min-width: 2.75rem; padding: 0.5rem 0.75rem; border: 1px solid var(--border-strong); border-radius: 0.35rem; background: #fff; color: var(--civic-deep); font: inherit; font-weight: 600; cursor: pointer; }
+  @media (min-width: 64rem) {
+    .content-search__icon { inset-inline-start: 1.5rem; }
+    input { height: 4.25rem; padding-inline-start: 3.75rem; }
+  }
+  .content-search__status:not(:empty) { margin-block: 0.5rem; color: var(--text-muted); }
+  .content-search__clear { margin-block-start: 0.25rem; border: 0; padding-inline: 0; font-weight: 400; text-decoration: underline; text-underline-offset: 0.2em; }
+  .content-search__panel { margin-block-start: 0.5rem; }
+  .content-search__list { margin: 0; padding: 0; list-style: none; }
+  .content-search__list :global(li) { border-block-end: 1px solid var(--border); }
+  .content-search__list :global(a) { display: grid; justify-items: start; gap: 0.25rem; min-height: 2.75rem; padding: 0.75rem 0.25rem; text-decoration: none; overflow-wrap: anywhere; }
+  .content-search__list :global(.content-search__tag) { padding: 0.1rem 0.4rem; border-radius: 0.25rem; background: #edf2f6; color: var(--civic-deep); font-size: 0.8125rem; font-weight: 500; line-height: 1.5; }
+  .content-search__list :global(.content-search__title) { font-weight: 600; color: var(--civic-deep); line-height: 1.5; }
+  .content-search__list :global(.content-search__context) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; color: var(--text-muted); font-size: 0.9375rem; line-height: 1.6; }
+  .content-search__list :global(a:hover .content-search__title) { text-decoration: underline; text-underline-offset: 0.2em; }
+  .content-search__full { display: inline-flex; align-items: center; min-height: 2.75rem; gap: 0.4rem; color: var(--brand); font-weight: 600; }
+  .content-search__filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-block-end: 0.5rem; }
+  .content-search__filters button[aria-pressed="true"] { background: #edf2f6; border-color: var(--civic-deep); text-decoration: underline; text-underline-offset: 0.2em; }
+  .content-search__browse { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin-block-start: 0.25rem; }
+  .content-search__browse a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--text-muted); font-size: 0.9375rem; text-underline-offset: 0.2em; }
+  :is(input, button, a):focus-visible, .content-search__list :global(a:focus-visible) { outline: 3px solid var(--brand); outline-offset: 3px; }
+  [hidden] { display: none !important; }
+</style>
+
+<script>
+  import {mountContentSearch} from '../../lib/search/client'
+  document.querySelectorAll<HTMLElement>('[data-content-search]').forEach((root) => mountContentSearch(root))
+</script>

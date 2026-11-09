@@ -3,6 +3,7 @@ import {defineArrayMember, defineField, defineType} from 'sanity'
 import {informationBoxBlockMember} from './informationBox'
 import {expandableSectionBlockMember} from './expandableSection'
 import {readAlsoBlockMember} from './readAlso'
+import {searchKeywordsField} from './searchKeywords'
 
 export const publicInformationGuide = defineType({
   name: 'publicInformationGuide',
@@ -112,20 +113,7 @@ export const publicInformationGuide = defineType({
       options: {hotspot: true},
     }),
 
-    defineField({
-      name: 'searchKeywords',
-      title: 'Search Keywords and Synonyms',
-      type: 'array',
-      description:
-        'Optional search terms in the guide language. Include everyday Nepali phrases, Norwegian official terminology, abbreviations, synonyms, and common alternative spellings where relevant. These terms are editorial metadata and do not need to be displayed publicly.',
-      of: [
-        defineArrayMember({
-          type: 'string',
-          validation: (rule) => rule.required().min(2).max(100),
-        }),
-      ],
-      validation: (rule) => rule.unique().max(30),
-    }),
+    searchKeywordsField(undefined, true),
     defineField({
       name: 'relatedGuides',
       title: 'Related Guides',

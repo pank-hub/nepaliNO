@@ -8,6 +8,7 @@ import HomeGuidanceTopics from '../../components/home/HomeGuidanceTopics.astro'
 import HomeIntroduction from '../../components/home/HomeIntroduction.astro'
 import HomeLatestUpdates from '../../components/home/HomeLatestUpdates.astro'
 import HomeUpcomingEvents from '../../components/home/HomeUpcomingEvents.astro'
+import ContentSearch from '../../components/search/ContentSearch.astro'
 import type {
   HomeArticle,
   HomeDirectoryListing,
@@ -112,7 +113,9 @@ const homepageEvents = expandUpcomingOccurrences(fetchedHomepageEvents, now)
   <SiteHeader slot="header" language={language} alternatePath={`/${alternateLanguage}/`} />
 
   <div class="container homepage">
-    <HomeIntroduction language={language} />
+    <HomeIntroduction language={language}>
+      <ContentSearch slot="search" language={language} />
+    </HomeIntroduction>
     {showInformation && <HomeGuidanceTopics language={language} topics={topics} />}
     <HomeLatestUpdates
       language={language}

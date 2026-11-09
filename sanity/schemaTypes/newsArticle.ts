@@ -9,6 +9,7 @@ import {
 import {informationBoxBlockMember} from './informationBox'
 import {expandableSectionBlockMember} from './expandableSection'
 import {readAlsoBlockMember} from './readAlso'
+import {searchKeywordsField} from './searchKeywords'
 
 export const newsArticle = defineType({
   name: 'newsArticle',
@@ -180,6 +181,7 @@ export const newsArticle = defineType({
       validation: (rule) => rule.required().min(40).max(300),
     }),
 
+    searchKeywordsField('writing'),
     defineField({
       name: 'articleSummary',
       title: 'Summary box (key points)',
