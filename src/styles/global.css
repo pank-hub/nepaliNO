@@ -59,6 +59,7 @@
   --surface: #ffffff;
   --surface-muted: #f5f8fb;
   --surface-warm: #f8f5ef;
+  --surface-intro: linear-gradient(110deg, var(--surface-muted), var(--color-warm-50));
   --text: #172534;
   --text-muted: #526273;
   --text-soft: #718096;

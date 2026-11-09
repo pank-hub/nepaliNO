@@ -113,6 +113,52 @@ test('homepage Forum topics render as compact rows with inherited focus states',
   assert.doesNotMatch(homepageForum, /innerHTML|discussions__topic-card/)
 })
 
+test('homepage hero contains the unchanged search slot on a semantic surface without decoration', async () => {
+  const [introduction, css] = await Promise.all([
+    read('../../src/components/home/HomeIntroduction.astro'),
+    read('../../src/styles/global.css'),
+  ])
+  assert.match(homepage, /<HomeIntroduction language=\{language\}>\s*<ContentSearch slot="search" language=\{language\} \/>\s*<\/HomeIntroduction>\s*<div class="container homepage">/)
+  assert.match(introduction, /<header class="home-introduction">[\s\S]*<slot name="search" \/>[\s\S]*<\/header>/)
+  assert.match(introduction, /background: var\(--surface-intro\)/)
+  assert.match(css, /--surface-intro: linear-gradient\([^;]*var\(--surface-muted\)[^;]*var\(--color-warm-50\)/)
+  assert.match(introduction, /border-block-end: 1px solid var\(--border\)/)
+  assert.doesNotMatch(introduction, /<img|<svg|<picture|::before|::after|radial-gradient|animation:/)
+  assert.match(introduction, /labels\.home\.title/)
+  assert.match(introduction, /labels\.home\.introduction/)
+})
+
+test('homepage Guidance descriptions improve leading without changing editorial selection or links', async () => {
+  const guidance = await read('../../src/components/home/HomeGuidanceTopics.astro')
+  assert.match(guidance, /selectHomepageGuidanceTopics\(topics\)/)
+  assert.match(guidance, /\{topic\.summary\}/)
+  assert.match(guidance, /href=\{`\/\$\{language\}\/info\/topic\/\$\{topic\.slug\}\/`\}/)
+  assert.match(guidance, /\.guidance-topic__summary\s*\{[^}]*font-size: 0\.9375rem;[^}]*font-weight: 400;[^}]*line-height: 1\.6;/)
+  assert.match(guidance, /@media \(min-width: 44rem\)\s*\{\s*\.guidance-topic__summary\s*\{\s*line-height: 1\.55;/)
+  assert.match(guidance, /-webkit-box-orient: vertical;\s*-webkit-line-clamp: 2;/)
+  assert.doesNotMatch(guidance, /font-family:|\.slice\(|<script|height:\s*\d+px/)
+})
+
+test('homepage Forum hides relationship labels but preserves role data, links, metadata and failure hiding', () => {
+  assert.doesNotMatch(homepageForum, /data-topic-role|forum-activity__role|forumNewsDiscussion|forumGuideDiscussion/)
+  assert.match(homepageForum, /role: 'newsDiscussion' \| 'guideQuestions'/)
+  assert.match(homepageForum, /topic\.role === 'newsDiscussion' \|\| topic\.role === 'guideQuestions'/)
+  assert.match(homepageForum, /item\.dataset\.topicRole = topic\.role/)
+  assert.match(homepageForum, /link\.href = topic\.url/)
+  assert.match(homepageForum, /replies\.textContent = String\(topic\.replyCount\)/)
+  assert.match(homepageForum, /time\.dateTime = date\.toISOString\(\)/)
+  assert.match(homepageForum, /labels\.home\.forumUpdated/)
+  assert.match(homepageForum, /<span aria-hidden="true">·<\/span>/)
+  assert.match(homepageForum, /\.home-forum\s*\{[^}]*background: var\(--surface-muted\);[^}]*border: 1px solid var\(--border\);[^}]*border-radius: var\(--radius-md\);/)
+  assert.match(homepageForum, /<p class="forum-activity__notice"><span>\{labels\.home\.forumNotice\}<\/span><\/p>/)
+  assert.match(homepageForum, /\.forum-activity__notice\s*\{[^}]*border-block-start: 1px solid var\(--border\);[^}]*color: var\(--text-muted\);/)
+  assert.match(homepageForum, /max-width: 75ch/)
+  assert.match(homepageForum, /if \(topics\.length === 0\) return/)
+  assert.match(homepageForum, /\.home-forum:has\(\[data-forum-topics\]\[hidden\]\)\s*\{\s*display: none;/)
+  assert.match(homepageForum, /list\.append\(items\)\s*list\.hidden = false/)
+  assert.doesNotMatch(homepageForum, /gradient|box-shadow|<svg/)
+})
+
 test('homepage omits empty Events and Directory sections and renders each real item only', () => {
   assert.match(homepage, /showEvents && homepageEvents\.length > 0 && \(\s*<HomeUpcomingEvents/)
   assert.match(homepage, /showDirectory && homepageDirectoryListings\.length > 0 && \(\s*<HomeDirectoryHighlights/)

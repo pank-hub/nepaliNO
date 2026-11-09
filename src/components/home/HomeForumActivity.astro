@@ -26,18 +26,16 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
         data-forum-topics
         data-language={language}
         data-locale={dateLocale}
-        data-news-label={labels.home.forumNewsDiscussion}
-        data-guide-label={labels.home.forumGuideDiscussion}
         hidden
       ></ol>
       <template data-forum-topic-template>
         <li class="forum-activity__row">
           <article>
-            <p class="forum-activity__role" data-topic-role></p>
             <h3><a data-topic-link target="_blank" rel="noopener noreferrer"></a></h3>
             <dl>
-              <div><dt>{labels.home.forumReplies}</dt><dd data-topic-replies></dd></div>
+              <div class="forum-activity__replies"><dt>{labels.home.forumReplies}</dt><dd data-topic-replies></dd></div>
               <div data-topic-updated hidden>
+                <span aria-hidden="true">·</span>
                 <dt>{labels.home.forumUpdated}</dt>
                 <dd><time data-topic-time></time></dd>
               </div>
@@ -45,7 +43,7 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
           </article>
         </li>
       </template>
-      <p class="forum-activity__notice">{labels.home.forumNotice}</p>
+      <p class="forum-activity__notice"><span>{labels.home.forumNotice}</span></p>
     </div>
   </HomeSectionHeading>
 </section>
@@ -95,15 +93,14 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
       for (const topic of topics) {
         const item = template.content.firstElementChild?.cloneNode(true)
         if (!(item instanceof HTMLLIElement)) throw new Error('Invalid Homepage Forum row template.')
-        const role = item.querySelector<HTMLElement>('[data-topic-role]')
         const link = item.querySelector<HTMLAnchorElement>('[data-topic-link]')
         const replies = item.querySelector<HTMLElement>('[data-topic-replies]')
         const updated = item.querySelector<HTMLElement>('[data-topic-updated]')
         const time = item.querySelector<HTMLTimeElement>('[data-topic-time]')
-        if (!role || !link || !replies || !updated || !time) {
+        if (!link || !replies || !updated || !time) {
           throw new Error('Missing Homepage Forum row fields.')
         }
-        role.textContent = (topic.role === 'newsDiscussion' ? list.dataset.newsLabel : list.dataset.guideLabel) ?? ''
+        item.dataset.topicRole = topic.role
         link.textContent = topic.title
         link.href = topic.url
         replies.textContent = String(topic.replyCount)
@@ -131,6 +128,13 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 </script>
 
 <style>
+  .home-forum {
+    padding: 1rem;
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+
   .home-forum:has([data-forum-topics][hidden]) {
     display: none;
   }
@@ -154,13 +158,6 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
     border-block-start: 1px solid var(--border);
   }
 
-  .forum-activity__role {
-    margin-block-end: 0.25rem;
-    color: var(--text-muted);
-    font-size: 0.9375rem;
-    line-height: 1.5;
-  }
-
   h3 {
     font-size: var(--home-title-size);
     font-weight: var(--home-title-weight);
@@ -180,7 +177,7 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
   dl {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
+    gap: 0.25rem 0.4rem;
     margin-block-start: 0.4rem;
     color: var(--text-muted);
     font-size: 0.9375rem;
@@ -190,6 +187,10 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
   dl div {
     display: flex;
     gap: 0.4rem;
+  }
+
+  .forum-activity__replies dd {
+    order: -1;
   }
 
   dl div[hidden] {
@@ -205,12 +206,21 @@ const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
     padding-block-start: 0.75rem;
     border-block-start: 1px solid var(--border);
     color: var(--text-muted);
-    font-size: 0.9375rem;
-    line-height: 1.6;
+    font-size: 0.875rem;
+    line-height: 1.65;
     overflow-wrap: anywhere;
   }
 
+  .forum-activity__notice span {
+    display: block;
+    max-width: 75ch;
+  }
+
   @media (min-width: 44rem) {
+    .home-forum {
+      padding: 1.25rem;
+    }
+
     .forum-activity {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       column-gap: 1.25rem;
