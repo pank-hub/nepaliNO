@@ -2,8 +2,9 @@
 import {getTranslations} from '../../i18n'
 import type {SupportedLanguage} from '../../i18n/config'
 import {getEventAccessLabels} from '../../lib/eventAccess'
+import {urlFor} from '../../lib/sanity/image'
 import HomeSectionHeading from './HomeSectionHeading.astro'
-import type {HomeEvent} from './types'
+import type {HomeEvent, HomeSanityImage} from './types'
 
 interface Props {
   language: SupportedLanguage
@@ -15,7 +16,6 @@ const {language, events, now} = Astro.props
 const labels = getTranslations(language)
 const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const eventTimeZone = 'Europe/Oslo'
-const categories: Record<string, string> = labels.events.categories
 const statuses: Record<string, string> = labels.events.statuses
 const formats: Record<string, string> = {
   'in-person': labels.events.inPerson,
@@ -49,85 +49,148 @@ const eventLocation = (event: HomeEvent) =>
   event.eventFormat === 'online'
     ? event.onlinePlatform || labels.events.online
     : event.city || event.venueName || formats[event.eventFormat] || event.eventFormat
+const eventThumbnail = (image: HomeSanityImage | null | undefined) => {
+  if (!image?.asset) return null
+  const dimensions = image.asset._ref.match(/-(\d+)x(\d+)-[a-z0-9]+$/)
+  if (!dimensions) throw new Error('Invalid homepage Event image asset dimensions.')
+  const crop = image.crop
+  const nativeWidth = Math.floor(Math.min(
+    Number(dimensions[1]) * (1 - (crop?.left ?? 0) - (crop?.right ?? 0)),
+    Number(dimensions[2]) * (1 - (crop?.top ?? 0) - (crop?.bottom ?? 0)) * 4 / 3,
+  ))
+  if (nativeWidth < 4) throw new Error('Homepage Event image crop is too small.')
+  const widths = [...new Set([128, 192, 256, 320, 480].map((width) => Math.min(width, nativeWidth)))]
+  const imageUrl = (width: number) =>
+    urlFor(image).width(width).height(Math.round(width * 3 / 4)).fit('crop').auto('format').url()
+  return {
+    src: imageUrl(widths[0]),
+    srcset: widths.map((width) => `${imageUrl(width)} ${width}w`).join(', '),
+    nativeWidth,
+  }
+}
+const statusLabel = (event: HomeEvent) => {
+  if (event.eventStatus !== 'scheduled') return statuses[event.eventStatus] ?? event.eventStatus
+  if (isOngoing(event)) return labels.events.ongoing
+  const access = getEventAccessLabels(event, labels.events)
+  if (!access.needsAction) return null
+  return event.registrationStatus === 'sold-out' || event.registrationStatus === 'closed'
+    ? access.statusLabel
+    : access.requirementLabel
+}
 ---
 
-<section aria-labelledby="home-events-heading">
+<section class="home-events" aria-labelledby="home-events-heading">
   <HomeSectionHeading
     id="home-events-heading"
     title={labels.home.eventsHeading}
     actionHref={`/${language}/events/`}
     actionLabel={labels.events.viewAllEvents}
-  />
+  >
   <ol class="upcoming-events">
-    {events.map((event) => {
-      const access = getEventAccessLabels(event, labels.events)
+    {events.slice(0, 3).map((event) => {
+      const status = statusLabel(event)
+      const image = eventThumbnail(event.featuredImage)
       return (
         <li>
           <article>
-            <div class="upcoming-events__labels">
-              {isOngoing(event) && <span class="badge badge-success">{labels.events.ongoing}</span>}
-              {event.eventStatus !== 'scheduled' && (
-                <span class="badge">{statuses[event.eventStatus] ?? event.eventStatus}</span>
-              )}
-              <span class="badge">{categories[event.eventType] ?? event.eventType}</span>
-              <span class="badge">{formats[event.eventFormat] ?? event.eventFormat}</span>
-              {event.isFree === true && <span class="badge badge-success">{labels.events.freeEvent}</span>}
-              {event.isFree === false && <span class="badge">{labels.events.paidEvent}</span>}
-              {access.needsAction && <span class="badge">{access.requirementLabel}</span>}
-            </div>
-            <h3><a href={`/${language}/events/${event.slug}/`}>{event.title}</a></h3>
-            <p>
+            {image && (
+              <div class="upcoming-events__media">
+                <img
+                  src={image.src}
+                  srcset={image.srcset}
+                  sizes="(min-width: 72rem) 33vw, (min-width: 44rem) 50vw, 100vw"
+                  width="320"
+                  height="240"
+                  style={`--media-native-width: ${image.nativeWidth}px`}
+                  alt={event.featuredImage?.alt ?? event.title}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
+            <p class="upcoming-events__date">
               <time datetime={event.startDateTime}>
                 {formatDateRange(event.startDateTime, event.endDateTime || event.startDateTime)}
                 {' · '}{event.isAllDay ? labels.events.allDay : formatTime(event.startDateTime)}
               </time>
             </p>
-            <p class="upcoming-events__summary">{event.summary}</p>
+            <h3><a href={`/${language}/events/${event.slug}/`}>{event.title}</a></h3>
             <dl>
               <div><dt>{labels.events.venue}</dt><dd>{eventLocation(event)}</dd></div>
-              <div><dt>{labels.events.organizer}</dt><dd>{event.organizerName}</dd></div>
+              {event.organizerName && event.organizerName !== event.title && (
+                <div><dt>{labels.events.organizer}</dt><dd>{event.organizerName}</dd></div>
+              )}
             </dl>
+            {status && <p class="upcoming-events__status">{status}</p>}
           </article>
         </li>
       )
     })}
   </ol>
-  <p class="upcoming-events__submit">
-    <a href={`/${language}/events/submit/`}>{labels.events.submitEvent}</a>
-  </p>
+  </HomeSectionHeading>
 </section>
 
 <style>
+  .home-events {
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+  }
+
   .upcoming-events {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
     padding: 0;
     list-style: none;
   }
 
   li {
-    padding-block: 1rem;
+    min-width: 0;
+    max-width: 36rem;
+    margin-inline: auto;
+    padding-block: 0.75rem;
     border-block-start: 1px solid var(--border);
   }
 
-  .upcoming-events__labels {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-block-end: 0.5rem;
+  .upcoming-events__media {
+    aspect-ratio: 4 / 3;
+    margin-block-end: 0.75rem;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+  }
+
+  .upcoming-events__media img {
+    display: block;
+    width: min(100%, var(--media-native-width));
+    height: 100%;
+    margin-inline: auto;
+    object-fit: cover;
   }
 
   h3 {
-    margin-block-end: 0.4rem;
-    font-size: 1.125rem;
+    margin-block: 0.25rem;
+    font-size: var(--home-title-size);
+    font-weight: var(--home-title-weight);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 
-  .upcoming-events__summary,
-  dl {
-    margin-block-start: 0.5rem;
+  h3 a {
+    color: var(--text);
   }
 
-  dl {
+  h3 a:hover {
+    text-decoration-color: var(--brand);
+  }
+
+  dl,
+  .upcoming-events__date {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
   }
 
   dl div {
@@ -138,9 +201,19 @@ const eventLocation = (event: HomeEvent) =>
 
   dd {
     margin: 0;
+    overflow-wrap: anywhere;
   }
 
-  .upcoming-events__submit {
-    margin-block-start: 1rem;
+  .upcoming-events__status {
+    margin-block-start: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+
+  @media (min-width: 44rem) {
+    .home-events {
+      padding: 1.25rem;
+    }
   }
 </style>

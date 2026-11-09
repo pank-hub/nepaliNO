@@ -111,17 +111,16 @@ const isActive = (href: string) => {
     position: relative;
     z-index: 50;
     border-bottom: 1px solid var(--border);
-    background: rgb(253 252 249 / 0.94);
-    backdrop-filter: blur(1rem);
+    background: var(--surface);
   }
 
   .site-header__bar {
-    min-height: 4.75rem;
+    min-height: 4rem;
   }
 
   .site-header__inner {
     display: flex;
-    min-height: 4.75rem;
+    min-height: 4rem;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
@@ -130,7 +129,7 @@ const isActive = (href: string) => {
   .brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
     color: var(--civic-deep);
     text-decoration: none;
   }
@@ -141,8 +140,8 @@ const isActive = (href: string) => {
 
   .brand__symbol {
     display: grid;
-    width: 2.45rem;
-    height: 2.45rem;
+    width: 2.2rem;
+    height: 2.2rem;
     place-items: center;
     border-radius: 0.8rem 0.8rem 0.8rem 0.2rem;
     background: var(--brand);
@@ -151,7 +150,7 @@ const isActive = (href: string) => {
     font-size: 1.25rem;
     font-weight: 720;
     line-height: 1;
-    box-shadow: 0 0.35rem 1.2rem rgb(198 42 31 / 0.18);
+    box-shadow: none;
   }
 
   .brand__name {
@@ -176,7 +175,13 @@ const isActive = (href: string) => {
 
   .desktop-navigation ul {
     align-items: center;
-    gap: 0.25rem;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+
+  .desktop-navigation {
+    flex: 1;
+    min-width: 0;
   }
 
   .desktop-navigation a,
@@ -184,37 +189,37 @@ const isActive = (href: string) => {
     color: var(--text-muted);
     font-weight: 680;
     text-decoration: none;
+    line-height: 1.5;
   }
 
   .desktop-navigation a {
     display: inline-flex;
-    min-height: 2.6rem;
+    min-height: 2.75rem;
     align-items: center;
-    padding-inline: 0.85rem;
-    border-radius: var(--radius-md);
+    padding-inline: 0.75rem;
+    border-block-end: 2px solid transparent;
   }
 
-  .desktop-navigation a:hover,
-  .desktop-navigation a[aria-current="page"] {
-    background: var(--surface-muted);
+  .desktop-navigation a:hover {
     color: var(--civic-deep);
   }
 
   .desktop-navigation a[aria-current="page"] {
-    box-shadow: inset 0 -0.16rem 0 var(--brand);
+    border-block-end-color: var(--brand);
+    color: var(--civic-deep);
   }
 
   .site-header__actions {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.5rem;
   }
 
   .language-link {
     display: inline-flex;
-    min-height: 2.5rem;
+    min-height: 2.75rem;
     align-items: center;
-    padding-inline: 0.8rem;
+    padding-inline: 0.65rem;
     border: 1px solid var(--border-strong);
     border-radius: 999px;
     color: var(--civic-deep);
@@ -261,7 +266,7 @@ const isActive = (href: string) => {
 
   .mobile-navigation nav {
     position: absolute;
-    inset-block-start: calc(100% + 0.75rem);
+    inset-block-start: calc(100% + 0.4rem);
     inset-inline-end: 0;
     width: min(18rem, calc(100vw - 2rem));
     padding: 0.65rem;
@@ -277,7 +282,8 @@ const isActive = (href: string) => {
 
   .mobile-navigation a {
     display: block;
-    padding: 0.75rem 0.85rem;
+    min-height: 2.75rem;
+    padding: 0.7rem 0.85rem;
     border-radius: var(--radius-md);
   }
 

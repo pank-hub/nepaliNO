@@ -1078,7 +1078,7 @@ export const HOMEPAGE_LATEST_NEWS_BY_LANGUAGE_QUERY = `
     defined(publishedAt) &&
     publishedAt <= now() &&
     (!defined($excludeId) || _id != $excludeId)
-  ] | order(publishedAt desc) [0...5] {
+  ] | order(publishedAt desc) [0...6] {
     _id,
     title,
     "slug": slug.current,

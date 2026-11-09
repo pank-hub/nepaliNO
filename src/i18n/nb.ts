@@ -94,9 +94,9 @@ export const nb = {
     metaDescription:
       "Informasjon, nyheter, diskusjoner, arrangementer og nyttige tjenester for det nepalske miljøet i Norge.",
     eyebrow: "Det nepalske miljøet i Norge",
-    title: "Finn informasjon, bli kjent og delta",
+    title: "Pålitelig informasjon om livet i Norge",
     introduction:
-      "Et digitalt samlingspunkt som knytter sammen pålitelig informasjon om livet i Norge, nyheter og gjensidig støtte i fellesskapet.",
+      "På nepali.no finner du veiledning, nyheter og informasjon om fellesskapet basert på offisielle kilder.",
     primaryAction: "Utforsk Livet i Norge",
     secondaryAction: "Les nyheter",
     informationEyebrow: "Pålitelig veiledning",
