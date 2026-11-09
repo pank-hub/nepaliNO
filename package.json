@@ -21,6 +21,8 @@
     "test:connected-content-presentation": "node --experimental-strip-types --test tests/content/connectedContentPresentation.test.mjs",
     "test:display-headline-typography": "node --experimental-strip-types --test tests/content/displayHeadlineTypography.test.mjs",
     "test:guide-search": "node --experimental-strip-types --test tests/content/guideSearch.test.mjs",
+    "test:shared-search": "tsx --test tests/search/search.test.mjs",
+    "test:search-browser": "tsx --test tests/search/browser.test.mjs",
     "test:language-sections": "node --experimental-strip-types --test tests/content/languageSections.test.mjs",
     "test:event-labels": "node --experimental-strip-types --test tests/content/eventLabels.test.mjs",
     "test:news-author-type": "node --experimental-strip-types --test tests/sanity/newsAuthorType.test.mjs",

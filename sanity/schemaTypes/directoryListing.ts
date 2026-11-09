@@ -1,5 +1,6 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
 import {validateTravelHelp} from './travelHelpValidation'
+import {searchKeywordsField} from './searchKeywords'
 
 const countyOptions = [
   {title: 'Agder', value: 'agder'},
@@ -264,6 +265,7 @@ export const directoryListing = defineType({
       of: [defineArrayMember({type: 'block'})],
       validation: (rule) => rule.required().min(1),
     }),
+    searchKeywordsField('content'),
     defineField({
       name: 'organizationNumber',
       title: 'Norwegian Organization Number',

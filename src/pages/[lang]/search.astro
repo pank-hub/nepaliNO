@@ -1,0 +1,28 @@
+---
+import SiteHeader from '../../components/SiteHeader.astro'
+import SiteFooter from '../../components/SiteFooter.astro'
+import ContentSearch from '../../components/search/ContentSearch.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import {getTranslations} from '../../i18n'
+import {supportedLanguages, type SupportedLanguage} from '../../i18n/config'
+
+interface Props {language: SupportedLanguage}
+export const getStaticPaths = () => supportedLanguages.map((language) => ({
+  params: {lang: language}, props: {language},
+}))
+const {language} = Astro.props
+const labels = getTranslations(language)
+const alternateLanguage = language === 'ne' ? 'nb' : 'ne'
+---
+<BaseLayout language={language} title={`${labels.search.pageTitle} | nepali.no`} description={labels.search.pageDescription} noIndex>
+  <SiteHeader slot="header" language={language} alternatePath={`/${alternateLanguage}/search/`} />
+  <section class="container search-page">
+    <h1>{labels.search.pageTitle}</h1>
+    <ContentSearch language={language} mode="full" />
+  </section>
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+<style>
+  .search-page { padding-block: 1.5rem 3rem; min-height: 50vh; }
+  h1 { font-size: clamp(1.6rem, 5vw, 2.25rem); color: var(--civic-deep); margin-block-end: 1rem; }
+</style>

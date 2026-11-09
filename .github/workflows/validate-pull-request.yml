@@ -46,6 +46,9 @@ jobs:
       - name: Test Guide archive search
         run: npm run test:guide-search
 
+      - name: Test shared published-content search
+        run: npm run test:shared-search
+
       - name: Test per-language section availability
         run: npm run test:language-sections
 
