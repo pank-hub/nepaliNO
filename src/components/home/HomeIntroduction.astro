@@ -1,0 +1,42 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+
+interface Props {
+  language: SupportedLanguage
+}
+
+const {language} = Astro.props
+const labels = getTranslations(language)
+---
+
+<header class="home-introduction">
+  <div class="reading-width">
+    <h1>{labels.home.title}</h1>
+    <p>{labels.home.introduction}</p>
+  </div>
+  {Astro.slots.has('search') && (
+    <div class="home-introduction__search">
+      <slot name="search" />
+    </div>
+  )}
+</header>
+
+<style>
+  .home-introduction {
+    padding-block-start: 2rem;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+  }
+
+  p {
+    margin-block-start: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .home-introduction__search {
+    margin-block-start: 1.5rem;
+  }
+</style>

@@ -1,0 +1,107 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import HomeSectionHeading from './HomeSectionHeading.astro'
+import type {HomeDirectoryListing} from './types'
+
+interface Props {
+  language: SupportedLanguage
+  listings: HomeDirectoryListing[]
+}
+
+const {language, listings} = Astro.props
+const labels = getTranslations(language)
+const types: Record<string, string> = labels.directory.listingTypes
+const categories: Record<string, string> = labels.directory.categories
+const counties: Record<string, string> = labels.directory.counties
+const presenceTypes: Record<string, string> = labels.directory.presenceTypes
+const typeLabel = (listing: HomeDirectoryListing) =>
+  listing.listingType === 'other'
+    ? listing.otherListingType || types.other
+    : types[listing.listingType] || listing.listingType
+const categoryLabel = (listing: HomeDirectoryListing) =>
+  listing.primaryCategory === 'other'
+    ? listing.otherCategory || categories.other
+    : categories[listing.primaryCategory] || listing.primaryCategory
+const locationLabel = (listing: HomeDirectoryListing) => {
+  if (listing.presenceType === 'online-only' || listing.presenceType === 'no-public-location') {
+    return presenceTypes[listing.presenceType]
+  }
+  return (
+    [listing.city || listing.municipality, listing.county ? counties[listing.county] || listing.county : null]
+      .filter(Boolean)
+      .join(' · ') || presenceTypes[listing.presenceType] || listing.presenceType
+  )
+}
+---
+
+<section aria-labelledby="home-directory-heading">
+  <HomeSectionHeading
+    id="home-directory-heading"
+    title={labels.home.businessesHeading}
+    actionHref={`/${language}/directory/`}
+    actionLabel={labels.directory.exploreListings}
+  />
+  <ul class="directory-highlights">
+    {listings.map((listing) => (
+      <li>
+        <article>
+          <div class="directory-highlights__labels">
+            {listing.isFeatured && <span class="badge badge-brand">{labels.directory.featuredListing}</span>}
+            {listing.isVerified && <span class="badge badge-success">{labels.directory.verified}</span>}
+          </div>
+          <h3><a href={`/${language}/directory/${listing.slug}/`}>{listing.name}</a></h3>
+          <p class="directory-highlights__meta">
+            {categoryLabel(listing)}{' · '}{typeLabel(listing)}{' · '}{locationLabel(listing)}
+          </p>
+          <p>{listing.summary}</p>
+        </article>
+      </li>
+    ))}
+  </ul>
+  <aside class="directory-highlights__submit" aria-label={labels.directory.submitListing}>
+    <a href={`/${language}/directory/submit/`}>{labels.directory.submitListing}</a>
+    <p class="muted">{labels.directory.submitListingDescription}</p>
+  </aside>
+</section>
+
+<style>
+  .directory-highlights {
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    padding-block: 1rem;
+    border-block-start: 1px solid var(--border);
+  }
+
+  .directory-highlights__labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .directory-highlights__labels:empty {
+    display: none;
+  }
+
+  h3 {
+    margin-block: 0.5rem;
+    font-size: 1.125rem;
+  }
+
+  .directory-highlights__meta {
+    margin-block-end: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .directory-highlights__submit {
+    margin-block-start: 1rem;
+  }
+
+  .directory-highlights__submit p {
+    margin-block-start: 0.5rem;
+  }
+</style>

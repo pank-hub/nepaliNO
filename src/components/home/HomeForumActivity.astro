@@ -1,0 +1,178 @@
+---
+import {forumPilot} from '../../config/forum'
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import HomeSectionHeading from './HomeSectionHeading.astro'
+
+interface Props {
+  language: SupportedLanguage
+}
+
+const {language} = Astro.props
+const labels = getTranslations(language)
+const dateLocale = language === 'ne' ? 'ne-NP' : 'nb-NO'
+---
+
+<section aria-labelledby="home-forum-heading" data-home-forum>
+  <HomeSectionHeading
+    id="home-forum-heading"
+    title={labels.home.discussionsHeading}
+    actionHref={forumPilot.url}
+    actionLabel={labels.home.forumVisit}
+  />
+  <ol
+    class="forum-activity"
+    data-forum-topics
+    data-language={language}
+    data-locale={dateLocale}
+    data-news-label={labels.home.forumNewsDiscussion}
+    data-guide-label={labels.home.forumGuideDiscussion}
+    hidden
+  ></ol>
+  <template data-forum-topic-template>
+    <li class="forum-activity__row">
+      <article>
+        <p class="forum-activity__role" data-topic-role></p>
+        <h3><a data-topic-link target="_blank" rel="noopener noreferrer"></a></h3>
+        <dl>
+          <div><dt>{labels.home.forumReplies}</dt><dd data-topic-replies></dd></div>
+          <div data-topic-updated hidden>
+            <dt>{labels.home.forumUpdated}</dt>
+            <dd><time data-topic-time></time></dd>
+          </div>
+        </dl>
+      </article>
+    </li>
+  </template>
+  <p class="forum-activity__notice">{labels.home.forumNotice}</p>
+</section>
+
+<script>
+  interface ForumTopic {
+    title: string
+    replyCount: number
+    lastPostedAt?: string
+    role: 'newsDiscussion' | 'guideQuestions'
+    url: string
+  }
+
+  const isForumTopic = (value: unknown): value is ForumTopic => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+    const topic = value as Record<string, unknown>
+    return (
+      typeof topic.title === 'string' &&
+      typeof topic.replyCount === 'number' &&
+      (topic.lastPostedAt === undefined || typeof topic.lastPostedAt === 'string') &&
+      (topic.role === 'newsDiscussion' || topic.role === 'guideQuestions') &&
+      typeof topic.url === 'string'
+    )
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-home-forum]').forEach(async (section) => {
+    const list = section.querySelector<HTMLOListElement>('[data-forum-topics]')
+    const template = section.querySelector<HTMLTemplateElement>('[data-forum-topic-template]')
+
+    try {
+      if (!list || !template) throw new Error('Missing Homepage Forum feed markup.')
+      const language = list.dataset.language
+      if (language !== 'ne' && language !== 'nb') throw new Error('Invalid Homepage Forum language.')
+
+      const response = await fetch(
+        `/api/forum-homepage-discussions?language=${encodeURIComponent(language)}`,
+      )
+      if (!response.ok) throw new Error(`Homepage Forum feed returned HTTP ${response.status}.`)
+      const payload: unknown = await response.json()
+      if (!payload || typeof payload !== 'object' || !('topics' in payload) || !Array.isArray(payload.topics)) {
+        throw new Error('Invalid Homepage Forum feed response.')
+      }
+      const topics = payload.topics.filter(isForumTopic)
+      if (topics.length === 0) return
+
+      const items = document.createDocumentFragment()
+      for (const topic of topics) {
+        const item = template.content.firstElementChild?.cloneNode(true)
+        if (!(item instanceof HTMLLIElement)) throw new Error('Invalid Homepage Forum row template.')
+        const role = item.querySelector<HTMLElement>('[data-topic-role]')
+        const link = item.querySelector<HTMLAnchorElement>('[data-topic-link]')
+        const replies = item.querySelector<HTMLElement>('[data-topic-replies]')
+        const updated = item.querySelector<HTMLElement>('[data-topic-updated]')
+        const time = item.querySelector<HTMLTimeElement>('[data-topic-time]')
+        if (!role || !link || !replies || !updated || !time) {
+          throw new Error('Missing Homepage Forum row fields.')
+        }
+        role.textContent = (topic.role === 'newsDiscussion' ? list.dataset.newsLabel : list.dataset.guideLabel) ?? ''
+        link.textContent = topic.title
+        link.href = topic.url
+        replies.textContent = String(topic.replyCount)
+        if (topic.lastPostedAt) {
+          const date = new Date(topic.lastPostedAt)
+          if (!Number.isNaN(date.getTime())) {
+            time.dateTime = date.toISOString()
+            time.textContent = date.toLocaleDateString(list.dataset.locale || 'nb-NO', {
+              day: 'numeric',
+              month: 'short',
+            })
+            updated.hidden = false
+          }
+        }
+        items.append(item)
+      }
+      list.append(items)
+      list.hidden = false
+    } catch (error) {
+      console.warn('Homepage Forum discussion feed is unavailable.', {
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+      })
+    }
+  })
+</script>
+
+<style>
+  .forum-activity {
+    padding: 0;
+    list-style: none;
+  }
+
+  .forum-activity__row {
+    padding-block: 0.75rem;
+    border-block-start: 1px solid var(--border);
+  }
+
+  .forum-activity__role {
+    margin-block-end: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
+  dl {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin-block-start: 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  dl div {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  dl div[hidden] {
+    display: none;
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  .forum-activity__notice {
+    margin-block-start: 1rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+</style>

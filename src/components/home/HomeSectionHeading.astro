@@ -1,0 +1,47 @@
+---
+interface Props {
+  id: string
+  title: string
+  description?: string
+  actionHref: string
+  actionLabel: string
+}
+
+const {id, title, description, actionHref, actionLabel} = Astro.props
+---
+
+<header class="home-section-heading">
+  <div>
+    <h2 id={id}>{title}</h2>
+    {description && <p>{description}</p>}
+  </div>
+  <a href={actionHref}>{actionLabel} <span aria-hidden="true">→</span></a>
+</header>
+
+<style>
+  .home-section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    margin-block-end: 1rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin-block-start: 0.5rem;
+    color: var(--text-muted);
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-weight: 700;
+  }
+</style>

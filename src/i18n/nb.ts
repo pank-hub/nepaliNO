@@ -133,6 +133,7 @@ export const nb = {
     latestNews: "Siste nytt",
     readFullStory: "Les hele saken",
     emptyInformation: "Nye veiledninger vises her når de blir publisert.",
+    emptyTopics: "Veiledningstemaer vises her når de blir publisert.",
     emptyNews: "Nye artikler vises her når de blir publisert.",
   },
 
