@@ -504,8 +504,14 @@ export const ne = {
     featuredLabel: "विशेष जानकारी",
     fundingAcknowledgement: "सहयोग तथा साझेदारी",
     searchLabel: "मार्गदर्शन खोज्नुहोस्",
-    searchPlaceholder: "जस्तै: बसोबास अनुमति, BankID, skattekort",
+    searchPlaceholder: "खोज्नुहोस् (जस्तै: BankID, skattekort, बसोबास अनुमति)...",
     searchHint: "शीर्षक, सारांश, जिम्मेवार निकाय र सम्बन्धित शब्दबाट खोज्न सकिन्छ।",
+    topicHeading: "आफूलाई चाहिएको विषय छान्नुहोस्",
+    topicGuideCount: {
+      one: "{count} प्रकाशित मार्गदर्शन",
+      other: "{count} प्रकाशित मार्गदर्शनहरू",
+    },
+    noPublishedTopicGuides: "अहिलेसम्म कुनै मार्गदर्शन प्रकाशित छैन",
     searchResultsHeading: "खोजका नतिजा",
     searchResultCount: {
       one: "{count} मार्गदर्शन भेटियो",

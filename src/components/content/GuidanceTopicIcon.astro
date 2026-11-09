@@ -3,7 +3,7 @@ interface Props {
   topicKey: string
 }
 
-// Homepage navigation glyphs, independent of Sanity's optional iconKey metadata.
+// Public topic glyphs are keyed by stable Sanity topicKey, not editorial labels.
 const paths: Record<string, readonly string[]> = {
   'immigration-residence': [
     'M5 3h14v18H5z',
@@ -34,10 +34,48 @@ const paths: Record<string, readonly string[]> = {
     'M12 5C9 3 6 3 3 4v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1Z',
     'M12 5v15',
   ],
+  'moving-population-register': [
+    'M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z',
+    'M9 10a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z',
+  ],
+  'tax-finance': [
+    'M6 3h12v18l-3-2-3 2-3-2-3 2V3Z',
+    'M9 8h6M9 12h6M9 16h2',
+  ],
+  housing: [
+    'm3 11 9-8 9 8',
+    'M5 10v11h14V10',
+    'M9 21v-6h6v6',
+  ],
+  'language-integration': [
+    'M4 5h16v11H9l-5 4V5Z',
+    'M8 9h8M8 12h5',
+    'M15 16v3h5',
+  ],
+  'digital-services-eid': [
+    'M4 5h16v14H4z',
+    'M8 9a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z',
+    'M7 15c1-2 5-2 6 0M15 9h2M15 12h2',
+  ],
+  'citizenship-participation': [
+    'M4 4h16v16H4z',
+    'M8 8h8M8 12h3',
+    'm13 15 2 2 4-4',
+  ],
+  'transport-driving': [
+    'M5 4h14l2 11H3L5 4Z',
+    'M5 9h14M7 15v3M17 15v3',
+    'M6 18h12',
+    'M7 12h.01M17 12h.01',
+  ],
+  other: [
+    'M6 3h9l4 4v14H6z',
+    'M15 3v5h5',
+    'M12 11v5M12 18v.01',
+  ],
 }
 const {topicKey} = Astro.props
-const glyph = paths[topicKey]
-if (!glyph) throw new Error(`Unmapped homepage Guidance icon: ${topicKey}`)
+const glyph = paths[topicKey] ?? paths.other
 ---
 
 <svg
@@ -52,6 +90,7 @@ if (!glyph) throw new Error(`Unmapped homepage Guidance icon: ${topicKey}`)
   aria-hidden="true"
   focusable="false"
   data-topic-icon={topicKey}
+  data-icon-fallback={paths[topicKey] ? undefined : 'document'}
 >
   {glyph.map((d) => <path d={d} />)}
 </svg>

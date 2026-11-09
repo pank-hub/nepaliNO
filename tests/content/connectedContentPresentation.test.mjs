@@ -282,7 +282,7 @@ test('homepage previews are concise, navy-led and use mobile actions after the c
   assert.match(guidance, /data-icon-key=\{topic\.iconKey\}/)
   assert.match(guidance, /-webkit-line-clamp: 2/)
   assert.match(guidance, /aria-label=\{topic\.title\}/)
-  assert.match(guidance, /<HomeGuidanceIcon topicKey=\{topic\.topicKey\}/)
+  assert.match(guidance, /<GuidanceTopicIcon topicKey=\{topic\.topicKey\}/)
   assert.doesNotMatch(guidance, /height: 100%|topic\.title ===/)
   for (const source of [updates, guidance, homepageEvents, homepageDirectory, homepageForum]) {
     assert.match(source, /color: var\(--text\)/)
@@ -299,11 +299,11 @@ test('homepage previews are concise, navy-led and use mobile actions after the c
 })
 
 test('homepage Guidance icons share one decorative outline treatment and stable-key mapping', async () => {
-  const icons = await read('../../src/components/home/HomeGuidanceIcon.astro')
+  const icons = await read('../../src/components/content/GuidanceTopicIcon.astro')
   for (const key of homepageGuidanceTopicKeys) {
     assert.ok(icons.includes(`'${key}': [`))
   }
-  assert.equal((icons.match(/': \[/g) ?? []).length, 6)
+  assert.equal((icons.match(/^  (?:'[^']+'|[a-z][\w-]*): \[/gm) ?? []).length, 14)
   assert.match(icons, /width="22"\s+height="22"/)
   assert.match(icons, /fill="none"/)
   assert.match(icons, /stroke="currentColor"/)
