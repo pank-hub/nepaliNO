@@ -1,0 +1,25 @@
+---
+export const prerender = false
+import NewsHubPage from '../../components/news/NewsHubPage.astro'
+import {newsReviewFixture} from '../../../tests/news/fixtures'
+
+if (!import.meta.env.DEV) return new Response(null, {status: 404})
+const data = newsReviewFixture(Astro.url.searchParams.has('image-free'), Astro.url.searchParams.has('overlap'))
+if (data.front.lead?.featuredImage) {
+  if (Astro.url.searchParams.has('invalid-image')) {
+    data.front.lead.featuredImage = {asset: {_ref: 'invalid-test-asset'}}
+  }
+  if (Astro.url.searchParams.has('small-image')) {
+    data.front.lead.featuredImage = {
+      ...data.front.lead.featuredImage,
+      crop: {top: 0, bottom: 0, left: .45, right: .45},
+    }
+  }
+}
+const page = Astro.url.searchParams.has('archive') ? 8 : 1
+if (page > 1) {
+  data.archive = true
+  data.stories = [data.front.lead!, ...data.front.secondary, ...data.front.latest]
+}
+---
+<NewsHubPage language="ne" page={page} data={data} review />

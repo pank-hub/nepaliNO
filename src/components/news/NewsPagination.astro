@@ -1,0 +1,26 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {newsPageUrl, paginationRange, type NewsCategory} from '../../lib/newsHub'
+interface Props {language: SupportedLanguage; current: number; total: number; category: NewsCategory | null}
+const {language, current, total, category} = Astro.props
+const labels = getTranslations(language).news
+const url = (page: number) => newsPageUrl(language, page, category, true)
+---
+<nav aria-label={labels.pagination}>
+  {current > 1 ? <a href={url(current - 1)} rel="prev">← {labels.previousPage}</a> : <span aria-disabled="true">← {labels.previousPage}</span>}
+  <span class="mobile" aria-current="page">{labels.pageLabel(current)} / {total}</span>
+  <ol>{paginationRange(current, total).map((page) => <li>{page === '…' ? <span aria-hidden="true">…</span> : <a href={url(page)} aria-current={page === current ? 'page' : undefined}>{page}</a>}</li>)}</ol>
+  {current < total ? <a href={url(current + 1)} rel="next">{labels.nextPage} →</a> : <span aria-disabled="true">{labels.nextPage} →</span>}
+</nav>
+<style>
+  nav { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-block: 1.5rem; font-size: .875rem; }
+  a, nav > span { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; color: var(--civic-deep); }
+  a { padding-inline: .35rem; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  [aria-disabled] { color: var(--text-muted); opacity: .7; }
+  ol { display: none; margin: 0; padding: 0; list-style: none; }
+  ol a { min-width: 44px; }
+  a[aria-current] { border-bottom: 3px solid var(--brand); font-weight: 700; }
+  @media (min-width: 64rem) { ol { display: flex; align-items: center; } nav > .mobile { display: none; } }
+</style>

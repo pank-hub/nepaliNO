@@ -1,0 +1,12 @@
+---
+import NewsStory from './NewsStory.astro'
+import type {SupportedLanguage} from '../../i18n/config'
+import type {NewsStory as Story} from '../../lib/newsHub'
+interface Props {stories: Story[]; language: SupportedLanguage}
+const {stories, language} = Astro.props
+---
+<ol>{stories.map((story) => <li><NewsStory story={story} language={language} variant="archive" heading="h2" /></li>)}</ol>
+<style>
+  ol { margin: 0; padding: 0; list-style: none; }
+  li { padding-block: 1.25rem; border-bottom: 1px solid var(--border); }
+</style>

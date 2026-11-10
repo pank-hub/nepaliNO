@@ -5,6 +5,7 @@ export const isSitemapPage = (page) => {
 
   return (
     pathname !== "/" &&
+    pathname !== "/news-sitemap.xml" &&
     !/^\/(ne|nb)\/(search\/?|search-index\.json)$/.test(pathname) &&
     !/^\/(translations|api|dev|preview)(\/|$)/.test(pathname) &&
     !/\/(directory|events)\/submit\/?$/.test(page)

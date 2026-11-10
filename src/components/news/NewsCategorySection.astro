@@ -1,0 +1,35 @@
+---
+import NewsStory from './NewsStory.astro'
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {newsPageUrl, type NewsCategory, type NewsStory as Story} from '../../lib/newsHub'
+interface Props {category: NewsCategory; stories: Story[]; language: SupportedLanguage}
+const {category, stories, language} = Astro.props
+const labels = getTranslations(language).news
+const categories: Record<string, string> = labels.categories
+---
+<section aria-labelledby={`section-${category}`}>
+  <h2 id={`section-${category}`}>{categories[category]}</h2>
+  <div class:list={['composition', {'two-stories': stories.length === 2}]}>
+    <NewsStory story={stories[0]} language={language} variant="primary" />
+    {stories.length === 2 ? (
+      <NewsStory story={stories[1]} language={language} variant="paired" />
+    ) : (
+      <div class="supporting">{stories.slice(1).map((story) => <div class="supporting-row"><NewsStory story={story} language={language} variant="support" /></div>)}</div>
+    )}
+  </div>
+  <a class="view-all" href={newsPageUrl(language, 1, category)}>{labels.viewCategory} <span aria-hidden="true">→</span><span class="sr-only"> {categories[category]}</span></a>
+</section>
+<style>
+  section { margin-block-start: 2.5rem; }
+  h2 { margin-block-end: 1.25rem; padding-block-end: .6rem; border-bottom: 2px solid var(--civic-deep); font-size: 1.6rem; }
+  .composition, .supporting { display: grid; gap: 1.5rem; min-width: 0; }
+  .supporting { align-content: start; }
+  .supporting-row + .supporting-row { padding-block-start: 1rem; border-top: 1px solid var(--border); }
+  .view-all { display: flex; align-items: center; gap: .5rem; width: fit-content; min-height: 44px; margin-block-start: .75rem; color: var(--civic-deep); font-weight: 600; }
+  @media (min-width: 48rem) { .composition { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 64rem) {
+    .composition { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 2rem; }
+    .two-stories { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>

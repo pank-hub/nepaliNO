@@ -1,0 +1,23 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {formatNewsDate, type NewsStory} from '../../lib/newsHub'
+interface Props {story: NewsStory; language: SupportedLanguage; isLead?: boolean}
+const {story, language, isLead = false} = Astro.props
+const labels = getTranslations(language)
+---
+<aside aria-label={labels.news.importantNow}>
+  <a href={isLead ? '#news-lead' : `/${language}/news/${story.slug}/`}>
+    <strong>{labels.news.importantNow}</strong>
+    <span>{isLead ? labels.home.featuredStory : story.title} <span aria-hidden="true">→</span></span>
+    {story.importantUntil && <small>{labels.home.importantUntil}: <time datetime={story.importantUntil}>{formatNewsDate(story.importantUntil, language, true)}</time></small>}
+  </a>
+</aside>
+<style>
+  aside { margin-block-end: 1.5rem; border-inline-start: 3px solid var(--brand); background: var(--color-brand-50); }
+  a { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem 1rem; min-height: 44px; padding: .6rem 1rem; color: var(--civic-deep); text-decoration: none; }
+  strong { color: var(--brand); font-size: .875rem; }
+  a > span { font-weight: 600; }
+  small { color: var(--text-muted); font-size: .8125rem; }
+  a:hover > span { text-decoration: underline; }
+</style>

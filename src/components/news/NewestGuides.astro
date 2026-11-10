@@ -1,0 +1,26 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import type {NewsGuide} from '../../lib/newsHub'
+interface Props {guides: NewsGuide[]; language: SupportedLanguage}
+const {guides, language} = Astro.props
+const labels = getTranslations(language)
+---
+<section aria-labelledby="newest-guides">
+  <h2 id="newest-guides">{labels.news.usefulGuidance}</h2>
+  <ul style={`--guide-rows: ${Math.ceil(guides.length / 2)}`}>{guides.map((guide) => <li><a href={`/${language}/info/${guide.slug}/`}>
+    <span>{guide.title}{guide.responsibleAgency && <small>{guide.responsibleAgency}</small>}</span><span aria-hidden="true">→</span>
+  </a></li>)}</ul>
+  <a class="hub-link" href={`/${language}/info/`}>{labels.navigation.information} <span aria-hidden="true">→</span></a>
+</section>
+<style>
+  section { margin-block-start: 2.5rem; padding: 1.25rem; background: var(--surface-muted); }
+  h2 { font-size: 1.4rem; }
+  ul { margin-block: .75rem; padding: 0; list-style: none; }
+  li { min-width: 0; border-top: 1px solid var(--border); }
+  a { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 44px; padding-block: .65rem; color: var(--civic-deep); text-decoration: none; font-weight: 600; line-height: 1.5; }
+  a:hover { text-decoration: underline; }
+  small { display: block; margin-block-start: .2rem; color: var(--text-muted); font-size: .8125rem; font-weight: 400; }
+  .hub-link { width: fit-content; text-decoration: underline; font-size: .9375rem; }
+  @media (min-width: 48rem) { ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--guide-rows), auto); grid-auto-flow: column; gap: 0 2rem; } section { padding: 1.5rem 2rem; } }
+</style>
