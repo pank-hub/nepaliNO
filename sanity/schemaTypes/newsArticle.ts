@@ -10,6 +10,7 @@ import {informationBoxBlockMember} from './informationBox'
 import {expandableSectionBlockMember} from './expandableSection'
 import {readAlsoBlockMember} from './readAlso'
 import {searchKeywordsField} from './searchKeywords'
+import {newsCategoryOptions} from './newsCategories'
 
 export const newsArticle = defineType({
   name: 'newsArticle',
@@ -221,16 +222,10 @@ export const newsArticle = defineType({
       title: 'Category',
       type: 'string',
       group: 'classification',
+      description:
+        'Choose the main editorial angle. For legacy Employment and Economy articles, review the category and Search Keywords and Synonyms before publishing. See docs/news-category-migration.md for category guidance.',
       options: {
-        list: [
-          {title: 'Current Affairs', value: 'current-affairs'},
-          {title: 'Immigration and Integration', value: 'immigration-integration'},
-          {title: 'Education and Student Life', value: 'education-student-life'},
-          {title: 'Employment and Economy', value: 'employment-economy'},
-          {title: 'Culture and Community', value: 'culture-community'},
-          {title: 'Health and Welfare', value: 'health-welfare'},
-          {title: 'Sports', value: 'sports'},
-        ],
+        list: newsCategoryOptions,
       },
       validation: (rule) => rule.required(),
     }),

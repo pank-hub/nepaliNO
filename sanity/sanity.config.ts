@@ -4,6 +4,11 @@ import {structureTool} from 'sanity/structure'
 import {createPresentationTool} from './presentation/previewConfig'
 import {schemaTypes} from './schemaTypes'
 import {submissionSchemaTypes} from './schemaTypes/submissionSchemaTypes'
+import {
+  finalNewsCategories,
+  legacyNewsCategory,
+  newsCategoryFilter,
+} from './schemaTypes/newsCategories'
 
 export default defineConfig([
   {
@@ -28,6 +33,39 @@ export default defineConfig([
                       S.listItem()
                         .title('All News Articles')
                         .child(S.documentTypeList('newsArticle')),
+                      S.listItem()
+                        .title('Employment and Economy: articles to reassign')
+                        .child(
+                          S.documentList()
+                            .id('legacy-employment-economy-news')
+                            .title('Employment and Economy: articles to reassign')
+                            .schemaType('newsArticle')
+                            .apiVersion('2026-03-01')
+                            .filter(newsCategoryFilter)
+                            .params({category: legacyNewsCategory.value}),
+                        ),
+                      S.listItem()
+                        .title('News by category')
+                        .child(
+                          S.list()
+                            .title('News by category')
+                            .items(
+                              finalNewsCategories.map(({title, value}) =>
+                                S.listItem()
+                                  .id(`news-category-${value}`)
+                                  .title(title)
+                                  .child(
+                                    S.documentList()
+                                      .id(`news-category-${value}`)
+                                      .title(title)
+                                      .schemaType('newsArticle')
+                                      .apiVersion('2026-03-01')
+                                      .filter(newsCategoryFilter)
+                                      .params({category: value}),
+                                  ),
+                              ),
+                            ),
+                        ),
                       S.divider(),
                       S.listItem()
                         .title('Drafts')

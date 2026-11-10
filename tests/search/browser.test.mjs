@@ -5,6 +5,8 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import test from 'node:test'
 import {buildSearchIndex, serializeSearchIndex} from '../../src/lib/search/buildIndex.ts'
+import {newsCategoryOptions} from '../../sanity/schemaTypes/newsCategories.ts'
+import {getTranslations} from '../../src/i18n/index.ts'
 
 const base = process.env.SEARCH_TEST_BASE_URL ?? 'http://localhost:4321'
 const executable = process.env.BROWSER_EXECUTABLE
@@ -19,6 +21,14 @@ const fixtures = serializeSearchIndex(buildSearchIndex(Array.from({length: 27}, 
   responsibleAgency: 'NAV', date: '2026-01-01', city: 'Oslo',
   searchKeywords: ['private-editorial-synonym'],
 })), 'ne'))
+const categoryFixtures = Object.fromEntries(['ne', 'nb'].map((language) => [
+  language,
+  serializeSearchIndex(buildSearchIndex(newsCategoryOptions.map(({value}, index) => ({
+    _id: `${language}-${value}`, _type: 'newsArticle', language,
+    slug: `category-fixture-${value}`, title: `Category fixture ${index}`,
+    summary: 'Category compatibility fixture', category: value,
+  })), language)),
+]))
 
 test('shared-search browser interactions and responsive production content', async (t) => {
   assert.ok(executable, 'Set BROWSER_EXECUTABLE to a headless Chromium executable')
@@ -90,7 +100,9 @@ test('shared-search browser interactions and responsive production content', asy
           return send('Fetch.fulfillRequest', {
             requestId, responseCode: selectedMode === 'error' ? 503 : 200,
             responseHeaders: [{name: 'content-type', value: 'application/json'}],
-            body: Buffer.from(JSON.stringify(selectedMode === 'error' ? {ok: false} : fixtures)).toString('base64'),
+            body: Buffer.from(JSON.stringify(selectedMode === 'error' ? {ok: false} :
+              selectedMode === 'categories' ? categoryFixtures[new URL(request.url).pathname.split('/')[1]] :
+              fixtures)).toString('base64'),
           })
         }
         void handle().catch((error) => interceptErrors.push(error.message))
@@ -443,6 +455,23 @@ test('shared-search browser interactions and responsive production content', asy
       await wait(`!window.__previousSearchDocument && document.querySelector('[data-search-status]')?.textContent.includes('160')`)
       assert.equal(await evaluate(`document.querySelector('[data-content-search] input').value.length`), 161)
       assert.equal(indexRequests.length, 0)
+    })
+
+    await t.test('mixed final and legacy News categories match and display localized labels in both languages', async () => {
+      mode = 'categories'
+      for (const language of ['ne', 'nb']) {
+        await navigate(`/${language}/`)
+        for (const {value} of newsCategoryOptions) {
+          const label = getTranslations(language).news.categories[value]
+          const path = `/${language}/news/category-fixture-${value}/`
+          await query(label)
+          await wait(`document.querySelector('[data-search-list] a[href="${path}"]')`)
+          assert.ok(await evaluate(`document.querySelector('[data-search-list] a[href="${path}"]').textContent.includes(${JSON.stringify(label)})`))
+          assert.equal(await evaluate(`document.querySelector('[data-search-list]').textContent.includes('legacy: please reassign')`), false)
+          assert.equal(await evaluate(`[...document.querySelectorAll('[data-search-list] a')].every(a => new URL(a.href).pathname.startsWith('/${language}/news/'))`), true)
+        }
+      }
+      mode = 'fixture'
     })
     assert.deepEqual(browserErrors, [])
     assert.deepEqual(interceptErrors, [])
