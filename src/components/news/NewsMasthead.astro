@@ -1,0 +1,44 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {formatNewsDate, newsPageUrl, publicNewsCategories, type NewsCategory} from '../../lib/newsHub'
+interface Props {language: SupportedLanguage; category: NewsCategory | null; archive: boolean}
+const {language, category, archive} = Astro.props
+const labels = getTranslations(language).news
+const categories: Record<string, string> = labels.categories
+const now = new Date()
+---
+<header class="masthead">
+  <div class="masthead-heading">
+    <h1>{category ? categories[category] : archive ? labels.olderNews : labels.pageTitle}</h1>
+    <time datetime={now.toISOString()}>{formatNewsDate(now, language)}</time>
+  </div>
+  <nav aria-label={labels.categoryNavigation} tabindex="0">
+    <div class="category-row">
+      <a href={newsPageUrl(language)} aria-current={!category ? 'page' : undefined}>{labels.allNews}</a>
+      {publicNewsCategories.slice(0, 5).map((value) => (
+        <a href={newsPageUrl(language, 1, value)} aria-current={category === value ? 'page' : undefined}>{categories[value]}</a>
+      ))}
+    </div>
+    <div class="category-row">
+      {publicNewsCategories.slice(5).map((value) => (
+        <a href={newsPageUrl(language, 1, value)} aria-current={category === value ? 'page' : undefined}>{categories[value]}</a>
+      ))}
+    </div>
+  </nav>
+</header>
+<style>
+  .masthead { margin-block: 1.25rem 1.5rem; border-top: 3px solid var(--civic-deep); }
+  .masthead-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; padding-block: .8rem; }
+  h1 { max-width: none; color: var(--civic-deep); font-size: clamp(2rem, 4vw, 3rem); line-height: 1.3; }
+  time { color: var(--text-muted); font-size: .875rem; }
+  nav { display: flex; overflow-x: auto; gap: 0 1.4rem; padding-block-end: .2rem; border-block: 1px solid var(--border-strong); scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+  .category-row { display: contents; }
+  a { display: flex; flex: 0 0 auto; align-items: center; min-height: 48px; padding-block: .5rem; border-bottom: 3px solid transparent; color: var(--civic); font-size: .9375rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+  a[aria-current] { border-bottom-color: var(--brand); color: var(--civic-deep); font-weight: 700; }
+  a:hover { text-decoration: underline; }
+  @media (min-width: 80rem) {
+    nav { display: grid; gap: 0; }
+    .category-row { display: flex; gap: 0 1.6rem; }
+  }
+</style>

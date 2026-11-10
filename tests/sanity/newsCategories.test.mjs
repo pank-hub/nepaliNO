@@ -265,8 +265,8 @@ test('shared search displays and matches every final and legacy label with uncha
 
 test('all public metadata surfaces consume central labels, never editorial option titles', async () => {
   for (const path of [
-    '../../src/pages/[lang]/news/index.astro',
-    '../../src/pages/[lang]/news/page/[page].astro',
+    '../../src/components/news/NewsHubPage.astro',
+    '../../src/components/news/NewsStory.astro',
     '../../src/components/articles/NewsArticleView.astro',
     '../../src/components/home/HomeLatestUpdates.astro',
     '../../src/lib/search/buildIndex.ts',

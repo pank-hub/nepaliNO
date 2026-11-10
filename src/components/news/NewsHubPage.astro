@@ -1,0 +1,64 @@
+---
+import SiteHeader from '../SiteHeader.astro'
+import SiteFooter from '../SiteFooter.astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {newsPageUrl} from '../../lib/newsHub'
+import type {NewsHubData} from '../../lib/sanity/loadNewsHub'
+import NewsMasthead from './NewsMasthead.astro'
+import ImportantNow from './ImportantNow.astro'
+import NewsLeadPackage from './NewsLeadPackage.astro'
+import LatestNews from './LatestNews.astro'
+import NewsCategorySection from './NewsCategorySection.astro'
+import NewestGuides from './NewestGuides.astro'
+import NewsArchive from './NewsArchive.astro'
+import NewsPagination from './NewsPagination.astro'
+interface Props {language: SupportedLanguage; page: number; data: NewsHubData; review?: boolean}
+const {language, page, data, review = false} = Astro.props
+const {category, archive, total, stories, front, guides} = data
+const labels = getTranslations(language)
+const categories: Record<string, string> = labels.news.categories
+const alternate: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
+const canonical = new URL(newsPageUrl(language, page, category), Astro.site)
+const title = category ? categories[category] : archive ? labels.news.olderNews : labels.news.pageTitle
+---
+<BaseLayout language={language} title={`${title}${page > 1 ? ` — ${labels.news.pageLabel(page)}` : ''} | nepali.no`}
+  bodyClass="news-hub"
+  description={archive ? labels.news.archiveDescription : labels.news.pageDescription}
+  canonicalUrl={canonical} noIndex={review || category !== null || Astro.url.searchParams.get('archive') === '1'}>
+  <Fragment slot="head">
+    <link rel="alternate" hreflang={language} href={canonical} />
+    <link rel="alternate" hreflang={alternate} href={new URL(newsPageUrl(alternate, 1, category), Astro.site)} />
+    {archive && page > 1 && <link rel="prev" href={new URL(newsPageUrl(language, page - 1, category, true), Astro.site)} />}
+    {archive && page < total && <link rel="next" href={new URL(newsPageUrl(language, page + 1, category), Astro.site)} />}
+  </Fragment>
+  <SiteHeader slot="header" language={language} alternatePath={newsPageUrl(alternate, 1, category)} />
+  <div class="newspaper container">
+    <NewsMasthead language={language} category={category} archive={archive} />
+    {archive ? (
+      <>
+        {stories.length ? <NewsArchive stories={stories} language={language} /> : <p class="empty">{category ? labels.news.emptyCategory : labels.news.emptyMessage}</p>}
+        <NewsPagination language={language} current={page} total={total} category={category} />
+      </>
+    ) : (
+      <>
+        {front.important && <ImportantNow story={front.important} language={language} isLead={front.important._id === front.lead?._id} />}
+        {front.lead ? <NewsLeadPackage lead={front.lead} secondary={front.secondary} language={language} /> : <div class="empty"><h2>{labels.news.emptyHeading}</h2><p>{labels.news.emptyMessage}</p></div>}
+        {front.latest.length > 0 && <LatestNews stories={front.latest} language={language} />}
+        {front.sections.map((section) => <NewsCategorySection {...section} language={language} />)}
+        {guides.length > 0 && <NewestGuides guides={guides} language={language} />}
+        <div class="archive-action"><a href={newsPageUrl(language, 1, null, true)}>{labels.news.browseArchive} <span aria-hidden="true">→</span></a></div>
+      </>
+    )}
+  </div>
+  <SiteFooter slot="footer" language={language} flush />
+</BaseLayout>
+<style>
+  :global(body.news-hub) { background: var(--surface); }
+  .newspaper { padding-block-end: 1.5rem; }
+  .archive-action { margin-block-start: 2rem; padding-block: 1.25rem; border-block: 1px solid var(--border-strong); }
+  .archive-action a { display: flex; align-items: center; gap: .75rem; min-height: 44px; width: fit-content; color: var(--civic-deep); font-weight: 600; }
+  .empty { padding-block: 2rem; color: var(--text-muted); }
+  .empty h2 { font-size: 1.5rem; }
+</style>

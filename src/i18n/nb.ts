@@ -178,6 +178,13 @@ export const nb = {
   },
 
   news: {
+    allNews: "Alle nyheter",
+    categoryNavigation: "Nyhetskategorier",
+    viewCategory: "Se alle",
+    usefulGuidance: "Nyttig veiledning",
+    importantNow: "Viktig nå",
+    emptyCategory: "Nyheter i denne kategorien vises her når de blir publisert.",
+    pagination: "Nyhetssider",
     pageTitle: "Nyheter",
     pageDescription:
       "Nyheter fra Norge, Nepal og det nepalske miljøet i Norge.",

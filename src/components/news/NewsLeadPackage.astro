@@ -1,0 +1,20 @@
+---
+import NewsStory from './NewsStory.astro'
+import type {NewsStory as Story} from '../../lib/newsHub'
+import type {SupportedLanguage} from '../../i18n/config'
+interface Props {lead: Story; secondary: Story[]; language: SupportedLanguage}
+const {lead, secondary, language} = Astro.props
+---
+<section id="news-lead" class="lead-package" aria-label={lead.title}>
+  <NewsStory story={lead} language={language} variant="lead" heading="h2" />
+  {secondary.length > 0 && <div class="secondary">{secondary.map((story) => <NewsStory story={story} language={language} variant="secondary" heading="h2" />)}</div>}
+</section>
+<style>
+  .lead-package { display: grid; gap: 1.5rem; }
+  .secondary { display: grid; align-content: start; gap: 1.25rem; padding-block-start: 1.25rem; border-top: 1px solid var(--border); }
+  @media (min-width: 48rem) and (max-width: 63.999rem) { .secondary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 64rem) {
+    .lead-package { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 2rem; }
+    .secondary { padding-block-start: 0; padding-inline-start: 1.5rem; border-top: 0; border-left: 1px solid var(--border); }
+  }
+</style>

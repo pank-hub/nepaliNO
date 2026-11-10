@@ -26,6 +26,7 @@ export default defineConfig({
     }),
     sitemap({
       filter: isSitemapPage,
+      customSitemaps: ["https://nepali.no/news-sitemap.xml"],
       // On-demand (SSR) public pages are not discovered by the integration.
       customPages: ["ne", "nb"].flatMap((lang) =>
         ["about", "contact", "privacy", "transparency"].map(

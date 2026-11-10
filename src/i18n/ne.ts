@@ -175,6 +175,13 @@ export const ne = {
   },
 
   news: {
+    allNews: "सबै समाचार",
+    categoryNavigation: "समाचारका विषयहरू",
+    viewCategory: "सबै हेर्नुहोस्",
+    usefulGuidance: "उपयोगी मार्गदर्शन",
+    importantNow: "अहिले महत्त्वपूर्ण",
+    emptyCategory: "यस विषयमा समाचार प्रकाशित भएपछि यहाँ देखिनेछ।",
+    pagination: "समाचारका पृष्ठहरू",
     pageTitle: "समाचार",
     pageDescription:
       "नर्वे, नेपाल र नर्वेको नेपाली समुदायसँग सम्बन्धित समाचारहरू।",

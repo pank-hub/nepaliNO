@@ -1,0 +1,20 @@
+---
+import NewsStory from './NewsStory.astro'
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import type {NewsStory as Story} from '../../lib/newsHub'
+interface Props {stories: Story[]; language: SupportedLanguage}
+const {stories, language} = Astro.props
+---
+<section aria-labelledby="latest-news">
+  <h2 id="latest-news">{getTranslations(language).news.latestHeading}</h2>
+  <ol>{stories.map((story) => <li><NewsStory story={story} language={language} /></li>)}</ol>
+</section>
+<style>
+  section { margin-block-start: 2.5rem; }
+  h2 { margin-block-end: .75rem; padding-block-end: .6rem; border-bottom: 2px solid var(--civic-deep); font-size: 1.6rem; }
+  ol { display: grid; margin: 0; padding: 0; list-style: none; }
+  li { min-width: 0; padding-block: 1rem; border-bottom: 1px solid var(--border); }
+  @media (min-width: 48rem) { ol { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1.5rem; } }
+  @media (min-width: 64rem) { ol { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 2rem; } }
+</style>
