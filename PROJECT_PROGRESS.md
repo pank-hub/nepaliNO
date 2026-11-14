@@ -1,8 +1,9 @@
 # nepali.no Project Progress
 
-**Status date:** 3 October 2026
-**Current documentation branch:** `main` after PR #77
-**Current protected production checkpoint:** PR #77, Norwegian site News only (earlier: `6a2b610`, PR #69)
+**Status date:** 14 November 2026
+**Current documentation branch:** `docs/update-project-handover`, based on `main`
+**Current repository checkpoint:** `4c1c294` (`feat(news): redesign digital newspaper hub`), squash-merged as PR #126 on 10 November 2026
+**Production deployment status:** Not established by the Git checkpoint; verify the deployed Vercel revision independently.
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
 
@@ -11,6 +12,40 @@
 This document is the concise current-state record for developers, operators, editors, auditors, and future maintainers. It replaces the former append-only progress log, which is preserved unchanged as `PROJECT_PROGRESS_ARCHIVE_TO_2026-08-08.md`.
 
 Use this document to understand what is operational now, what is deliberately disabled, what remains unfinished, and where detailed instructions are maintained. Git history and pull requests remain the authoritative implementation record.
+
+## Current status summary — 14 November 2026
+
+### Completed in the current repository
+
+- The mobile-first Nordic homepage has its final responsive composition and hero/Forum polish, Mukta-first Devanagari typography, six deliberately selected Guidance shortcuts, and compact News, Event, Directory and Forum treatments. Event and Directory images are conditional; missing assets do not create placeholders. The homepage search sits in the introduction and uses the shared published-content search.
+- Shared search covers published Guidance, News and Directory content, with a full-results route, type filters and a language-specific build-time index. Its established refresh point is deployment, not Sanity publishing.
+- The redesigned Guidance hub uses the stable-key priority order in `src/config/guidanceHub.ts`, retains the relative Sanity order of unspecified middle topics, and puts `other` last. Its full hub is distinct from the six selections in `src/config/homepage.ts`; it has shared icons, active Guide counts and empty-topic handling. Guidance archive search remains Guidance-only.
+- News has ten final stored categories. `employment-economy` remains temporary legacy compatibility and is excluded from public category navigation. PR #125 added the manual review queue and compatibility; PR #126 redesigned the digital-newspaper hub while preserving Featured Story and Important Now selection, archive routes, category filtering, language gates and image-free rendering.
+- Forum homepage discussions and role-eligible companion cards are implemented. The homepage feed and companion cards are enabled in source configuration; related-topic panels remain disabled. Repeated visible homepage relationship labels were removed while the underlying relationship role and metadata remain.
+- OpenStreetMap maps, the secure Sanity draft Preview implementation, Entur travel assistance, and endpoint-specific Upstash protection are present in `main`. Their user-facing release, provider, privacy and acceptance gates remain in force; source code alone does not establish current hosted environment or production activation.
+- Shared accessible editorial charts are implemented in `main` for News and Guidance; verify hosted rollout and any Sanity-published chart content independently.
+
+### Active editorial and development work
+
+- **Owner-supplied / Antigravity-reported, not repository-verified:** a separate, unversioned Python workspace on the owner's Ubuntu machine collects and curates news, deduplicates against Sanity, prepares/uploads drafts and provides an hourly read-only monitor. A 09:00 Europe/Oslo Antigravity task reportedly sends up to 15 News drafts to Sanity when the machine is awake and Antigravity is running. Editorial review and publication remain manual; no automatic publishing was reported. Details and safeguards are in `DEVELOPER_HANDOVER.md`.
+- The reported automation uses deterministic draft IDs and `createOrReplace`, which can overwrite manual draft edits; its public-CDN slug check fails open on network errors and deduplication has capped, heuristic reads. It is not version-controlled, has no reported automated Python suite, does not automatically complete picked-story state, and has no image/asset upload. Cloud portability remains future work.
+- The uploader reportedly enables an AI-assisted article summary, while editorial policy requires review and approval before enabling the public summary. Reconcile this discrepancy; do not assume automation output is approved.
+- Manually review News documents still using `employment-economy`, select the appropriate final category for each, and enrich News Search Keywords and Synonyms during that review.
+- A previously reported inventory counted **35 published legacy-category articles**. Treat this only as a dated, historical count; the inventory date is not recorded here and the count is not guaranteed current.
+- Gradually enrich Directory Search Keywords and Synonyms where editorially useful.
+- Before removing `employment-economy`, inspect published documents, drafts, translated counterparts, scheduled documents and release versions through authenticated Sanity access. Unknown counts are not zero. Follow the complete removal gate in `docs/news-category-migration.md`.
+- Verify that the normal deployment path refreshes `/{language}/search-index.json`. Do not assume a Sanity publish event triggers a deployment.
+- Continue editor-manual and operational-runbook work, and complete pending visual, accessibility and hosted acceptance checks only where they remain outstanding.
+
+### Deferred, blocked and future work
+
+- **Requires authenticated access:** the current legacy-category inventory and migration completion cannot be established from the public build or unauthenticated queries.
+- **Release-gated:** Entur remains protected by `ENTUR_TRAVEL_API_ENABLED`; confirm the actual deployment setting and complete provider-terms, translation, privacy and hosted/browser acceptance before any production activation. Automatic FOSSGIS route calculation remains disabled in source until storage/display permission is resolved.
+- **Deferred:** related Forum topics, wider Forum rollout, and any Discourse work beyond the approved feed/cards require separate review. Backup restoration, moderation, incident, monitoring and operational readiness work remains.
+- **Environment:** website development remains in Codespaces. Antigravity has been used for read-only GitHub inspection, while the separate local editorial automation reportedly writes Sanity drafts; website repository editing or deployment requires separate explicit approval.
+- **Separate open work:** the useful Forum status from PR #64 is reflected here and can be considered for closure after this replacement documentation is merged. Leave PR #73 unchanged until its dependency/security claims receive a separate current assessment; its historical claims are not newly verified here.
+
+Sections 12 onward preserve dated implementation checkpoints. Their branch or deployment wording describes the state recorded at that checkpoint and is not a substitute for this current summary.
 
 ## 2. Mission and platform position
 
@@ -28,7 +63,7 @@ The platform combines:
 
 nepali.no is not a Norwegian public authority and does not replace official legal, immigration, tax, health, welfare, or administrative guidance.
 
-## 3. Current production architecture
+## 3. Current platform architecture
 
 - Public application: Astro and TypeScript on Vercel project `nepali-no`
 - Production domain: `https://nepali.no`
@@ -53,32 +88,33 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 ## 4. Operational services
 
-### Entur travel assistance (interface implemented; release-disabled)
+### Entur travel assistance (implemented; runtime activation remains gated)
 
-- The Entur backend foundation and shared map/travel capability for Events, Directory, News and Public Information Guides are implemented on `feature/entur-news-integration`. The mocked fixture's origin selection and journey-results flow has been manually verified; no Production Entur journey has been tested (live Preview searches are recorded below). The new integration still needs browser and hosted acceptance.
+- The Entur backend foundation and shared map/travel capability for Events, Directory, News and Public Information Guides are implemented in `main` through PRs #110–#118. The mocked fixture's origin selection and journey-results flow has been manually verified. Historical live Preview verification is recorded below; it is not evidence that production Entur is enabled.
 - Community Event and Directory Studio records have an editor-controlled `travelHelpEnabled` opt-in; new and existing documents are ineligible unless the value is explicitly `true`. Editors must verify coordinates are appropriate to expose.
 - News and Guides reuse the complete shared Location Map and an optional default-off travel control. A single eligible exact keyed place is automatic; multiple places require an editor's selection. Published destination adapters recheck the document, map and place; browser-supplied destination coordinates are never accepted. Event and Directory retain their original location fields and now expose fullscreen on loaded maps.
-- The availability, origin and journey routes remain disabled by default; production activation has not occurred and Production remains disabled. Remaining before Production activation: Entur provider-terms review, final translation polishing and browser/hosted acceptance checks.
-- Privacy and attribution: the published Norwegian Privacy Policy now includes "Kart og reisehjelp" and the published Nepali one "नक्सा र यात्रा सहायता" (Sanity Trust Pages, updated and verified publicly). The disclosure covers OpenStreetMap tile requests, active Entur travel searches, pseudonymous Upstash rate limiting, the absence of browser geolocation and reader choice; the same text is the code fallback in `src/pages/[lang]/privacy.astro`. Visible Entur, NLOD and OpenStreetMap attribution below the TravelHelp results was merged in #113, with a corrected travel privacy line. New Studio map blocks default to click-to-load; existing automatic maps remain supported and unchanged.
+- The availability, origin and journey routes fail closed unless server-only `ENTUR_TRAVEL_API_ENABLED` is exactly `true`. Verify the deployed setting rather than inferring it from source. Before any production activation, complete Entur provider-terms review, final translation polishing, and browser/hosted acceptance checks.
+- Privacy and attribution: Norwegian "Kart og reisehjelp" and Nepali "नक्सा र यात्रा सहायता" disclosures were historically reported published and publicly verified in Sanity `trustPage` documents; current Sanity wording was not rechecked during this task. The reported disclosures cover OpenStreetMap tile requests, active Entur searches, pseudonymous Upstash rate limiting, absence of browser geolocation and reader choice. Entur, NLOD and OpenStreetMap attribution was merged in #113. New News/Guide map blocks default to click-to-load; editors may choose automatic loading. See `DEVELOPER_HANDOVER.md` and `src/lib/entur/README.md`.
 - Application-level distributed rate limiting is implemented with an Upstash Redis Pay as You Go database in Frankfurt (eu-central-1) with a $20 database budget ceiling. Limits (sliding window): origins 20/60 s, journeys 10/60 s, availability 30/60 s. The key is a pseudonymous HMAC-SHA-256 identifier; no raw IP address, query or journey data is stored. Provider errors or timeouts fail closed with 503. Vercel Hobby's single rate-limit rule stays reserved for Event and Directory submissions and is unchanged.
-- Live Vercel Preview verification passed: live Entur origin and journey searches succeeded; 20 origin requests returned 200 and the 21st returned 429 (`rate_limited`) with `Retry-After: 41`; after it elapsed one recovery request returned 200. The temporary Preview-only acceptance page and destination override used for this were removed before merge.
+- Historical live Vercel Preview verification passed: live Entur origin and journey searches succeeded; 20 origin requests returned 200 and the 21st returned 429 (`rate_limited`) with `Retry-After: 41`; after it elapsed one recovery request returned 200. This dated test is not a current deployment-state check. The temporary Preview-only acceptance page and destination override used for it were removed before merge.
 - Fixture: `/dev/travel-help-test/` with `ENTUR_TRAVEL_API_ENABLED=true` locally; all travel requests on that fixture are mocked. See `src/lib/entur/README.md` for contracts, privacy drafts, testing, and rollback.
-- Verification on the feature branch: all 29 repository test scripts passed (490 tests); production build and Astro check passed. Keyboard, mobile, screen-reader, DST, map fullscreen and live News/Guide travel flows still need acceptance testing. The extension contract for future content types is in `src/lib/entur/README.md`.
+- Historical validation passed on the implementation branches. Outstanding keyboard, mobile, screen-reader, DST, fullscreen and live News/Guide travel checks should be confirmed against current acceptance records rather than treated as newly completed.
 
 ### News
 
 - Bilingual archives and article routes are operational.
 - Future-dated News is excluded from public queries and static paths until publication time.
-- Homepage News supports a compact Important Now band, one featured article, two supporting visual stories, and three compact stories. `importantUntil` remains internal lifecycle metadata and is not shown publicly.
-- The News archive uses one featured article, two supporting visual stories, six medium cards, and a compact list for all remaining articles. Three Public Information Guides remain an independent closing section.
+- Homepage News shows up to six stories, with Important Now separate. `importantUntil` remains internal lifecycle metadata and is not shown publicly.
+- The redesigned News hub has a Featured Story lead, Important Now preservation, two secondary stories, six Latest News stories, adaptive category sections, six newest Guides in Nepali, and a chronological archive with responsive pagination. Norwegian remains News-only. See `docs/news-hub.md`.
 - News articles can now store one companion Forum discussion and up to three curated related Forum topics in Sanity.
 - The Sanity News editor is organized around a writing-first default tab with separate Classification, Publishing, Sources and Trust, Forum, and Workflow groups.
 - The News Article Portable Text editor explicitly supports approved headings, quotation, bullet and numbered lists, bold, emphasis, links, and images.
 - The Studio Editorial workspace provides task-oriented News views for drafts, scheduled stories, featured stories, Important Now, language queues, and missing translations. Custom structure lists use stable IDs to prevent hosted Studio structure-reader errors.
-- Public Forum panels are still disabled.
+- Forum homepage activity and individual companion cards are enabled as described in section 5; related-topic panels remain disabled.
 
 ### Public Information
 
+- The redesigned Guidance hub presents active Topic Hubs in deliberate public order, with shared icons, active published-Guide counts, and explicit zero-Guide handling. Guide pages retain their own structured content and fields.
 - Guides, Topic Hubs, official sources, review dates, audience metadata, reusable Norwegian terms, search metadata, guide format, priority, and maintenance sensitivity are operational.
 - Related Guides are selected in Sanity and rendered publicly in the Guide sidebar (same language, active, slug-safe).
 - Search Keywords and Synonyms feed the client-side Guide search on `/[lang]/info/`; they are never displayed publicly.
@@ -103,14 +139,14 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 - Phase 1 is operational and Pankaj-only.
 - GitHub login, signed sessions, server validation, deterministic TypeScript updates, generated branches, and protected pull requests are implemented.
-- `https://nepali.no/translations/` displays the login page, but production-domain GitHub login currently fails because its redirect URI is not associated with the application.
-- The working `nepali-no.vercel.app` route must remain available until the production callback has been corrected and tested.
+- Production-domain GitHub login was reported to fail because its redirect URI was not associated with the application. Treat the callback as an unresolved defect until a successful fix is verified end to end.
+- The previously verified working `nepali-no.vercel.app` fallback route must remain available until the production callback has been corrected and tested.
 - Phase 2 multi-user proofreading remains deferred pending risk assessment.
 
 ### Trust and transparency pages
 
 - About, Project development and transparency, Privacy, and Contact exist in Nepali and Norwegian and are linked from the footer.
-- Their content is managed in Sanity through eight localized `trustPage` documents and fetched on demand at request time, so editorial updates do not require a code deployment.
+- Repository implementation supports eight localized Sanity `trustPage` documents fetched on demand, so editorial updates do not require a code deployment. Publication was historically reported; current Sanity publication and wording were not rechecked during this task.
 - Their wording needs a later editorial and legal-quality review.
 - Existing localized URLs, language switching, footer links, mobile design, and safe local fallbacks are preserved.
 - The registered organization name and organization number should later be added to About, Privacy, and a restrained footer identity line after exact wording is approved.
@@ -173,7 +209,7 @@ Live synthetic evidence:
 - The first Guide proof exposed a Sanity slug-object URL defect. Topic 17 was corrected manually and PR #39 added a regression-tested permanent fix.
 - Norwegian opening templates were correctly selected from `language: nb` for both live proofs.
 
-The public `/api/forum-content` endpoint and News/Guide presentation remain intentionally disabled. Generic HTTP 404 with `Cache-Control: no-store` remains the public boundary while both Forum presentation flags are false.
+The public `/api/forum-content` endpoint and News/Guide companion cards are enabled by `contentIntegrationEnabled`; the homepage activity feed is independently enabled. `relatedTopicsEnabled` remains false. The homepage renders no repeated visible relationship-role label, while the verified relationship role remains in the underlying response and DOM data. A Discourse category alone never grants eligibility. See `FORUM_INTEGRATION.md`.
 
 Fifty-six dependency-free Forum tests and ten connected-content tests now form the expected focused suites, for 66 passing tests in total, followed by Astro Check and the production build.
 
@@ -184,7 +220,7 @@ Fifty-six dependency-free Forum tests and ten connected-content tests now form t
 - Never expose Sanity write tokens or Discourse API keys to browsers.
 - Never let browsers choose repositories, datasets, document types, moderation status, API routes, or Forum topic IDs.
 - Keep Forum credentials server-side and least-privileged.
-- The current metadata reader is a dedicated non-staff account with granular topic-read access restricted to synthetic topic ID 13.
+- Synthetic topic 13 remains preserved as historical integration evidence. Do not assume it describes a current metadata-reader allowlist; see the current reader contract in `FORUM_INTEGRATION.md`.
 - Forum failure must not break News or Guide pages.
 - Community contributions never become verified guidance or journalism automatically.
 - Notification failure never reverses valid private submission storage.
@@ -200,39 +236,33 @@ Completed:
 3. Existing field names and published content preserved.
 4. TypeScript, Sanity production build, Astro validation, Vercel deployments, and hosted Studio deployment verified.
 
-The next Studio follow-up is optional evaluation of a separate Form and Preview document view. The default Astro favicon remains a separate small branding task, and Forum visual harmonization remains approved but is not active.
+The next Studio follow-up is optional evaluation of a separate Form and Preview document view. The nepali.no favicon set is complete (section 20); Forum visual harmonization remains a separate, inactive task.
 
-## 8. Deferred but approved work
+## 8. Deferred, blocked and future work
 
-- Build News Forum panel and related-topic sidebar.
-- Build Guide questions-and-experiences panel and related-topic sidebar.
-- Correct the Translation Editor production-domain OAuth callback.
-- Move all four localized trust pages into Sanity: About, Project development and transparency, Privacy, and Contact. Preserve existing localized URLs, footer links, language switching, responsive presentation, and safe fallback behavior.
-- Add registered organization identity and organization number to public trust surfaces.
-- Complete GDPR processing inventory, retention schedule, processor review, and final privacy notice.
-- Polish Discourse activation, invitation, password-recovery, and system email tone.
-- Implement Forum language tags after usability testing.
-- Perform a clean Discourse backup restoration test.
-- Complete upgrade testing, monitoring, incident procedures, and launch gates.
-- Create `EDITORIAL_USER_MANUAL.md` and the broader platform `OPERATIONS_RUNBOOK.md`.
-- Complete remaining launch polish, including a branded 1200 x 630 fallback social image and replacement of the default Astro favicon.
-- Verify deployed Open Graph and X Card previews, and request a fresh Facebook scrape when cached metadata is stale.
+- **Active/manual:** News legacy-category review and keyword enrichment; gradual Directory keyword enrichment; editor-manual and runbook work. See the current status summary and `docs/news-category-migration.md`.
+- **Requires authenticated access:** confirm all published, draft, translated, scheduled and release-version News documents before removing `employment-economy`.
+- **Blocked on external configuration or owner review:** correct and verify the previously reported broken Translation Editor production OAuth callback; complete the Entur provider-terms and privacy review before changing its release gate; resolve FOSSGIS storage/display permission before enabling automatic route calculation.
+- **Deferred Forum governance:** complete a clean disposable backup restoration test; finalize moderation, privacy, incident, monitoring, upgrade and moderator-readiness procedures, including at least two trusted moderators. Polish system-email language and tone; consider language tags after usability review and continue visual harmonization. Related-topic panels remain disabled.
+- **Other editorial and operational work:** verify Trust Page publication and wording; add approved organization identity wording; complete the GDPR processing inventory/retention/processor review and final privacy notice; create `EDITORIAL_USER_MANUAL.md` and `OPERATIONS_RUNBOOK.md`. Create a branded 1200 x 630 social-sharing fallback image, verify Open Graph/X previews and request a fresh Facebook scrape if cached metadata is stale.
+- **Future:** evaluate portable cloud hosting for the separate editorial automation; repository access and the local draft workflow have distinct permissions as documented in `DEVELOPER_HANDOVER.md`.
 
-## 9. Launch blockers
+## 9. Known readiness limitations
 
-- Forum restoration test not completed.
-- Forum moderation policy, privacy notice, incident process, and full launch governance not finalized.
-- At least two trusted moderators are not yet operationally established.
-- Public News and Guide Forum presentation remains disabled pending final-hostname verification.
-- Translation Editor production callback remains broken.
-- Static trust-page wording and GDPR notice need final review.
-- Organization identity and number are not yet presented consistently.
-- Editorial and operational manuals remain incomplete.
+- Current production deployment, environment flags, and hosted acceptance state must be checked in their respective systems; this Git status does not establish them.
+- Forum restoration testing, moderation/privacy/incident readiness and the requirement for at least two trusted moderators need confirmation before any broader Forum launch. Homepage activity and companion cards are already enabled; related-topic panels are not.
+- The previously reported broken Translation Editor production OAuth callback remains unresolved until corrected and verified end to end; retain the working fallback.
+- Trust-page wording, GDPR processing inventory, retention and processor review need final review.
+- Approved organization identity wording, editorial manual and operations runbook remain outstanding.
+- News migration counts and completion require authenticated Sanity inspection; do not treat unknown draft, translation, schedule or release-version counts as zero.
 
 ## 10. Documentation map
 
 - `PROJECT_PROGRESS.md`: current verified state and priorities
 - `PROJECT_PROGRESS_ARCHIVE_TO_2026-08-08.md`: full historical append-only record
+- `docs/news-hub.md`: current News hub routes, editorial selection, rendering and validation
+- `docs/news-category-migration.md`: manual category workflow, authenticated inventory and removal gates
+- `docs/shared-content-search.md`: shared index scope, freshness, matching and interface contract
 - `PROJECT_PROVENANCE.md`: ownership, custom development, technology, and transparency
 - `TRANSLATION_MODULE_ARCHITECTURE.md`: Translation Editor authority and security contract
 - `FORUM_ARCHITECTURE_AND_GOVERNANCE.md`: current Forum platform and governance rules
@@ -290,7 +320,7 @@ PR #48 refined the desktop homepage composition by tightening hero and section s
 
 ## 13. 2026-09-01 presentation and social-sharing continuity update
 
-The local branch `feature/news-and-events-presentation` now contains six reviewed presentation and metadata checkpoints after protected production checkpoint `ec9651a`:
+At this 2026-09-01 checkpoint, the local branch `feature/news-and-events-presentation` contained six reviewed presentation and metadata checkpoints after protected production checkpoint `ec9651a`:
 
 - `a291ca8` unified Event and Directory context rails
 - `defb9d3` modernized the Event detail presentation
@@ -351,32 +381,32 @@ Existing document field names and published data must be preserved. Events and D
 
 ### Confirmed small branding and routing work
 
-The public site still uses Astro's default favicon. Replace it later with approved nepali.no branding based on the compact `ने` symbol and verify browser, mobile, and cache behavior.
+At this historical checkpoint the site used Astro's default favicon. This was superseded by the branded favicon implementation in PR #81 (see section 20); hosted browser, mobile and cache behavior still require independent verification.
 
 The root route intentionally sends `/` to `/ne/`. The `nepali-no.vercel.app` route must remain available until the Translation Editor production-domain GitHub OAuth callback is corrected and fully tested. Do not introduce a blanket Vercel-domain redirect before that dependency is removed.
 
 ### Four Sanity-managed trust pages
 
-All four localized footer trust pages should later move from hardcoded Astro content into Sanity-managed editorial content:
+At this historical checkpoint, the proposed work was to move all four localized footer trust pages from hardcoded Astro content into Sanity-managed editorial content:
 
 1. About
 2. Project development and transparency
 3. Privacy
 4. Contact
 
-The migration must preserve existing localized URLs, footer links, Nepali and Norwegian language switching, current responsive presentation, publication controls, and safe fallback behavior. This is a separate future milestone and must not be folded casually into the News editor reorganization.
+The migration was to preserve existing localized URLs, footer links, Nepali and Norwegian language switching, responsive presentation, publication controls, and safe fallback behavior. The repository now implements Sanity-managed Trust Pages (section 4); current editorial publication and wording were not rechecked during this task.
 
 ## 15. 2026-10-03 Guide archive search
 
 The localized `/[lang]/info/` archive has a minimal client-side Guide search. It is intentionally not site-wide search.
 
-- `ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY` selects `searchKeywords`. No other guide query, the Guide detail page, metadata, or structured data uses it. `tests/content/guideSearch.test.mjs` fails if the archive query stops selecting it.
+- `ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY` selects `searchKeywords` for this archive; Guide detail metadata and structured data do not use them. The later shared-search projection also selects these keywords (see `src/lib/search/query.ts`). `tests/content/guideSearch.test.mjs` checks the archive query.
 - Each Guide list item carries a normalized `data-search-text` attribute built from title, summary, responsible agency, and Search Keywords. Keywords are never rendered as visible text or cards. They are present in the page source only inside that attribute.
 - `src/lib/guideSearch.ts` normalizes text (case, whitespace, zero-width joiners, Latin accents, and `æ`/`ø`/`å` folded to `ae`/`o`/`a`; Devanagari is preserved) and requires every query term to match.
 - The search box appears only when JavaScript runs. With an empty query the page keeps its Topic grouping. While searching, Topic cards are replaced by one de-duplicated list of matching Guides with a result count and an empty state.
 - Labels, placeholder, hint, result count, and empty-state text live in `information` in `src/i18n/ne.ts` and `src/i18n/nb.ts`.
 
-Not included: Guide body or Norwegian-term indexing, ranking, fuzzy or typo-tolerant matching, `?q=` URLs, an external search service, SEO meta keywords, and site-wide search. Nepali spelling variants beyond zero-width joiners (for example chandrabindu versus anusvara) match only if an editor adds them as Search Keywords. Guides are currently disabled on the Norwegian site (section 16), so the search exists on `/ne/info/` only.
+This Guidance-only interface does not include Guide body or Norwegian-term indexing, ranking, fuzzy or typo-tolerant matching, `?q=` URLs, an external search service, SEO meta keywords, or site-wide search. The later shared search is separate and indexes body vocabulary; see `docs/shared-content-search.md`. Nepali spelling variants beyond zero-width joiners (for example chandrabindu versus anusvara) match only if an editor adds them as Search Keywords. Guides are currently disabled on the Norwegian site (section 16), so this search exists on `/ne/info/` only.
 
 ## 16. 2026-10-03 Norwegian site is News only
 
@@ -434,9 +464,9 @@ PR #88 adds one JSON-LD `@graph` to Nepali and Norwegian News article detail pag
 - `NEWS_ARTICLE_BY_SLUG_QUERY` fetches `authorType`; no other query or page type receives this markup. Existing page metadata and homepage structured data are unchanged.
 - Tests: `npm run test:news-article-structured-data` covers author resolution, image handling, language, canonical IDs, publisher, breadcrumbs and omitted fields.
 
-## 22. 2026-10-15 Shared editorial charts (implemented, not yet deployed)
+## 22. 2026-10-15 Shared editorial charts (historical rollout checkpoint)
 
-Implementation is complete and committed on the working branch. It is **not deployed and not active in production**. Deployment is a separate, later step.
+At this checkpoint, implementation was complete on the working branch but had not yet been deployed. The chart schema and renderer were subsequently merged into `main`; current hosted rollout and any Sanity-published chart content still require independent verification.
 
 - One shared `editorialChart` Portable Text object is available in both News articles and Public Information Guides. Supported types: vertical bar, horizontal bar, grouped bar, stacked bar, line, area, donut and pie.
 - Charts are rendered server-side with Astro, HTML and SVG. No charting library was added and no client hydration is required.
@@ -465,7 +495,7 @@ Required rollout sequence:
 
 ## 24. 2026-11-02 OpenStreetMap mapping milestone
 
-Implemented on `feature/openstreetmap-mapping`; not merged or deployed.
+At the 2026-11-02 checkpoint, implementation was on `feature/openstreetmap-mapping` and had not yet merged or deployed. The mapping milestone later merged in PR #107; map-presentation and preview follow-ups merged in PR #108.
 
 - Shared optional Sanity `mapLocation` stores coordinates as the standard `geopoint`, precision (`exact` or `approximate`), an approximate radius (50–100,000 m), and initial zoom (1–19). The shared Studio input supports map click, draggable pin, manual latitude/longitude, clearing, saved-value preview, validation and an external OSM search link. No point is saved by opening the field. For approximate locations, the centre remains public coordinate data; editors must choose a safe approximate centre.
 - One optional `locationMap` Portable Text block is registered in News and Guides. It supports a title, map location, caption, source label/HTTP(S) URL and required accessible description.
@@ -482,14 +512,14 @@ Implemented on `feature/openstreetmap-mapping`; not merged or deployed.
   3. In browser developer tools, confirm no OSM/Leaflet network requests before activating a public map. Activate it and confirm OSM tiles and visible attribution. Check exact marker/link, approximate circle with no precise marker or centre link, and two independent maps on one page.
   4. Check keyboard focus/zoom controls and normal mobile scrolling. Block or fail tile requests and confirm a useful error while text remains. Check legacy Event/Directory pages without `mapLocation`, plus online Events and `online-only`/`no-public-location` listings.
   5. Read the actual Nepali and Norwegian Sanity Privacy documents without editing or publishing them. Confirm they explain that activating a map contacts OpenStreetMap tile services and transmits visitor IP address and requested map tiles/area; assess whether editor/legal wording needs an update. This review remains unperformed, so no change is recommended as already approved.
-- Public-renderer test fixture (2026-11-02): public pages fetch with `perspective: "published"` (`astro.config.mjs`), so draft articles cannot be previewed. Local-only page `src/pages/dev/location-map-test.astro` renders the real `LocationMap.astro` with one exact and one approximate fixture map. It is `prerender = false` and returns 404 unless `import.meta.env.DEV`; a production build emits no static copy. Open `http://localhost:4321/dev/location-map-test/` after `npm run dev` (Codespaces: forward port 4321). Studio local map confirmed working by the owner after the explicit `referrerPolicy: strict-origin-when-cross-origin` tile fix; public-renderer browser checks remain pending.
+- Public-renderer test fixture (2026-11-02): public pages fetch with `perspective: "published"` (`astro.config.mjs`), so they do not display draft articles; the separate authenticated Preview routes were added later. Local-only page `src/pages/dev/location-map-test.astro` renders the real `LocationMap.astro` with one exact and one approximate fixture map. It is `prerender = false` and returns 404 unless `import.meta.env.DEV`; a production build emits no static copy. Open `http://localhost:4321/dev/location-map-test/` after `npm run dev` (Codespaces: forward port 4321). Studio local map confirmed working by the owner after the explicit `referrerPolicy: strict-origin-when-cross-origin` tile fix; public-renderer browser checks remain pending.
 - Multiple locations, icons and saved routes were added afterwards; see section 25.
 
 Rollout: deploy the public frontend first, verify legacy pages, then deploy the canonical Vercel Studio and preview a controlled draft on mobile and desktop. Before rolling back to a frontend without `locationMap` support, remove/replace every published map block. No data migration or backfill is required.
 
 ## 25. 2026-11-02 Multi-location maps, icons and saved driving routes
 
-Implemented on `feature/openstreetmap-mapping`; uncommitted, not merged or deployed.
+At this checkpoint, the multi-location, icon and saved-route implementation was still uncommitted on `feature/openstreetmap-mapping`. It was subsequently merged with the map and preview work in PRs #107 and #108.
 
 Owner-verified baseline (manual, browser): on `/dev/location-map-test/` both placeholders render before activation; exact and approximate maps activate independently; exact mode shows OSM tiles, a precise marker and an OSM link; approximate mode shows a 1,500 m circle with no centre marker or precise link; attribution is visible; tiles load after the explicit `referrerPolicy` fix.
 
@@ -514,7 +544,7 @@ Owner-verified baseline (manual, browser): on `/dev/location-map-test/` both pla
 
 ## 26. 2026-11-02 Manual editorial path (clarified requirement)
 
-Implemented on `feature/openstreetmap-mapping`; uncommitted, not merged or deployed.
+At this checkpoint, the editorial-path implementation was still uncommitted on `feature/openstreetmap-mapping`. The path feature was subsequently included in the map and preview work merged through PRs #107 and #108.
 
 - Clarified requirement: the primary line feature is an EDITORIAL HIGHLIGHTED PATH drawn by the editor (journey, railway/accident corridor, evacuation or procession route). It must never be described as a calculated driving route. The automatic FOSSGIS route model (section 25) is kept separate for later evaluation; calculation stays disabled (`ROUTING_CALCULATION_ENABLED = false`), no request goes to `routing.openstreetmap.de`, and the provider is unchanged.
 - Sanity storage (`locationMap.editorialPath`, type `mapEditorialPath`, separate from `route`): `enabled`, `label`, `description`, `color` (blue, red, orange, green, purple, black), `style` (solid, dashed), `points` (array of standard `geopoint`, 2-500, hidden field edited by the map), `updatedAt`, `locationsSignature` (fingerprint of all locations when the path was last edited). Direction arrows are not implemented (not accessible without a larger design).
@@ -531,7 +561,7 @@ Implemented on `feature/openstreetmap-mapping`; uncommitted, not merged or deplo
 
 ## 27. 2026-11-02 Editorial path accepted; automatic routing hidden; wording review
 
-Uncommitted on `feature/openstreetmap-mapping`; not merged, deployed or published.
+At this checkpoint, the changes were uncommitted on `feature/openstreetmap-mapping`; they were later included in the map and preview work merged through PRs #107 and #108. Deployment and Sanity publication remain separate facts.
 
 - Approved route solution: the manual highlighted editorial path (section 26). Owner-verified manually: Studio path drawing, and creating and displaying a highlighted path between locations. Studio save/reopen was later verified by the owner (section 27a). No test content was created or published.
 - Automatic driving-route calculation stays unapproved. The FOSSGIS permission question (storing and publicly displaying returned geometry) is unresolved. `ROUTING_CALCULATION_ENABLED = false` in `src/lib/maps/location.ts` now also hides the whole "Optional Driving Route" field in Studio (`hidden` on the `route` field in `sanity/schemaTypes/mapLocation.ts`): no checkbox, stop picker, button or warnings. There is no Studio setting to enable it. Schema, stored data (never altered), validation, public rendering of existing saved route data, tests and the fixture (section 5) are kept. Enabling needs a code change plus a confirmed provider permission. Studio makes no FOSSGIS request while false; public pages never do.
@@ -546,18 +576,22 @@ Uncommitted on `feature/openstreetmap-mapping`; not merged, deployed or publishe
 
 Manually verified by the owner after leaving and reopening the document: multiple locations and their order; coordinates, icons and label settings; approximate-area settings; the manual editorial path, its points, colour, style and editorial fields; the saved path remained editable; moving a location displayed the path-review warning. Still unverified: real keyboard/touch devices, native-speaker wording review, Privacy page review.
 
-## 28. 2026-11-03 Secure Sanity draft preview (implemented on `feature/sanity-draft-preview`, not deployed)
+## 28. 2026-11-03 Secure Sanity draft preview (historical implementation checkpoint)
 
-- Sanity Presentation Tool + cookie-gated on-demand preview routes. Public pages stay static and published-only; only `/preview/**` and `/api/preview/**` are `prerender = false`.
+At this checkpoint, the implementation was on `feature/sanity-draft-preview` and had not yet been deployed. It was subsequently merged into `main` through PR #108; hosted environment and deployment status remain unverified.
+
+- Sanity Presentation Tool + cookie-gated on-demand preview routes. Public content remains published-only; rendering mode is separate from draft access. The News hub now uses request rendering, and `/preview/**` and `/api/preview/**` are on-demand routes.
 - News and Guide markup moved (git mv) into shared `src/components/articles/NewsArticleView.astro` and `GuideView.astro`; public and preview pages both render them. Shared GROQ projections in `src/lib/sanity/queries.ts`; public filters unchanged (regression-tested).
 - Tests: `npm run test:preview` (25 pass). Every `test:*` script passes. `test:display-headline-typography` previously asserted `src/pages/dev` was absent; that was outdated after #107 added the guarded dev map fixture, so it now asserts the fixture is `prerender = false` with a production 404 guard, `/dev` stays in the sitemap exclusion, and no `dist/client/dev` output exists. `astro check` 0 errors, root build, Studio `tsc` and Studio build pass. Built with fake secrets: neither names nor values appear in client assets or the server bundle; public HTML has no Visual Editing code; sitemap has no `/preview` or `/dev` entries. (`astro check` scans `sanity/dist`; delete that ignored folder before running it.)
 - Lockfile: `@sanity/preview-url-secret` 4.1.5 requires `@sanity/client ^7.26.2`; root range `^7.25.0` allows it, so npm deduped everything to 7.28.0 (retained, no manual edit). `sanity/package-lock.json` is unchanged (Studio still 7.25.0). `get-it` and `nanoid` moved as transitive patch updates.
-- Not deployed; Vercel environment, Studio domain and hosted CORS owner actions remain pending (see DEVELOPER_HANDOVER "Draft preview"). Local Presentation authentication and the News workflow below were verified by the owner.
+- At this checkpoint, Vercel environment, Studio domain and hosted CORS owner actions remained pending (see DEVELOPER_HANDOVER "Draft preview"). Local Presentation authentication and the News workflow below were verified by the owner.
 
 ## 29. Owner-verified preview and editorial map presentation
 
+This section records the settings and checks at that checkpoint. The new-block loading default was later changed to click-to-load; automatic near-viewport loading remains available only when selected.
+
 - The owner verified secure local Presentation authentication, a completely unpublished News article, live draft updates without publication, field overlays, and a Location Map with multiple exact locations, different icons, a manual highlighted editorial path, OSM tiles and attribution. This does not imply Guide, scheduled-News or hosted-origin acceptance.
-- New `locationMap` blocks default to `loadingBehavior: 'automatic'`, `showViewOnMapActions: false`, `showOpenStreetMapLinks: false`. Missing settings on existing blocks preserve click-to-load and prior actions. Event and Directory retain their defaults.
+- At this checkpoint, new `locationMap` blocks defaulted to `loadingBehavior: 'automatic'`, `showViewOnMapActions: false` and `showOpenStreetMapLinks: false`. Missing settings on existing blocks preserved click-to-load and prior actions. Event and Directory retained their defaults. The default later changed to click-to-load, with automatic loading available only when selected.
 - Automatic maps load independently with IntersectionObserver 300px before the viewport; click-to-load stays available, including as fallback without IntersectionObserver. The external-service notice and textual list remain visible, and the server makes no tile requests. Reader-triggered mode can load and focus an exact marker from a visible location action.
 - Approximate maps retain existing circles without centre markers or precise links. The owner chose to preserve these circles: their coordinates are still sent to the browser and their centre is inferable, so they must not contain confidential locations.
 - Checks: `test:preview` 29/29 and `test:maps` 52/52; language sections, Guide search, connected content, content relationships, headline typography, article summary, information boxes, expandable sections, read-also, Event labels and Event occurrences all passed. Astro check: 0 errors, 0 warnings, 22 hints; root build, Studio-local TypeScript check, Studio build and `git diff --check` passed. The dev fixture's server-rendered HTML was checked for two automatic maps without actions, a click map with both actions, no approximate-area link and no tile images.
@@ -565,14 +599,14 @@ Manually verified by the owner after leaving and reopening the document: multipl
 
 ## 30. Location list presentation
 
-- The owner verified automatic near-viewport loading. New News/Guide Location Map blocks now default `showLocationList` to false; missing values retain the existing visible list. Existing legacy single-location, Event and Directory presentation is unchanged.
+- At this checkpoint, the owner verified automatic near-viewport loading. New News/Guide Location Map blocks defaulted `showLocationList` to false; missing values retained the existing visible list. Existing legacy single-location, Event and Directory presentation was unchanged.
 - The list remains visible until tiles load, and is restored after map failure. When collapsed after successful loading, its text stays in the accessibility tree, while any enabled location actions remain visible. With JavaScript disabled the server-rendered list remains visible.
 - Checks passed: 53 map tests, 29 preview tests, 106 relevant language/content/Event tests, Astro check (0 errors, 0 warnings, 22 hints), root build, Studio-local TypeScript, Studio build and `git diff --check`. The local fixture's server-rendered fallback markup was inspected; browser interaction is still pending.
 - Remaining browser acceptance: confirm hidden and visible settings, screen-reader list text, enabled actions, keyboard marker popups, approximate-area safeguards, no-JavaScript fallback and blocked-tile recovery on desktop and mobile.
 
 ## 31. Map-level OpenStreetMap control
 
-- The owner verified automatic loading and the optional visible location list. The uncommitted `showOpenStreetMapControl` now defaults to false for new News/Guide blocks as well as absent values on existing blocks. Per-location OpenStreetMap links remain independently controlled and hidden by default for new blocks.
+- At this checkpoint, the owner verified automatic loading and the optional visible location list. The then-uncommitted `showOpenStreetMapControl` defaulted to false for new News/Guide blocks as well as absent values on existing blocks. Per-location OpenStreetMap links remained independently controlled and hidden by default for new blocks.
 - After successful tile loading, a separate link bar above the map opens OpenStreetMap in a new tab. One exact location without a path uses that location; multiple locations, a path or an approximate area use the current displayed centre and zoom, updated on movement. URLs contain no editor text or precise-marker query. The link is hidden on failure or for an invalid target; existing textual fallbacks remain.
 - The local-only map fixture includes exact, multiple, path and approximate examples with the control enabled. Remaining browser checks: verify targets after pan/zoom, no marker on approximate links, link separation from map interactions, keyboard/mobile use, blocked-tile recovery and absent controls on legacy maps.
 
