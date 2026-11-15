@@ -14,7 +14,7 @@ The public Guidance Hub (`/[lang]/info/`) and Topic Hubs (`/[lang]/info/topic/[s
 
 `composeGuidanceHub(topics, guides)` produces a deterministic editorial layout from Sanity's `PUBLIC_INFORMATION_TOPICS_BY_LANGUAGE_QUERY` and `ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY`:
 
-1. **Guidance Masthead (`src/components/guidance/GuidanceMasthead.astro`):** Top `3px solid var(--civic-deep)` rule, page title and active topic/guide totals, concise description, and a scrollable quick-jump bar linking to Recent Guidance, All Topics, and core priority Topic Hubs.
+1. **Guidance Masthead (`src/components/guidance/GuidanceMasthead.astro`):** Top `3px solid var(--civic-deep)` rule, page title and active topic/guide totals, concise description, and a scrollable quick-jump bar pairing a highlighted `"नयाँ"` / `"Nytt"` recent-guides pill (`#recent-guidance-heading`) separated by a hairline divider from core priority Topic Hub links.
 2. **Guidance-Only Search (`.info-search` in `src/pages/[lang]/info/index.astro`):** Preserved inline substring search over guide title, summary, responsible agency, and `searchKeywords` (`buildGuideSearchText`, `matchesGuideSearch`). While searching, `[data-recent-section]` and `[data-topics-section]` are hidden and `[data-guides-section]` reveals matching hairline editorial rows.
 3. **Recent & Updated Package (`src/components/guidance/GuidanceRecentPackage.astro`):**
    - **Urgent strip:** Optional top alert bar (`border-inline-start: 3px solid var(--brand)`, `var(--color-brand-50)`) when an active guide has `isUrgent == true`.

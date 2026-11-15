@@ -41,8 +41,28 @@ const guideCountText = (
   {(hasRecent || quickTopics.length > 0) && (
     <nav aria-label={labels.quickJumpLabel} tabindex="0">
       <div class="nav-row">
-        {hasRecent && <a href="#recent-guidance-heading">{labels.recentJumpLabel}</a>}
-        {quickTopics.length > 0 && <a href="#topics-heading">{labels.topicsJumpLabel}</a>}
+        {hasRecent && (
+          <a class="nav-recent" href="#recent-guidance-heading">
+            <span class="nav-recent-pill">
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"></path>
+              </svg>
+              <span>{labels.recentJumpLabel}</span>
+            </span>
+          </a>
+        )}
+        {hasRecent && quickTopics.length > 0 && <span class="nav-divider" aria-hidden="true"></span>}
         {quickTopics.map((topic) => (
           <a
             href={topicHref(language, topic.slug)}
@@ -96,7 +116,7 @@ const guideCountText = (
   nav {
     display: flex;
     overflow-x: auto;
-    gap: 0 1.4rem;
+    gap: 0 1.25rem;
     padding-block-end: 0.2rem;
     border-block: 1px solid var(--border-strong);
     scrollbar-width: thin;
@@ -105,7 +125,8 @@ const guideCountText = (
 
   .nav-row {
     display: flex;
-    gap: 0 1.4rem;
+    align-items: center;
+    gap: 0 1.25rem;
   }
 
   nav a {
@@ -122,6 +143,37 @@ const guideCountText = (
     white-space: nowrap;
   }
 
+  .nav-recent {
+    padding-block: 0.35rem;
+    border-bottom: 0;
+  }
+
+  .nav-recent-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid var(--color-brand-200);
+    border-radius: 999px;
+    background: var(--color-brand-50);
+    color: var(--brand);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .nav-recent-pill svg {
+    flex: 0 0 auto;
+  }
+
+  .nav-divider {
+    flex: 0 0 auto;
+    align-self: center;
+    width: 1px;
+    height: 1.25rem;
+    background: var(--border-strong);
+  }
+
   nav a[aria-current] {
     border-bottom-color: var(--brand);
     color: var(--civic-deep);
@@ -130,6 +182,15 @@ const guideCountText = (
 
   nav a:hover {
     text-decoration: underline;
+  }
+
+  .nav-recent:hover {
+    text-decoration: none;
+  }
+
+  .nav-recent:hover .nav-recent-pill {
+    border-color: var(--color-brand-300);
+    background: var(--color-brand-100);
   }
 
   nav a:focus-visible {
