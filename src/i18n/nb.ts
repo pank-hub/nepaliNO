@@ -79,7 +79,7 @@ export const nb = {
     privacy:
       "Teksten du skriver for å søke etter startsted sendes via nepali.no til Entur. Valgte koordinater og ønsket tidspunkt sendes til Entur for å beregne reisen. Entur mottar forespørslene fra nepali.no sin tjener, ikke direkte fra nettleseren din. nepali.no lagrer ikke startstedet ditt eller reisehistorikken din.",
     attribution:
-      "Inneholder data under {nlod} tilgjengeliggort av {entur}. Reiseinformasjonen er sammenstilt av nepali.no. Stedsdata kan inneholde © {osm}.",
+      "Inneholder data under {nlod} tilgjengeliggjort av {entur}. Reiseinformasjonen er sammenstilt av nepali.no. Stedsdata kan inneholde © {osm}.",
     attributionEntur: "Entur AS",
     attributionNlod: "Norsk lisens for offentlige data (NLOD)",
     attributionOsm: "OpenStreetMap-bidragsytere",

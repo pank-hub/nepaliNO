@@ -481,7 +481,7 @@ export const ne = {
       "needs-review": "पुनः जाँच आवश्यक",
     },
     statusExplanation: "स्थिति सम्बन्धी जानकारी",
-    statusEffectiveAt: "स्थिति लागू भएको मिति",
+    statusEffectiveAt: "यो स्थिति लागू भएको मिति",
     translation: "अर्को भाषामा हेर्नुहोस्",
     submitListing: "सूची पठाउनुहोस्",
     submitListingDescription:

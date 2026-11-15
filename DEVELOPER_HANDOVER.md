@@ -55,8 +55,6 @@ This is not website-repository implementation and has not been independently ins
 - Forum: Discourse at `https://forum.nepali.no`, hosted on Gigahost
 - Forum pilot alias: `https://forum-poc.nepali.no`
 - Transactional email: Resend from `notifications.nepali.no`
-- DNS and email infrastructure: Domeneshop
-- Forum: Discourse hosted separately on Gigahost in Norway at the canonical hostname `forum.nepali.no`; `forum-poc.nepali.no` is a TLS-covered alias that redirects to the canonical hostname
 - Public languages: Nepali (`ne`) and Norwegian Bokmal (`nb`)
 - English is limited to selected submission and administrative services.
 - The Norwegian site currently publishes News only. Guides, Events, Directory, and the Forum are disabled for `nb` through `src/config/languageSections.ts` (see "Per-language section availability").
