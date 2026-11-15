@@ -1,0 +1,303 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {formatGuideDate, guideHref, type GuidanceGuideItem} from '../../lib/guidanceHub'
+
+interface Props {
+  language: SupportedLanguage
+  urgentGuide: GuidanceGuideItem | null
+  leadGuide: GuidanceGuideItem | null
+  recentGuides: GuidanceGuideItem[]
+  topicTitles: Record<string, string>
+}
+
+const {language, urgentGuide, leadGuide, recentGuides, topicTitles} = Astro.props
+const labels = getTranslations(language).information
+const leadDate = leadGuide
+  ? formatGuideDate(leadGuide.lastReviewedAt ?? leadGuide.publishedAt, language)
+  : ''
+const leadTopic = leadGuide?.topic ? topicTitles[leadGuide.topic] : undefined
+const urgentDate = urgentGuide
+  ? formatGuideDate(urgentGuide.lastReviewedAt ?? urgentGuide.publishedAt, language)
+  : ''
+---
+
+{(urgentGuide || leadGuide) && (
+  <div class="recent-package">
+    {urgentGuide && (
+      <aside class="urgent-strip" aria-labelledby="urgent-guide-heading">
+        <div class="urgent-meta">
+          <span id="urgent-guide-heading" class="urgent-badge">
+            {labels.urgentLabel}
+          </span>
+          {urgentGuide.responsibleAgency && (
+            <span class="urgent-agency">{urgentGuide.responsibleAgency}</span>
+          )}
+          {urgentDate && <span class="urgent-date">{urgentDate}</span>}
+        </div>
+        <a class="urgent-link" href={guideHref(language, urgentGuide.slug)}>
+          <span>{urgentGuide.title}</span>
+          <span aria-hidden="true">→</span>
+        </a>
+      </aside>
+    )}
+
+    {leadGuide && (
+      <div class:list={['package-grid', {'has-rail': recentGuides.length > 0}]}>
+        <article class="lead-spotlight">
+          <p class="spotlight-kicker">
+            {[
+              leadGuide.isFeatured ? labels.featuredSpotlightLabel : labels.recentHeading,
+              leadTopic,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <h2
+            id={recentGuides.length === 0 ? 'recent-guidance-heading' : undefined}
+            class="lead-title"
+          >
+            <a href={guideHref(language, leadGuide.slug)}>{leadGuide.title}</a>
+          </h2>
+          <p class="lead-summary">{leadGuide.summary}</p>
+          <div class="lead-footer">
+            {(leadGuide.responsibleAgency || leadDate) && (
+              <p class="lead-meta">
+                {[leadGuide.responsibleAgency, leadDate ? `${labels.lastReviewed}: ${leadDate}` : '']
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            )}
+            <a class="lead-action" href={guideHref(language, leadGuide.slug)}>
+              <span>{labels.readGuide}</span>
+              <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </article>
+
+        {recentGuides.length > 0 && (
+          <div class="recent-rail">
+            <h2 id="recent-guidance-heading" class="rail-heading">
+              {labels.recentHeading}
+            </h2>
+            <ol class="recent-list">
+              {recentGuides.map((guide) => {
+                const guideTopic = guide.topic ? topicTitles[guide.topic] : undefined
+                const guideDate = formatGuideDate(
+                  guide.lastReviewedAt ?? guide.publishedAt,
+                  language,
+                )
+                const metaLine = [guideTopic, guide.responsibleAgency, guideDate]
+                  .filter(Boolean)
+                  .join(' · ')
+                return (
+                  <li>
+                    <a class="recent-link" href={guideHref(language, guide.slug)}>
+                      <span class="recent-copy">
+                        <span class="recent-title">{guide.title}</span>
+                        {metaLine && <span class="recent-meta">{metaLine}</span>}
+                      </span>
+                      <span class="recent-arrow" aria-hidden="true">
+                        →
+                      </span>
+                    </a>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+)}
+
+<style>
+  .recent-package {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .urgent-strip {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.85rem 1rem;
+    border-inline-start: 3px solid var(--brand);
+    background: var(--color-brand-50);
+  }
+
+  .urgent-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .urgent-badge {
+    color: var(--brand);
+    font-weight: 700;
+  }
+
+  .urgent-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 44px;
+    color: var(--civic-deep);
+    font-weight: 600;
+    line-height: 1.5;
+    text-decoration: none;
+  }
+
+  .urgent-link:hover {
+    text-decoration: underline;
+  }
+
+  .package-grid {
+    display: grid;
+    gap: 1.75rem;
+    align-items: start;
+  }
+
+  .lead-spotlight {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.35rem 1.5rem;
+    border-top: 2px solid var(--civic-deep);
+    background: var(--surface-warm);
+  }
+
+  .spotlight-kicker {
+    margin: 0;
+    color: var(--civic);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .lead-title {
+    margin: 0;
+    font-size: clamp(1.35rem, 2.3vw, 1.85rem);
+    line-height: 1.35;
+  }
+
+  .lead-title a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .lead-title a:hover {
+    text-decoration: underline;
+  }
+
+  .lead-summary {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.75;
+  }
+
+  .lead-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.25rem;
+    margin-block-start: 0.25rem;
+    padding-block-start: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .lead-meta {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.84rem;
+  }
+
+  .lead-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    color: var(--civic-deep);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .lead-action:hover {
+    text-decoration: underline;
+  }
+
+  .recent-rail {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .rail-heading {
+    margin: 0;
+    padding-block-end: 0.55rem;
+    border-bottom: 2px solid var(--civic-deep);
+    font-size: 1.25rem;
+    color: var(--civic-deep);
+  }
+
+  .recent-list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .recent-list li {
+    min-width: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .recent-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding-block: 0.7rem;
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .recent-link:hover .recent-title {
+    text-decoration: underline;
+  }
+
+  .recent-copy {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .recent-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  .recent-meta {
+    color: var(--text-soft);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .recent-arrow {
+    flex: 0 0 auto;
+    color: var(--civic);
+    font-weight: 600;
+  }
+
+  @media (min-width: 64rem) {
+    .package-grid.has-rail {
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: 2rem;
+    }
+  }
+</style>

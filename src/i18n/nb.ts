@@ -556,6 +556,24 @@ export const nb = {
     disclaimerTitle: "Viktig informasjon",
     disclaimer:
       "nepali.no er ikke en offentlig myndighet. Informasjonen er utarbeidet for å gi en generell og lettere forståelig forklaring. Sjekk alltid den ansvarlige myndighetens offisielle nettsted for gjeldende regler, individuelle avgjørelser og søknadsprosesser.",
+    recentHeading: "Nye og oppdaterte veiledninger",
+    featuredSpotlightLabel: "Utvalgt veiledning",
+    moreTopicsHeading: "Flere temaer og oversikt",
+    viewTopicGuides: "Se alle",
+    quickJumpLabel: "Hopp til del",
+    recentJumpLabel: "Nye veiledninger",
+    topicsJumpLabel: "Temaer",
+    backToHub: "Tilbake til alle veiledningstemaer",
+    allTopicGuidesHeading: "Alle veiledninger i dette temaet",
+    topicDirectoryHeading: "Alle temaer",
+    topicsCountLabel: {
+      one: "{count} tema",
+      other: "{count} temaer",
+    },
+    guidesCountLabel: {
+      one: "{count} veiledning",
+      other: "{count} veiledninger",
+    },
   },
 
   footer: {

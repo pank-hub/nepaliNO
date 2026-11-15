@@ -1,0 +1,139 @@
+---
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {topicHref, type GuidanceTopicItem} from '../../lib/guidanceHub'
+
+interface Props {
+  language: SupportedLanguage
+  topicCount: number
+  guideCount: number
+  quickTopics: GuidanceTopicItem[]
+  hasRecent: boolean
+  activeTopicKey?: string
+}
+
+const {language, topicCount, guideCount, quickTopics, hasRecent, activeTopicKey} = Astro.props
+const labels = getTranslations(language).information
+
+const topicCountText = (
+  topicCount === 1 ? labels.topicsCountLabel.one : labels.topicsCountLabel.other
+).replace('{count}', String(topicCount))
+
+const guideCountText = (
+  guideCount === 1 ? labels.guidesCountLabel.one : labels.guidesCountLabel.other
+).replace('{count}', String(guideCount))
+---
+
+<header class="masthead">
+  <div class="masthead-heading">
+    <div>
+      <h1>{labels.pageTitle}</h1>
+      <p class="masthead-description">{labels.pageDescription}</p>
+    </div>
+    {(topicCount > 0 || guideCount > 0) && (
+      <p class="masthead-stats">
+        {[topicCount > 0 ? topicCountText : '', guideCount > 0 ? guideCountText : '']
+          .filter(Boolean)
+          .join(' · ')}
+      </p>
+    )}
+  </div>
+  {(hasRecent || quickTopics.length > 0) && (
+    <nav aria-label={labels.quickJumpLabel} tabindex="0">
+      <div class="nav-row">
+        {hasRecent && <a href="#recent-guidance-heading">{labels.recentJumpLabel}</a>}
+        {quickTopics.length > 0 && <a href="#topics-heading">{labels.topicsJumpLabel}</a>}
+        {quickTopics.map((topic) => (
+          <a
+            href={topicHref(language, topic.slug)}
+            aria-current={activeTopicKey === topic.topicKey ? 'page' : undefined}
+          >
+            {topic.title}
+          </a>
+        ))}
+      </div>
+    </nav>
+  )}
+</header>
+
+<style>
+  .masthead {
+    margin-block: 1.25rem 1.25rem;
+    border-top: 3px solid var(--civic-deep);
+  }
+
+  .masthead-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.45rem 1.5rem;
+    padding-block: 0.9rem;
+  }
+
+  h1 {
+    max-width: none;
+    color: var(--civic-deep);
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.3;
+  }
+
+  .masthead-description {
+    max-width: 62ch;
+    margin-block-start: 0.35rem;
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .masthead-stats {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 0 1.4rem;
+    padding-block-end: 0.2rem;
+    border-block: 1px solid var(--border-strong);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  .nav-row {
+    display: flex;
+    gap: 0 1.4rem;
+  }
+
+  nav a {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-height: 48px;
+    padding-block: 0.5rem;
+    border-bottom: 3px solid transparent;
+    color: var(--civic);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  nav a[aria-current] {
+    border-bottom-color: var(--brand);
+    color: var(--civic-deep);
+    font-weight: 700;
+  }
+
+  nav a:hover {
+    text-decoration: underline;
+  }
+
+  nav a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+  }
+</style>
