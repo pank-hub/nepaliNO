@@ -481,7 +481,7 @@ export const ne = {
       "needs-review": "पुनः जाँच आवश्यक",
     },
     statusExplanation: "स्थिति सम्बन्धी जानकारी",
-    statusEffectiveAt: "यो स्थिति लागू भएको मिति",
+    statusEffectiveAt: "स्थिति लागू भएको मिति",
     translation: "अर्को भाषामा हेर्नुहोस्",
     submitListing: "सूची पठाउनुहोस्",
     submitListingDescription:
@@ -546,6 +546,24 @@ export const ne = {
     disclaimerTitle: "महत्त्वपूर्ण सूचना",
     disclaimer:
       "nepali.no सरकारी निकाय होइन। यहाँ दिइएको जानकारी सामान्य बुझाइका लागि हो। हालको नियम, व्यक्तिगत निर्णय र आवेदन प्रक्रियाका लागि सम्बन्धित सरकारी निकायको आधिकारिक वेबसाइट हेर्नुहोस्।",
+    recentHeading: "भर्खरका तथा अद्यावधिक मार्गदर्शन",
+    featuredSpotlightLabel: "प्रमुख मार्गदर्शन",
+    moreTopicsHeading: "अन्य विषय र निर्देशिका",
+    viewTopicGuides: "सबै हेर्नुहोस्",
+    quickJumpLabel: "मार्गदर्शनका खण्डहरू",
+    recentJumpLabel: "भर्खरका मार्गदर्शन",
+    topicsJumpLabel: "विषयहरू",
+    backToHub: "सबै मार्गदर्शन विषयहरूमा फर्कनुहोस्",
+    allTopicGuidesHeading: "यस विषयका सबै मार्गदर्शन",
+    topicDirectoryHeading: "सबै विषयहरू",
+    topicsCountLabel: {
+      one: "{count} विषय",
+      other: "{count} विषयहरू",
+    },
+    guidesCountLabel: {
+      one: "{count} मार्गदर्शन",
+      other: "{count} मार्गदर्शनहरू",
+    },
   },
 
   footer: {

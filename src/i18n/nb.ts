@@ -79,7 +79,7 @@ export const nb = {
     privacy:
       "Teksten du skriver for å søke etter startsted sendes via nepali.no til Entur. Valgte koordinater og ønsket tidspunkt sendes til Entur for å beregne reisen. Entur mottar forespørslene fra nepali.no sin tjener, ikke direkte fra nettleseren din. nepali.no lagrer ikke startstedet ditt eller reisehistorikken din.",
     attribution:
-      "Inneholder data under {nlod} tilgjengeliggjort av {entur}. Reiseinformasjonen er sammenstilt av nepali.no. Stedsdata kan inneholde © {osm}.",
+      "Inneholder data under {nlod} tilgjengeliggort av {entur}. Reiseinformasjonen er sammenstilt av nepali.no. Stedsdata kan inneholde © {osm}.",
     attributionEntur: "Entur AS",
     attributionNlod: "Norsk lisens for offentlige data (NLOD)",
     attributionOsm: "OpenStreetMap-bidragsytere",
@@ -556,6 +556,24 @@ export const nb = {
     disclaimerTitle: "Viktig informasjon",
     disclaimer:
       "nepali.no er ikke en offentlig myndighet. Informasjonen er utarbeidet for å gi en generell og lettere forståelig forklaring. Sjekk alltid den ansvarlige myndighetens offisielle nettsted for gjeldende regler, individuelle avgjørelser og søknadsprosesser.",
+    recentHeading: "Nye og oppdaterte veiledninger",
+    featuredSpotlightLabel: "Utvalgt veiledning",
+    moreTopicsHeading: "Flere temaer og oversikt",
+    viewTopicGuides: "Se alle",
+    quickJumpLabel: "Hopp til del",
+    recentJumpLabel: "Nye veiledninger",
+    topicsJumpLabel: "Temaer",
+    backToHub: "Tilbake til alle veiledningstemaer",
+    allTopicGuidesHeading: "Alle veiledninger i dette temaet",
+    topicDirectoryHeading: "Alle temaer",
+    topicsCountLabel: {
+      one: "{count} tema",
+      other: "{count} temaer",
+    },
+    guidesCountLabel: {
+      one: "{count} veiledning",
+      other: "{count} veiledninger",
+    },
   },
 
   footer: {
