@@ -1,9 +1,9 @@
 # nepali.no Developer Handover
 
-**Status date:** 14 November 2026
+**Status date:** 15 November 2026
 **Repository:** `pank-hub/nepaliNO`
 **Owner and final decision-maker:** Pankaj Kafley
-**Current `main` checkpoint:** `4c1c294`, News hub redesign, squash-merged as PR #126 on 10 November 2026
+**Current `main` checkpoint:** `4c1c294`, News hub redesign, squash-merged as PR #126 on 10 November 2026 (followed by PR #127 handover update; active Guidance Hub redesign on `feat/redesign-guidance-hub`)
 **Production deployment status:** Verify the deployed Vercel revision independently; a merged commit is not proof of deployment.
 
 ## Purpose
@@ -55,6 +55,8 @@ This is not website-repository implementation and has not been independently ins
 - Forum: Discourse at `https://forum.nepali.no`, hosted on Gigahost
 - Forum pilot alias: `https://forum-poc.nepali.no`
 - Transactional email: Resend from `notifications.nepali.no`
+- DNS and email infrastructure: Domeneshop
+- Forum: Discourse hosted separately on Gigahost in Norway at the canonical hostname `forum.nepali.no`; `forum-poc.nepali.no` is a TLS-covered alias that redirects to the canonical hostname
 - Public languages: Nepali (`ne`) and Norwegian Bokmal (`nb`)
 - English is limited to selected submission and administrative services.
 - The Norwegian site currently publishes News only. Guides, Events, Directory, and the Forum are disabled for `nb` through `src/config/languageSections.ts` (see "Per-language section availability").
@@ -79,8 +81,12 @@ This is not website-repository implementation and has not been independently ins
 
 ### Guidance
 
-- The complete public Topic Hub uses the stable-key priority order in `src/config/guidanceHub.ts`; unspecified middle topics retain their relative Sanity order and `other` is last. The hub uses active published-Guide counts, deliberate empty-topic presentation and the shared glyph registry in `src/components/content/GuidanceTopicIcon.astro`.
-- The homepage's six-key selection in `src/config/homepage.ts` is intentionally distinct from the full hub ordering. Individual Guide fields and Portable Text remain separate from the hub presentation.
+- The Guidance Hub (`/[lang]/info/`) and Topic Hubs (`/[lang]/info/topic/[slug]/`) follow the Nordic editorial aesthetic documented in `docs/guidance-hub.md`, powered by pure composition helpers in `src/lib/guidanceHub.ts` and scoped components in `src/components/guidance/`.
+- `composeGuidanceHub` pairs a top masthead and quick-jump bar (`GuidanceMasthead.astro`), preserved Guidance-only search, an editorial Recent & Updated package (`GuidanceRecentPackage.astro` with urgent strip, `var(--surface-warm)` lead spotlight, and up to 5 newest guides sorted chronologically regardless of `isFeatured`), and `GuidanceTopicShowcase.astro` (up to 6 non-empty priority topics with direct preview guide links + a `var(--surface-muted)` 2-column directory band).
+- Topic ordering comes from `orderGuidanceHubTopics` (`src/config/guidanceHub.ts`), retaining relative Sanity order for middle topics and keeping `other` last; zero-guide topics retain explicit `noPublishedTopicGuides` status, and `GuidanceTopicIcon.astro` supplies consistent glyphs.
+- Topic Hubs (`src/pages/[lang]/info/topic/[slug].astro`) use matching `border-top: 3px solid var(--civic-deep)` mastheads, breadcrumbs, topic icons, curated spotlight guides, and a responsive hairline directory grid.
+- Front-door hub presentation remains universally framed for all Nepali-speaking residents in Norway rather than spotlighting specific migration/EU pathways.
+- The homepage's six-key selection in `src/config/homepage.ts` is intentionally distinct from the full hub ordering. Individual Guide fields and Portable Text remain separate from hub presentation.
 - Norwegian Guidance remains disabled by `src/config/languageSections.ts`.
 
 ### News
@@ -129,9 +135,11 @@ Nepali typography was recently adjusted to reduce heavy Devanagari weights in he
 
 ### Public Information
 
-Bilingual Topic Hubs and Guides, official sources, review dates, audience metadata, reusable Norwegian terms, search metadata, editorial classifications, and Portable Text rendering are operational. The redesigned `/[lang]/info/` hub uses the deliberate public topic order and shared topic-icon registry, with active published-Guide counts and zero-Guide handling. Related Guides are selected in Sanity and rendered in the Guide sidebar (same language, active, with a slug). The six-topic homepage selection is separate from the full hub.
+Bilingual Topic Hubs and Guides, official sources, review dates, audience metadata, reusable Norwegian terms, search metadata, editorial classifications, and Portable Text rendering are operational. The redesigned `/[lang]/info/` hub combines a civic masthead, chronological recent-guides package, 6-topic core showcase with preview guide links, and a full `var(--surface-muted)` topic directory band using `orderGuidanceHubTopics` and `GuidanceTopicIcon.astro`. Topic Hubs (`/[lang]/info/topic/[slug]/`) follow the same editorial system with breadcrumbs, topic icon, curated spotlight guides, and hairline multi-column directories. See `docs/guidance-hub.md`.
 
-The `/[lang]/info/` archive retains a Guidance-only client-side substring search over title, summary, responsible agency, and Search Keywords and Synonyms. `ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY` in `src/lib/sanity/queries.ts` projects its keywords; `src/lib/guideSearch.ts` prepares its search text, including the list item's `data-search-text` attribute. Guide body text and reusable Norwegian terms are not indexed by this interface. Separately, `SHARED_SEARCH_QUERY` in `src/lib/search/query.ts` also projects keywords for the build-time shared index; its ranked search includes additional type-specific fields and body vocabulary as described in `docs/shared-content-search.md`. Keywords are not rendered as public tags. Public Information is currently available in Nepali only (see below).
+Related Guides are selected in Sanity and rendered in the Guide sidebar (same language, active, with a slug). The six-topic homepage selection is separate from the full hub. `npm run test:guidance-hub` covers `composeGuidanceHub`, `formatGuideDate`, and presentation contracts (`tests/content/guidanceHub.test.mjs`, `tests/content/guidanceHubPresentation.test.mjs`); wire it into `.github/workflows/validate-pull-request.yml` via a workflow-scoped token.
+
+The `/[lang]/info/` archive retains its Guidance-only client-side substring search over title, summary, responsible agency, and Search Keywords and Synonyms, hiding `[data-recent-section]` and `[data-topics-section]` while active. `ACTIVE_PUBLIC_INFORMATION_GUIDES_QUERY` in `src/lib/sanity/queries.ts` projects its keywords; `src/lib/guideSearch.ts` prepares its search text, including the list item's `data-search-text` attribute. Guide body text and reusable Norwegian terms are not indexed by this interface. Separately, `SHARED_SEARCH_QUERY` in `src/lib/search/query.ts` also projects keywords for the build-time shared index; its ranked search includes additional type-specific fields and body vocabulary as described in `docs/shared-content-search.md`. Keywords are not rendered as public tags. Public Information is currently available in Nepali only (see below).
 
 Reusable Norwegian terms expose the Norwegian term and optional Nepali pronunciation separately. The pronunciation is rendered in italic muted text; legacy inline terms remain supported.
 
@@ -407,7 +415,7 @@ The signed Sanity-to-Discourse companion-topic workflow is production-proven. Pr
 
 ## Current next milestone
 
-Continue manual review of legacy News categories and search keywords; do not remove the legacy schema value before the authenticated inventory and removal gates in `docs/news-category-migration.md` are satisfied. Confirm deployment-triggered shared-search freshness and remaining hosted/manual acceptance only where needed.
+Continue manual review of legacy News categories and search keywords; do not remove the legacy schema value before the authenticated inventory and removal gates in `docs/news-category-migration.md` are satisfied. Confirm deployment-triggered shared-search freshness and remaining hosted/manual acceptance only where needed. Wire `npm run test:guidance-hub` into `.github/workflows/validate-pull-request.yml` via a workflow-scoped token if not already enabled during review.
 
 The News writing-first editor and task-oriented views were delivered through PR #68; the custom-list IDs were fixed through PR #69. A separate Form and Preview document view remains optional evaluation, not a prerequisite to the current workflow.
 
@@ -447,6 +455,7 @@ Do not use destructive Git commands such as `git reset --hard` or `git checkout 
 ## Documentation map
 
 - `PROJECT_PROGRESS.md`: concise current status, next milestone, and blockers
+- `docs/guidance-hub.md`: Guidance hub and Topic Hub composition, recency, search preservation and validation
 - `docs/news-hub.md`: News hub selection, routes, pagination, responsive presentation and validation
 - `docs/news-category-migration.md`: manual News category migration and authenticated removal gates
 - `docs/shared-content-search.md`: search index scope, freshness, matching and accessible interface

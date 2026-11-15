@@ -1,8 +1,8 @@
 # nepali.no Project Progress
 
-**Status date:** 14 November 2026
-**Current documentation branch:** `docs/update-project-handover`, based on `main`
-**Current repository checkpoint:** `4c1c294` (`feat(news): redesign digital newspaper hub`), squash-merged as PR #126 on 10 November 2026
+**Status date:** 15 November 2026
+**Current documentation branch:** `feat/redesign-guidance-hub`, based on `main`
+**Current repository checkpoint:** `4c1c294` (`feat(news): redesign digital newspaper hub`), squash-merged as PR #126 on 10 November 2026 (followed by PR #127 handover update; Guidance Hub and Topic Hub redesign on `feat/redesign-guidance-hub`)
 **Production deployment status:** Not established by the Git checkpoint; verify the deployed Vercel revision independently.
 **Repository:** `pank-hub/nepaliNO`
 **Project owner and final decision-maker:** Pankaj Kafley
@@ -13,13 +13,13 @@ This document is the concise current-state record for developers, operators, edi
 
 Use this document to understand what is operational now, what is deliberately disabled, what remains unfinished, and where detailed instructions are maintained. Git history and pull requests remain the authoritative implementation record.
 
-## Current status summary — 14 November 2026
+## Current status summary — 15 November 2026
 
 ### Completed in the current repository
 
 - The mobile-first Nordic homepage has its final responsive composition and hero/Forum polish, Mukta-first Devanagari typography, six deliberately selected Guidance shortcuts, and compact News, Event, Directory and Forum treatments. Event and Directory images are conditional; missing assets do not create placeholders. The homepage search sits in the introduction and uses the shared published-content search.
 - Shared search covers published Guidance, News and Directory content, with a full-results route, type filters and a language-specific build-time index. Its established refresh point is deployment, not Sanity publishing.
-- The redesigned Guidance hub uses the stable-key priority order in `src/config/guidanceHub.ts`, retains the relative Sanity order of unspecified middle topics, and puts `other` last. Its full hub is distinct from the six selections in `src/config/homepage.ts`; it has shared icons, active Guide counts and empty-topic handling. Guidance archive search remains Guidance-only.
+- The Guidance Hub (`/[lang]/info/`) and Topic Hubs (`/[lang]/info/topic/[slug]/`) have been redesigned on `feat/redesign-guidance-hub` to match the Nordic editorial system of the News Hub (`src/lib/guidanceHub.ts`, `src/components/guidance/`): masthead with quick-jump bar, preserved Guidance-only archive search, urgent notice strip, featured lead spotlight (`var(--surface-warm)`), up to five chronologically sorted recent/updated guides, up to six core topic showcase blocks with preview guide links, a `var(--surface-muted)` 2-column topic directory band keeping `orderGuidanceHubTopics` order (`other` last, `GuidanceTopicIcon`, explicit zero-guide handling), and matching editorial Topic Hubs. Front-door presentation remains universally framed for all Nepali-speaking residents in Norway (`docs/guidance-hub.md`).
 - News has ten final stored categories. `employment-economy` remains temporary legacy compatibility and is excluded from public category navigation. PR #125 added the manual review queue and compatibility; PR #126 redesigned the digital-newspaper hub while preserving Featured Story and Important Now selection, archive routes, category filtering, language gates and image-free rendering.
 - Forum homepage discussions and role-eligible companion cards are implemented. The homepage feed and companion cards are enabled in source configuration; related-topic panels remain disabled. Repeated visible homepage relationship labels were removed while the underlying relationship role and metadata remain.
 - OpenStreetMap maps, the secure Sanity draft Preview implementation, Entur travel assistance, and endpoint-specific Upstash protection are present in `main`. Their user-facing release, provider, privacy and acceptance gates remain in force; source code alone does not establish current hosted environment or production activation.
@@ -42,7 +42,7 @@ Use this document to understand what is operational now, what is deliberately di
 - **Requires authenticated access:** the current legacy-category inventory and migration completion cannot be established from the public build or unauthenticated queries.
 - **Release-gated:** Entur remains protected by `ENTUR_TRAVEL_API_ENABLED`; confirm the actual deployment setting and complete provider-terms, translation, privacy and hosted/browser acceptance before any production activation. Automatic FOSSGIS route calculation remains disabled in source until storage/display permission is resolved.
 - **Deferred:** related Forum topics, wider Forum rollout, and any Discourse work beyond the approved feed/cards require separate review. Backup restoration, moderation, incident, monitoring and operational readiness work remains.
-- **Environment:** website development remains in Codespaces. Antigravity has been used for read-only GitHub inspection, while the separate local editorial automation reportedly writes Sanity drafts; website repository editing or deployment requires separate explicit approval.
+- **Environment:** website development remains in Codespaces. Antigravity has been used for read-only GitHub inspection, while the separate local editorial automation reportedly writes Sanity drafts; website repository editing or deployment requires separate explicit approval. On `feat/redesign-guidance-hub`, `npm run test:guidance-hub` was added to `package.json`; adding the step to `.github/workflows/validate-pull-request.yml` requires an owner/workflow-scoped GitHub token.
 - **Separate open work:** the useful Forum status from PR #64 is reflected here and can be considered for closure after this replacement documentation is merged. Leave PR #73 unchanged until its dependency/security claims receive a separate current assessment; its historical claims are not newly verified here.
 
 Sections 12 onward preserve dated implementation checkpoints. Their branch or deployment wording describes the state recorded at that checkpoint and is not a substitute for this current summary.
@@ -114,7 +114,8 @@ nepali.no is not a Norwegian public authority and does not replace official lega
 
 ### Public Information
 
-- The redesigned Guidance hub presents active Topic Hubs in deliberate public order, with shared icons, active published-Guide counts, and explicit zero-Guide handling. Guide pages retain their own structured content and fields.
+- The Guidance Hub (`/[lang]/info/`) and Topic Hubs (`/[lang]/info/topic/[slug]/`) follow the Nordic editorial hierarchy documented in `docs/guidance-hub.md`: top masthead with quick-jump bar, preserved Guidance-only search, urgent strip, `var(--surface-warm)` lead spotlight, up to five chronological recent/updated guides, six core priority topic preview blocks, and a `var(--surface-muted)` 2-column topic directory band keeping `orderGuidanceHubTopics` order, shared `GuidanceTopicIcon` glyphs, active published-Guide counts, and explicit zero-Guide handling.
+- Hub copy and navigation are universally framed for all Nepali-speaking residents in Norway rather than spotlighting EU-only relocation paths.
 - Guides, Topic Hubs, official sources, review dates, audience metadata, reusable Norwegian terms, search metadata, guide format, priority, and maintenance sensitivity are operational.
 - Related Guides are selected in Sanity and rendered publicly in the Guide sidebar (same language, active, slug-safe).
 - Search Keywords and Synonyms feed the client-side Guide search on `/[lang]/info/`; they are never displayed publicly.
@@ -260,6 +261,7 @@ The next Studio follow-up is optional evaluation of a separate Form and Preview 
 
 - `PROJECT_PROGRESS.md`: current verified state and priorities
 - `PROJECT_PROGRESS_ARCHIVE_TO_2026-08-08.md`: full historical append-only record
+- `docs/guidance-hub.md`: Guidance hub and Topic Hub composition, recency, search preservation and validation
 - `docs/news-hub.md`: current News hub routes, editorial selection, rendering and validation
 - `docs/news-category-migration.md`: manual category workflow, authenticated inventory and removal gates
 - `docs/shared-content-search.md`: shared index scope, freshness, matching and interface contract
@@ -629,3 +631,14 @@ This section records the settings and checks at that checkpoint. The new-block l
 - All 25 repository test scripts passed. Astro check reported 0 errors, 0 warnings and 22 hints; root build, Studio-local TypeScript, Studio build and `git diff --check` passed. Studio build still reports its `appId` and local/runtime version warnings.
 - A production Studio bundle initially contained the local forwarded origin because it was passed to the resolver unconditionally; the development-only branch now permits build-time elimination, and the rebuilt Studio bundle and public assets have no forwarded hostname. Browser assets and public HTML also contained none of the preview secret variable names or cookie name. The temporary Viewer token was not in the process environment, so its value could not be compared.
 - Public queries retain published-only filters and the shared client uses the published perspective; unconfigured preview fails closed, `/preview` and `/dev` are excluded from the sitemap, and automatic FOSSGIS routing remains disabled.
+
+## 35. 2026-11-15 Guidance Hub and Topic Hub editorial redesign
+
+At this checkpoint on `feat/redesign-guidance-hub`, `/[lang]/info/` and `/[lang]/info/topic/[slug]/` were redesigned to match the Nordic editorial system of the News Hub while resolving two key UX gaps: surfacing recently published/updated Guides by default on the Guidance Hub and replacing uniform Topic Hub card grids.
+
+- Added pure composition and safe date helpers in `src/lib/guidanceHub.ts` (`composeGuidanceHub`, `composeTopicGuides`, `sortGuidesByRecency`, `formatGuideDate`, handling both ISO timestamps and `YYYY-MM-DD` review dates in `Europe/Oslo`).
+- Added scoped editorial hub components in `src/components/guidance/`: `GuidanceMasthead.astro` (quick-jump nav bar and totals), `GuidanceRecentPackage.astro` (urgent strip, `var(--surface-warm)` lead spotlight, and up to 5 newest guides sorted purely chronologically regardless of `isFeatured`), and `GuidanceTopicShowcase.astro` (up to 6 non-empty priority topic preview blocks + `var(--surface-muted)` 2-column directory band preserving `orderGuidanceHubTopics`, `GuidanceTopicIcon`, empty-topic handling, and `other` last).
+- Preserved Guidance-only substring search on `/[lang]/info/` (`#guide-search-input`, `buildGuideSearchText`, `matchesGuideSearch`), hiding `[data-recent-section]` and `[data-topics-section]` while a query is active, plus the neutral `.trust-notice` disclaimer and single `<main>` landmark via `BaseLayout`.
+- Redesigned `/[lang]/info/topic/[slug]/` with matching `border-top: 3px solid var(--civic-deep)` masthead, breadcrumbs, `GuidanceTopicIcon`, urgent notice strip, curated spotlight composition, 3-column hairline directory grid (removing `min-height: 22rem` cards), preserved localized empty states, and hub return navigation.
+- Preserved universal front-door positioning for all Nepali-speaking residents in Norway (no EU-only or arrival-route front-door segregation).
+- Added unit tests (`tests/content/guidanceHub.test.mjs`), updated presentation contract tests (`tests/content/guidanceHubPresentation.test.mjs`), added `"test:guidance-hub"` to `package.json`, and documented the design in `docs/guidance-hub.md` alongside `DEVELOPER_HANDOVER.md`. (Wiring `npm run test:guidance-hub` into `.github/workflows/validate-pull-request.yml` requires an owner/workflow-scoped GitHub token.)
