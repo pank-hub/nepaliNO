@@ -288,7 +288,6 @@ test('Guidance hub and editorial labels are localized in ne and nb', () => {
     'viewTopicGuides',
     'quickJumpLabel',
     'recentJumpLabel',
-    'topicsJumpLabel',
     'backToHub',
     'topicsCountLabel',
     'guidesCountLabel',
@@ -296,6 +295,14 @@ test('Guidance hub and editorial labels are localized in ne and nb', () => {
     assert.match(ne, new RegExp(`\\b${key}:`))
     assert.match(nb, new RegExp(`\\b${key}:`))
   }
+  assert.match(ne, /recentHeading:\s*"पछिल्ला तथा अद्यावधिक मार्गदर्शन"/)
+  assert.match(ne, /recentJumpLabel:\s*"नयाँ"/)
+  assert.doesNotMatch(ne, /\btopicsJumpLabel:/)
+  assert.doesNotMatch(nb, /\btopicsJumpLabel:/)
+  assert.match(masthead, /class="nav-recent"/)
+  assert.match(masthead, /class="nav-recent-pill"/)
+  assert.match(masthead, /class="nav-divider"/)
+  assert.doesNotMatch(masthead, /topicsJumpLabel|#topics-heading/)
 })
 
 test('homepage selection and shared search scope remain independent of complete Guidance taxonomy', () => {
