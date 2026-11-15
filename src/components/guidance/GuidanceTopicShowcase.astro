@@ -1,0 +1,350 @@
+---
+import GuidanceTopicIcon from '../content/GuidanceTopicIcon.astro'
+import {getTranslations} from '../../i18n'
+import type {SupportedLanguage} from '../../i18n/config'
+import {
+  guideHref,
+  topicHref,
+  type GuidanceTopicItem,
+  type GuidanceTopicShowcaseItem,
+} from '../../lib/guidanceHub'
+
+interface Props {
+  language: SupportedLanguage
+  coreTopics: GuidanceTopicShowcaseItem[]
+  directoryTopics: GuidanceTopicItem[]
+}
+
+const {language, coreTopics, directoryTopics} = Astro.props
+const labels = getTranslations(language).information
+
+function formatTopicCount(count: number): string {
+  const template = count === 1 ? labels.topicGuideCount.one : labels.topicGuideCount.other
+  return template.replace('{count}', String(count))
+}
+---
+
+<section class="topics-section section-sm" aria-labelledby="topics-heading" data-topics-section>
+  <h2 id="topics-heading" class="topics-heading">
+    {labels.topicHeading}
+  </h2>
+
+  {coreTopics.length > 0 && (
+    <div class="core-grid">
+      {coreTopics.map(({topic, previewGuides}) => (
+        <article
+          class="core-topic"
+          data-topic-key={topic.topicKey}
+          data-icon-key={topic.iconKey || topic.topicKey}
+          data-guide-count={topic.guideCount}
+        >
+          <div class="core-header">
+            <span class="topic-icon">
+              <GuidanceTopicIcon topicKey={topic.topicKey} />
+            </span>
+            <div class="core-titles">
+              <h3 id={`topic-title-${topic._id}`}>
+                <a href={topicHref(language, topic.slug)}>{topic.title}</a>
+              </h3>
+              <span class="topic-count">{formatTopicCount(topic.guideCount)}</span>
+            </div>
+          </div>
+
+          {topic.summary && <p class="core-summary">{topic.summary}</p>}
+
+          {previewGuides.length > 0 && (
+            <ul class="preview-list">
+              {previewGuides.map((guide) => (
+                <li>
+                  <a href={guideHref(language, guide.slug)}>
+                    <span>{guide.title}</span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <a class="view-all" href={topicHref(language, topic.slug)}>
+            <span>{labels.viewTopicGuides}</span>
+            <span aria-hidden="true">→</span>
+            <span class="sr-only"> {topic.title}</span>
+          </a>
+        </article>
+      ))}
+    </div>
+  )}
+
+  {directoryTopics.length > 0 && (
+    <div class="directory-band">
+      <h3 class="directory-heading">
+        {coreTopics.length > 0 ? labels.moreTopicsHeading : labels.topicDirectoryHeading}
+      </h3>
+      <ul
+        class="directory-list"
+        style={`--topic-rows: ${Math.max(1, Math.ceil(directoryTopics.length / 2))}`}
+      >
+        {directoryTopics.map((topic) => (
+          <li
+            data-topic-key={topic.topicKey}
+            data-icon-key={topic.iconKey || topic.topicKey}
+            data-guide-count={topic.guideCount}
+          >
+            <a
+              class="directory-link"
+              href={topicHref(language, topic.slug)}
+              aria-labelledby={`topic-title-${topic._id}`}
+            >
+              <span class="directory-main">
+                <span class="topic-icon">
+                  <GuidanceTopicIcon topicKey={topic.topicKey} />
+                </span>
+                <span class="directory-copy">
+                  <span id={`topic-title-${topic._id}`} class="directory-title">
+                    {topic.title}
+                  </span>
+                  <small class:list={{'is-empty': topic.guideCount === 0}}>
+                    {topic.guideCount === 0
+                      ? labels.noPublishedTopicGuides
+                      : formatTopicCount(topic.guideCount)}
+                  </small>
+                </span>
+              </span>
+              <span class="directory-arrow" aria-hidden="true">
+                →
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</section>
+
+<style>
+  .topics-section {
+    padding-block-start: 0.5rem;
+  }
+
+  .topics-heading {
+    margin: 0 0 1.35rem;
+    padding-block-end: 0.6rem;
+    border-bottom: 2px solid var(--civic-deep);
+    color: var(--civic-deep);
+    font-size: 1.6rem;
+  }
+
+  .core-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .core-topic {
+    display: grid;
+    align-content: start;
+    gap: 0.75rem;
+    min-width: 0;
+    padding-block-start: 1rem;
+    border-top: 2px solid var(--civic-deep);
+  }
+
+  .core-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .topic-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    margin-block-start: 0.15rem;
+    color: var(--civic-deep);
+  }
+
+  .core-titles {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .core-titles h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .core-titles h3 a {
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .core-titles h3 a:hover {
+    text-decoration: underline;
+  }
+
+  .topic-count {
+    color: var(--text-soft);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .core-summary {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+
+  .preview-list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .preview-list li {
+    min-width: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .preview-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding-block: 0.55rem;
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.45;
+    text-decoration: none;
+  }
+
+  .preview-list a:hover {
+    color: var(--civic-deep);
+    text-decoration: underline;
+  }
+
+  .view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+    min-height: 44px;
+    color: var(--civic-deep);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .view-all:hover {
+    text-decoration: underline;
+  }
+
+  .directory-band {
+    margin-block-start: 2.25rem;
+    padding: 1.25rem;
+    background: var(--surface-muted);
+  }
+
+  .directory-heading {
+    margin: 0 0 0.75rem;
+    color: var(--civic-deep);
+    font-size: 1.35rem;
+  }
+
+  .directory-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .directory-list li {
+    min-width: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .directory-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 48px;
+    padding-block: 0.7rem;
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .directory-link:hover .directory-title {
+    text-decoration: underline;
+  }
+
+  .directory-link:focus-visible,
+  .view-all:focus-visible,
+  .preview-list a:focus-visible,
+  .core-titles h3 a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .directory-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .directory-copy {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .directory-title {
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  .directory-copy small {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 400;
+  }
+
+  .directory-copy small.is-empty {
+    font-style: italic;
+  }
+
+  .directory-arrow {
+    flex: 0 0 auto;
+    color: var(--civic);
+    font-weight: 600;
+  }
+
+  @media (min-width: 48rem) {
+    .core-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.25rem 2rem;
+    }
+
+    .directory-band {
+      padding: 1.5rem 2rem;
+    }
+
+    .directory-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(var(--topic-rows), auto);
+      grid-auto-flow: column;
+      gap: 0 2rem;
+    }
+  }
+</style>
