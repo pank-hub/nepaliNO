@@ -86,8 +86,10 @@ function PathEditor({points, places, colour, dashed, readOnly, onCommit}: Editor
           center: [LOCATION_DEFAULTS.defaultCenter.lat, LOCATION_DEFAULTS.defaultCenter.lng],
           zoom: 12,
           scrollWheelZoom: false,
+          attributionControl: false,
           keyboard: true,
         })
+        L.control.attribution({prefix: 'nepali.no'}).addTo(map)
         map.on('click', (event) => {
           const current = latest.current
           if (current.readOnly) return

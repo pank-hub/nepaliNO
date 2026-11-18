@@ -82,7 +82,15 @@ export function createMapFullscreen(doc: Document, win: Window) {
     if (active && !active.dialog.open) close();
   };
   const onDialogClick = (event: Event) => {
-    if (event.target === active?.dialog.querySelector("[data-map-fullscreen-exit]")) close();
+    const exit = active?.dialog.querySelector("[data-map-fullscreen-exit]");
+    if (!exit) return;
+    const target = event.target as { closest?: (selector: string) => unknown } | null;
+    if (
+      target === exit ||
+      (typeof target?.closest === "function" && target.closest("[data-map-fullscreen-exit]") === exit)
+    ) {
+      close();
+    }
   };
 
   const open = (root: HTMLElement, map: LeafletMap) => {

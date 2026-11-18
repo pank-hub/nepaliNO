@@ -288,10 +288,10 @@ test("fullscreen rendering keeps controls and attribution in the existing map wi
     read("../../src/i18n/nb.ts"),
   ]);
   assert.match(renderer, /<dialog[^>]*data-map-fullscreen-dialog[^>]*aria-label/);
-  assert.match(renderer, /<div class="location-map__stage" data-map-stage>[\s\S]*?<\/div>\s*<\/div>\s*\{display\.showFullscreenControl && contextSidebar && \([\s\S]*?\)\}\s*\{contextSidebar && <MapPrivacy language=\{language\} \/>\}\s*\{display\.showFullscreenControl && \(\s*<dialog/);
-  assert.match(renderer, /data-map-fullscreen-open[^>]*aria-haspopup="dialog"[^>]*hidden/);
+  assert.match(renderer, /<div class="location-map__stage" data-map-stage>[\s\S]*data-map-fullscreen-open[\s\S]*<MapPrivacy language=\{language\} \/>[\s\S]*\{display\.showFullscreenControl && \(\s*<dialog/);
+  assert.match(renderer, /data-map-fullscreen-open[\s\S]*?aria-haspopup="dialog"[\s\S]*?hidden/);
   assert.match(renderer, /tiles\.once\("load"[\s\S]*?fullscreenButton\.hidden = false/);
-  assert.match(renderer, /tiles\.on\("tileerror"[\s\S]*?fullscreen\.close\(root, false\)/);
+  assert.match(renderer, /const failMap = \(\) => \{[\s\S]*?fullscreen\.close\(root, false\)[\s\S]*?tiles\.on\("tileerror"/);
   assert.match(renderer, /fullscreen\.close\(undefined, false\)/);
   assert.match(renderer, /data-map-fullscreen-exit/);
   assert.match(renderer, /height: 100dvh/);
@@ -459,7 +459,7 @@ test("renderer keeps text and privacy notice, defers tiles, and supports focus a
   assert.match(script, /layer\.openPopup\(\)/);
   assert.match(script, /bindPopup\(placeContent\(place, document\)\)/);
   assert.match(script, /tiles\.on\("tileerror"/);
-  assert.match(script, /tiles\.once\("load", \(\) => \{\s*if \(activeMaps\.get\(id\) !== record\) return;\s*setMapListLoaded\(root, true\)/);
+  assert.match(script, /tiles\.once\("load", \(\) => \{\s*if \(activeMaps\.get\(id\) !== record\) return;[\s\S]*?setMapListLoaded\(root, true\)/);
   assert.match(script, /const dispose = [\s\S]*?setMapListLoaded\(root, false\)/);
   assert.match(script, /keyboard: true,[\s\S]*?icon: createPlaceIcon/);
   assert.match(script, /marker\.getElement\(\)\?\.setAttribute\("aria-label", place\.label\)/);

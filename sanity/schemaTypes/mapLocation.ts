@@ -324,7 +324,8 @@ export const mapPresentation = defineType({
   name: 'mapPresentation',
   title: 'Map Presentation',
   type: 'object',
-  description: 'These settings use the existing Map Coordinates. Public maps load immediately and always offer fullscreen.',
+  options: {collapsible: true, collapsed: true},
+  description: 'Optional display overrides for the sidebar map (title, pin icon, caption, or path).',
   fields: [
     defineField({name: 'title', title: 'Public map title', type: 'string', validation: (rule) => rule.max(120)}),
     defineField({name: 'markerLabel', title: 'Public place or pin label', type: 'string', validation: (rule) => rule.max(80)}),
@@ -349,6 +350,18 @@ export const locationMap = defineType({
   name: 'locationMap',
   title: 'Location Map',
   type: 'object',
+  fieldsets: [
+    {
+      name: 'details',
+      title: 'Caption, source & path',
+      options: {collapsible: true, collapsed: true},
+    },
+    {
+      name: 'display',
+      title: 'Display options',
+      options: {collapsible: true, collapsed: true},
+    },
+  ],
   initialValue: {
     loadingBehavior: 'click',
     showViewOnMapActions: false,
@@ -372,7 +385,7 @@ export const locationMap = defineType({
       of: [{type: 'mapPlace'}],
       components: {input: MapPlacesInput},
       description:
-        'Add one or more locations. Use the list order for the text list. Approximate areas show a circle only; their centre is still public coordinate data, so never use a confidential address.',
+        'Add one or more locations. Approximate areas show a circle only; never use a confidential address.',
       validation: (rule) =>
         rule.custom((places, context) => {
           const parent = context.parent as {location?: unknown} | undefined
@@ -383,10 +396,19 @@ export const locationMap = defineType({
         }),
     }),
     defineField({
+      name: 'accessibleDescription',
+      title: 'Accessible Location Description',
+      type: 'text',
+      rows: 2,
+      description:
+        'Short summary of the mapped location(s) for screen readers and when the map is not loaded.',
+      validation: (rule) => rule.required().min(10).max(500),
+    }),
+    defineField({
       name: 'travelHelpEnabled',
       title: 'Offer travel assistance',
       type: 'boolean',
-      description: 'Optional. One exact location is used automatically; choose a destination when there are several. Approximate and legacy locations are not eligible.',
+      description: 'Optional public-transport planner (exact locations only).',
       validation: (rule) => rule.custom((value, context) =>
         mapTravelValidation({...context.parent as LocationMapBlock | undefined, travelHelpEnabled: value}) ?? true),
     }),
@@ -401,9 +423,31 @@ export const locationMap = defineType({
         mapTravelValidation((context.parent ?? {}) as LocationMapBlock) ?? true),
     }),
     defineField({
+      name: 'caption',
+      title: 'Optional Caption',
+      type: 'string',
+      fieldset: 'details',
+      validation: (rule) => rule.max(300),
+    }),
+    defineField({
+      name: 'sourceLabel',
+      title: 'Optional Source Label',
+      type: 'string',
+      fieldset: 'details',
+      validation: (rule) => rule.max(120),
+    }),
+    defineField({
+      name: 'sourceUrl',
+      title: 'Optional Source URL',
+      type: 'url',
+      fieldset: 'details',
+      validation: (rule) => rule.uri({scheme: ['http', 'https']}),
+    }),
+    defineField({
       name: 'initialZoom',
       title: 'Optional Initial Zoom (single exact location only)',
       type: 'number',
+      fieldset: 'details',
       description: 'Multi-location maps fit all locations automatically.',
       validation: (rule) =>
         rule.custom((zoom) =>
@@ -416,9 +460,29 @@ export const locationMap = defineType({
         ),
     }),
     defineField({
+      name: 'editorialPath',
+      title: 'Optional Highlighted Editorial Path (manually drawn)',
+      type: 'mapEditorialPath',
+      fieldset: 'details',
+      description:
+        'A path you draw by hand to highlight a journey or corridor. It is not a calculated driving route.',
+      validation: (rule) => [
+        rule.custom((path) => validateEditorialPath(path as never) ?? true),
+        rule
+          .custom((path, context) => {
+            const parent = context.parent as {locations?: unknown[]} | undefined
+            return editorialPathNeedsReview(path as never, parent?.locations as never)
+              ? 'Location coordinates changed since the path was drawn. Review the path.'
+              : true
+          })
+          .warning(),
+      ],
+    }),
+    defineField({
       name: 'loadingBehavior',
       title: 'Map loading behaviour',
       type: 'string',
+      fieldset: 'display',
       options: {
         list: [
           {title: 'Load automatically near the map', value: 'automatic'},
@@ -435,54 +499,38 @@ export const locationMap = defineType({
         ),
     }),
     defineField({
-      name: 'showViewOnMapActions',
-      title: 'Show “View on map” actions',
-      type: 'boolean',
-      description: 'Existing maps without a setting retain their location actions.',
-    }),
-    defineField({
-      name: 'showOpenStreetMapLinks',
-      title: 'Show “Open in OpenStreetMap” links',
-      type: 'boolean',
-      description: 'Existing maps without a setting retain their OpenStreetMap links. Approximate areas never have precise links.',
-    }),
-    defineField({
       name: 'showLocationList',
       title: 'Show location list below the map',
       type: 'boolean',
+      fieldset: 'display',
       description:
-        'When disabled, the list remains available to screen readers and appears if the map cannot load. Existing maps retain their list.',
+        'When disabled, the list remains available to screen readers and appears if the map cannot load.',
     }),
     defineField({
-      name: 'showOpenStreetMapControl',
-      title: 'Show “Open this map in OpenStreetMap” control',
+      name: 'showViewOnMapActions',
+      title: 'Show “View on map” actions',
       type: 'boolean',
-      description:
-        'Show one link for the map view. Existing blocks without this setting do not show it.',
+      fieldset: 'display',
+      description: 'Show a focus button next to each place in the list.',
     }),
     defineField({
       name: 'showFullscreenControl',
       title: 'Show fullscreen map control',
       type: 'boolean',
-      description: 'Expand the embedded map. Existing blocks without this setting do not show the control.',
+      fieldset: 'display',
+      description: 'Show the square fullscreen toggle inside the map.',
     }),
     defineField({
-      name: 'editorialPath',
-      title: 'Optional Highlighted Editorial Path (manually drawn)',
-      type: 'mapEditorialPath',
-      description:
-        'A path you draw by hand to highlight a journey or corridor. It is not a calculated driving route.',
-      validation: (rule) => [
-        rule.custom((path) => validateEditorialPath(path as never) ?? true),
-        rule
-          .custom((path, context) => {
-            const parent = context.parent as {locations?: unknown[]} | undefined
-            return editorialPathNeedsReview(path as never, parent?.locations as never)
-              ? 'Location coordinates changed since the path was drawn. Review the path.'
-              : true
-          })
-          .warning(),
-      ],
+      name: 'showOpenStreetMapLinks',
+      title: 'Show “Open in OpenStreetMap” links',
+      type: 'boolean',
+      hidden: true,
+    }),
+    defineField({
+      name: 'showOpenStreetMapControl',
+      title: 'Show “Open this map in OpenStreetMap” control',
+      type: 'boolean',
+      hidden: true,
     }),
     defineField({
       name: 'route',
@@ -504,33 +552,6 @@ export const locationMap = defineType({
       description:
         'Only present on maps created before multi-location support. It keeps working; add locations above to replace it.',
       hidden: ({value}) => !value,
-    }),
-    defineField({
-      name: 'caption',
-      title: 'Optional Caption',
-      type: 'string',
-      validation: (rule) => rule.max(300),
-    }),
-    defineField({
-      name: 'sourceLabel',
-      title: 'Optional Source Label',
-      type: 'string',
-      validation: (rule) => rule.max(120),
-    }),
-    defineField({
-      name: 'sourceUrl',
-      title: 'Optional Source URL',
-      type: 'url',
-      validation: (rule) => rule.uri({scheme: ['http', 'https']}),
-    }),
-    defineField({
-      name: 'accessibleDescription',
-      title: 'Accessible Location Description',
-      type: 'text',
-      rows: 3,
-      description:
-        'Describe the locations and any approximate boundary for screen-reader users. Required for every map so its information is available without the visual map.',
-      validation: (rule) => rule.required().min(10).max(500),
     }),
   ],
   preview: {

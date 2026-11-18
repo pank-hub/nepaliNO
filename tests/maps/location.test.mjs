@@ -35,14 +35,14 @@ test("OpenStreetMap navigation URLs are recognized by host, not by substring", (
   }
 });
 
-test("Event and Directory reuse their rail and render one immediate map followed by travel", async () => {
+test("Event and Directory reuse their rail and render one automatic sidebar map followed by travel", async () => {
   for (const path of ["../../src/pages/[lang]/events/[slug].astro", "../../src/pages/[lang]/directory/[slug].astro"]) {
     const page = await read(path);
     const main = page.slice(page.indexOf("<main"), page.indexOf("</main>"));
     const rail = page.slice(page.indexOf("<ContentContextRail"), page.indexOf("</ContentContextRail>"));
     assert.doesNotMatch(main, /<LocationMap|<TravelHelp/);
     assert.equal((rail.match(/<LocationMap/g) ?? []).length, 1);
-    assert.match(rail, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*immediate=\{true\}[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
+    assert.match(rail, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*loadingBehavior="automatic"[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
     assert.match(page, /isOpenStreetMapUrl\(/);
     assert.match(rail, /contextSidebar=\{true\}/);
     assert.match(rail, /<TravelHelp[^>]*defaultOpen=\{true\}/);
@@ -79,28 +79,40 @@ test("sidebar maps preserve original location panels and avoid generated duplica
   }
 });
 
-test("fullscreen control is below sidebar maps and above embedded maps with one rendered control", async () => {
+test("fullscreen control is a square icon inside map controls and brand badge sits inside the stage", async () => {
   const renderer = await read("../../src/components/content/LocationMap.astro");
-  const stage = renderer.indexOf('<div class="location-map__stage"');
-  const before = renderer.slice(renderer.indexOf('<figure'), stage);
-  const after = renderer.slice(stage, renderer.indexOf('<p\n        class="location-map__status"'));
-  assert.match(before, /display\.showFullscreenControl && !contextSidebar && \(/);
-  assert.equal((before.match(/data-map-fullscreen-open/g) ?? []).length, 1);
-  assert.match(after, /<\/div>\s*<\/div>\s*\{display\.showFullscreenControl && contextSidebar && \(/);
-  assert.equal((after.match(/data-map-fullscreen-open/g) ?? []).length, 1);
-  assert.match(after, /\{labels\.viewMapFullscreen\}/);
-  assert.match(after, /data-map-fullscreen-open[\s\S]*<MapPrivacy language=\{language\}/);
+  const stageStart = renderer.indexOf('<div class="location-map__stage"');
+  const controlsEnd = renderer.indexOf('<dialog', stageStart);
+  const stageHtml = renderer.slice(stageStart, controlsEnd);
+  assert.equal((renderer.match(/data-map-fullscreen-open/g) ?? []).length, 1);
+  assert.match(stageHtml, /class="location-map__controls"[\s\S]*data-map-fullscreen-open[\s\S]*<svg[\s\S]*data-map-zoom-in/);
+  assert.match(stageHtml, /data-map-brand[\s\S]*nepali\.no/);
+  assert.match(stageHtml, /<MapPrivacy language=\{language\}/);
+  assert.match(renderer, /attributionControl:\s*false/);
+  assert.match(renderer, /L\.control\.attribution\(\{\s*prefix:\s*"nepali\.no"\s*\}\)\.addTo\(map\)/);
 });
 
-test("sidebar spacing hides only empty rows and uses compact card and travel gaps without resizing the map", async () => {
+test("sidebar spacing hides empty status rows, keeps mobile touch panning enabled, and uses compact gaps", async () => {
   const renderer = await read("../../src/components/content/LocationMap.astro");
   const rail = await read("../../src/components/content/ContentContextRail.astro");
   assert.match(renderer, /\.location-map\.location-map--context\s*\{\s*padding-bottom: 1\.125rem/);
-  assert.match(renderer, /\.location-map--context \.location-map__status:empty/);
-  assert.match(renderer, /\.location-map--context \.location-map__actions\s*\{\s*display: contents/);
+  assert.match(renderer, /\.location-map__status:empty/);
   assert.match(rail, /\.context-map\)[\s\S]*?gap: 1\.375rem/);
   assert.match(rail, /\.context-map \.travel-help\)[\s\S]*?margin-block: 0/);
-  assert.match(renderer, /height: clamp\(18rem, 55vw, 32rem\);\s*min-height: 18rem/);
+  assert.match(renderer, /height: clamp\(18rem, 55vw, 32rem\);\s*min-height: 18rem[\s\S]*touch-action: none/);
+});
+
+test("Studio schemas collapse secondary options and Studio editors use bundled SVG pins", async () => {
+  const [schema, singleInput, placesInput] = await Promise.all([
+    read("../../sanity/schemaTypes/mapLocation.ts"),
+    read("../../sanity/components/MapLocationInput.tsx"),
+    read("../../sanity/components/MapPlacesInput.tsx"),
+  ]);
+  assert.match(schema, /name: 'details'[\s\S]*collapsible: true,\s*collapsed: true/);
+  assert.match(schema, /name: 'display'[\s\S]*collapsible: true,\s*collapsed: true/);
+  assert.match(schema, /export const mapPresentation[\s\S]*collapsible: true,\s*collapsed: true/);
+  assert.match(singleInput, /createPlaceIcon\(L,\s*'pin'\)/);
+  assert.match(placesInput, /createPlaceIcon\(L,\s*'pin'\)/);
 });
 
 test("shared map retains interactive controls and attribution without OSM navigation", async () => {

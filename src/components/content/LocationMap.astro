@@ -118,7 +118,7 @@ const legacy = isLegacyBlock({ location, locations });
 const error =
   places.length === 0
     ? ((legacy ? validateMapLocation(location) : validatePlaces(locations)) ??
-      "Choose a map location.")
+      labels.failed)
     : undefined;
 const route = places.length > 0 ? publicRoute(routeInput, places) : undefined;
 const path = places.length > 0 ? publicEditorialPath(pathInput) : undefined;
@@ -225,39 +225,63 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     >
       {!contextSidebar && title && <h2 class="location-map__title">{title}</h2>}
       {!contextSidebar && <p class="location-map__description">{description}</p>}
-      {!contextSidebar && <p class="location-map__external-notice">{labels.externalNotice}</p>}
-      {display.showFullscreenControl && !contextSidebar && (
-        <button type="button" class="location-map__fullscreen-open" data-map-fullscreen-open aria-haspopup="dialog" aria-controls={`${mapId}-fullscreen`} hidden>
-          {labels.viewMapFullscreen}
-        </button>
-      )}
       <div class="location-map__stage" data-map-stage>
+        <div class="location-map__placeholder" data-map-placeholder hidden={immediate}>
+          <button type="button" class="location-map__load" data-map-load hidden={immediate}>
+            {labels.load}
+          </button>
+          {!contextSidebar && <p class="location-map__external-notice">{labels.externalNotice}</p>}
+        </div>
         <div
           class="location-map__canvas"
           data-map-canvas
           hidden
           aria-hidden="true"
         />
+        <div class="location-map__brand" data-map-brand hidden aria-hidden="true">
+          <span class="location-map__brand-dot" aria-hidden="true"></span>
+          <span>nepali.no</span>
+        </div>
         <div class="location-map__controls" data-map-controls hidden>
-          <button type="button" data-map-zoom-in aria-label={labels.zoomIn}>
+          {display.showFullscreenControl && (
+            <button
+              type="button"
+              class="location-map__control-icon"
+              data-map-fullscreen-open
+              aria-label={labels.viewMapFullscreen}
+              title={labels.viewMapFullscreen}
+              aria-haspopup="dialog"
+              aria-controls={`${mapId}-fullscreen`}
+              hidden
+            >
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4" />
+              </svg>
+            </button>
+          )}
+          <button type="button" data-map-zoom-in aria-label={labels.zoomIn} title={labels.zoomIn}>
             +
           </button>
-          <button type="button" data-map-zoom-out aria-label={labels.zoomOut}>
+          <button type="button" data-map-zoom-out aria-label={labels.zoomOut} title={labels.zoomOut}>
             −
           </button>
         </div>
       </div>
-      {display.showFullscreenControl && contextSidebar && (
-        <button type="button" class="location-map__fullscreen-open" data-map-fullscreen-open aria-haspopup="dialog" aria-controls={`${mapId}-fullscreen`} hidden>
-          {labels.viewMapFullscreen}
-        </button>
-      )}
+      {immediate && <noscript><p class="location-map__status">{labels.failed}</p></noscript>}
       {contextSidebar && <MapPrivacy language={language} />}
       {display.showFullscreenControl && (
         <dialog id={`${mapId}-fullscreen`} class="location-map__fullscreen" data-map-fullscreen-dialog aria-label={labels.viewMapFullscreen}>
-          <div class="location-map__fullscreen-header">
-            <button type="button" data-map-fullscreen-exit>{labels.exitMapFullscreen}</button>
-          </div>
+          <button
+            type="button"
+            class="location-map__fullscreen-exit"
+            data-map-fullscreen-exit
+            aria-label={labels.exitMapFullscreen}
+            title={labels.exitMapFullscreen}
+          >
+            <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M3 7h4V3M17 7h-4V3M13 17v-4h4M7 17v-4H3" />
+            </svg>
+          </button>
         </dialog>
       )}
       <p
@@ -266,12 +290,6 @@ const mapId = `location-map-${crypto.randomUUID()}`;
         role="status"
         aria-live="polite"
       />
-      <div class="location-map__actions">
-        <button type="button" class="location-map__load" data-map-load hidden={immediate}>
-          {labels.load}
-        </button>
-        {immediate && <noscript><p>{labels.failed}</p></noscript>}
-      </div>
       {showList && (
         <section class="location-map__places">
           <h3 class="location-map__subheading">{labels.locationsList}</h3>
@@ -444,6 +462,10 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     setMapListLoaded(root, false);
     const fullscreenButton = root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
     if (fullscreenButton) fullscreenButton.hidden = true;
+    const brand = root.querySelector<HTMLElement>("[data-map-brand]");
+    if (brand) brand.hidden = true;
+    const placeholder = root.querySelector<HTMLElement>("[data-map-placeholder]");
+    if (placeholder) placeholder.hidden = false;
     const id = root.dataset.mapId;
     if (!id) return;
     activeMaps.get(id)?.map.remove();
@@ -459,11 +481,14 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     const canvas = root.querySelector<HTMLElement>("[data-map-canvas]");
     const button = root.querySelector<HTMLButtonElement>("[data-map-load]");
     const controls = root.querySelector<HTMLElement>("[data-map-controls]");
+    const placeholder = root.querySelector<HTMLElement>("[data-map-placeholder]");
+    const brand = root.querySelector<HTMLElement>("[data-map-brand]");
     const places = readPlaces(root.dataset.places);
     const zoom = Number(root.dataset.zoom);
     if (!canvas || !button || !controls || places.length === 0) {
       announce(root, root.dataset.failedLabel ?? "");
       if (button) button.hidden = false;
+      if (placeholder) placeholder.hidden = false;
       return;
     }
 
@@ -475,11 +500,13 @@ const mapId = `location-map-${crypto.randomUUID()}`;
         button.disabled = false;
         return;
       }
+      if (placeholder) placeholder.hidden = true;
       canvas.hidden = false;
       canvas.setAttribute("aria-hidden", "false");
       canvas.setAttribute("role", "region");
       canvas.setAttribute("aria-label", root.dataset.description ?? "");
       controls.hidden = false;
+      if (brand) brand.hidden = false;
       const map = L.map(canvas, {
         center: [places[0].lat, places[0].lng],
         zoom: Number.isFinite(zoom) && root.dataset.zoom !== "" ? zoom : 13,
@@ -487,7 +514,9 @@ const mapId = `location-map-${crypto.randomUUID()}`;
         keyboard: true,
         scrollWheelZoom: false,
         zoomControl: false,
+        attributionControl: false,
       });
+      L.control.attribution({ prefix: "nepali.no" }).addTo(map);
       const tiles = L.tileLayer(root.dataset.tileUrl ?? "", {
         attribution: root.dataset.attribution ?? "",
         maxZoom: Number(root.dataset.maxZoom),
@@ -583,20 +612,35 @@ const mapId = `location-map-${crypto.randomUUID()}`;
           `${root.dataset.description ?? ""}. ${radiusLabel}`,
         );
       }
-      tiles.on("tileerror", () => {
+      let loadedTiles = 0;
+      let erroredTiles = 0;
+      const failMap = () => {
+        if (activeMaps.get(id) !== record) return;
         const wasFullscreen = fullscreen.close(root, false);
         dispose(root);
         canvas.hidden = true;
         canvas.setAttribute("aria-hidden", "true");
         controls.hidden = true;
+        if (placeholder) placeholder.hidden = false;
         announce(root, root.dataset.failedLabel ?? "");
         button.hidden = false;
         button.disabled = false;
         button.textContent = root.dataset.loadLabel ?? "";
         if (wasFullscreen) button.focus();
+      };
+      tiles.on("tileload", () => {
+        loadedTiles += 1;
+      });
+      tiles.on("tileerror", () => {
+        erroredTiles += 1;
+        if (loadedTiles === 0 && erroredTiles >= 4) failMap();
       });
       tiles.once("load", () => {
         if (activeMaps.get(id) !== record) return;
+        if (loadedTiles === 0 && erroredTiles > 0) {
+          failMap();
+          return;
+        }
         setMapListLoaded(root, true);
         const fullscreenButton = root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
         if (fullscreenButton) fullscreenButton.hidden = false;
@@ -612,6 +656,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       canvas.hidden = true;
       canvas.setAttribute("aria-hidden", "true");
       controls.hidden = true;
+      if (placeholder) placeholder.hidden = false;
       button.hidden = false;
       button.disabled = false;
       announce(root, root.dataset.failedLabel ?? "");
@@ -705,6 +750,10 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       setMapListLoaded(record.root, false);
       const fullscreenButton = record.root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
       if (fullscreenButton) fullscreenButton.hidden = true;
+      const brand = record.root.querySelector<HTMLElement>("[data-map-brand]");
+      if (brand) brand.hidden = true;
+      const placeholder = record.root.querySelector<HTMLElement>("[data-map-placeholder]");
+      if (placeholder) placeholder.hidden = false;
       record.map.remove();
       const canvas = record.root.querySelector<HTMLElement>("[data-map-canvas]");
       if (canvas) {
@@ -750,8 +799,26 @@ const mapId = `location-map-${crypto.randomUUID()}`;
   }
 
   .location-map__external-notice {
+    max-width: 34ch;
+    margin: 0;
     color: var(--text-muted, #526273);
-    font-size: 0.875rem;
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  .location-map__placeholder {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0.65rem;
+    min-height: 10.5rem;
+    padding: 1.5rem 1rem;
+    border: 1px solid var(--border, #dce4ec);
+    border-radius: 0.5rem;
+    background:
+      radial-gradient(circle at 20% 20%, rgb(255 255 255 / 0.8), transparent 60%),
+      linear-gradient(135deg, #f3f6fa 0%, #e9eff6 100%);
+    text-align: center;
   }
 
   .location-map__canvas {
@@ -761,7 +828,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     overflow: hidden;
     border-radius: 0.5rem;
     background: #e8eef5;
-    touch-action: pan-y;
+    touch-action: none;
   }
 
   .location-map [hidden] {
@@ -772,52 +839,43 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     position: relative;
   }
 
-  .location-map__map-link-bar {
-    display: flex;
-    justify-content: flex-start;
+  .location-map__brand {
+    position: absolute;
+    z-index: 450;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.22rem 0.55rem;
+    border: 1px solid rgb(23 37 52 / 0.14);
+    border-radius: 999px;
+    background: rgb(253 252 249 / 0.92);
+    backdrop-filter: blur(4px);
+    color: var(--civic-deep, #172534);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    box-shadow: 0 1px 4px rgb(23 37 52 / 0.12);
+    pointer-events: none;
+    user-select: none;
   }
 
-  .location-map__map-link-bar a:not([hidden]) {
-    display: inline-block;
-    padding: 0.4rem 0.6rem;
-    font-size: 0.875rem;
-  }
-
-  .location-map__fullscreen-open,
-  .location-map__fullscreen-header button {
-    min-height: 2.75rem;
-    padding: 0.4rem 0.75rem;
-    border: 1px solid var(--border-strong, #bdcad7);
-    border-radius: 0.5rem;
-    background: var(--surface, #fff);
-    color: var(--text, #172534);
-    font: inherit;
-    cursor: pointer;
-  }
-
-  .location-map__fullscreen-open {
-    margin: 0 0 0.5rem;
-  }
-
-  .location-map--context > .location-map__fullscreen-open {
-    margin: 0.5rem 0 0;
-    border: 0;
-    background: transparent;
-    padding-inline: 0;
-    text-decoration: underline;
-    text-underline-offset: 0.15em;
+  .location-map__brand-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--brand, #c62a1f);
+    flex: none;
   }
 
   .location-map.location-map--context {
     padding-bottom: 1.125rem;
   }
 
-  .location-map--context .location-map__status:empty {
+  .location-map__status:empty {
     display: none;
-  }
-
-  .location-map--context .location-map__actions {
-    display: contents;
   }
 
   .location-map__fullscreen[open] {
@@ -832,17 +890,37 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     max-height: none;
     box-sizing: border-box;
     margin: 0;
-    padding: 0 0 env(safe-area-inset-bottom);
+    padding: 0;
     border: 0;
     background: var(--surface, #fff);
     overscroll-behavior: contain;
   }
 
-  .location-map__fullscreen-header {
-    flex: none;
-    display: flex;
-    justify-content: flex-end;
-    padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) 0.5rem max(0.5rem, env(safe-area-inset-left));
+  .location-map__fullscreen[open] [data-map-fullscreen-open] {
+    display: none !important;
+  }
+
+  .location-map__fullscreen[open] .location-map__controls {
+    top: calc(max(0.5rem, env(safe-area-inset-top)) + 2.75rem + 0.35rem);
+    right: max(0.5rem, env(safe-area-inset-right));
+  }
+
+  .location-map__fullscreen-exit {
+    position: absolute;
+    z-index: 600;
+    top: max(0.5rem, env(safe-area-inset-top));
+    right: max(0.5rem, env(safe-area-inset-right));
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid var(--border-strong, #bdcad7);
+    border-radius: 0.5rem;
+    background: var(--surface, #fff);
+    color: var(--text, #172534);
+    box-shadow: 0 1px 4px rgb(23 37 52 / 0.14);
+    cursor: pointer;
   }
 
   .location-map__fullscreen .location-map__stage {
@@ -855,6 +933,11 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     min-height: 0;
     border-radius: 0;
     touch-action: none;
+  }
+
+  .location-map__fullscreen .location-map__brand {
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    left: max(0.5rem, env(safe-area-inset-left));
   }
 
   .location-map__controls {
@@ -877,24 +960,36 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+    box-shadow: 0 1px 4px rgb(23 37 52 / 0.14);
+  }
+
+  .location-map__controls button {
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+
+  .location-map__controls button svg,
+  .location-map__fullscreen-exit svg {
+    display: block;
+    pointer-events: none;
   }
 
   .location-map__load {
-    padding: 0.65rem 1rem;
+    padding: 0.65rem 1.15rem;
+    border-color: var(--civic-deep, #172534);
     background: var(--civic-deep, #172534);
     color: #fff;
   }
 
   .location-map__controls button:focus-visible,
-  .location-map__fullscreen-open:focus-visible,
-  .location-map__fullscreen-header button:focus-visible,
+  .location-map__fullscreen-exit:focus-visible,
   .location-map__load:focus-visible,
   .location-map a:focus-visible {
     outline: 3px solid var(--focus, #2563eb);
     outline-offset: 2px;
   }
 
-  .location-map__actions,
   .location-map__caption {
     display: flex;
     flex-wrap: wrap;

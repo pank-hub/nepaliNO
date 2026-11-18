@@ -118,8 +118,10 @@ export function MapPlacesInput(props: ArrayOfObjectsInputProps) {
           center: [LOCATION_DEFAULTS.defaultCenter.lat, LOCATION_DEFAULTS.defaultCenter.lng],
           zoom: LOCATION_DEFAULTS.exactZoom,
           scrollWheelZoom: false,
+          attributionControl: false,
           keyboard: true,
         })
+        L.control.attribution({prefix: 'nepali.no'}).addTo(map)
         map.on('click', (event: LeafletMouseEvent) => {
           moveSelected(event.latlng.lat, event.latlng.lng)
         })
@@ -193,6 +195,7 @@ export function MapPlacesInput(props: ArrayOfObjectsInputProps) {
           const centre = L.marker([point.lat, point.lng], {
             draggable: !readOnly,
             title: 'Circle centre (editor only, public coordinate data)',
+            icon: createPlaceIcon(L, 'pin'),
           }).addTo(layer)
           centre.on('dragend', () => {
             const next = centre.getLatLng()
@@ -290,32 +293,26 @@ export function MapPlacesInput(props: ArrayOfObjectsInputProps) {
 
   return (
     <Stack space={3}>
-      <Card padding={3} radius={2} tone="caution" border>
-        <Text size={1}>
-          Approximate areas show a circle only, but the circle centre is still stored as public
-          coordinate data. Choose a safe approximate centre, never a confidential address. Searching
-          does not send anything automatically: the link below opens OpenStreetMap in a new tab.
-        </Text>
-      </Card>
-
-      <Flex gap={2} wrap="wrap">
-        <TextInput
-          aria-label="Search text for OpenStreetMap"
-          placeholder="Place or public address to look up"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.currentTarget.value)}
-        />
+      <Flex gap={2} wrap="wrap" align="center">
+        <div style={{flex: 1, minWidth: 200}}>
+          <TextInput
+            aria-label="Search text for OpenStreetMap"
+            placeholder="Search public place on OpenStreetMap…"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.currentTarget.value)}
+          />
+        </div>
         {searchQuery.trim() ? (
           <Button
             as="a"
             href={searchOpenStreetMap(searchQuery)}
             target="_blank"
             rel="noopener noreferrer"
-            text="Search on OpenStreetMap"
+            text="Search OSM"
             mode="ghost"
           />
         ) : (
-          <Button text="Search on OpenStreetMap" mode="ghost" disabled />
+          <Button text="Search OSM" mode="ghost" disabled />
         )}
       </Flex>
 
@@ -323,7 +320,7 @@ export function MapPlacesInput(props: ArrayOfObjectsInputProps) {
         ref={mapElement}
         role="region"
         aria-label="Map of all locations. Click the map to move the selected location."
-        style={{height: 360, borderRadius: 4, overflow: 'hidden', background: '#e8eef5'}}
+        style={{height: 320, borderRadius: 6, overflow: 'hidden', background: '#e8eef5'}}
       />
       {mapError && (
         <Card padding={3} tone="critical" radius={2}>
@@ -371,10 +368,10 @@ export function MapPlacesInput(props: ArrayOfObjectsInputProps) {
         <Card padding={3} border radius={2}>
           <Stack space={3}>
             <Text weight="semibold" size={1}>
-              Editing location {selectedIndex + 1} of {places.length}
+              Location {selectedIndex + 1} of {places.length}
             </Text>
             <label>
-              <Text size={1}>Label (required, shown on the public map and list)</Text>
+              <Text size={1}>Label (required)</Text>
               <TextInput
                 value={selected.label ?? ''}
                 disabled={readOnly}
@@ -384,97 +381,112 @@ export function MapPlacesInput(props: ArrayOfObjectsInputProps) {
                 }
               />
             </label>
-            <label>
-              <Text size={1}>Optional description</Text>
-              <TextArea
-                rows={2}
-                value={selected.description ?? ''}
-                disabled={readOnly}
-                onChange={(event) =>
-                  selected._key &&
-                  updatePlace(selected._key, {
-                    description: event.currentTarget.value || undefined,
-                  })
-                }
-              />
-            </label>
             <Flex gap={2} wrap="wrap">
-              <label>
-                <Text size={1}>Latitude</Text>
-                <TextInput
-                  inputMode="decimal"
-                  value={latitude}
+              <label style={{flex: 1, minWidth: 160}}>
+                <Text size={1}>Precision</Text>
+                <Select
+                  value={selected.precision === 'approximate' ? 'approximate' : 'exact'}
                   disabled={readOnly}
-                  onChange={(event) => changeLatLng(event.currentTarget.value, longitude)}
-                />
+                  onChange={(event) =>
+                    changePrecision(event.currentTarget.value as LocationPrecision)
+                  }
+                >
+                  <option value="exact">Exact pin</option>
+                  <option value="approximate">Approximate area (circle, no pin)</option>
+                </Select>
               </label>
-              <label>
-                <Text size={1}>Longitude</Text>
-                <TextInput
-                  inputMode="decimal"
-                  value={longitude}
-                  disabled={readOnly}
-                  onChange={(event) => changeLatLng(latitude, event.currentTarget.value)}
-                />
-              </label>
+              {selected.precision === 'approximate' ? (
+                <label style={{flex: 1, minWidth: 160}}>
+                  <Text size={1}>Radius in metres (50–100000)</Text>
+                  <TextInput
+                    inputMode="numeric"
+                    value={String(selected.radiusMeters ?? '')}
+                    disabled={readOnly}
+                    onChange={(event) => {
+                      const radius = readNumber(event.currentTarget.value)
+                      if (selected._key) updatePlace(selected._key, {radiusMeters: radius})
+                    }}
+                  />
+                </label>
+              ) : (
+                <label style={{flex: 1, minWidth: 160}}>
+                  <Text size={1}>Pin icon</Text>
+                  <Select
+                    value={iconForPlace(selected)}
+                    disabled={readOnly}
+                    onChange={(event) =>
+                      selected._key &&
+                      updatePlace(selected._key, {icon: event.currentTarget.value as PlaceIcon})
+                    }
+                  >
+                    {PLACE_ICONS.map((icon) => (
+                      <option key={icon} value={icon}>
+                        {ICON_TITLES[icon]}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+              )}
             </Flex>
+            {selected.precision === 'approximate' && (
+              <Card padding={2} radius={2} tone="caution" border>
+                <Text size={1}>
+                  The circle centre is still public coordinate data. Choose a safe approximate
+                  centre, never a confidential address.
+                </Text>
+              </Card>
+            )}
+            <details>
+              <summary style={{cursor: 'pointer', fontSize: 13, color: '#526273'}}>
+                Optional description &amp; manual coordinates
+              </summary>
+              <Stack space={3} style={{marginTop: 12}}>
+                <label>
+                  <Text size={1}>Optional description</Text>
+                  <TextArea
+                    rows={2}
+                    value={selected.description ?? ''}
+                    disabled={readOnly}
+                    onChange={(event) =>
+                      selected._key &&
+                      updatePlace(selected._key, {
+                        description: event.currentTarget.value || undefined,
+                      })
+                    }
+                  />
+                </label>
+                <Flex gap={2} wrap="wrap">
+                  <label style={{flex: 1, minWidth: 140}}>
+                    <Text size={1}>Latitude</Text>
+                    <TextInput
+                      inputMode="decimal"
+                      value={latitude}
+                      disabled={readOnly}
+                      onChange={(event) => changeLatLng(event.currentTarget.value, longitude)}
+                    />
+                  </label>
+                  <label style={{flex: 1, minWidth: 140}}>
+                    <Text size={1}>Longitude</Text>
+                    <TextInput
+                      inputMode="decimal"
+                      value={longitude}
+                      disabled={readOnly}
+                      onChange={(event) => changeLatLng(latitude, event.currentTarget.value)}
+                    />
+                  </label>
+                </Flex>
+              </Stack>
+            </details>
             {coordinateError && (
               <Text size={1} style={{color: '#b42318'}}>
                 {coordinateError}
               </Text>
             )}
-            <label>
-              <Text size={1}>Precision</Text>
-              <Select
-                value={selected.precision === 'approximate' ? 'approximate' : 'exact'}
-                disabled={readOnly}
-                onChange={(event) =>
-                  changePrecision(event.currentTarget.value as LocationPrecision)
-                }
-              >
-                <option value="exact">Exact pin</option>
-                <option value="approximate">Approximate area (circle, no pin)</option>
-              </Select>
-            </label>
-            {selected.precision === 'approximate' ? (
-              <label>
-                <Text size={1}>Radius in metres (50 to 100000)</Text>
-                <TextInput
-                  inputMode="numeric"
-                  value={String(selected.radiusMeters ?? '')}
-                  disabled={readOnly}
-                  onChange={(event) => {
-                    const radius = readNumber(event.currentTarget.value)
-                    if (selected._key) updatePlace(selected._key, {radiusMeters: radius})
-                  }}
-                />
-              </label>
-            ) : (
-              <label>
-                <Text size={1}>Icon (the text label is always shown too)</Text>
-                <Select
-                  value={iconForPlace(selected)}
-                  disabled={readOnly}
-                  onChange={(event) =>
-                    selected._key &&
-                    updatePlace(selected._key, {icon: event.currentTarget.value as PlaceIcon})
-                  }
-                >
-                  {PLACE_ICONS.map((icon) => (
-                    <option key={icon} value={icon}>
-                      {ICON_TITLES[icon]}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-            )}
             <Text size={1} muted>
-              Saved value:{' '}
+              Saved:{' '}
               {selected.coordinates
-                ? `${selected.coordinates.lat}, ${selected.coordinates.lng}`
+                ? `${selected.coordinates.lat.toFixed(5)}, ${selected.coordinates.lng.toFixed(5)}`
                 : 'no coordinates yet'}
-              {' · key '}
-              <code>{selected._key}</code>
             </Text>
             {selectedError && (
               <Text size={1} style={{color: '#b42318'}}>
