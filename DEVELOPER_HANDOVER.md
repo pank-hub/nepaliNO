@@ -3,7 +3,7 @@
 **Status date:** 19 November 2026
 **Repository:** `pank-hub/nepaliNO`
 **Current owner & final decision-maker:** Pankaj Kafley
-**Current `main` checkpoint:** `87c2438` (`PR #132` interactive editorial charts, squash-merged 19 November 2026)
+**Current `main` checkpoint:** `f2f2235` (`PR #134` Nepalis in Norway SSB stats hub & Sanity chart importer, squash-merged 19 November 2026)
 **Production deployment status:** Verify the deployed Vercel revision independently; a merged commit is not proof of deployment.
 
 ---
@@ -22,6 +22,8 @@ This document is the **single canonical handover and operations handbook** for a
 
 | PR / SHA | Date | Scope | Key Operational Impact |
 | :--- | :--- | :--- | :--- |
+| `#134` (`f2f2235`) | 2026-11-19 | Nepalis in Norway Stats Hub & SSB Importer | Added `/ne/stats/` SSR hub (`12h` CDN cache + snapshot fallback across 7 SSB PxWebApi v2 tables) with interactive charts & MapLibre city map, plus Sanity Studio `Import from SSB` tool on `editorialChart`. |
+| `#133` (`dd20bf5`) | 2026-11-19 | Docs consolidation | Consolidated handover, progress archive (`PROJECT_PROGRESS_ARCHIVE_TO_2026-11-19.md`), and Gigahost/Discourse runbook into `DEVELOPER_HANDOVER.md`. |
 | `#132` (`87c2438`) | 2026-11-19 | Interactive editorial charts | Progressive tooltips, crosshair snapping, keyboard arrows, legend series toggles, donut center readout, scroll reveal, `Chart \| Table` toggle, UTF-8 BOM CSV export, `nepali.no` footer badge. |
 | `#131` (`4e478b2`) | 2026-11-19 | MapLibre GL + OpenFreeMap public maps | Public renderer switched to vector tiles (`tiles.openfreemap.org`) with `editorial` (NRK-inspired calm vector + Norway inset) & `city` styles; privacy fallback copy updated. |
 | `#130` (`638edc6`) | 2026-11-19 | Map Studio & UX polish | Simplified Sanity map fields, bundled SVG Studio markers, moved fullscreen button inside map controls, added `nepali.no` badge & touch panning polish. |
@@ -44,7 +46,7 @@ nepali.no runs across separate managed services. **For an ownership handover, tr
 | **Transactional Email** | Resend | Sender domain `notifications.nepali.no` | Transfer Resend account; keep Forum SMTP credential (`resend` user, `smtp.resend.com:587`) separate from Astro Event/Directory submission notification keys. |
 | **Forum VPS & Database** | Gigahost AS (`NO DC2`, Sandefjord) | Ubuntu 24.04 LTS (2 vCPU, 4 GB RAM, 40 GB NVMe); `https://forum.nepali.no` (`forum-poc.nepali.no` redirect alias) | Transfer Gigahost billing/control panel; add new owner's Ed25519 SSH key to server (`AllowUsers`) and remove departing SSH keys; transfer Discourse Administrator account & test a clean backup restore. |
 | **API Rate Limiting** | Upstash Redis (Pay as You Go) | `eu-central-1` (Frankfurt), \$20 budget cap | Transfer Upstash org/billing; confirm REST URL/token stay server-only in Vercel for `/api/entur/*`. |
-| **Maps & Travel Data** | OpenFreeMap / OSM / Entur | `https://tiles.openfreemap.org`, OpenStreetMap, Entur | No API keys required for OpenFreeMap; verify Entur provider terms & `ENTUR_TRAVEL_API_ENABLED` flag before public activation. Update live Sanity `trustPage` (`privacy`) wording to `tiles.openfreemap.org`. |
+| **Maps, Travel & Public Stats** | OpenFreeMap / OSM / Entur / SSB | `https://tiles.openfreemap.org`, OpenStreetMap, Entur, `https://data.ssb.no/api/pxwebapi/v2/` | No API keys required for OpenFreeMap or SSB (`CC BY 4.0` attribution); verify Entur provider terms & `ENTUR_TRAVEL_API_ENABLED` flag before public activation. Update live Sanity `trustPage` (`privacy`) wording to `tiles.openfreemap.org`. |
 
 ---
 
@@ -72,7 +74,7 @@ nepali.no runs across separate managed services. **For an ownership handover, tr
 
 ### Per-language section availability (`src/config/languageSections.ts`)
 
-`isSectionEnabled(language, section)` gates header/footer links, homepage modules, News archive Guide promos, Companion Forum/Guide cards, Contact items, submission language switchers, and `getStaticPaths()` generation. Today `nb` publishes News only; `src/pages/nb/{info,events,directory}/[...slug].astro` serve temporary `302` redirects to `/nb/`. Before re-enabling a `nb` section: flip its flag, remove the corresponding redirect route, publish Norwegian content, update `npm run test:language-sections`, and review `nb` hero/About/Privacy copy and `nb` Forum automation templates.
+`isSectionEnabled(language, section)` gates header/footer links, homepage modules, News archive Guide promos, Companion Forum/Guide cards, Contact items, submission language switchers, the `/[lang]/stats/` hub, and `getStaticPaths()` generation. Today `nb` publishes News only; `src/pages/nb/{info,events,directory}/[...slug].astro` and `src/pages/nb/stats/index.astro` serve temporary `302` redirects to `/nb/`. Before re-enabling a `nb` section: flip its flag, remove the corresponding redirect route, publish Norwegian content, update `npm run test:language-sections`, and review `nb` hero/About/Privacy copy and `nb` Forum automation templates.
 
 ### Homepage & Shared Published-Content Search
 
@@ -107,6 +109,16 @@ nepali.no runs across separate managed services. **For an ownership handover, tr
   - `IntersectionObserver` scroll-reveal bar growth and Web Animations API line draw-in respect `prefers-reduced-motion: reduce`.
   - Header segmented `Chart | Table` switcher, client-side UTF-8 BOM CSV export (formula triggers escaped safely), and a subtle `nepali.no` footer badge.
 - **Verification:** `node --experimental-strip-types --test tests/editorialChart/editorialChart.test.mjs` (44 tests including `jsdom` interaction & CSV escaping).
+
+### Nepalis in Norway Stats Hub (`/[lang]/stats/`) & SSB API Importer (`PR #134`)
+
+- **Public `/ne/stats/` Hub (`src/pages/[lang]/stats/index.astro`, `src/lib/ssb/`):**
+  - Renders on-demand (`export const prerender = false`) with `Cache-Control: public, s-maxage=43200, stale-while-revalidate=86400` (12h Vercel edge CDN cache) and is included in the sitemap via `astro.config.mjs` `customPages`.
+  - Fetches live `json-stat2` data from **SSB PxWebApi v2** (`https://data.ssb.no/api/pxwebapi/v2/`, free, no API key, `CC BY 4.0` attribution, ~30 queries/min cap, avoid automated bulk runs 07:55–08:15 Oslo time) across 7 official tables (`13880`, `05184`, `05196`, `04767`, `09817`, `12557`, `09623`) with 4.5s timeouts and falls back cleanly per dataset to `src/lib/ssb/snapshots/nepalStatsSnapshot.json`.
+  - Displays KPI cards, 5 interactive `EditorialChart` visualizations (`population`, `naturalisations`, `municipalities`, `occupations`, `education`), a click-to-load NRK-style `LocationMap` plotting the top 10 Norwegian municipalities, and a methodology section explaining why Norway lacks a spoken-language register and how `Landbakgrunn` (including Nepal-born EU citizens) differs from `Statsborgerskap`. Visitor browsers never call SSB directly.
+- **Sanity Studio SSB Importer (`sanity/components/EditorialChartSsbInput.tsx`):**
+  - Wraps `editorialChart` with a collapsible **Import from SSB** bar in Studio: editors choose presets or paste any SSB table ID / `data.ssb.no` PxWebApi v2 URL (`src/lib/ssb/pxweb.ts`), pick category/series dimensions, and fill `title`, `categories`, `series`, and source attribution fields while leaving every label editable.
+- **Verification:** `npm run test:ssb` (4/4 pass covering URL security, `json-stat2` indexing, fallback resilience, chart normalization, and `stats` language-section gating).
 
 ### Location Maps (`src/components/content/LocationMap.astro`, `sanity/schemaTypes/mapLocation.ts`)
 
