@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import test from 'node:test'
+import {JSDOM} from 'jsdom'
+import {
+  buildChartClientData,
+  buildChartCsv,
+  buildChartCsvFilename,
+  escapeCsvCell,
+} from '../../src/lib/editorialChart/interactive.ts'
+import {initEditorialCharts} from '../../src/lib/editorialChart/client.ts'
 import {
   createChartNumberFormatter,
   formatChartUnit,
@@ -697,4 +705,183 @@ test('print rules never depend on the disclosure state and are scoped to chart d
   assert.match(source, /\.editorial-chart__print-table/)
   assert.doesNotMatch(source, /(^|\n)\s*details\s*[,{]/)
   assert.doesNotMatch(source, /(^|\n)\s*summary\s*[,{]/)
+})
+
+test('interactive chart payload and CSV export support Nepali/Norwegian locales and formula safety', () => {
+  const stacked = normalize({
+    chartType: 'stackedBar',
+    title: 'Employment & Permits 2026',
+    categories: ['=CMD()', 'फागुन'],
+    unit: 'people',
+    series: [
+      {label: 'Skilled', values: [120, 80]},
+      {label: 'Seasonal', values: [30, 20]},
+    ],
+  })
+  const neData = buildChartClientData(stacked, 'ne')
+  assert.equal(neData.isStacked, true)
+  assert.deepEqual(neData.totals, ['१५० जन', '१०० जन'])
+  assert.equal(neData.series[0].formattedValues[0], '१२० जन')
+
+  const csv = buildChartCsv(neData)
+  assert.ok(csv.startsWith('\uFEFF'))
+  assert.equal(csv.slice(1), "श्रेणी,Skilled (जन),Seasonal (जन)\r\n'=CMD(),120,30\r\nफागुन,80,20")
+  assert.equal(escapeCsvCell('=1+1'), "'=1+1")
+  assert.equal(escapeCsvCell(-42), '-42')
+  assert.equal(buildChartCsvFilename('Nepal & Norway: Stats 2026!'), 'nepal-norway-stats-2026.csv')
+  assert.equal(buildChartCsvFilename('नेपाली'), 'nepali-no-chart.csv')
+})
+
+test('interactive controller handles view switching, crosshair/tooltips, keyboard arrows, and legend filters', () => {
+  const chart = normalize({
+    chartType: 'stackedBar',
+    title: 'Work permits',
+    categories: ['2024', '2025'],
+    series: [
+      {label: 'Skilled', values: [100, 140]},
+      {label: 'Seasonal', values: [25, 35]},
+    ],
+  })
+  const geometry = createChartGeometry(chart, 'nb', 'wide')
+  const payload = buildChartClientData(chart, 'nb')
+  const rects = geometry.shapes.filter((s) => s.type === 'rect' && typeof s.categoryIndex === 'number')
+  const rectMarkup = rects
+    .map(
+      (s) =>
+        `<rect x="${s.x}" y="${s.y}" width="${s.width}" height="${s.height}" class="chart-target chart-bar chart-bar--vertical chart-series-${s.series}" data-cat-idx="${s.categoryIndex}" data-series-idx="${s.position}" tabindex="0"></rect>`,
+    )
+    .join('')
+
+  const dom = new JSDOM(
+    `<figure class="editorial-chart">
+      <script type="application/json" data-chart-payload>${JSON.stringify(payload)}</script>
+      <div class="editorial-chart__toolbar" hidden>
+        <button type="button" data-chart-view="chart" aria-pressed="true">Diagram</button>
+        <button type="button" data-chart-view="table" aria-pressed="false">Tabell</button>
+      </div>
+      <div class="editorial-chart__visual-group">
+        <div class="editorial-chart__stage">
+          <svg class="editorial-chart__svg" viewBox="0 0 ${geometry.width} ${geometry.height}"
+            data-plot-top="${geometry.plotTop}" data-plot-bottom="${geometry.plotBottom}"
+            data-plot-left="${geometry.plotLeft}" data-plot-right="${geometry.plotRight}"
+            data-cat-x="${geometry.categoryXPositions.join(',')}">
+            <line class="editorial-chart__crosshair" />
+            ${rectMarkup}
+          </svg>
+          <div class="editorial-chart__tooltip" hidden></div>
+        </div>
+        <button type="button" class="editorial-chart__legend-btn" data-legend-index="0" aria-pressed="true">Skilled</button>
+        <button type="button" class="editorial-chart__legend-btn" data-legend-index="1" aria-pressed="true">Seasonal</button>
+        <button type="button" data-chart-action="reset-series" hidden>Vis alle</button>
+      </div>
+      <details class="editorial-chart__data"><summary>Data</summary></details>
+    </figure>`,
+  )
+
+  const prevDocument = globalThis.document
+  const prevWindow = globalThis.window
+  globalThis.document = dom.window.document
+  globalThis.window = dom.window
+  try {
+    initEditorialCharts(dom.window.document)
+    const figure = dom.window.document.querySelector('.editorial-chart')
+    const toolbar = figure.querySelector('.editorial-chart__toolbar')
+    const tooltip = figure.querySelector('.editorial-chart__tooltip')
+    const crosshair = figure.querySelector('.editorial-chart__crosshair')
+    assert.equal(toolbar.hidden, false)
+    assert.equal(figure.dataset.view, 'chart')
+
+    // Focus first bar -> shows tooltip with both series + total + crosshair.
+    const firstBar = figure.querySelector('.chart-target[data-cat-idx="0"][data-series-idx="0"]')
+    firstBar.dispatchEvent(new dom.window.FocusEvent('focus'))
+    assert.equal(tooltip.hidden, false)
+    assert.equal(crosshair.classList.contains('is-visible'), true)
+    assert.match(tooltip.textContent, /2024/)
+    assert.match(tooltip.textContent, /Skilled/)
+    assert.match(tooltip.textContent, /Seasonal/)
+    assert.match(tooltip.textContent, /Totalt/)
+
+    // Toggle series 1 off via legend -> excludes Seasonal and shows reset button, cannot blank last series.
+    const legendBtn0 = figure.querySelector('[data-legend-index="0"]')
+    const legendBtn1 = figure.querySelector('[data-legend-index="1"]')
+    const resetBtn = figure.querySelector('[data-chart-action="reset-series"]')
+    legendBtn1.click()
+    assert.equal(legendBtn1.getAttribute('aria-pressed'), 'false')
+    assert.equal(resetBtn.hidden, false)
+    assert.doesNotMatch(tooltip.textContent, /Seasonal/)
+
+    // Clicking last remaining series restores both cleanly.
+    legendBtn0.click()
+    assert.equal(legendBtn1.getAttribute('aria-pressed'), 'true')
+    assert.equal(resetBtn.hidden, true)
+
+    // Switch to Table view and back.
+    const tableBtn = figure.querySelector('[data-chart-view="table"]')
+    const chartBtn = figure.querySelector('[data-chart-view="chart"]')
+    tableBtn.click()
+    assert.equal(figure.dataset.view, 'table')
+    assert.equal(figure.querySelector('.editorial-chart__data').open, true)
+    assert.equal(tooltip.hidden, true)
+    chartBtn.click()
+    assert.equal(figure.dataset.view, 'chart')
+  } finally {
+    globalThis.document = prevDocument
+    globalThis.window = prevWindow
+    dom.window.close()
+  }
+})
+
+test('donut charts lock slice focus cleanly and update center readout on selection', () => {
+  const donut = normalize({
+    chartType: 'donut',
+    title: 'Shares',
+    categories: ['Oslo', 'Bergen'],
+    series: [{label: 'Share', values: [3, 1]}],
+  })
+  const geometry = createChartGeometry(donut, 'nb')
+  const payload = buildChartClientData(donut, 'nb')
+  const sliceMarkup = geometry.shapes
+    .filter((s) => s.type === 'path' && s.slice)
+    .map(
+      (s) =>
+        `<path d="${s.d}" class="chart-slice chart-target" data-cat-idx="${s.position}" data-series-idx="0" data-tip-x="${s.tipX}" data-tip-y="${s.tipY}" tabindex="0"></path>`,
+    )
+    .join('')
+
+  const dom = new JSDOM(
+    `<figure class="editorial-chart">
+      <script type="application/json" data-chart-payload>${JSON.stringify(payload)}</script>
+      <div class="editorial-chart__visual-group">
+        <div class="editorial-chart__stage">
+          <svg class="editorial-chart__svg" viewBox="0 0 ${geometry.width} ${geometry.height}">
+            ${sliceMarkup}
+            <g class="chart-donut-center">
+              <text class="chart-donut-center__pct"></text>
+              <text class="chart-donut-center__label"></text>
+            </g>
+          </svg>
+          <div class="editorial-chart__tooltip" hidden></div>
+        </div>
+      </div>
+    </figure>`,
+  )
+
+  const prevDocument = globalThis.document
+  const prevWindow = globalThis.window
+  globalThis.document = dom.window.document
+  globalThis.window = dom.window
+  try {
+    initEditorialCharts(dom.window.document)
+    const slice = dom.window.document.querySelector('[data-cat-idx="0"]')
+    const pct = dom.window.document.querySelector('.chart-donut-center__pct')
+    const label = dom.window.document.querySelector('.chart-donut-center__label')
+    slice.dispatchEvent(new dom.window.MouseEvent('click', {bubbles: true}))
+    assert.equal(pct.textContent, '75%')
+    assert.equal(label.textContent, 'Oslo')
+    assert.equal(dom.window.document.querySelector('.editorial-chart__tooltip').hidden, false)
+  } finally {
+    globalThis.document = prevDocument
+    globalThis.window = prevWindow
+    dom.window.close()
+  }
 })

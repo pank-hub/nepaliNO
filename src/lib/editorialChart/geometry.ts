@@ -158,6 +158,9 @@ const polarGeometry = (chart: NormalizedChart): ChartGeometry => {
   scaledValues.forEach((value, index) => {
     if (value <= 0 || total <= 0) return
     const next = angle + (value / total) * 360
+    const middle = (angle + next) / 2
+    const middleRad = ((middle - 90) * Math.PI) / 180
+    const tipRadius = chart.chartType === 'donut' ? 99 : radius * 0.62
     shapes.push({
       type: 'path',
       d: pieArc(cx, cy, radius, angle, next),
@@ -165,8 +168,12 @@ const polarGeometry = (chart: NormalizedChart): ChartGeometry => {
       position: index,
       slice: true,
       pattern: index > 0,
+      centerX: cx,
+      centerY: cy,
+      tipX: Math.round(cx + tipRadius * Math.cos(middleRad)),
+      tipY: Math.round(cy + tipRadius * Math.sin(middleRad)),
     })
-    sliceLabels.push({index, angle: (angle + next) / 2, share: value / total})
+    sliceLabels.push({index, angle: middle, share: value / total})
     angle = next
   })
   const donut = chart.chartType === 'donut'
@@ -305,6 +312,9 @@ const horizontalGeometry = (
           height: thickness,
           series: colorIndex(seriesIndex, chart),
           position: seriesIndex,
+          categoryIndex,
+          originX: zero,
+          originY: y + thickness / 2,
           pattern: grouped && seriesIndex > 0,
         })
       }
@@ -334,7 +344,18 @@ const horizontalGeometry = (
       className: 'category',
     })
   })
-  return {width: spec.width, height, shapes, layout, scrolls: false, labelLines}
+  return {
+    width: spec.width,
+    height,
+    shapes,
+    layout,
+    scrolls: false,
+    labelLines,
+    plotTop: top,
+    plotBottom: bottom,
+    plotLeft: left,
+    plotRight: right,
+  }
 }
 
 const verticalGeometry = (
@@ -469,14 +490,18 @@ const verticalGeometry = (
         const y2 = scaleY(endValue)
         // A true zero draws no bar; any non-zero value keeps at least one pixel.
         if (value !== 0) {
+          const renderedWidth = Math.max(2, barWidth)
           shapes.push({
             type: 'rect',
             x,
             y: Math.min(y1, y2),
-            width: Math.max(2, barWidth),
+            width: renderedWidth,
             height: Math.max(1, Math.abs(y2 - y1)),
             series: colorIndex(seriesIndex, chart),
             position: seriesIndex,
+            categoryIndex,
+            originX: x + renderedWidth / 2,
+            originY: zero,
             pattern: (grouped || isStacked) && seriesIndex > 0,
           })
         }
@@ -490,14 +515,28 @@ const verticalGeometry = (
       })
     })
     pushCategoryLabels()
-    return {width, height, shapes, layout, scrolls: width > spec.width, labelLines}
+    return {
+      width,
+      height,
+      shapes,
+      layout,
+      scrolls: width > spec.width,
+      labelLines,
+      plotTop: top,
+      plotBottom: bottom,
+      plotLeft: left,
+      plotRight: right,
+      categoryXPositions: categories.map((_, idx) => categoryX(idx)),
+    }
   }
 
   pushCategoryLabels()
   if (chart.chartType === 'line') {
     series.forEach((item, seriesIndex) => {
       const points = item.values.flatMap((value, index) =>
-        typeof value === 'number' ? [{x: categoryX(index), y: scaleY(value / magnitude)}] : [],
+        typeof value === 'number'
+          ? [{x: categoryX(index), y: scaleY(value / magnitude), categoryIndex: index}]
+          : [],
       )
       if (points.length > 1) {
         const d = points
@@ -510,7 +549,7 @@ const verticalGeometry = (
           position: seriesIndex,
         })
       }
-      points.forEach(({x, y}) =>
+      points.forEach(({x, y, categoryIndex}) =>
         shapes.push({
           type: 'circle',
           cx: x,
@@ -518,6 +557,7 @@ const verticalGeometry = (
           r: 5,
           series: colorIndex(seriesIndex, chart),
           position: seriesIndex,
+          categoryIndex,
         }),
       )
     })
@@ -527,6 +567,7 @@ const verticalGeometry = (
     series.forEach((item, seriesIndex) => {
       const lower: number[] = []
       const upper: number[] = []
+      const pointCategories: number[] = []
       item.values.forEach((value, index) => {
         if (typeof value !== 'number') return
         const scaledValue = value / magnitude
@@ -536,10 +577,18 @@ const verticalGeometry = (
         else negative[index] = next
         lower.push(base)
         upper.push(next)
+        pointCategories.push(index)
       })
-      const upperPoints = upper.map((value, index) => ({x: categoryX(index), y: scaleY(value)}))
+      const upperPoints = upper.map((value, idx) => ({
+        x: categoryX(pointCategories[idx]),
+        y: scaleY(value),
+        categoryIndex: pointCategories[idx],
+      }))
       const lowerPoints = lower
-        .map((value, index) => ({x: categoryX(index), y: scaleY(value)}))
+        .map((value, idx) => ({
+          x: categoryX(pointCategories[idx]),
+          y: scaleY(value),
+        }))
         .reverse()
       const d =
         [...upperPoints, ...lowerPoints]
@@ -553,7 +602,7 @@ const verticalGeometry = (
         fill: true,
         pattern: seriesIndex > 0,
       })
-      upperPoints.forEach(({x, y}) =>
+      upperPoints.forEach(({x, y, categoryIndex}) =>
         shapes.push({
           type: 'circle',
           cx: x,
@@ -561,11 +610,24 @@ const verticalGeometry = (
           r: 4,
           series: colorIndex(seriesIndex, chart),
           position: seriesIndex,
+          categoryIndex,
         }),
       )
     })
   }
-  return {width, height, shapes, layout, scrolls: width > spec.width, labelLines}
+  return {
+    width,
+    height,
+    shapes,
+    layout,
+    scrolls: width > spec.width,
+    labelLines,
+    plotTop: top,
+    plotBottom: bottom,
+    plotLeft: left,
+    plotRight: right,
+    categoryXPositions: categories.map((_, idx) => categoryX(idx)),
+  }
 }
 
 export const createChartGeometry = (

@@ -10,11 +10,14 @@ import {
   normalizeEditorialChart,
 } from "../../lib/editorialChart/normalize.ts";
 import {
-  CHART_PALETTE,
   CHART_PATTERN_PATHS,
   getPaletteIndex,
   isPolarChart,
 } from "../../lib/editorialChart/palette.ts";
+import {
+  buildChartClientData,
+  getEditorialChartCopy,
+} from "../../lib/editorialChart/interactive.ts";
 import EditorialChartTable from "./EditorialChartTable.astro";
 import type {
   ChartGeometry,
@@ -60,40 +63,23 @@ if (chart.warnings.length) {
 const idSuffix = createChartIdSuffix(node, index);
 const titleId = `editorial-chart-title-${idSuffix}`;
 const descriptionId = `editorial-chart-description-${idSuffix}`;
-const copy =
-  language === "ne"
-    ? {
-        chart: "चार्ट",
-        legend: "चार्टको सङ्केत",
-        unit: "एकाइ",
-        scrollHint: "चार्ट काटिएमा दायाँबायाँ स्क्रोल गर्नुहोस्।",
-        dataTable: "चार्टको तथ्याङ्क तालिका",
-        category: "श्रेणी",
-        unavailable: "उपलब्ध छैन",
-        data: "चार्टको पूरा तथ्याङ्क हेर्नुहोस्",
-        source: "स्रोत",
-        note: "टिप्पणी",
-        summary:
-          "यो चार्टमा {categories} श्रेणी र {series} तथ्याङ्क शृङ्खला छन्। पूरा मान तलको तालिकामा छन्।",
-        chartUnavailable:
-          "चार्ट चित्र देखाउन सकिएन। तथ्याङ्क तालिकामा उपलब्ध छ।",
-      }
-    : {
-        chart: "Diagram",
-        legend: "Tegnforklaring",
-        unit: "Enhet",
-        scrollHint: "Rull sideveis hvis diagrammet er avkuttet.",
-        dataTable: "Diagramdata som tabell",
-        category: "Kategori",
-        unavailable: "Ikke tilgjengelig",
-        data: "Vis alle diagramdata",
-        source: "Kilde",
-        note: "Merknad",
-        summary:
-          "Diagrammet viser {categories} kategorier og {series} dataserier. Alle verdiene står i tabellen nedenfor.",
-        chartUnavailable:
-          "Diagrammet kunne ikke vises. Dataene finnes i tabellen.",
-      };
+const copy = getEditorialChartCopy(language);
+const clientData = buildChartClientData(chart, language);
+const serializedClientData = JSON.stringify(clientData).replace(/</g, "\\u003c");
+const isHorizontal = chart.chartType === "horizontalBar";
+const targetAriaLabel = (catIdx: number, seriesIdx: number): string => {
+  const category = chart.categories[catIdx] || `${copy.category} ${catIdx + 1}`;
+  if (polar) {
+    const val = clientData.series[0]?.formattedValues[catIdx] ?? copy.unavailable;
+    const pct = clientData.percentages[catIdx];
+    return pct ? `${category}: ${val} (${pct})` : `${category}: ${val}`;
+  }
+  const s = clientData.series[seriesIdx];
+  const val = s?.formattedValues[catIdx] ?? copy.unavailable;
+  return chart.series.length > 1 && s
+    ? `${category}, ${s.label}: ${val}`
+    : `${category}: ${val}`;
+};
 
 const summaryText = (item: NormalizedChart) =>
   item.altSummary ??
@@ -126,6 +112,8 @@ const legendEntries = polar
       percentage: null,
     }));
 
+const interactiveLegend = hasVisual && legendEntries.length > 1;
+
 const formatValue = (value: number) => formatChartValue(value, chart, language);
 const showSource = chart.sourceLabel || chart.sourceUrl || chart.sourceDate;
 const measureParts = [
@@ -154,280 +142,513 @@ const patternSlots = Array.from(
   aria-labelledby={chart.title ? titleId : undefined}
   aria-label={chart.title ? undefined : copy.chart}
 >
+  <script
+    is:inline
+    type="application/json"
+    data-chart-payload
+    set:html={serializedClientData}
+  />
   <header class="editorial-chart__header">
-    {
-      chart.title && (
-        <p class="editorial-chart__title" id={titleId}>
-          {chart.title}
-        </p>
-      )
-    }
-    {
-      chart.subtitle && (
-        <p class="editorial-chart__subtitle">{chart.subtitle}</p>
-      )
-    }
-    {
-      chart.showDataSummary && (
-        <p class="editorial-chart__summary">{summaryText(chart)}</p>
-      )
-    }
-    {
-      measureParts.length > 0 && (
-        <p class="editorial-chart__measure">{measureParts.join(" · ")}</p>
-      )
-    }
+    <div class="editorial-chart__header-main">
+      {
+        chart.title && (
+          <p class="editorial-chart__title" id={titleId}>
+            {chart.title}
+          </p>
+        )
+      }
+      {
+        chart.subtitle && (
+          <p class="editorial-chart__subtitle">{chart.subtitle}</p>
+        )
+      }
+      {
+        chart.showDataSummary && (
+          <p class="editorial-chart__summary">{summaryText(chart)}</p>
+        )
+      }
+      {
+        measureParts.length > 0 && (
+          <p class="editorial-chart__measure">{measureParts.join(" · ")}</p>
+        )
+      }
+    </div>
+    <div class="editorial-chart__toolbar" hidden>
+      {
+        hasVisual && (
+          <div class="editorial-chart__segmented" role="group" aria-label={copy.chart}>
+            <button
+              type="button"
+              class="editorial-chart__seg-btn"
+              data-chart-view="chart"
+              aria-pressed="true"
+            >
+              {copy.chartView}
+            </button>
+            <button
+              type="button"
+              class="editorial-chart__seg-btn"
+              data-chart-view="table"
+              aria-pressed="false"
+            >
+              {copy.tableView}
+            </button>
+          </div>
+        )
+      }
+      <button
+        type="button"
+        class="editorial-chart__csv-btn"
+        data-chart-action="csv"
+        aria-label={`${copy.downloadCsv} (${chart.title ?? copy.chart})`}
+      >
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+          <path
+            d="M8 2v7.5m0 0L5 6.5m3 3 3-3M3 12.5h10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>{copy.downloadCsv}</span>
+      </button>
+    </div>
   </header>
 
-  {
-    hasVisual ? (
-      tiers.map(({ key, geometry }) => (
-        <div
-          class={
-            polar
-              ? "editorial-chart__tier"
-              : `editorial-chart__tier editorial-chart__tier--${key}`
-          }
-        >
+  <div class="editorial-chart__visual-group">
+    {
+      hasVisual ? (
+        tiers.map(({ key, geometry }) => (
           <div
-            class:list={[
-              "editorial-chart__visual",
-              geometry.scrolls && "is-scrollable",
-            ]}
-            tabindex={geometry.scrolls ? 0 : undefined}
-            style={
-              geometry.scrolls
-                ? `--chart-min-width: ${geometry.width}px`
-                : undefined
+            class={
+              polar
+                ? "editorial-chart__tier"
+                : `editorial-chart__tier editorial-chart__tier--${key}`
             }
           >
-            <svg
-              class="editorial-chart__svg"
-              viewBox={`0 0 ${geometry.width} ${geometry.height}`}
-              role="img"
-              aria-label={copy.chart}
-              aria-describedby={
-                chart.showDataSummary ? undefined : `${descriptionId}-${key}`
-              }
-              focusable="false"
-            >
-              <defs>
-                {patternSlots.map((slot) => (
-                  <pattern
-                    id={`chart-pattern-${idSuffix}-${key}-${slot.position}`}
-                    width="8"
-                    height="8"
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <rect
-                      width="8"
-                      height="8"
-                      class={`chart-series-${slot.color}`}
-                    />
-                    <path d={slot.path} class="chart-pattern-line" />
-                  </pattern>
-                ))}
-              </defs>
-              {!chart.showDataSummary && (
-                <desc id={`${descriptionId}-${key}`}>{summaryText(chart)}</desc>
-              )}
-              {geometry.shapes.map((shape: SvgShape) => {
-                if (shape.type === "line") {
-                  return (
+            <div class="editorial-chart__stage">
+              <div
+                class:list={[
+                  "editorial-chart__visual",
+                  geometry.scrolls && "is-scrollable",
+                ]}
+                tabindex={geometry.scrolls ? 0 : undefined}
+                style={
+                  geometry.scrolls
+                    ? `--chart-min-width: ${geometry.width}px`
+                    : undefined
+                }
+              >
+                <svg
+                  class="editorial-chart__svg"
+                  viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+                  role="img"
+                  aria-label={copy.chart}
+                  aria-describedby={
+                    chart.showDataSummary ? undefined : `${descriptionId}-${key}`
+                  }
+                  focusable="false"
+                  data-plot-top={geometry.plotTop}
+                  data-plot-bottom={geometry.plotBottom}
+                  data-plot-left={geometry.plotLeft}
+                  data-plot-right={geometry.plotRight}
+                  data-cat-x={geometry.categoryXPositions?.join(",")}
+                >
+                  <defs>
+                    {patternSlots.map((slot) => (
+                      <pattern
+                        id={`chart-pattern-${idSuffix}-${key}-${slot.position}`}
+                        width="8"
+                        height="8"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <rect
+                          width="8"
+                          height="8"
+                          class={`chart-series-${slot.color}`}
+                        />
+                        <path d={slot.path} class="chart-pattern-line" />
+                      </pattern>
+                    ))}
+                  </defs>
+                  {!chart.showDataSummary && (
+                    <desc id={`${descriptionId}-${key}`}>{summaryText(chart)}</desc>
+                  )}
+                  {!polar && !isHorizontal && (
                     <line
-                      x1={shape.x1}
-                      y1={shape.y1}
-                      x2={shape.x2}
-                      y2={shape.y2}
-                      class:list={[
-                        "chart-line",
-                        shape.className && `chart-line--${shape.className}`,
-                      ]}
+                      class="editorial-chart__crosshair"
+                      aria-hidden="true"
                     />
-                  );
-                }
-                if (shape.type === "rect") {
-                  return (
-                    <rect
-                      x={shape.x}
-                      y={shape.y}
-                      width={shape.width}
-                      height={shape.height}
-                      rx="2"
-                      style={
-                        shape.pattern
-                          ? `fill: url(#chart-pattern-${idSuffix}-${key}-${shape.position});`
-                          : undefined
-                      }
-                      class:list={[
-                        `chart-series-${shape.series}`,
-                        `chart-pos-${shape.position}`,
-                        shape.pattern && "chart-pattern",
-                      ]}
-                    />
-                  );
-                }
-                if (shape.type === "hole") {
-                  return (
-                    <circle
-                      cx={shape.cx}
-                      cy={shape.cy}
-                      r={shape.r}
-                      class="chart-hole"
-                    />
-                  );
-                }
-                if (shape.type === "circle") {
-                  return (
-                    <circle
-                      cx={shape.cx}
-                      cy={shape.cy}
-                      r={shape.r}
-                      class={`chart-series-${shape.series} chart-pos-${shape.position}`}
-                    />
-                  );
-                }
-                if (shape.type === "path") {
-                  return (
-                    <path
-                      d={shape.d}
-                      style={
-                        shape.pattern
-                          ? `fill: url(#chart-pattern-${idSuffix}-${key}-${shape.position});`
-                          : undefined
-                      }
-                      class:list={[
-                        `chart-series-${shape.series}`,
-                        `chart-pos-${shape.position}`,
-                        shape.slice
-                          ? "chart-slice"
-                          : shape.fill
-                            ? "chart-area"
-                            : "chart-line-path",
-                        shape.pattern && "chart-pattern",
-                      ]}
-                    />
-                  );
-                }
-                return (
-                  <text
-                    x={shape.x}
-                    y={shape.y}
-                    text-anchor={shape.anchor ?? "middle"}
-                    class:list={[
-                      "chart-text",
-                      shape.className && `chart-text--${shape.className}`,
-                    ]}
-                  >
-                    {shape.lines
-                      ? shape.lines.map((line, index) => (
-                          <tspan x={shape.x} dy={index === 0 ? 0 : "1.15em"}>
-                            {line}
-                          </tspan>
-                        ))
-                      : shape.text}
-                  </text>
-                );
-              })}
-            </svg>
-          </div>
-          {geometry.scrolls && (
-            <p class="editorial-chart__scroll-hint">{copy.scrollHint}</p>
-          )}
-        </div>
-      ))
-    ) : (
-      <>
-        <p class="editorial-chart__fallback">{copy.chartUnavailable}</p>
-        {import.meta.env.DEV && geometryError && (
-          <p class="editorial-chart__fallback" data-chart-geometry-error>
-            Dev only: {geometryError}
-          </p>
-        )}
-      </>
-    )
-  }
-
-  {
-    chart.legendVisible && legendEntries.length > 0 && (
-      <ul class="editorial-chart__legend" aria-label={copy.legend}>
-        {legendEntries.map((entry) => (
-          <li class="editorial-chart__legend-item">
-            {polar || !hasVisual ? (
-              <span
-                class={`editorial-chart__swatch chart-series-${getPaletteIndex(chart, entry.index)}`}
-                aria-hidden="true"
-              >
-                {polar && <span>{entry.index + 1}</span>}
-              </span>
-            ) : (
-              <svg
-                class="editorial-chart__swatch-graphic"
-                viewBox="0 0 28 18"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <defs>
-                  <pattern
-                    id={`chart-pattern-${idSuffix}-legend-${entry.index}`}
-                    width="8"
-                    height="8"
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <rect
-                      width="8"
-                      height="8"
-                      class={`chart-series-${getPaletteIndex(chart, entry.index)}`}
-                    />
-                    <path
-                      d={
-                        CHART_PATTERN_PATHS[
-                          entry.index % CHART_PATTERN_PATHS.length
-                        ]
-                      }
-                      class="chart-pattern-line"
-                    />
-                  </pattern>
-                </defs>
-                {chart.chartType === "line" ? (
-                  <line
-                    x1="2"
-                    y1="9"
-                    x2="26"
-                    y2="9"
-                    class={`chart-series-${getPaletteIndex(chart, entry.index)} chart-pos-${entry.index} chart-line-path`}
-                  />
-                ) : (
-                  <rect
-                    width="28"
-                    height="18"
-                    rx="3"
-                    class={`chart-series-${getPaletteIndex(chart, entry.index)}`}
-                    style={
-                      entry.index > 0
-                        ? `fill: url(#chart-pattern-${idSuffix}-legend-${entry.index});`
-                        : undefined
+                  )}
+                  {geometry.shapes.map((shape: SvgShape) => {
+                    if (shape.type === "line") {
+                      return (
+                        <line
+                          x1={shape.x1}
+                          y1={shape.y1}
+                          x2={shape.x2}
+                          y2={shape.y2}
+                          class:list={[
+                            "chart-line",
+                            shape.className && `chart-line--${shape.className}`,
+                          ]}
+                        />
+                      );
                     }
-                  />
-                )}
-              </svg>
+                    if (shape.type === "rect") {
+                      const interactive = typeof shape.categoryIndex === "number";
+                      const styleParts = [
+                        shape.pattern
+                          ? `fill: url(#chart-pattern-${idSuffix}-${key}-${shape.position})`
+                          : undefined,
+                        shape.originX !== undefined
+                          ? `--origin-x: ${shape.originX}px`
+                          : undefined,
+                        shape.originY !== undefined
+                          ? `--origin-y: ${shape.originY}px`
+                          : undefined,
+                        interactive
+                          ? `--cat-idx: ${shape.categoryIndex}`
+                          : undefined,
+                      ].filter(Boolean);
+                      return (
+                        <rect
+                          x={shape.x}
+                          y={shape.y}
+                          width={shape.width}
+                          height={shape.height}
+                          rx="3"
+                          style={styleParts.length ? styleParts.join("; ") : undefined}
+                          class:list={[
+                            `chart-series-${shape.series}`,
+                            `chart-pos-${shape.position}`,
+                            shape.pattern && "chart-pattern",
+                            interactive && "chart-target",
+                            interactive && "chart-bar",
+                            interactive &&
+                              (isHorizontal
+                                ? "chart-bar--horizontal"
+                                : "chart-bar--vertical"),
+                          ]}
+                          data-cat-idx={shape.categoryIndex}
+                          data-series-idx={shape.position}
+                          data-origin-x={shape.originX}
+                          tabindex={interactive ? 0 : undefined}
+                          aria-label={
+                            interactive
+                              ? targetAriaLabel(shape.categoryIndex!, shape.position)
+                              : undefined
+                          }
+                        />
+                      );
+                    }
+                    if (shape.type === "hole") {
+                      return (
+                        <circle
+                          cx={shape.cx}
+                          cy={shape.cy}
+                          r={shape.r}
+                          class="chart-hole"
+                        />
+                      );
+                    }
+                    if (shape.type === "circle") {
+                      const interactive = typeof shape.categoryIndex === "number";
+                      return (
+                        <circle
+                          cx={shape.cx}
+                          cy={shape.cy}
+                          r={shape.r}
+                          class:list={[
+                            `chart-series-${shape.series}`,
+                            `chart-pos-${shape.position}`,
+                            interactive && "chart-target",
+                            interactive && "chart-point",
+                          ]}
+                          data-cat-idx={shape.categoryIndex}
+                          data-series-idx={shape.position}
+                          tabindex={interactive ? 0 : undefined}
+                          aria-label={
+                            interactive
+                              ? targetAriaLabel(shape.categoryIndex!, shape.position)
+                              : undefined
+                          }
+                        />
+                      );
+                    }
+                    if (shape.type === "path") {
+                      const styleParts = [
+                        shape.pattern
+                          ? `fill: url(#chart-pattern-${idSuffix}-${key}-${shape.position})`
+                          : undefined,
+                        shape.slice && shape.centerX !== undefined
+                          ? `transform-origin: ${shape.centerX}px ${shape.centerY}px`
+                          : undefined,
+                      ].filter(Boolean);
+                      return (
+                        <path
+                          d={shape.d}
+                          style={styleParts.length ? styleParts.join("; ") : undefined}
+                          class:list={[
+                            `chart-series-${shape.series}`,
+                            `chart-pos-${shape.position}`,
+                            shape.slice
+                              ? "chart-slice chart-target"
+                              : shape.fill
+                                ? "chart-area"
+                                : "chart-line-path",
+                            shape.pattern && "chart-pattern",
+                          ]}
+                          data-cat-idx={shape.slice ? shape.position : undefined}
+                          data-series-idx={shape.slice ? 0 : shape.position}
+                          data-tip-x={shape.slice ? shape.tipX : undefined}
+                          data-tip-y={shape.slice ? shape.tipY : undefined}
+                          tabindex={shape.slice ? 0 : undefined}
+                          aria-label={
+                            shape.slice ? targetAriaLabel(shape.position, 0) : undefined
+                          }
+                        />
+                      );
+                    }
+                    return (
+                      <text
+                        x={shape.x}
+                        y={shape.y}
+                        text-anchor={shape.anchor ?? "middle"}
+                        class:list={[
+                          "chart-text",
+                          shape.className && `chart-text--${shape.className}`,
+                        ]}
+                      >
+                        {shape.lines
+                          ? shape.lines.map((line, index) => (
+                              <tspan x={shape.x} dy={index === 0 ? 0 : "1.15em"}>
+                                {line}
+                              </tspan>
+                            ))
+                          : shape.text}
+                      </text>
+                    );
+                  })}
+                  {chart.chartType === "donut" && (
+                    <g class="chart-donut-center" aria-hidden="true">
+                      <text
+                        x="180"
+                        y="167"
+                        text-anchor="middle"
+                        class="chart-donut-center__pct"
+                      />
+                      <text
+                        x="180"
+                        y="188"
+                        text-anchor="middle"
+                        class="chart-donut-center__label"
+                      />
+                    </g>
+                  )}
+                </svg>
+              </div>
+              <div
+                class="editorial-chart__tooltip"
+                role="status"
+                aria-live="polite"
+                hidden
+              />
+            </div>
+            {geometry.scrolls && (
+              <p class="editorial-chart__scroll-hint">{copy.scrollHint}</p>
             )}
-            <span>
-              <strong>{entry.label}</strong>
-              {entry.value !== null && (
-                <span class="editorial-chart__legend-value">
-                  {formatValue(entry.value)}
-                  {chart.showPercentages &&
-                    entry.percentage !== null &&
-                    ` (${formatPercentage(entry.percentage, language)})`}
-                </span>
+          </div>
+        ))
+      ) : (
+        <>
+          <p class="editorial-chart__fallback">{copy.chartUnavailable}</p>
+          {import.meta.env.DEV && geometryError && (
+            <p class="editorial-chart__fallback" data-chart-geometry-error>
+              Dev only: {geometryError}
+            </p>
+          )}
+        </>
+      )
+    }
+
+    {
+      chart.legendVisible && legendEntries.length > 0 && (
+        <ul class="editorial-chart__legend" aria-label={copy.legend}>
+          {legendEntries.map((entry) => (
+            <li class="editorial-chart__legend-item">
+              {interactiveLegend ? (
+                <button
+                  type="button"
+                  class="editorial-chart__legend-btn"
+                  data-legend-index={entry.index}
+                  aria-pressed="true"
+                >
+                  {polar || !hasVisual ? (
+                    <span
+                      class={`editorial-chart__swatch chart-series-${getPaletteIndex(chart, entry.index)}`}
+                      aria-hidden="true"
+                    >
+                      {polar && <span>{entry.index + 1}</span>}
+                    </span>
+                  ) : (
+                    <svg
+                      class="editorial-chart__swatch-graphic"
+                      viewBox="0 0 28 18"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <defs>
+                        <pattern
+                          id={`chart-pattern-${idSuffix}-legend-${entry.index}`}
+                          width="8"
+                          height="8"
+                          patternUnits="userSpaceOnUse"
+                        >
+                          <rect
+                            width="8"
+                            height="8"
+                            class={`chart-series-${getPaletteIndex(chart, entry.index)}`}
+                          />
+                          <path
+                            d={
+                              CHART_PATTERN_PATHS[
+                                entry.index % CHART_PATTERN_PATHS.length
+                              ]
+                            }
+                            class="chart-pattern-line"
+                          />
+                        </pattern>
+                      </defs>
+                      {chart.chartType === "line" ? (
+                        <line
+                          x1="2"
+                          y1="9"
+                          x2="26"
+                          y2="9"
+                          class={`chart-series-${getPaletteIndex(chart, entry.index)} chart-pos-${entry.index} chart-line-path`}
+                        />
+                      ) : (
+                        <rect
+                          width="28"
+                          height="18"
+                          rx="3"
+                          class={`chart-series-${getPaletteIndex(chart, entry.index)}`}
+                          style={
+                            entry.index > 0
+                              ? `fill: url(#chart-pattern-${idSuffix}-legend-${entry.index});`
+                              : undefined
+                          }
+                        />
+                      )}
+                    </svg>
+                  )}
+                  <span class="editorial-chart__legend-text">
+                    <strong>{entry.label}</strong>
+                    {entry.value !== null && (
+                      <span class="editorial-chart__legend-value">
+                        {formatValue(entry.value)}
+                        {chart.showPercentages &&
+                          entry.percentage !== null &&
+                          ` (${formatPercentage(entry.percentage, language)})`}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              ) : (
+                <>
+                  {polar || !hasVisual ? (
+                    <span
+                      class={`editorial-chart__swatch chart-series-${getPaletteIndex(chart, entry.index)}`}
+                      aria-hidden="true"
+                    >
+                      {polar && <span>{entry.index + 1}</span>}
+                    </span>
+                  ) : (
+                    <svg
+                      class="editorial-chart__swatch-graphic"
+                      viewBox="0 0 28 18"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <defs>
+                        <pattern
+                          id={`chart-pattern-${idSuffix}-legend-${entry.index}`}
+                          width="8"
+                          height="8"
+                          patternUnits="userSpaceOnUse"
+                        >
+                          <rect
+                            width="8"
+                            height="8"
+                            class={`chart-series-${getPaletteIndex(chart, entry.index)}`}
+                          />
+                          <path
+                            d={
+                              CHART_PATTERN_PATHS[
+                                entry.index % CHART_PATTERN_PATHS.length
+                              ]
+                            }
+                            class="chart-pattern-line"
+                          />
+                        </pattern>
+                      </defs>
+                      {chart.chartType === "line" ? (
+                        <line
+                          x1="2"
+                          y1="9"
+                          x2="26"
+                          y2="9"
+                          class={`chart-series-${getPaletteIndex(chart, entry.index)} chart-pos-${entry.index} chart-line-path`}
+                        />
+                      ) : (
+                        <rect
+                          width="28"
+                          height="18"
+                          rx="3"
+                          class={`chart-series-${getPaletteIndex(chart, entry.index)}`}
+                          style={
+                            entry.index > 0
+                              ? `fill: url(#chart-pattern-${idSuffix}-legend-${entry.index});`
+                              : undefined
+                          }
+                        />
+                      )}
+                    </svg>
+                  )}
+                  <span>
+                    <strong>{entry.label}</strong>
+                    {entry.value !== null && (
+                      <span class="editorial-chart__legend-value">
+                        {formatValue(entry.value)}
+                        {chart.showPercentages &&
+                          entry.percentage !== null &&
+                          ` (${formatPercentage(entry.percentage, language)})`}
+                      </span>
+                    )}
+                  </span>
+                </>
               )}
-            </span>
-          </li>
-        ))}
-      </ul>
-    )
-  }
+            </li>
+          ))}
+          {interactiveLegend && !polar && (
+            <li class="editorial-chart__legend-item">
+              <button
+                type="button"
+                class="editorial-chart__legend-reset"
+                data-chart-action="reset-series"
+                hidden
+              >
+                {copy.showAll}
+              </button>
+            </li>
+          )}
+        </ul>
+      )
+    }
+  </div>
 
   <details class="editorial-chart__data">
     <summary>{copy.data}</summary>
@@ -446,65 +667,153 @@ const patternSlots = Array.from(
     />
   </div>
 
-  {
-    (chart.note || showSource || chart.caption) && (
-      <figcaption class="editorial-chart__caption">
-        {chart.caption && <span>{chart.caption}</span>}
-        {chart.note && (
-          <span>
-            <strong>{copy.note}:</strong> {chart.note}
-          </span>
-        )}
-        {showSource && (
-          <span>
-            <strong>{copy.source}:</strong>{" "}
-            {chart.sourceUrl ? (
-              <a
-                href={chart.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {chart.sourceLabel ?? chart.sourceUrl}
-              </a>
-            ) : (
-              chart.sourceLabel
-            )}
-            {chart.sourceDate && ` (${chart.sourceDate})`}
-          </span>
-        )}
-      </figcaption>
-    )
-  }
+  <figcaption class="editorial-chart__caption">
+    <div class="editorial-chart__caption-meta">
+      {chart.caption && <span>{chart.caption}</span>}
+      {chart.note && (
+        <span>
+          <strong>{copy.note}:</strong> {chart.note}
+        </span>
+      )}
+      {showSource && (
+        <span>
+          <strong>{copy.source}:</strong>{" "}
+          {chart.sourceUrl ? (
+            <a
+              href={chart.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {chart.sourceLabel ?? chart.sourceUrl}
+            </a>
+          ) : (
+            chart.sourceLabel
+          )}
+          {chart.sourceDate && ` (${chart.sourceDate})`}
+        </span>
+      )}
+    </div>
+    <span class="editorial-chart__brand" aria-hidden="true">nepali.no</span>
+  </figcaption>
 </figure>
+
+<script>
+  import { initEditorialCharts } from "../../lib/editorialChart/client.ts";
+
+  initEditorialCharts();
+  document.addEventListener("astro:page-load", () => initEditorialCharts());
+</script>
 
 <style>
   .editorial-chart {
     margin-block: 2rem;
     padding: clamp(1rem, 3vw, 1.5rem);
-    border: 1px solid var(--chart-border);
+    border: 1px solid color-mix(in srgb, var(--chart-border) 72%, transparent);
+    border-top: 3px solid var(--chart-blue);
     border-radius: var(--radius-lg);
     background: var(--chart-surface);
+    box-shadow: 0 2px 10px rgb(23 37 52 / 0.04);
     color: var(--text);
     container: editorial-chart / inline-size;
   }
+  .editorial-chart__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+  }
+  .editorial-chart__header-main {
+    flex: 1 1 16rem;
+    min-width: 0;
+  }
   .editorial-chart__title {
     margin: 0;
-    color: var(--text);
-    font-size: clamp(1.2rem, 3vw, 1.55rem);
+    color: var(--chart-text);
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
     font-weight: 700;
-    line-height: 1.35;
+    line-height: 1.32;
+    letter-spacing: -0.01em;
     overflow-wrap: anywhere;
   }
   .editorial-chart__subtitle,
   .editorial-chart__summary {
-    margin-block: 0.45rem 0;
+    margin-block: 0.4rem 0;
     color: var(--text-muted);
+    line-height: 1.45;
   }
   .editorial-chart__measure {
-    margin-block: 0.6rem 0;
-    color: var(--text);
-    font-size: 0.95rem;
+    display: inline-block;
+    margin-block: 0.65rem 0;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    background: var(--chart-table-heading);
+    border: 1px solid color-mix(in srgb, var(--chart-border) 65%, transparent);
+    color: var(--chart-text);
+    font-size: 0.85rem;
     font-weight: 600;
+  }
+  .editorial-chart__toolbar {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .editorial-chart__toolbar[hidden] {
+    display: none;
+  }
+  .editorial-chart__segmented {
+    display: inline-flex;
+    padding: 0.2rem;
+    border: 1px solid color-mix(in srgb, var(--chart-border) 75%, transparent);
+    border-radius: 999px;
+    background: var(--chart-table-heading);
+  }
+  .editorial-chart__seg-btn,
+  .editorial-chart__csv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    min-height: 2rem;
+    padding: 0.25rem 0.72rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 140ms ease,
+      color 140ms ease,
+      box-shadow 140ms ease;
+  }
+  .editorial-chart__seg-btn[aria-pressed="true"] {
+    background: var(--chart-surface);
+    color: var(--chart-text);
+    box-shadow: 0 1px 3px rgb(23 37 52 / 0.14);
+  }
+  .editorial-chart__csv-btn {
+    border: 1px solid color-mix(in srgb, var(--chart-border) 75%, transparent);
+    background: var(--chart-surface);
+    color: var(--chart-text);
+  }
+  .editorial-chart__seg-btn:hover,
+  .editorial-chart__csv-btn:hover {
+    color: var(--chart-text);
+  }
+  .editorial-chart__csv-btn:hover {
+    background: var(--chart-table-heading);
+  }
+  .editorial-chart.is-interactive[data-view="table"] .editorial-chart__visual-group {
+    display: none;
+  }
+  .editorial-chart.is-interactive[data-view="chart"] .editorial-chart__data {
+    display: none;
+  }
+  .editorial-chart.is-interactive[data-view="table"] .editorial-chart__data summary {
+    display: none;
   }
   .editorial-chart__tier--compact {
     display: none;
@@ -516,6 +825,9 @@ const patternSlots = Array.from(
     .editorial-chart__tier--wide {
       display: none;
     }
+  }
+  .editorial-chart__stage {
+    position: relative;
   }
   .editorial-chart__visual {
     max-width: 100%;
@@ -548,7 +860,11 @@ const patternSlots = Array.from(
   }
   .editorial-chart__visual:focus-visible,
   .editorial-chart__data summary:focus-visible,
-  .editorial-chart a:focus-visible {
+  .editorial-chart a:focus-visible,
+  .editorial-chart__seg-btn:focus-visible,
+  .editorial-chart__csv-btn:focus-visible,
+  .editorial-chart__legend-btn:focus-visible,
+  .editorial-chart__legend-reset:focus-visible {
     outline: 0.18rem solid var(--focus);
     outline-offset: 0.2rem;
   }
@@ -559,6 +875,81 @@ const patternSlots = Array.from(
     height: auto;
     overflow: visible;
     font-family: inherit;
+  }
+  .editorial-chart__crosshair {
+    display: none;
+    stroke: var(--chart-baseline);
+    stroke-width: 1.25;
+    stroke-dasharray: 4 3;
+    opacity: 0.72;
+    pointer-events: none;
+  }
+  .editorial-chart__crosshair.is-visible {
+    display: inline;
+  }
+  .editorial-chart__tooltip {
+    position: absolute;
+    z-index: 4;
+    min-width: 9rem;
+    max-width: min(17rem, calc(100% - 1rem));
+    padding: 0.55rem 0.72rem;
+    border-radius: 0.45rem;
+    background: #172534;
+    color: #f8fafc;
+    box-shadow: 0 8px 20px rgb(15 23 42 / 0.24);
+    font-size: 0.82rem;
+    line-height: 1.35;
+    pointer-events: none;
+    transition:
+      left 90ms ease-out,
+      top 90ms ease-out;
+  }
+  .editorial-chart__tooltip[hidden] {
+    display: none;
+  }
+  .editorial-chart__tooltip :global(.editorial-chart__tooltip-head) {
+    margin-bottom: 0.32rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.16);
+    color: #ffffff;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .editorial-chart__tooltip :global(.editorial-chart__tooltip-row) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-block: 0.1rem;
+    color: #cbd5e1;
+  }
+  .editorial-chart__tooltip :global(.editorial-chart__tooltip-row.is-focused) {
+    color: #ffffff;
+    font-weight: 600;
+  }
+  .editorial-chart__tooltip :global(.editorial-chart__tooltip-row.is-total) {
+    margin-top: 0.26rem;
+    padding-top: 0.26rem;
+    border-top: 1px dashed rgb(255 255 255 / 0.2);
+    color: #f8fafc;
+  }
+  .editorial-chart__tooltip :global(.editorial-chart__tooltip-label) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    min-width: 0;
+  }
+  .editorial-chart__tooltip :global(.editorial-chart__tooltip-dot) {
+    flex: 0 0 0.55rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .editorial-chart__tooltip :global(.editorial-chart__tooltip-value) {
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
   .chart-line {
     fill: none;
@@ -613,6 +1004,17 @@ const patternSlots = Array.from(
     fill: var(--chart-surface);
     stroke: var(--chart-surface);
   }
+  .chart-donut-center__pct {
+    fill: var(--chart-text);
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .chart-donut-center__label {
+    fill: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
   .chart-pattern-line {
     fill: none;
     stroke: var(--chart-surface);
@@ -621,6 +1023,62 @@ const patternSlots = Array.from(
   .chart-line-path {
     fill: none;
     stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: opacity 180ms ease;
+  }
+  .chart-point {
+    stroke: var(--chart-surface);
+    stroke-width: 2;
+    cursor: pointer;
+    transition:
+      transform 140ms ease,
+      opacity 160ms ease;
+  }
+  .chart-bar {
+    cursor: pointer;
+    transition:
+      transform 480ms cubic-bezier(0.22, 1, 0.36, 1) calc(var(--cat-idx, 0) * 28ms),
+      opacity 150ms ease,
+      filter 150ms ease;
+  }
+  .chart-bar--vertical {
+    transform-origin: var(--origin-x, center) var(--origin-y, bottom);
+  }
+  .chart-bar--horizontal {
+    transform-origin: var(--origin-x, left) var(--origin-y, center);
+  }
+  .editorial-chart.is-animated:not(.is-revealed) .chart-bar--vertical {
+    transform: scaleY(0);
+  }
+  .editorial-chart.is-animated:not(.is-revealed) .chart-bar--horizontal {
+    transform: scaleX(0);
+  }
+  .editorial-chart.is-animated:not(.is-revealed) .chart-point {
+    opacity: 0;
+  }
+  .chart-target:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .editorial-chart__svg[data-has-active="1"] .chart-target:not(.is-active),
+  .editorial-chart__svg[data-has-series-spotlight] .is-series-dimmed {
+    opacity: 0.32;
+  }
+  .chart-bar.is-active {
+    filter: brightness(1.06);
+  }
+  .chart-point.is-active {
+    stroke: #172534;
+    stroke-width: 2.5;
+  }
+  .chart-slice.is-active {
+    transform: scale(1.035);
+    filter: drop-shadow(0 3px 6px rgb(23 37 52 / 0.2));
+  }
+  .is-series-hidden {
+    opacity: 0.06 !important;
+    pointer-events: none;
   }
   .chart-pos-1.chart-line-path,
   .chart-pos-1.chart-area {
@@ -642,6 +1100,7 @@ const patternSlots = Array.from(
     stroke: currentColor;
     stroke-width: 2;
     fill-opacity: 0.18;
+    transition: opacity 180ms ease;
   }
   .chart-pos-0.chart-area {
     fill-opacity: 0.24;
@@ -652,6 +1111,11 @@ const patternSlots = Array.from(
   .chart-slice {
     stroke: var(--chart-surface);
     stroke-width: 2;
+    cursor: pointer;
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 160ms ease,
+      filter 160ms ease;
   }
   .chart-pattern {
     stroke: var(--chart-surface);
@@ -685,12 +1149,14 @@ const patternSlots = Array.from(
     stroke: var(--chart-surface);
     stroke-width: 4px;
     stroke-linejoin: round;
+    pointer-events: none;
   }
   .editorial-chart__legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem 1rem;
-    margin: 0 0 1rem;
+    align-items: center;
+    gap: 0.55rem 0.75rem;
+    margin: 0.2rem 0 0.85rem;
     padding: 0;
     list-style: none;
   }
@@ -702,29 +1168,78 @@ const patternSlots = Array.from(
     color: var(--text);
     overflow-wrap: anywhere;
   }
+  .editorial-chart__legend-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.32rem 0.6rem;
+    border: 1px solid color-mix(in srgb, var(--chart-border) 65%, transparent);
+    border-radius: 0.45rem;
+    background: var(--chart-table-heading);
+    color: inherit;
+    font: inherit;
+    font-size: 0.88rem;
+    text-align: start;
+    cursor: default;
+    transition:
+      border-color 140ms ease,
+      background-color 140ms ease,
+      opacity 140ms ease;
+  }
+  .editorial-chart.is-interactive .editorial-chart__legend-btn {
+    cursor: pointer;
+  }
+  .editorial-chart.is-interactive .editorial-chart__legend-btn:hover {
+    border-color: var(--chart-baseline);
+    background: var(--chart-surface);
+  }
+  .editorial-chart__legend-btn.is-muted {
+    opacity: 0.48;
+  }
+  .editorial-chart__legend-btn.is-muted strong {
+    text-decoration: line-through;
+  }
+  .editorial-chart__legend-text {
+    min-width: 0;
+  }
+  .editorial-chart__legend-reset {
+    padding: 0.3rem 0.62rem;
+    border: 1px dashed var(--chart-border);
+    border-radius: 0.45rem;
+    background: transparent;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .editorial-chart__legend-reset[hidden] {
+    display: none;
+  }
   .editorial-chart__swatch {
     display: grid;
-    flex: 0 0 1.5rem;
-    width: 1.5rem;
-    height: 1.5rem;
+    flex: 0 0 1.4rem;
+    width: 1.4rem;
+    height: 1.4rem;
     place-items: center;
     border-radius: 0.3rem;
     background: currentColor;
   }
   .editorial-chart__swatch span {
     color: var(--chart-surface);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 800;
   }
   .editorial-chart__swatch-graphic {
-    flex: 0 0 1.75rem;
-    width: 1.75rem;
-    height: 1.125rem;
+    flex: 0 0 1.65rem;
+    width: 1.65rem;
+    height: 1.05rem;
     overflow: visible;
   }
   .editorial-chart__legend-value {
     display: block;
     color: var(--text-muted);
+    font-size: 0.84rem;
     font-variant-numeric: tabular-nums;
   }
   .editorial-chart__data {
@@ -742,15 +1257,35 @@ const patternSlots = Array.from(
     text-underline-offset: 0.2em;
   }
   .editorial-chart__caption {
-    display: grid;
-    gap: 0.35rem;
-    margin-block-start: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-block-start: 0.85rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid color-mix(in srgb, var(--chart-border) 45%, transparent);
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.86rem;
+  }
+  .editorial-chart__caption-meta {
+    display: grid;
+    gap: 0.28rem;
+    min-width: 0;
   }
   .editorial-chart__caption a {
     color: var(--brand);
     overflow-wrap: anywhere;
+  }
+  .editorial-chart__brand {
+    padding: 0.16rem 0.52rem;
+    border-radius: 0.3rem;
+    background: rgb(23 37 52 / 0.06);
+    color: var(--chart-text);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
   }
   .editorial-chart__fallback {
     padding: 0.8rem;
@@ -759,6 +1294,22 @@ const patternSlots = Array.from(
   }
   .editorial-chart__print-table {
     display: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chart-bar,
+    .chart-point,
+    .chart-slice,
+    .chart-line-path,
+    .editorial-chart__tooltip {
+      transition: none !important;
+    }
+    .editorial-chart.is-animated:not(.is-revealed) .chart-bar--vertical,
+    .editorial-chart.is-animated:not(.is-revealed) .chart-bar--horizontal {
+      transform: none;
+    }
+    .editorial-chart.is-animated:not(.is-revealed) .chart-point {
+      opacity: 1;
+    }
   }
   @media (max-width: 35rem) {
     .editorial-chart {
@@ -771,9 +1322,22 @@ const patternSlots = Array.from(
     .editorial-chart {
       break-inside: avoid;
       border: 1px solid #777;
+      box-shadow: none;
       background: #fff;
       color: #000;
       print-color-adjust: exact;
+    }
+    .editorial-chart__toolbar,
+    .editorial-chart__tooltip,
+    .editorial-chart__crosshair,
+    .editorial-chart__legend-reset {
+      display: none !important;
+    }
+    .editorial-chart.is-interactive[data-view="table"] .editorial-chart__visual-group {
+      display: block !important;
+    }
+    .editorial-chart.is-interactive[data-view="chart"] .editorial-chart__data {
+      display: block !important;
     }
     .editorial-chart__tier--compact {
       display: none !important;
