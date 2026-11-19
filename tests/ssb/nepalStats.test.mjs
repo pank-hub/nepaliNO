@@ -80,10 +80,14 @@ test('json-stat2 decoder handles multi-dimensional indexing and extracts chart s
   assert.match(defaultUrl, /valueCodes%5BTid%5D=top%286%29/)
 })
 
-test('Nepali stats loader renders valid interactive charts and falls back gracefully on SSB failure', async () => {
+test('Nepali stats loader renders all 11 interactive charts and falls back gracefully on SSB failure', async () => {
   const snapshotModel = await loadNepaliStats({allowLive: false})
   assert.equal(snapshotModel.liveTablesLoaded.length, 0)
   assert.equal(toNepaliYear('2026'), '२०२६')
+  assert.equal(Object.keys(snapshotModel.charts).length, 11)
+  assert.equal(snapshotModel.snapshot.municipalities.counties.length, 15)
+  assert.equal(snapshotModel.snapshot.residenceDuration.total, 3757)
+  assert.equal(snapshotModel.snapshot.employmentRate.overall, 78.5)
 
   for (const [name, input] of Object.entries(snapshotModel.charts)) {
     const chart = normalizeEditorialChart(input)

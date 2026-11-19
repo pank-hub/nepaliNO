@@ -8,12 +8,24 @@
     "latestYear": "2026",
     "latestMales": 1973,
     "latestFemales": 1782,
-    "latestCitizenship": 2310
+    "latestCitizenship": 2310,
+    "genderHistory": {
+      "years": ["2008", "2010", "2012", "2014", "2016", "2018", "2020", "2022", "2024", "2026"],
+      "males": [199, 389, 588, 809, 891, 1097, 1255, 1326, 1672, 1973],
+      "females": [143, 251, 377, 526, 673, 870, 1033, 1179, 1492, 1782]
+    },
+    "ageSex": {
+      "groups": ["०–१२ वर्ष", "१३–१९ वर्ष", "२०–२९ वर्ष", "३०–३९ वर्ष", "४०–४९ वर्ष", "५०+ वर्ष"],
+      "males": [214, 71, 141, 414, 164, 37],
+      "females": [191, 62, 249, 547, 159, 61]
+    }
   },
   "naturalisations": {
     "updatedDate": "2026-05-07",
     "years": ["2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"],
-    "counts": [18, 56, 18, 37, 47, 86, 71, 134, 134, 147]
+    "counts": [18, 56, 18, 37, 47, 86, 71, 134, 134, 147],
+    "adults": [14, 38, 14, 26, 34, 60, 42, 78, 79, 100],
+    "children": [4, 18, 4, 11, 13, 26, 29, 56, 55, 47]
   },
   "municipalities": {
     "updatedDate": "2026-03-05",
@@ -29,7 +41,46 @@
       {"code": "5501", "name": "Tromsø", "neName": "ट्र्योम्सो", "count": 77, "lat": 69.6492, "lng": 18.9553},
       {"code": "3218", "name": "Ås", "neName": "ओस", "count": 56, "lat": 59.6615, "lng": 10.7905},
       {"code": "3203", "name": "Asker", "neName": "आस्कर", "count": 53, "lat": 59.8342, "lng": 10.4357}
+    ],
+    "counties": [
+      {"code": "03", "name": "Oslo", "neName": "ओस्लो", "count": 2502},
+      {"code": "32", "name": "Akershus", "neName": "आकेशुस", "count": 559},
+      {"code": "50", "name": "Trøndelag", "neName": "त्र्योन्दलाग", "count": 233},
+      {"code": "11", "name": "Rogaland", "neName": "रोगालान", "count": 191},
+      {"code": "46", "name": "Vestland", "neName": "भेस्तलान", "count": 187},
+      {"code": "31", "name": "Østfold", "neName": "ओस्तफोल", "count": 124},
+      {"code": "40", "name": "Telemark", "neName": "तेलेमार्क", "count": 92},
+      {"code": "55", "name": "Troms", "neName": "त्रोम्स", "count": 87},
+      {"code": "42", "name": "Agder", "neName": "आगदेर", "count": 86},
+      {"code": "18", "name": "Nordland", "neName": "नोर्दलान", "count": 85},
+      {"code": "15", "name": "Møre og Romsdal", "neName": "मोरे ओग रोम्सदाल", "count": 80},
+      {"code": "34", "name": "Innlandet", "neName": "इन्लाने", "count": 71},
+      {"code": "33", "name": "Buskerud", "neName": "बुस्केरु", "count": 70},
+      {"code": "39", "name": "Vestfold", "neName": "भेस्तफोल", "count": 44},
+      {"code": "56", "name": "Finnmark", "neName": "फिन्नमार्क", "count": 43}
     ]
+  },
+  "residenceDuration": {
+    "updatedDate": "2026-03-05",
+    "latestYear": "2026",
+    "total": 3757,
+    "buckets": [
+      {"label": "२ वर्षभन्दा कम", "count": 714},
+      {"label": "२–४ वर्ष", "count": 1109},
+      {"label": "५–९ वर्ष", "count": 823},
+      {"label": "१०–१४ वर्ष", "count": 595},
+      {"label": "१५ वर्ष वा बढी", "count": 516}
+    ]
+  },
+  "employmentRate": {
+    "updatedDate": "2026-06-09",
+    "latestYear": "2025",
+    "overall": 78.5,
+    "malesTotal": 81.5,
+    "femalesTotal": 75.4,
+    "categories": ["४ वर्ष वा कम", "४–६ वर्ष", "७ वर्ष वा बढी", "समग्र (२०–६६ वर्ष)"],
+    "males": [80.5, 80.9, 82.5, 81.5],
+    "females": [70.3, 76.1, 79.7, 75.4]
   },
   "occupations": {
     "updatedDate": "2026-06-11",
@@ -51,6 +102,17 @@
       "engineering": 69,
       "cleaners": 326,
       "kitchenAssistants": 278
+    },
+    "specialistRoles": {
+      "teaching": 194,
+      "health": 109,
+      "engTech": 102,
+      "ict": 86,
+      "scienceEng": 69,
+      "bizProf": 52,
+      "bizAssoc": 42,
+      "healthAssoc": 30,
+      "ictTech": 21
     }
   },
   "education": {
