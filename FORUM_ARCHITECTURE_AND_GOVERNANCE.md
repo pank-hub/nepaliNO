@@ -1,8 +1,10 @@
 # Forum Architecture and Governance
 
-**Status:** Discourse selected; private pilot operational
+> **Consolidated (19 November 2026):** Forum governance policy, category allowlists, `forum-publisher` least-privilege rules, and launch gates from this document have been incorporated into [`DEVELOPER_HANDOVER.md`](./DEVELOPER_HANDOVER.md) (*Discourse Forum on Gigahost: Architecture, Governance & Operations Runbook*). Treat `DEVELOPER_HANDOVER.md` as the single canonical source of truth going forward.
+
+**Status:** Discourse selected; private pilot operational (`https://forum.nepali.no`)
 **Host:** Gigahost, Norway
-**Last reviewed:** 11 August 2026
+**Last reviewed:** 11 August 2026 (incorporated 19 November 2026)
 
 ## 1. Settled platform decision
 
