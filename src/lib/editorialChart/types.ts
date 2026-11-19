@@ -92,9 +92,20 @@ export type SvgShape =
       height: number
       series: number
       position: number
+      categoryIndex?: number
+      originX?: number
+      originY?: number
       pattern?: boolean
     }
-  | {type: 'circle'; cx: number; cy: number; r: number; series: number; position: number}
+  | {
+      type: 'circle'
+      cx: number
+      cy: number
+      r: number
+      series: number
+      position: number
+      categoryIndex?: number
+    }
   | {type: 'hole'; cx: number; cy: number; r: number}
   | {
       type: 'path'
@@ -104,6 +115,10 @@ export type SvgShape =
       fill?: boolean
       slice?: boolean
       pattern?: boolean
+      centerX?: number
+      centerY?: number
+      tipX?: number
+      tipY?: number
     }
   | {
       type: 'text'
@@ -125,4 +140,9 @@ export interface ChartGeometry {
   // True when the data needs more width than the layout offers, so the visual scrolls inside its container.
   scrolls: boolean
   labelLines: number
+  plotTop?: number
+  plotBottom?: number
+  plotLeft?: number
+  plotRight?: number
+  categoryXPositions?: number[]
 }
