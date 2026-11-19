@@ -1,7 +1,7 @@
 ---
 import MapPrivacy from "./MapPrivacy.astro";
 import {
-  MAP_PROVIDER,
+  MAP_VECTOR_PROVIDER,
   ROUTING_PROVIDER,
   resolveMapDisplaySettings,
   validateMapLocation,
@@ -9,9 +9,15 @@ import {
   type MapLocation,
   type MapPlace,
   type MapRoute,
+  type MapStyleMode,
   type PlaceIcon,
 } from "../../lib/maps/location";
-import {isOpenStreetMapUrl} from "../../lib/maps/publicMapUrl";
+import { isOpenStreetMapUrl } from "../../lib/maps/publicMapUrl";
+import {
+  NORWAY_LOCATOR_VIEWBOX,
+  NORWAY_MAINLAND_PATH,
+  projectNorwayPoint,
+} from "../../lib/maps/norwayLocator";
 import {
   iconForPlace,
   isLegacyBlock,
@@ -28,6 +34,8 @@ interface Props {
   initialZoom?: number;
   route?: MapRoute;
   editorialPath?: MapEditorialPath;
+  mapStyle?: MapStyleMode;
+  showNorwayLocator?: boolean;
   loadingBehavior?: "automatic" | "click";
   immediate?: boolean;
   contextSidebar?: boolean;
@@ -48,8 +56,8 @@ interface Props {
     externalNotice: string;
     exact: string;
     approximate: string;
-    openInOsm: string;
-    openMapInOsm: string;
+    openInOsm?: string;
+    openMapInOsm?: string;
     viewMapFullscreen: string;
     exitMapFullscreen: string;
     fullscreenFailed: string;
@@ -79,6 +87,8 @@ const {
   initialZoom,
   route: routeInput,
   editorialPath: pathInput,
+  mapStyle,
+  showNorwayLocator,
   loadingBehavior,
   immediate = false,
   contextSidebar = false,
@@ -99,19 +109,32 @@ const {
   sourceUrl,
   class: className = "",
 } = Astro.props;
+
 const display = resolveMapDisplaySettings({
   loadingBehavior,
+  mapStyle,
+  showNorwayLocator,
   showViewOnMapActions,
   showOpenStreetMapLinks,
   showLocationList,
   showOpenStreetMapControl,
   showFullscreenControl,
 });
-const normalizedPlaces =
-  normalizePlaces({ location, locations, title }, labels.defaultPlaceLabel);
+
+const normalizedPlaces = normalizePlaces(
+  { location, locations, title },
+  labels.defaultPlaceLabel,
+);
 const places = validPlaces(
-  isLegacyBlock({location, locations}) && normalizedPlaces.length
-    ? [{...normalizedPlaces[0], label: markerLabel?.trim() || normalizedPlaces[0].label, icon: markerIcon ?? normalizedPlaces[0].icon, showLabel: markerShowLabel}]
+  isLegacyBlock({ location, locations }) && normalizedPlaces.length
+    ? [
+        {
+          ...normalizedPlaces[0],
+          label: markerLabel?.trim() || normalizedPlaces[0].label,
+          icon: markerIcon ?? normalizedPlaces[0].icon,
+          showLabel: markerShowLabel,
+        },
+      ]
     : normalizedPlaces,
 );
 const legacy = isLegacyBlock({ location, locations });
@@ -125,6 +148,7 @@ const path = places.length > 0 ? publicEditorialPath(pathInput) : undefined;
 const single = places.length === 1 ? places[0] : undefined;
 const precision = single?.precision === "approximate" ? "approximate" : "exact";
 const showList = !legacy || places.length > 1 || showLocationList !== undefined;
+
 // Legacy blocks keep their stored zoom; a lone new exact place may set its own.
 const fixedZoom =
   route || path || !single
@@ -134,6 +158,7 @@ const fixedZoom =
       : single.precision === "exact"
         ? (initialZoom ?? 15)
         : undefined;
+
 const safeSourceUrl = (() => {
   if (!sourceUrl || isOpenStreetMapUrl(sourceUrl)) return undefined;
   try {
@@ -145,17 +170,22 @@ const safeSourceUrl = (() => {
     return undefined;
   }
 })();
+
 const radiusText = (place: MapPlace) =>
   labels.approximateRadius.replace(
     "{radius}",
     String(place.radiusMeters ?? ""),
   );
+
 const precisionLabel =
   places.length > 1
     ? ""
     : precision === "approximate"
       ? `${labels.approximate} · ${radiusText(single!)}`
-      : contextSidebar ? "" : labels.exact;
+      : contextSidebar
+        ? ""
+        : labels.exact;
+
 const clientPlaces = places.map((place) => ({
   key: place._key,
   label: place.label,
@@ -167,6 +197,20 @@ const clientPlaces = places.map((place) => ({
   icon: place.precision === "exact" ? iconForPlace(place) : undefined,
   showLabel: place.showLabel !== false,
 }));
+
+const centerLat =
+  places.length > 0
+    ? places.reduce((sum, p) => sum + p.coordinates!.lat, 0) / places.length
+    : 0;
+const centerLng =
+  places.length > 0
+    ? places.reduce((sum, p) => sum + p.coordinates!.lng, 0) / places.length
+    : 0;
+const initialLocatorPoint =
+  display.showNorwayLocator && places.length > 0
+    ? projectNorwayPoint(centerLat, centerLng)
+    : undefined;
+
 const routeSummary = route
   ? labels.routeSummary
       .replace("{distance}", (route.distanceMeters! / 1000).toFixed(1))
@@ -178,6 +222,8 @@ const routeSummary = route
 const routeDate = route?.calculatedAt?.slice(0, 10);
 const routeData = route?.geometry;
 const mapId = `location-map-${crypto.randomUUID()}`;
+const styleUrl = MAP_VECTOR_PROVIDER.styles[display.mapStyle];
+const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
 ---
 
 {
@@ -200,9 +246,12 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     </aside>
   ) : (
     <figure
-      class={`location-map ${contextSidebar ? "location-map--context" : ""} ${className}`}
+      class={`location-map ${contextSidebar ? "location-map--context" : ""} ${isEditorialFrame ? "location-map--editorial" : ""} ${className}`}
       data-location-map
       data-map-id={mapId}
+      data-map-style={display.mapStyle}
+      data-show-locator={String(display.showNorwayLocator)}
+      data-style-url={styleUrl}
       data-loading-behavior={display.loadingBehavior}
       data-map-immediate={immediate ? "true" : undefined}
       data-show-location-list={String(display.showLocationList)}
@@ -211,10 +260,9 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       data-path={path ? JSON.stringify(path) : undefined}
       data-zoom={fixedZoom ?? ""}
       data-description={description}
-      data-tile-url={MAP_PROVIDER.tiles}
-      data-attribution={MAP_PROVIDER.attribution}
-      data-max-zoom={MAP_PROVIDER.maxZoom}
-      data-referrer-policy={MAP_PROVIDER.referrerPolicy}
+      data-attribution={MAP_VECTOR_PROVIDER.attribution}
+      data-max-zoom={MAP_VECTOR_PROVIDER.maxZoom}
+      data-referrer-policy={MAP_VECTOR_PROVIDER.referrerPolicy}
       data-load-label={labels.load}
       data-loading-label={labels.loading}
       data-failed-label={labels.failed}
@@ -224,13 +272,26 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       data-fullscreen-failed-label={labels.fullscreenFailed}
     >
       {!contextSidebar && title && <h2 class="location-map__title">{title}</h2>}
-      {!contextSidebar && <p class="location-map__description">{description}</p>}
+      {!contextSidebar && description && (
+        <p class="location-map__description">{description}</p>
+      )}
       <div class="location-map__stage" data-map-stage>
-        <div class="location-map__placeholder" data-map-placeholder hidden={immediate}>
-          <button type="button" class="location-map__load" data-map-load hidden={immediate}>
+        <div
+          class="location-map__placeholder"
+          data-map-placeholder
+          hidden={immediate}
+        >
+          <button
+            type="button"
+            class="location-map__load"
+            data-map-load
+            hidden={immediate}
+          >
             {labels.load}
           </button>
-          {!contextSidebar && <p class="location-map__external-notice">{labels.externalNotice}</p>}
+          {!contextSidebar && (
+            <p class="location-map__external-notice">{labels.externalNotice}</p>
+          )}
         </div>
         <div
           class="location-map__canvas"
@@ -238,7 +299,35 @@ const mapId = `location-map-${crypto.randomUUID()}`;
           hidden
           aria-hidden="true"
         />
-        <div class="location-map__brand" data-map-brand hidden aria-hidden="true">
+        <div
+          class="location-map__locator"
+          data-map-locator
+          hidden
+          aria-hidden="true"
+        >
+          <svg
+            viewBox={NORWAY_LOCATOR_VIEWBOX}
+            width="60"
+            height="72"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path class="location-map__locator-land" d={NORWAY_MAINLAND_PATH} />
+            <circle
+              class="location-map__locator-dot"
+              data-map-locator-dot
+              cx={initialLocatorPoint?.x ?? 20}
+              cy={initialLocatorPoint?.y ?? 76}
+              r="3.8"
+            />
+          </svg>
+        </div>
+        <div
+          class="location-map__brand"
+          data-map-brand
+          hidden
+          aria-hidden="true"
+        >
           <span class="location-map__brand-dot" aria-hidden="true"></span>
           <span>nepali.no</span>
         </div>
@@ -254,23 +343,55 @@ const mapId = `location-map-${crypto.randomUUID()}`;
               aria-controls={`${mapId}-fullscreen`}
               hidden
             >
-              <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <svg
+                viewBox="0 0 20 20"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
                 <path d="M7 3H3v4M13 3h4v4M17 13v4h-4M3 13v4h4" />
               </svg>
             </button>
           )}
-          <button type="button" data-map-zoom-in aria-label={labels.zoomIn} title={labels.zoomIn}>
-            +
-          </button>
-          <button type="button" data-map-zoom-out aria-label={labels.zoomOut} title={labels.zoomOut}>
-            −
-          </button>
+          <div class="location-map__zoom-group">
+            <button
+              type="button"
+              data-map-zoom-in
+              aria-label={labels.zoomIn}
+              title={labels.zoomIn}
+            >
+              +
+            </button>
+            <button
+              type="button"
+              data-map-zoom-out
+              aria-label={labels.zoomOut}
+              title={labels.zoomOut}
+            >
+              −
+            </button>
+          </div>
         </div>
       </div>
-      {immediate && <noscript><p class="location-map__status">{labels.failed}</p></noscript>}
+      {immediate && (
+        <noscript>
+          <p class="location-map__status">{labels.failed}</p>
+        </noscript>
+      )}
       {contextSidebar && <MapPrivacy language={language} />}
       {display.showFullscreenControl && (
-        <dialog id={`${mapId}-fullscreen`} class="location-map__fullscreen" data-map-fullscreen-dialog aria-label={labels.viewMapFullscreen}>
+        <dialog
+          id={`${mapId}-fullscreen`}
+          class="location-map__fullscreen"
+          data-map-fullscreen-dialog
+          aria-label={labels.viewMapFullscreen}
+        >
           <button
             type="button"
             class="location-map__fullscreen-exit"
@@ -278,7 +399,18 @@ const mapId = `location-map-${crypto.randomUUID()}`;
             aria-label={labels.exitMapFullscreen}
             title={labels.exitMapFullscreen}
           >
-            <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <svg
+              viewBox="0 0 20 20"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
               <path d="M3 7h4V3M17 7h-4V3M13 17v-4h4M7 17v-4H3" />
             </svg>
           </button>
@@ -307,14 +439,14 @@ const mapId = `location-map-${crypto.randomUUID()}`;
                 </div>
                 {display.showViewOnMapActions && (
                   <span class="location-map__place-actions">
-                    {display.showViewOnMapActions && <button
+                    <button
                       type="button"
                       data-map-focus={place._key}
                       aria-label={`${labels.showOnMap}: ${place.label}`}
                       hidden
                     >
                       {labels.showOnMap}
-                    </button>}
+                    </button>
                   </span>
                 )}
               </li>
@@ -345,39 +477,60 @@ const mapId = `location-map-${crypto.randomUUID()}`;
           </p>
         </section>
       )}
-      {(caption || safeSourceUrl || precisionLabel || (contextSidebar && title)) && <figcaption class="location-map__caption">
-        {contextSidebar && title && <span>{title}</span>}
-        {caption && <span>{caption}</span>}
-        {safeSourceUrl && (
-          <span>
-            {sourceLabel && <span>{sourceLabel}: </span>}
-            <a href={safeSourceUrl} target="_blank" rel="noopener noreferrer">
-              {sourceLabel || safeSourceUrl}
-            </a>
-          </span>
-        )}
-        {precisionLabel && <span>{precisionLabel}</span>}
-      </figcaption>}
+      {(caption ||
+        safeSourceUrl ||
+        precisionLabel ||
+        (contextSidebar && title)) && (
+        <figcaption class="location-map__caption">
+          {contextSidebar && title && <span>{title}</span>}
+          {caption && <span>{caption}</span>}
+          {safeSourceUrl && (
+            <span>
+              {sourceLabel && <span>{sourceLabel}: </span>}
+              <a
+                href={safeSourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {sourceLabel || safeSourceUrl}
+              </a>
+            </span>
+          )}
+          {precisionLabel && <span>{precisionLabel}</span>}
+        </figcaption>
+      )}
     </figure>
   )
 }
 
 <script>
   import type {
-    Circle,
-    LatLngBoundsExpression,
-    Map as LeafletMap,
+    LngLatBoundsLike,
+    MapLibreMap,
     Marker,
-    TileLayer,
-  } from "leaflet";
+    StyleSpecification,
+  } from "maplibre-gl";
   import {
-    createPlaceIcon,
-    labelContent,
+    createMapLibreMarkerElement,
     placeContent,
   } from "../../lib/maps/markerIcons";
   import type { PlaceIcon } from "../../lib/maps/location";
-  import { decodePolyline6 } from "../../lib/maps/places";
-  import { createMapActivator, observeAutomaticMaps, setMapListLoaded } from "../../lib/maps/mapLoading";
+  import {
+    customizeMapStyle,
+    type MapStyleMode,
+    type VectorStyleSpec,
+  } from "../../lib/maps/mapStyle";
+  import { projectNorwayPoint } from "../../lib/maps/norwayLocator";
+  import {
+    circlePolygonRing,
+    decodePolyline6,
+    editorialPathMidpoint,
+  } from "../../lib/maps/places";
+  import {
+    createMapActivator,
+    observeAutomaticMaps,
+    setMapListLoaded,
+  } from "../../lib/maps/mapLoading";
   import { createMapFullscreen } from "../../lib/maps/mapFullscreen";
 
   type ClientPlace = {
@@ -392,10 +545,14 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     showLabel?: boolean;
   };
 
+  type LayerTarget =
+    | { type: "marker"; lngLat: [number, number]; marker: Marker }
+    | { type: "circle"; bounds: [[number, number], [number, number]] };
+
   type MapRecord = {
-    map: LeafletMap;
-    layers: Map<string, Marker | Circle>;
-    tiles: TileLayer;
+    map: MapLibreMap;
+    layers: Map<string, LayerTarget>;
+    markers: Marker[];
     root: HTMLElement;
   };
 
@@ -420,6 +577,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     points: [number, number][];
     color: string;
     dashArray?: string;
+    label?: string;
   };
 
   const readPath = (raw: string | undefined): ClientPath | undefined => {
@@ -439,17 +597,39 @@ const mapId = `location-map-${crypto.randomUUID()}`;
   const activeMaps = new Map<string, MapRecord>();
   const fullscreen = createMapFullscreen(document, window);
   let mapGeneration = 0;
-  let leafletPromise: Promise<typeof import("leaflet")> | undefined;
+  let mapLibrePromise: Promise<typeof import("maplibre-gl")> | undefined;
+  const styleCache = new Map<string, Promise<VectorStyleSpec>>();
 
-  const loadLeaflet = () => {
-    leafletPromise ??= Promise.all([
-      import("leaflet"),
-      import("leaflet/dist/leaflet.css"),
-    ]).then(([leaflet]) => leaflet).catch((error: unknown) => {
-      leafletPromise = undefined;
-      throw error;
-    });
-    return leafletPromise;
+  const loadMapLibre = () => {
+    mapLibrePromise ??= Promise.all([
+      import("maplibre-gl"),
+      import("maplibre-gl/dist/maplibre-gl.css"),
+    ])
+      .then(([mod]) => mod)
+      .catch((error: unknown) => {
+        mapLibrePromise = undefined;
+        throw error;
+      });
+    return mapLibrePromise;
+  };
+
+  const fetchBaseStyle = (
+    styleUrl: string,
+    referrerPolicy: ReferrerPolicy,
+  ): Promise<VectorStyleSpec> => {
+    const cached = styleCache.get(styleUrl);
+    if (cached) return cached;
+    const request = fetch(styleUrl, { referrerPolicy })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<VectorStyleSpec>;
+      })
+      .catch((error: unknown) => {
+        styleCache.delete(styleUrl);
+        throw error;
+      });
+    styleCache.set(styleUrl, request);
+    return request;
   };
 
   const announce = (root: HTMLElement, message: string) => {
@@ -457,19 +637,47 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     if (status) status.textContent = message;
   };
 
+  const updateLocator = (root: HTMLElement, lat: number, lng: number) => {
+    const locator = root.querySelector<HTMLElement>("[data-map-locator]");
+    const dot = root.querySelector<SVGCircleElement>("[data-map-locator-dot]");
+    if (!locator || !dot) return;
+    if (root.dataset.showLocator !== "true") {
+      locator.hidden = true;
+      return;
+    }
+    const projected = projectNorwayPoint(lat, lng);
+    if (!projected) {
+      locator.hidden = true;
+      return;
+    }
+    dot.setAttribute("cx", String(projected.x));
+    dot.setAttribute("cy", String(projected.y));
+    locator.hidden = false;
+  };
+
   const dispose = (root: HTMLElement) => {
     fullscreen.close(root, false);
     setMapListLoaded(root, false);
-    const fullscreenButton = root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
+    const fullscreenButton = root.querySelector<HTMLButtonElement>(
+      "[data-map-fullscreen-open]",
+    );
     if (fullscreenButton) fullscreenButton.hidden = true;
     const brand = root.querySelector<HTMLElement>("[data-map-brand]");
     if (brand) brand.hidden = true;
-    const placeholder = root.querySelector<HTMLElement>("[data-map-placeholder]");
+    const locator = root.querySelector<HTMLElement>("[data-map-locator]");
+    if (locator) locator.hidden = true;
+    const placeholder = root.querySelector<HTMLElement>(
+      "[data-map-placeholder]",
+    );
     if (placeholder) placeholder.hidden = false;
     const id = root.dataset.mapId;
     if (!id) return;
-    activeMaps.get(id)?.map.remove();
-    activeMaps.delete(id);
+    const record = activeMaps.get(id);
+    if (record) {
+      for (const marker of record.markers) marker.remove();
+      record.map.remove();
+      activeMaps.delete(id);
+    }
     root.querySelector<HTMLElement>("[data-map-canvas]")?.replaceChildren();
   };
 
@@ -481,11 +689,19 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     const canvas = root.querySelector<HTMLElement>("[data-map-canvas]");
     const button = root.querySelector<HTMLButtonElement>("[data-map-load]");
     const controls = root.querySelector<HTMLElement>("[data-map-controls]");
-    const placeholder = root.querySelector<HTMLElement>("[data-map-placeholder]");
+    const placeholder = root.querySelector<HTMLElement>(
+      "[data-map-placeholder]",
+    );
     const brand = root.querySelector<HTMLElement>("[data-map-brand]");
     const places = readPlaces(root.dataset.places);
     const zoom = Number(root.dataset.zoom);
-    if (!canvas || !button || !controls || places.length === 0) {
+    const styleUrl = root.dataset.styleUrl ?? "";
+    const styleMode: MapStyleMode =
+      root.dataset.mapStyle === "city" ? "city" : "editorial";
+    const referrerPolicy = (root.dataset.referrerPolicy ||
+      "strict-origin-when-cross-origin") as ReferrerPolicy;
+
+    if (!canvas || !button || !controls || !styleUrl || places.length === 0) {
       announce(root, root.dataset.failedLabel ?? "");
       if (button) button.hidden = false;
       if (placeholder) placeholder.hidden = false;
@@ -494,12 +710,17 @@ const mapId = `location-map-${crypto.randomUUID()}`;
 
     announce(root, root.dataset.loadingLabel ?? "");
     button.disabled = true;
+
     try {
-      const L = await loadLeaflet();
+      const [maplibregl, rawStyle] = await Promise.all([
+        loadMapLibre(),
+        fetchBaseStyle(styleUrl, referrerPolicy),
+      ]);
       if (!root.isConnected || generation !== mapGeneration) {
         button.disabled = false;
         return;
       }
+
       if (placeholder) placeholder.hidden = true;
       canvas.hidden = false;
       canvas.setAttribute("aria-hidden", "false");
@@ -507,113 +728,39 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       canvas.setAttribute("aria-label", root.dataset.description ?? "");
       controls.hidden = false;
       if (brand) brand.hidden = false;
-      const map = L.map(canvas, {
-        center: [places[0].lat, places[0].lng],
-        zoom: Number.isFinite(zoom) && root.dataset.zoom !== "" ? zoom : 13,
-        maxZoom: Number(root.dataset.maxZoom),
-        keyboard: true,
-        scrollWheelZoom: false,
-        zoomControl: false,
+
+      const styledSpec = customizeMapStyle(rawStyle, styleMode);
+      const map = new maplibregl.Map({
+        container: canvas,
+        style: styledSpec as unknown as StyleSpecification,
+        center: [places[0].lng, places[0].lat],
+        zoom: Number.isFinite(zoom) && root.dataset.zoom !== "" ? zoom : 12.5,
+        maxZoom: Number(root.dataset.maxZoom) || 19,
         attributionControl: false,
+        scrollZoom: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        transformRequest: (url) => ({ url, referrerPolicy }),
       });
-      L.control.attribution({ prefix: "nepali.no" }).addTo(map);
-      const tiles = L.tileLayer(root.dataset.tileUrl ?? "", {
-        attribution: root.dataset.attribution ?? "",
-        maxZoom: Number(root.dataset.maxZoom),
-        referrerPolicy: (root.dataset.referrerPolicy ||
-          "strict-origin-when-cross-origin") as "strict-origin-when-cross-origin",
-      }).addTo(map);
-      const record: MapRecord = { map, tiles, root, layers: new Map() };
+      map.addControl(
+        new maplibregl.AttributionControl({
+          compact: false,
+          customAttribution: "nepali.no",
+        }),
+        "bottom-right",
+      );
+
+      const record: MapRecord = {
+        map,
+        layers: new Map(),
+        markers: [],
+        root,
+      };
       activeMaps.set(id, record);
 
-      const bounds = L.latLngBounds([]);
-      const routePoints = root.dataset.route
-        ? (() => {
-            try {
-              return decodePolyline6(root.dataset.route);
-            } catch {
-              return [];
-            }
-          })()
-        : [];
-      if (routePoints.length > 1) {
-        L.polyline(routePoints, {
-          color: "#1d4ed8",
-          weight: 5,
-          opacity: 0.8,
-          interactive: false,
-        }).addTo(map);
-        bounds.extend(routePoints);
-      }
-      const editorialPath = readPath(root.dataset.path);
-      if (editorialPath) {
-        // White casing keeps the highlighted path readable over any base map.
-        L.polyline(editorialPath.points, {
-          color: "#ffffff",
-          weight: 9,
-          opacity: 0.9,
-          interactive: false,
-        }).addTo(map);
-        L.polyline(editorialPath.points, {
-          color: editorialPath.color,
-          weight: 5,
-          opacity: 1,
-          dashArray: editorialPath.dashArray,
-          interactive: false,
-        }).addTo(map);
-        bounds.extend(editorialPath.points);
-      }
-      for (const place of places) {
-        const latlng: [number, number] = [place.lat, place.lng];
-        if (place.precision === "approximate" && place.radius) {
-          const circle = L.circle(latlng, {
-            radius: place.radius,
-            color: "#b42318",
-            fillColor: "#f04438",
-            fillOpacity: 0.18,
-            weight: 2,
-          }).addTo(map);
-          // Popup opens at the click point, never at the circle centre.
-          circle.bindPopup(placeContent(place, document));
-          record.layers.set(place.key, circle);
-          bounds.extend(circle.getBounds());
-        } else {
-          const marker = L.marker(latlng, {
-            title: place.label,
-            keyboard: true,
-            icon: createPlaceIcon(L, place.icon),
-          }).addTo(map);
-          marker.bindPopup(placeContent(place, document));
-          marker.bindTooltip(labelContent(place.label, document), {
-            permanent: place.showLabel !== false,
-            direction: "right",
-            offset: [8, 0],
-          });
-          marker.getElement()?.setAttribute("aria-label", place.label);
-          if (root.dataset.mapImmediate === "true" && place.showLabel !== false) marker.openPopup();
-          record.layers.set(place.key, marker);
-          bounds.extend(latlng);
-        }
-      }
-      if (root.dataset.zoom === "" && bounds.isValid()) {
-        map.fitBounds(bounds as LatLngBoundsExpression, {
-          padding: [32, 32],
-          maxZoom: 16,
-        });
-      }
-      const only = places.length === 1 ? places[0] : undefined;
-      if (only?.precision === "approximate") {
-        const radiusLabel = (root.dataset.radiusLabel ?? "").replace(
-          "{radius}",
-          String(Math.round(only.radius ?? 0)),
-        );
-        canvas.setAttribute(
-          "aria-label",
-          `${root.dataset.description ?? ""}. ${radiusLabel}`,
-        );
-      }
-      let loadedTiles = 0;
-      let erroredTiles = 0;
+      const bounds = new maplibregl.LngLatBounds();
+      let hasLoaded = false;
+
       const failMap = () => {
         if (activeMaps.get(id) !== record) return;
         const wasFullscreen = fullscreen.close(root, false);
@@ -628,28 +775,243 @@ const mapId = `location-map-${crypto.randomUUID()}`;
         button.textContent = root.dataset.loadLabel ?? "";
         if (wasFullscreen) button.focus();
       };
-      tiles.on("tileload", () => {
-        loadedTiles += 1;
+
+      map.on("error", () => {
+        if (!hasLoaded) failMap();
       });
-      tiles.on("tileerror", () => {
-        erroredTiles += 1;
-        if (loadedTiles === 0 && erroredTiles >= 4) failMap();
-      });
-      tiles.once("load", () => {
+
+      map.once("load", () => {
         if (activeMaps.get(id) !== record) return;
-        if (loadedTiles === 0 && erroredTiles > 0) {
-          failMap();
-          return;
+        hasLoaded = true;
+
+        const routePoints = root.dataset.route
+          ? (() => {
+              try {
+                return decodePolyline6(root.dataset.route);
+              } catch {
+                return [];
+              }
+            })()
+          : [];
+        if (routePoints.length > 1) {
+          const coords = routePoints.map(
+            ([lat, lng]) => [lng, lat] as [number, number],
+          );
+          for (const c of coords) bounds.extend(c);
+          map.addSource("saved-route", {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: {},
+              geometry: { type: "LineString", coordinates: coords },
+            },
+          });
+          map.addLayer({
+            id: "saved-route-line",
+            type: "line",
+            source: "saved-route",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: {
+              "line-color": "#1d4ed8",
+              "line-width": 4.5,
+              "line-opacity": 0.85,
+            },
+          });
         }
+
+        const editorialPath = readPath(root.dataset.path);
+        if (editorialPath) {
+          const coords = editorialPath.points.map(
+            ([lat, lng]) => [lng, lat] as [number, number],
+          );
+          for (const c of coords) bounds.extend(c);
+          map.addSource("editorial-path", {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: {},
+              geometry: { type: "LineString", coordinates: coords },
+            },
+          });
+          map.addLayer({
+            id: "editorial-path-casing",
+            type: "line",
+            source: "editorial-path",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: {
+              "line-color": "#ffffff",
+              "line-width": 8,
+              "line-opacity": 0.9,
+            },
+          });
+          map.addLayer({
+            id: "editorial-path-line",
+            type: "line",
+            source: "editorial-path",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: {
+              "line-color": editorialPath.color,
+              "line-width": 4.5,
+              "line-opacity": 1,
+              ...(editorialPath.dashArray
+                ? { "line-dasharray": [2.2, 1.8] }
+                : {}),
+            },
+          });
+
+          if (editorialPath.label) {
+            const mid = editorialPathMidpoint(editorialPath.points);
+            if (mid) {
+              const pathBadge = document.createElement("div");
+              pathBadge.className = "nrk-path-label";
+              pathBadge.textContent = editorialPath.label;
+              const pathMarker = new maplibregl.Marker({
+                element: pathBadge,
+                anchor: "center",
+              })
+                .setLngLat([mid[1], mid[0]])
+                .addTo(map);
+              record.markers.push(pathMarker);
+            }
+          }
+        }
+
+        const approxFeatures: GeoJSON.Feature<GeoJSON.Polygon>[] = [];
+        for (const place of places) {
+          if (place.precision === "approximate" && place.radius) {
+            const ring = circlePolygonRing(place.lat, place.lng, place.radius);
+            let west = Infinity;
+            let south = Infinity;
+            let east = -Infinity;
+            let north = -Infinity;
+            for (const pt of ring) {
+              bounds.extend(pt);
+              west = Math.min(west, pt[0]);
+              south = Math.min(south, pt[1]);
+              east = Math.max(east, pt[0]);
+              north = Math.max(north, pt[1]);
+            }
+            record.layers.set(place.key, {
+              type: "circle",
+              bounds: [
+                [west, south],
+                [east, north],
+              ],
+            });
+            approxFeatures.push({
+              type: "Feature",
+              properties: { key: place.key },
+              geometry: { type: "Polygon", coordinates: [ring] },
+            });
+          } else {
+            const lngLat: [number, number] = [place.lng, place.lat];
+            const el = createMapLibreMarkerElement(place, document);
+            const popup = new maplibregl.Popup({
+              offset: 14,
+              closeButton: true,
+            }).setDOMContent(placeContent(place, document));
+            const marker = new maplibregl.Marker({
+              element: el,
+              anchor: "bottom",
+            })
+              .setLngLat(lngLat)
+              .setPopup(popup)
+              .addTo(map);
+            el.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                marker.togglePopup();
+              }
+            });
+            record.layers.set(place.key, {
+              type: "marker",
+              lngLat,
+              marker,
+            });
+            record.markers.push(marker);
+            bounds.extend(lngLat);
+          }
+        }
+
+        if (approxFeatures.length > 0) {
+          map.addSource("approximate-areas", {
+            type: "geojson",
+            data: { type: "FeatureCollection", features: approxFeatures },
+          });
+          map.addLayer({
+            id: "approximate-areas-fill",
+            type: "fill",
+            source: "approximate-areas",
+            paint: { "fill-color": "#f04438", "fill-opacity": 0.18 },
+          });
+          map.addLayer({
+            id: "approximate-areas-line",
+            type: "line",
+            source: "approximate-areas",
+            paint: {
+              "line-color": "#b42318",
+              "line-width": 2,
+              "line-dasharray": [3, 2],
+            },
+          });
+          map.on("click", "approximate-areas-fill", (event) => {
+            const key = event.features?.[0]?.properties?.key as
+              | string
+              | undefined;
+            const targetPlace = places.find((p) => p.key === key);
+            if (!targetPlace) return;
+            new maplibregl.Popup({ closeButton: true })
+              .setLngLat(event.lngLat)
+              .setDOMContent(placeContent(targetPlace, document))
+              .addTo(map);
+          });
+          map.on("mouseenter", "approximate-areas-fill", () => {
+            map.getCanvas().style.cursor = "pointer";
+          });
+          map.on("mouseleave", "approximate-areas-fill", () => {
+            map.getCanvas().style.cursor = "";
+          });
+        }
+
+        if (root.dataset.zoom === "" && !bounds.isEmpty()) {
+          map.fitBounds(bounds as LngLatBoundsLike, {
+            padding: 48,
+            maxZoom: 15,
+            duration: 0,
+          });
+        }
+
+        const currentCenter = map.getCenter();
+        updateLocator(root, currentCenter.lat, currentCenter.lng);
+        map.on("moveend", () => {
+          const next = map.getCenter();
+          updateLocator(root, next.lat, next.lng);
+        });
+
         setMapListLoaded(root, true);
-        const fullscreenButton = root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
+        const fullscreenButton = root.querySelector<HTMLButtonElement>(
+          "[data-map-fullscreen-open]",
+        );
         if (fullscreenButton) fullscreenButton.hidden = false;
         announce(root, "");
       });
+
+      const only = places.length === 1 ? places[0] : undefined;
+      if (only?.precision === "approximate") {
+        const radiusLabel = (root.dataset.radiusLabel ?? "").replace(
+          "{radius}",
+          String(Math.round(only.radius ?? 0)),
+        );
+        canvas.setAttribute(
+          "aria-label",
+          `${root.dataset.description ?? ""}. ${radiusLabel}`,
+        );
+      }
+
       button.textContent = root.dataset.loadLabel ?? "";
       button.disabled = false;
       button.hidden = true;
-      requestAnimationFrame(() => map.invalidateSize());
+      requestAnimationFrame(() => map.resize());
       announce(root, "");
     } catch (error) {
       dispose(root);
@@ -669,8 +1031,11 @@ const mapId = `location-map-${crypto.randomUUID()}`;
   document.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
-    const fullscreenButton = target.closest<HTMLButtonElement>("[data-map-fullscreen-open]");
-    const fullscreenRoot = fullscreenButton?.closest<HTMLElement>("[data-location-map]");
+    const fullscreenButton = target.closest<HTMLButtonElement>(
+      "[data-map-fullscreen-open]",
+    );
+    const fullscreenRoot =
+      fullscreenButton?.closest<HTMLElement>("[data-location-map]");
     const fullscreenMap = fullscreenRoot?.dataset.mapId
       ? activeMaps.get(fullscreenRoot.dataset.mapId)?.map
       : undefined;
@@ -678,7 +1043,10 @@ const mapId = `location-map-${crypto.randomUUID()}`;
       try {
         fullscreen.open(fullscreenRoot, fullscreenMap);
       } catch (error) {
-        announce(fullscreenRoot, fullscreenRoot.dataset.fullscreenFailedLabel ?? "");
+        announce(
+          fullscreenRoot,
+          fullscreenRoot.dataset.fullscreenFailedLabel ?? "",
+        );
         console.error("[location-map] Unable to open fullscreen map.", error);
       }
       return;
@@ -704,16 +1072,17 @@ const mapId = `location-map-${crypto.randomUUID()}`;
           ? activeMaps.get(focusRoot.dataset.mapId)
           : undefined;
         if (!focusRecord) return;
-        const layer = focusRecord.layers.get(focusControl.dataset.mapFocus ?? "");
-        if (layer && "getBounds" in layer) {
-          // Approximate area: fit the circle, never open anything at its centre.
-          focusRecord.map.fitBounds(layer.getBounds(), { padding: [32, 32] });
-        } else if (layer) {
-          focusRecord.map.setView(
-            layer.getLatLng(),
-            Math.max(focusRecord.map.getZoom(), 16),
-          );
-          layer.openPopup();
+        const layer = focusRecord.layers.get(
+          focusControl.dataset.mapFocus ?? "",
+        );
+        if (layer?.type === "circle") {
+          focusRecord.map.fitBounds(layer.bounds, { padding: 36 });
+        } else if (layer?.type === "marker") {
+          focusRecord.map.flyTo({
+            center: layer.lngLat,
+            zoom: Math.max(focusRecord.map.getZoom(), 15),
+          });
+          if (!layer.marker.getPopup()?.isOpen()) layer.marker.togglePopup();
         }
         focusRoot
           .querySelector<HTMLElement>("[data-map-canvas]")
@@ -742,18 +1111,28 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     });
     stopObserving = observeAutomaticMaps(roots, ensureActive);
   };
+
   const disposeAll = () => {
     mapGeneration++;
     stopObserving();
     fullscreen.close(undefined, false);
     for (const record of activeMaps.values()) {
       setMapListLoaded(record.root, false);
-      const fullscreenButton = record.root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
+      const fullscreenButton = record.root.querySelector<HTMLButtonElement>(
+        "[data-map-fullscreen-open]",
+      );
       if (fullscreenButton) fullscreenButton.hidden = true;
       const brand = record.root.querySelector<HTMLElement>("[data-map-brand]");
       if (brand) brand.hidden = true;
-      const placeholder = record.root.querySelector<HTMLElement>("[data-map-placeholder]");
+      const locator = record.root.querySelector<HTMLElement>(
+        "[data-map-locator]",
+      );
+      if (locator) locator.hidden = true;
+      const placeholder = record.root.querySelector<HTMLElement>(
+        "[data-map-placeholder]",
+      );
       if (placeholder) placeholder.hidden = false;
+      for (const marker of record.markers) marker.remove();
       record.map.remove();
       const canvas = record.root.querySelector<HTMLElement>("[data-map-canvas]");
       if (canvas) {
@@ -761,9 +1140,13 @@ const mapId = `location-map-${crypto.randomUUID()}`;
         canvas.hidden = true;
         canvas.setAttribute("aria-hidden", "true");
       }
-      const controls = record.root.querySelector<HTMLElement>("[data-map-controls]");
+      const controls = record.root.querySelector<HTMLElement>(
+        "[data-map-controls]",
+      );
       if (controls) controls.hidden = true;
-      const button = record.root.querySelector<HTMLButtonElement>("[data-map-load]");
+      const button = record.root.querySelector<HTMLButtonElement>(
+        "[data-map-load]",
+      );
       if (button) button.hidden = false;
     }
     activeMaps.clear();
@@ -788,18 +1171,25 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     background: var(--surface, #fff);
   }
 
+  .location-map--editorial {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
   .location-map__title {
     margin: 0 0 0.5rem;
     font-size: 1.25rem;
   }
 
-  .location-map__description,
-  .location-map__external-notice {
-    margin: 0.5rem 0;
+  .location-map__description {
+    margin: 0 0 0.65rem;
+    color: var(--text-muted, #526273);
   }
 
   .location-map__external-notice {
-    max-width: 34ch;
+    max-width: 36ch;
     margin: 0;
     color: var(--text-muted, #526273);
     font-size: 0.84rem;
@@ -811,7 +1201,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     place-items: center;
     align-content: center;
     gap: 0.65rem;
-    min-height: 10.5rem;
+    min-height: 11rem;
     padding: 1.5rem 1rem;
     border: 1px solid var(--border, #dce4ec);
     border-radius: 0.5rem;
@@ -827,7 +1217,7 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     min-height: 18rem;
     overflow: hidden;
     border-radius: 0.5rem;
-    background: #e8eef5;
+    background: #eef3f8;
     touch-action: none;
   }
 
@@ -837,6 +1227,37 @@ const mapId = `location-map-${crypto.randomUUID()}`;
 
   .location-map__stage {
     position: relative;
+  }
+
+  .location-map__locator {
+    position: absolute;
+    z-index: 450;
+    top: 0.55rem;
+    left: 0.55rem;
+    padding: 0.25rem;
+    border-radius: 0.4rem;
+    background: rgb(253 252 249 / 0.72);
+    backdrop-filter: blur(3px);
+    box-shadow: 0 1px 4px rgb(23 37 52 / 0.12);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .location-map__locator svg {
+    display: block;
+  }
+
+  .location-map__locator-land {
+    fill: #ffffff;
+    stroke: var(--civic-deep, #172534);
+    stroke-width: 1.35;
+    stroke-linejoin: round;
+  }
+
+  .location-map__locator-dot {
+    fill: var(--brand, #c62a1f);
+    stroke: #ffffff;
+    stroke-width: 1.25;
   }
 
   .location-map__brand {
@@ -900,6 +1321,10 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     display: none !important;
   }
 
+  .location-map__fullscreen[open] .location-map__zoom-group {
+    display: grid;
+  }
+
   .location-map__fullscreen[open] .location-map__controls {
     top: calc(max(0.5rem, env(safe-area-inset-top)) + 2.75rem + 0.35rem);
     right: max(0.5rem, env(safe-area-inset-right));
@@ -935,6 +1360,11 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     touch-action: none;
   }
 
+  .location-map__fullscreen .location-map__locator {
+    top: max(0.55rem, env(safe-area-inset-top));
+    left: max(0.55rem, env(safe-area-inset-left));
+  }
+
   .location-map__fullscreen .location-map__brand {
     bottom: max(0.5rem, env(safe-area-inset-bottom));
     left: max(0.5rem, env(safe-area-inset-left));
@@ -947,6 +1377,15 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     right: 0.5rem;
     display: grid;
     gap: 0.35rem;
+  }
+
+  .location-map__zoom-group {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .location-map--editorial .location-map__zoom-group {
+    display: none;
   }
 
   .location-map__controls button,
@@ -990,12 +1429,104 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     outline-offset: 2px;
   }
 
+  /* NRK-style editorial markers, navy pill labels, and inline path callout */
+  .location-map__stage :global(.nrk-marker) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .location-map__stage :global(.nrk-marker__label) {
+    max-width: 15rem;
+    padding: 0.22rem 0.55rem;
+    border-radius: 0.25rem;
+    background: var(--civic-deep, #172534);
+    color: #ffffff;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 6px rgb(23 37 52 / 0.24);
+  }
+
+  .location-map__stage :global(.nrk-marker--hover-label .nrk-marker__label) {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease;
+  }
+
+  .location-map__stage :global(.nrk-marker--hover-label:hover .nrk-marker__label),
+  .location-map__stage :global(.nrk-marker--hover-label:focus-visible .nrk-marker__label) {
+    opacity: 1;
+  }
+
+  .location-map__stage :global(.nrk-marker__dot) {
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 2.5px solid #ffffff;
+    border-radius: 50%;
+    background: #1d4ed8;
+    box-shadow: 0 1px 4px rgb(23 37 52 / 0.35);
+  }
+
+  .location-map__stage :global(.nrk-marker__badge) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 5px rgb(23 37 52 / 0.35);
+  }
+
+  .location-map__stage :global(.nrk-marker:focus-visible .nrk-marker__dot),
+  .location-map__stage :global(.nrk-marker:focus-visible .nrk-marker__badge) {
+    outline: 3px solid var(--focus, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .location-map__stage :global(.nrk-path-label) {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid rgb(23 37 52 / 0.14);
+    border-radius: 0.25rem;
+    background: rgb(253 252 249 / 0.94);
+    color: var(--civic-deep, #172534);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.25;
+    box-shadow: 0 1px 4px rgb(23 37 52 / 0.16);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .location-map__stage :global(.maplibregl-popup-content) {
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.5rem;
+    color: var(--text, #172534);
+    font: inherit;
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .location-map__stage :global(.maplibregl-ctrl-attrib) {
+    font-size: 0.7rem;
+    background: rgb(255 255 255 / 0.86);
+  }
+
   .location-map__caption {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem 1rem;
+    gap: 0.5rem 1rem;
     align-items: center;
-    margin-top: 0.75rem;
+    margin-top: 0.65rem;
+    color: var(--text-muted, #526273);
+    font-size: 0.875rem;
   }
 
   .location-map__status {
@@ -1073,18 +1604,13 @@ const mapId = `location-map-${crypto.randomUUID()}`;
     font-size: 0.875rem;
   }
 
-  .location-map__caption {
-    color: var(--text-muted, #526273);
-    font-size: 0.875rem;
-  }
-
   .location-map a {
     color: var(--civic, #30465c);
     text-underline-offset: 0.15em;
   }
 
   @media (min-width: 48rem) {
-    .location-map {
+    .location-map:not(.location-map--editorial) {
       padding: 1.25rem;
     }
 

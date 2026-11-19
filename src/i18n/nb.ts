@@ -599,14 +599,14 @@ export const nb = {
     showLess: "Vis mindre",
     maps: {
       privacyTitle: "Kart og personvern",
-      privacyExplanation: "Når kartet lastes, kontakter nettleseren din OpenStreetMaps karttjener direkte. Vanlig teknisk informasjon, blant annet IP-adressen din og hvilket kartområde som etterspørres, kan da bli behandlet. nepali.no ber ikke om enhetens posisjon og lagrer ikke hvordan du flytter eller zoomer kartet.",
+      privacyExplanation: "Når kartet lastes, kontakter nettleseren din OpenFreeMaps OpenStreetMap-baserte karttjener direkte. Vanlig teknisk informasjon, blant annet IP-adressen din og hvilket kartområde som etterspørres, kan da bli behandlet. nepali.no ber ikke om enhetens posisjon og lagrer ikke hvordan du flytter eller zoomer kartet.",
       privacyMore: "Les mer om kart og personvern",
       privacyClose: "Lukk",
       load: "Vis kart",
       loading: "Laster inn kart …",
       failed: "Kartet kunne ikke lastes. Du finner stedsbeskrivelsen nedenfor.",
       externalNotice:
-        "Når du laster inn kartet, sendes IP-adressen din og en forespørsel om kartutsnittet til den eksterne tjenesten OpenStreetMap.",
+        "Når du laster inn kartet, sendes IP-adressen din og en forespørsel om kartutsnittet til den eksterne karttjenesten OpenFreeMap (OpenStreetMap).",
       exact: "Nøyaktig sted",
       approximate: "Omtrentlig område",
       openInOsm: "Åpne i OpenStreetMap",

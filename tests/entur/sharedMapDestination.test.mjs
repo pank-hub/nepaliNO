@@ -188,7 +188,7 @@ test('shared renderer and Studio wiring preserve map behavior and map-following 
   }
   for (const page of [event, directory]) assert.match(page, /<LocationMap[\s\S]*?showFullscreenControl=\{true\}/)
   for (const control of [/data-map-fullscreen-open/, /data-map-zoom-in/, /data-map-zoom-out/,
-    /L\.marker\(/, /marker\.bindPopup\(/, /data-attribution=\{MAP_PROVIDER\.attribution\}/]) {
+    /new maplibregl\.Marker\(/, /\.setPopup\(popup\)/, /data-attribution=\{MAP_VECTOR_PROVIDER\.attribution\}/]) {
     assert.match(map, control)
   }
   assert.match(travel, /\[leaveNow, setLeaveNow\] = useState\(true\)/)

@@ -84,14 +84,14 @@ export const en = {
     showLess: "Show less",
     maps: {
       privacyTitle: "Map and privacy",
-      privacyExplanation: "When the map loads, your browser contacts OpenStreetMap’s tile server directly. Ordinary technical information, including your IP address and the requested map area, may then be processed. nepali.no does not request your device location or store how you move or zoom the map.",
+      privacyExplanation: "When the map loads, your browser contacts OpenFreeMap’s OpenStreetMap-based tile service directly. Ordinary technical information, including your IP address and the requested map area, may then be processed. nepali.no does not request your device location or store how you move or zoom the map.",
       privacyMore: "Read more about maps and privacy",
       privacyClose: "Close",
       load: "Load map",
       loading: "Loading map…",
       failed: "The map could not be loaded. The location description is available below.",
       externalNotice:
-        "Loading this map sends your IP address and a request for the map area to an external OpenStreetMap service.",
+        "Loading this map sends your IP address and a request for the map area to an external OpenFreeMap / OpenStreetMap service.",
       exact: "Exact location",
       approximate: "Approximate area",
       openInOsm: "Open in OpenStreetMap",

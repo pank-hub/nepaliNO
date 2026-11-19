@@ -31,7 +31,7 @@ test('the Nepali and Norwegian fallbacks each have one Maps and travel assistanc
 test('Norwegian fallback covers every required disclosure', () => {
   const text = sections.nb
   for (const pattern of [
-    /tile\.openstreetmap\.org/,
+    /tiles\.openfreemap\.org/,
     /kontakter nettleseren din denne leverandøren direkte/,
     /IP-adresse og forespurte kartruter/,
     /når du klikker, eller når du ruller i nærheten/,
@@ -51,7 +51,7 @@ test('Norwegian fallback covers every required disclosure', () => {
 test('Nepali fallback covers every required disclosure', () => {
   const text = sections.ne
   for (const pattern of [
-    /tile\.openstreetmap\.org/,
+    /tiles\.openfreemap\.org/,
     /ब्राउजरले सीधै त्यो प्रदायकसँग सम्पर्क गर्छ/,
     /IP ठेगाना तथा माग गरिएका नक्सा खण्ड/,
     /क्लिक गर्दा वा त्यसको नजिक स्क्रोल गर्दा/,
@@ -83,7 +83,7 @@ test('the live privacy page still prefers the published Sanity document', () => 
 
 test('new Studio map blocks load on click while automatic loading stays supported', async () => {
   const schema = await read('../../sanity/schemaTypes/mapLocation.ts')
-  assert.match(schema, /initialValue:\s*\{\s*loadingBehavior: 'click',/)
+  assert.match(schema, /initialValue:\s*\{[\s\S]*?loadingBehavior: 'click',/)
   assert.doesNotMatch(schema, /initialValue:\s*\{\s*loadingBehavior: 'automatic'/)
   assert.match(schema, /\{title: 'Load automatically near the map', value: 'automatic'\}/)
   assert.match(schema, /\{title: 'Require the reader to load the map', value: 'click'\}/)

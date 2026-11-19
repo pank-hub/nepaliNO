@@ -42,7 +42,7 @@ test("Event and Directory reuse their rail and render one automatic sidebar map 
     const rail = page.slice(page.indexOf("<ContentContextRail"), page.indexOf("</ContentContextRail>"));
     assert.doesNotMatch(main, /<LocationMap|<TravelHelp/);
     assert.equal((rail.match(/<LocationMap/g) ?? []).length, 1);
-    assert.match(rail, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*loadingBehavior="automatic"[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
+    assert.match(rail, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*mapStyle=\{[^\n]*\?\? "city"\}[\s\S]*loadingBehavior="automatic"[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
     assert.match(page, /isOpenStreetMapUrl\(/);
     assert.match(rail, /contextSidebar=\{true\}/);
     assert.match(rail, /<TravelHelp[^>]*defaultOpen=\{true\}/);
@@ -66,11 +66,11 @@ test("sidebar maps preserve original location panels and avoid generated duplica
   }
   const renderer = await read("../../src/components/content/LocationMap.astro");
   assert.match(renderer, /!contextSidebar && title && <h2 class="location-map__title"/);
-  assert.match(renderer, /!contextSidebar && <p class="location-map__description"/);
-  assert.match(renderer, /!contextSidebar && <p class="location-map__external-notice"/);
-  assert.match(renderer, /contextSidebar \? "" : labels\.exact/);
+  assert.match(renderer, /!contextSidebar && description && \(\s*<p class="location-map__description"/);
+  assert.match(renderer, /!contextSidebar && \(\s*<p class="location-map__external-notice"/);
+  assert.match(renderer, /contextSidebar\s*\?\s*""\s*:\s*labels\.exact/);
   assert.match(renderer, /precision === "approximate"\s*\?\s*`\$\{labels\.approximate\} · \$\{radiusText\(single!\)\}`/);
-  assert.match(renderer, /caption \|\| safeSourceUrl \|\| precisionLabel/);
+  assert.match(renderer, /caption\s*\|\|\s*safeSourceUrl\s*\|\|\s*precisionLabel/);
   assert.match(renderer, /\{caption && <span>\{caption\}<\/span>\}/);
   assert.match(renderer, /data-description=\{description\}/);
   for (const language of ["ne", "nb"]) {
@@ -81,15 +81,18 @@ test("sidebar maps preserve original location panels and avoid generated duplica
 
 test("fullscreen control is a square icon inside map controls and brand badge sits inside the stage", async () => {
   const renderer = await read("../../src/components/content/LocationMap.astro");
-  const stageStart = renderer.indexOf('<div class="location-map__stage"');
-  const controlsEnd = renderer.indexOf('<dialog', stageStart);
-  const stageHtml = renderer.slice(stageStart, controlsEnd);
-  assert.equal((renderer.match(/data-map-fullscreen-open/g) ?? []).length, 1);
+  const templateEnd = renderer.indexOf("<script>");
+  const template = renderer.slice(0, templateEnd);
+  const stageStart = template.indexOf('<div class="location-map__stage"');
+  const controlsEnd = template.indexOf("<dialog", stageStart);
+  const stageHtml = template.slice(stageStart, controlsEnd);
+  assert.equal((template.match(/data-map-fullscreen-open/g) ?? []).length, 1);
   assert.match(stageHtml, /class="location-map__controls"[\s\S]*data-map-fullscreen-open[\s\S]*<svg[\s\S]*data-map-zoom-in/);
   assert.match(stageHtml, /data-map-brand[\s\S]*nepali\.no/);
-  assert.match(stageHtml, /<MapPrivacy language=\{language\}/);
+  assert.match(stageHtml, /data-map-locator[\s\S]*<svg[\s\S]*data-map-locator-dot/);
+  assert.match(template.slice(stageStart), /<MapPrivacy language=\{language\}/);
   assert.match(renderer, /attributionControl:\s*false/);
-  assert.match(renderer, /L\.control\.attribution\(\{\s*prefix:\s*"nepali\.no"\s*\}\)\.addTo\(map\)/);
+  assert.match(renderer, /customAttribution:\s*"nepali\.no"/);
 });
 
 test("sidebar spacing hides empty status rows, keeps mobile touch panning enabled, and uses compact gaps", async () => {
@@ -117,7 +120,7 @@ test("Studio schemas collapse secondary options and Studio editors use bundled S
 
 test("shared map retains interactive controls and attribution without OSM navigation", async () => {
   const map = await read("../../src/components/content/LocationMap.astro");
-  for (const control of ["data-map-zoom-in", "data-map-zoom-out", "data-map-fullscreen-open", "marker.bindPopup", "marker.bindTooltip", "data-attribution={MAP_PROVIDER.attribution}"]) assert.ok(map.includes(control));
+  for (const control of ["data-map-zoom-in", "data-map-zoom-out", "data-map-fullscreen-open", "data-map-style", "setPopup(popup)", "data-attribution={MAP_VECTOR_PROVIDER.attribution}"]) assert.ok(map.includes(control), control);
   assert.match(map, /data-map-immediate/);
   assert.match(map, /dataset\.mapImmediate === "true"/);
   assert.match(map, /isOpenStreetMapUrl\(sourceUrl\)/);
@@ -319,8 +322,8 @@ test("location block is shared by News and Guides and the renderer defers tile l
   assert.match(renderer, /activeMaps\.set\(id, record\)/);
   assert.match(renderer, /activeMaps\.has\(id\)/);
   assert.match(renderer, /place\.precision === "approximate" && place\.radius/);
-  assert.match(renderer, /L\.circle\(/);
-  assert.match(renderer, /L\.marker\(/);
+  assert.match(renderer, /circlePolygonRing\(/);
+  assert.match(renderer, /new maplibregl\.Marker\(/);
   const approximateStart = renderer.indexOf(
     'place.precision === "approximate" && place.radius',
   );
@@ -328,9 +331,9 @@ test("location block is shared by News and Guides and the renderer defers tile l
     approximateStart,
     renderer.indexOf("} else {", approximateStart),
   );
-  assert.doesNotMatch(approximateBranch, /L\.marker\(/);
+  assert.doesNotMatch(approximateBranch, /new maplibregl\.Marker\(/);
   assert.doesNotMatch(renderer, /openStreetMapLocationUrl|data-map-osm-link/);
-  assert.match(renderer, /data-attribution=\{MAP_PROVIDER\.attribution\}/);
+  assert.match(renderer, /data-attribution=\{MAP_VECTOR_PROVIDER\.attribution\}/);
   assert.match(renderer, /astro:before-swap/);
   assert.doesNotMatch(renderer, /<img[^>]+(?:tile\.openstreetmap|data-tile)/);
 
@@ -338,8 +341,8 @@ test("location block is shared by News and Guides and the renderer defers tile l
     renderer.indexOf("const activate = async"),
     renderer.indexOf("document.addEventListener"),
   );
-  assert.match(activation, /await loadLeaflet\(\)/);
-  assert.match(activation, /L\.tileLayer\(/);
+  assert.match(activation, /loadMapLibre\(\)/);
+  assert.match(activation, /new maplibregl\.Map\(/);
   assert.match(renderer, /externalNotice/);
   assert.match(renderer, /data-map-canvas[\s\S]*?hidden/);
   assert.match(renderer, /catch \(error\)/);
@@ -355,9 +358,26 @@ test("both tile layers send the shared strict-origin-when-cross-origin referrer 
   assert.match(studioInput, /referrerPolicy: MAP_PROVIDER\.referrerPolicy/);
   assert.match(
     renderer,
-    /data-referrer-policy=\{MAP_PROVIDER\.referrerPolicy\}/,
+    /data-referrer-policy=\{MAP_VECTOR_PROVIDER\.referrerPolicy\}/,
   );
-  assert.match(renderer, /referrerPolicy: \(root\.dataset\.referrerPolicy/);
+  assert.match(renderer, /referrerPolicy = \(root\.dataset\.referrerPolicy/);
+});
+
+test("Norway mini-locator and vector styles support editorial and city modes", async () => {
+  const { projectNorwayPoint, isWithinNorwayBounds } = await import("../../src/lib/maps/norwayLocator.ts");
+  const { customizeMapStyle } = await import("../../src/lib/maps/mapStyle.ts");
+  assert.equal(isWithinNorwayBounds(59.9139, 10.7522), true);
+  assert.equal(isWithinNorwayBounds(27.7172, 85.324), false);
+  const oslo = projectNorwayPoint(59.9139, 10.7522);
+  const tromso = projectNorwayPoint(69.6492, 18.9553);
+  assert.ok(oslo && tromso && tromso.y < oslo.y);
+  assert.equal(projectNorwayPoint(27.7172, 85.324), undefined);
+  const editorial = customizeMapStyle({ version: 8, layers: [{ id: "building", type: "fill" }, { id: "water", type: "fill" }] }, "editorial");
+  assert.equal(editorial.layers[0].layout.visibility, "none");
+  assert.equal(editorial.layers[1].paint["fill-color"], "#94c0eb");
+  const city = customizeMapStyle({ version: 8, layers: [{ id: "building", type: "fill" }, { id: "water", type: "fill" }] }, "city");
+  assert.equal(city.layers[0].layout, undefined);
+  assert.equal(city.layers[1].paint["fill-color"], "#9cc6f0");
 });
 
 test("local map fixture is dev-only and uses the real renderer", async () => {

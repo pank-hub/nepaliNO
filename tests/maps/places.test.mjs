@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import {runInNewContext} from "node:vm";
 import {JSDOM} from "jsdom";
 
 import {
@@ -9,7 +8,7 @@ import {
   PLACE_ICONS,
   ROUTING_PROVIDER,
 } from "../../src/lib/maps/location.ts";
-import { labelContent, placeContent } from "../../src/lib/maps/markerIcons.ts";
+import { placeContent } from "../../src/lib/maps/markerIcons.ts";
 import {
   LEGACY_PLACE_KEY,
   decodePolyline6,
@@ -68,51 +67,27 @@ test("real Leaflet Standard pin renders its bundled SVG and activation preserves
   }
 });
 
-test("immediate markers respect persistent label settings without losing their pin or popup", async () => {
-  const renderer = await read("../../src/components/content/LocationMap.astro");
-  const start = renderer.indexOf("const marker = L.marker(latlng");
-  const end = renderer.indexOf("bounds.extend(latlng);", start);
-  assert.ok(start > 0 && end > start);
-  const script = renderer.slice(start, end);
-  for (const showLabel of [false, true, undefined]) {
-    for (const immediate of [true, false]) {
-      const marker = {
-        open: false,
-        addTo() { return this; },
-        bindPopup(content) { this.popup = content; },
-        bindTooltip(content, options) { this.tooltip = content; this.permanent = options.permanent; },
-        getElement() { return {setAttribute() {}}; },
-        openPopup() { this.open = true; },
-        closePopup() { this.open = false; },
-      };
-      let options;
-      const pin = {};
-      const L = {marker(_position, value) { options = value; return marker; }};
-      const place = {key: "venue", label: "Caritas Norge", icon: "pin", showLabel};
-      const document = {
-        createElement() {
-          return {textContent: "", children: [], style: {}, append(child) { this.children.push(child); }};
-        },
-      };
-      const layers = new Map();
-      runInNewContext(script, {
-        L, place, document, latlng: [59.9, 10.7], map: {},
-        root: {dataset: {mapImmediate: immediate ? "true" : undefined}},
-        record: {layers}, createPlaceIcon: () => pin, placeContent, labelContent,
-      });
-      assert.equal(options.icon, pin);
-      assert.equal(options.keyboard, true);
-      assert.equal(layers.get("venue"), marker);
-      assert.equal(marker.popup.children[0].textContent, "Caritas Norge");
-      assert.equal(marker.tooltip.textContent, "Caritas Norge");
-      assert.equal(marker.permanent, showLabel !== false);
-      assert.equal(marker.open, immediate && showLabel !== false);
-      marker.openPopup();
-      assert.equal(marker.open, true);
-      marker.closePopup();
-      assert.equal(marker.open, false);
-      assert.equal(layers.get("venue"), marker);
-    }
+test("MapLibre markers render NRK-style dot/badge, navy pill label, and XSS-safe text", async () => {
+  const dom = new JSDOM('<!doctype html><div id="root"></div>', {url: "https://nepali.no"});
+  const { createMapLibreMarkerElement } = await import("../../src/lib/maps/markerIcons.ts");
+  try {
+    const doc = dom.window.document;
+    const pinEl = createMapLibreMarkerElement({ label: "Nordhordlandsbrua <script>", icon: "pin", showLabel: true }, doc);
+    assert.ok(pinEl.classList.contains("nrk-marker"));
+    assert.equal(pinEl.classList.contains("nrk-marker--hover-label"), false);
+    assert.ok(pinEl.querySelector(".nrk-marker__dot"));
+    assert.equal(pinEl.querySelector(".nrk-marker__badge"), null);
+    assert.equal(pinEl.querySelector(".nrk-marker__label").textContent, "Nordhordlandsbrua <script>");
+    assert.equal(pinEl.querySelector("script"), null);
+    assert.equal(pinEl.getAttribute("role"), "button");
+
+    const hoverEl = createMapLibreMarkerElement({ label: "Dagens E39", icon: "hospital", showLabel: false }, doc);
+    assert.ok(hoverEl.classList.contains("nrk-marker--hover-label"));
+    assert.ok(hoverEl.querySelector(".nrk-marker__badge svg"));
+    assert.equal(hoverEl.querySelector(".nrk-marker__dot"), null);
+    assert.equal(hoverEl.getAttribute("aria-label"), "Dagens E39");
+  } finally {
+    dom.window.close();
   }
 });
 const exact = (key, lat, lng, extra = {}) => ({
@@ -397,14 +372,14 @@ test("public renderer never uses innerHTML for editor text or calls a routing se
   const script = renderer.slice(renderer.indexOf("<script>"));
   assert.ok(!/innerHTML|insertAdjacentHTML|set:html/.test(renderer));
   assert.ok(
-    !/fetch\(|XMLHttpRequest|routing\.openstreetmap\.de|ROUTING_PROVIDER\.endpoint/.test(
+    !/XMLHttpRequest|routing\.openstreetmap\.de|ROUTING_PROVIDER\.endpoint/.test(
       script,
     ),
   );
   assert.ok(!/fetch\(|routing\.openstreetmap\.de/.test(ne + nb));
   // The only HTML string is the fixed icon badge; it takes no editor text.
   assert.ok(!/\$\{(place|label|description)/.test(icons));
-  assert.ok(script.includes("bindPopup(placeContent("));
+  assert.ok(script.includes("placeContent(place, document)"));
 });
 
 test("only the Studio route action contacts the routing provider", async () => {
@@ -428,7 +403,9 @@ test("only the Studio route action contacts the routing provider", async () => {
 });
 
 test("OSM referrer policy is kept in the shared config, Studio editors and renderer", async () => {
+  const { MAP_VECTOR_PROVIDER } = await import("../../src/lib/maps/location.ts");
   assert.equal(MAP_PROVIDER.referrerPolicy, "strict-origin-when-cross-origin");
+  assert.equal(MAP_VECTOR_PROVIDER.referrerPolicy, "strict-origin-when-cross-origin");
   const [places, single, renderer] = await Promise.all([
     read("../../sanity/components/MapPlacesInput.tsx"),
     read("../../sanity/components/MapLocationInput.tsx"),
@@ -437,7 +414,7 @@ test("OSM referrer policy is kept in the shared config, Studio editors and rende
   assert.ok(places.includes("referrerPolicy: MAP_PROVIDER.referrerPolicy"));
   assert.ok(single.includes("referrerPolicy: MAP_PROVIDER.referrerPolicy"));
   assert.ok(
-    renderer.includes("data-referrer-policy={MAP_PROVIDER.referrerPolicy}"),
+    renderer.includes("data-referrer-policy={MAP_VECTOR_PROVIDER.referrerPolicy}"),
   );
 });
 
@@ -451,8 +428,8 @@ test("approximate places render as circles with no centre marker, link or toolti
       script.indexOf('place.precision === "approximate" && place.radius'),
     ),
   );
-  assert.ok(circleBranch.includes("L.circle"));
-  assert.ok(!/L\.marker|bindTooltip/.test(circleBranch));
+  assert.ok(circleBranch.includes("circlePolygonRing"));
+  assert.ok(!/Marker/.test(circleBranch));
   assert.doesNotMatch(renderer, /openStreetMapLocationUrl|labels\.openInOsm/);
 });
 

@@ -436,3 +436,65 @@ export function editorialPathNeedsReview(
     path.locationsSignature !== placesSignature(places)
   );
 }
+
+/** Arc-length midpoint of a [lat, lng] polyline for placing an inline label pill. */
+export function editorialPathMidpoint(
+  points: [number, number][],
+): [number, number] | undefined {
+  if (points.length === 0) return undefined;
+  if (points.length === 1) return points[0];
+  let total = 0;
+  const lengths: number[] = [];
+  for (let i = 1; i < points.length; i++) {
+    const dLat = points[i][0] - points[i - 1][0];
+    const cos = Math.cos((((points[i][0] + points[i - 1][0]) / 2) * Math.PI) / 180);
+    const dLng = (points[i][1] - points[i - 1][1]) * Math.max(cos, 0.01);
+    const len = Math.hypot(dLat, dLng);
+    lengths.push(len);
+    total += len;
+  }
+  if (total === 0) return points[0];
+  const half = total / 2;
+  let acc = 0;
+  for (let i = 0; i < lengths.length; i++) {
+    const seg = lengths[i];
+    if (acc + seg >= half) {
+      const t = seg === 0 ? 0 : (half - acc) / seg;
+      return [
+        points[i][0] + (points[i + 1][0] - points[i][0]) * t,
+        points[i][1] + (points[i + 1][1] - points[i][1]) * t,
+      ];
+    }
+    acc += seg;
+  }
+  return points[points.length - 1];
+}
+
+/** Closed GeoJSON [lng, lat] ring approximating a geodesic radius around (lat, lng). */
+export function circlePolygonRing(
+  lat: number,
+  lng: number,
+  radiusMeters: number,
+  steps = 64,
+): [number, number][] {
+  const earthRadius = 6_371_000;
+  const latRad = (lat * Math.PI) / 180;
+  const lngRad = (lng * Math.PI) / 180;
+  const angularDist = radiusMeters / earthRadius;
+  const ring: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const bearing = (2 * Math.PI * i) / steps;
+    const pLat = Math.asin(
+      Math.sin(latRad) * Math.cos(angularDist) +
+        Math.cos(latRad) * Math.sin(angularDist) * Math.cos(bearing),
+    );
+    const pLng =
+      lngRad +
+      Math.atan2(
+        Math.sin(bearing) * Math.sin(angularDist) * Math.cos(latRad),
+        Math.cos(angularDist) - Math.sin(latRad) * Math.sin(pLat),
+      );
+    ring.push([(pLng * 180) / Math.PI, (pLat * 180) / Math.PI]);
+  }
+  return ring;
+}
