@@ -151,7 +151,9 @@ const methodologyTitle = "तथ्याङ्क बुझ्ने तरि�
 
         <div class="stats-grid-two">
           <EditorialChart node={charts.population} language="ne" index={0} />
-          <EditorialChart node={charts.naturalisations} language="ne" index={1} />
+          <EditorialChart node={charts.genderHistory} language="ne" index={1} />
+          <EditorialChart node={charts.ageSex} language="ne" index={2} />
+          <EditorialChart node={charts.naturalisations} language="ne" index={3} />
         </div>
       </div>
     </section>
@@ -159,16 +161,17 @@ const methodologyTitle = "तथ्याङ्क बुझ्ने तरि�
     <section class="stats-section stats-section--tinted" aria-labelledby="stats-geo-heading">
       <div class="container">
         <div class="reading-width stats-section__intro">
-          <h2 id="stats-geo-heading">नर्वेका कुन सहरमा कति नेपाली बस्छन्?</h2>
+          <h2 id="stats-geo-heading">नर्वेका कुन सहर र काउन्टीमा कति नेपाली बस्छन्?</h2>
           <p>
             ओस्लो र नजिकका आकेशुस (Lillestrøm, Lørenskog, Bærum, Ås, Asker)
             नगरपालिकामा सबैभन्दा ठूलो बसोबास छ। विश्वविद्यालय र रोजगार केन्द्रका कारण
-            त्रोन्हाइम, बेर्गेन, स्टाभाङ्गर र उत्तरमा ट्र्योम्सोसम्म समुदाय फैलिएको छ।
+            त्रोन्हाइम, बेर्गेन, स्टाभाङ्गर र उत्तरमा ट्र्योम्सोसम्म समुदाय फैलिएको छ भने
+            नर्वेका १५ वटै काउन्टीमा नेपाली समुदायको उपस्थिति देखिन्छ।
           </p>
         </div>
 
         <div class="stats-grid-two stats-grid-two--geo">
-          <EditorialChart node={charts.municipalities} language="ne" index={2} />
+          <EditorialChart node={charts.municipalities} language="ne" index={4} />
           <div class="stats-map-card">
             <h3 class="stats-map-card__title">शीर्ष १० कोमुनेको नक्सा ({toNepaliYear(snapshot.municipalities.latestYear)})</h3>
             <LocationMap
@@ -187,6 +190,8 @@ const methodologyTitle = "तथ्याङ्क बुझ्ने तरि�
               labels={translations.common.maps}
             />
           </div>
+          <EditorialChart node={charts.counties} language="ne" index={5} />
+          <EditorialChart node={charts.residenceDuration} language="ne" index={6} />
         </div>
       </div>
     </section>
@@ -194,21 +199,23 @@ const methodologyTitle = "तथ्याङ्क बुझ्ने तरि�
     <section class="stats-section" aria-labelledby="stats-work-heading">
       <div class="container">
         <div class="reading-width stats-section__intro">
-          <h2 id="stats-work-heading">रोजगारी पेशा र शैक्षिक स्तर</h2>
+          <h2 id="stats-work-heading">रोजगारी, पेशा र शैक्षिक स्तर</h2>
           <p>
             सन् {toNepaliYear(snapshot.occupations.latestYear)} को चौथो त्रैमासमा{" "}
             {nf.format(snapshot.occupations.totalEmployed)} नेपाली मूलका व्यक्तिहरू नर्वेमा
-            रोजगारीमा संलग्न देखिन्छन्। सेवा र आतिथ्य क्षेत्र प्रमुख भए पनि{" "}
+            रोजगारीमा संलग्न देखिन्छन् ({pctFormat.format(snapshot.employmentRate.overall)}% रोजगारी दर, २०–६६ उमेर समूह)। सेवा, स्याहार, सरसफाइ र भान्सा क्षेत्र प्रमुख भए पनि{" "}
             {nf.format(snapshot.occupations.highlights.teaching)} शिक्षक,{" "}
             {nf.format(snapshot.occupations.highlights.health)} स्वास्थ्यकर्मी,{" "}
-            {nf.format(snapshot.occupations.highlights.ict)} आइटी विशेषज्ञ र{" "}
-            {nf.format(snapshot.occupations.highlights.engineering)} इन्जिनियर कार्यरत छन्।
+            {nf.format(snapshot.occupations.highlights.ict)} आईटी विशेषज्ञ र{" "}
+            {nf.format(snapshot.occupations.highlights.engineering)} सिभिल/विज्ञान इन्जिनियर कार्यरत छन्।
           </p>
         </div>
 
         <div class="stats-grid-two">
-          <EditorialChart node={charts.occupations} language="ne" index={3} />
-          <EditorialChart node={charts.education} language="ne" index={4} />
+          <EditorialChart node={charts.occupations} language="ne" index={7} />
+          <EditorialChart node={charts.employmentByStay} language="ne" index={8} />
+          <EditorialChart node={charts.specialistProfessions} language="ne" index={9} />
+          <EditorialChart node={charts.education} language="ne" index={10} />
         </div>
       </div>
     </section>
