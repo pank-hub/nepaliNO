@@ -374,9 +374,13 @@ test("Norway mini-locator and vector styles support editorial and city modes", a
   assert.equal(projectNorwayPoint(27.7172, 85.324), undefined);
   const editorial = customizeMapStyle({ version: 8, layers: [{ id: "building", type: "fill" }, { id: "water", type: "fill" }] }, "editorial");
   assert.equal(editorial.layers[0].layout.visibility, "none");
+  assert.equal(Object.hasOwn(editorial.layers[0], "paint"), false);
+  assert.equal(Object.hasOwn(editorial.layers[1], "layout"), false);
   assert.equal(editorial.layers[1].paint["fill-color"], "#94c0eb");
   const city = customizeMapStyle({ version: 8, layers: [{ id: "building", type: "fill" }, { id: "water", type: "fill" }] }, "city");
   assert.equal(city.layers[0].layout, undefined);
+  assert.equal(Object.hasOwn(city.layers[0], "layout"), false);
+  assert.equal(Object.hasOwn(city.layers[0], "paint"), false);
   assert.equal(city.layers[1].paint["fill-color"], "#9cc6f0");
 });
 

@@ -19,7 +19,7 @@ export const createChartNumberFormatter = (
 
 export const formatChartUnit = (unit: string, language: ChartLanguage): string => {
   const localizedUnits: Record<string, Record<ChartLanguage, string>> = {
-    people: {ne: 'जन', nb: 'personer'},
+    people: {ne: 'जना', nb: 'personer'},
     days: {ne: 'दिन', nb: 'dager'},
     hours: {ne: 'घण्टा', nb: 'timer'},
     percent: {ne: 'प्रतिशत', nb: 'prosent'},

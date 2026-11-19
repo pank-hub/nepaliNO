@@ -44,8 +44,8 @@ export function customizeMapStyle(
   const layers = (rawStyle.layers ?? []).map((layer) => {
     const next: StyleLayer = {
       ...layer,
-      layout: layer.layout ? { ...layer.layout } : undefined,
-      paint: layer.paint ? { ...layer.paint } : undefined,
+      ...(layer.layout ? { layout: { ...layer.layout } } : {}),
+      ...(layer.paint ? { paint: { ...layer.paint } } : {}),
     };
 
     if (mode === "editorial") {
