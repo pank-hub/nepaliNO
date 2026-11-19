@@ -83,3 +83,44 @@ export function labelContent(label: string, document: Document): HTMLElement {
   element.textContent = label;
   return element;
 }
+
+/**
+ * Builds a MapLibre marker DOM node using pure DOM/SVG APIs (never innerHTML for editor text).
+ * Standard pins render the clean NRK-style dot + dark navy pill label; typed icons show their badge.
+ */
+export function createMapLibreMarkerElement(
+  place: { label: string; icon?: PlaceIcon; showLabel?: boolean },
+  document: Document,
+): HTMLElement {
+  const root = document.createElement("div");
+  root.className = "nrk-marker";
+  root.tabIndex = 0;
+  root.setAttribute("role", "button");
+  root.setAttribute("aria-label", place.label);
+  if (place.showLabel === false) {
+    root.classList.add("nrk-marker--hover-label");
+  }
+
+  const label = document.createElement("span");
+  label.className = "nrk-marker__label";
+  label.textContent = place.label;
+  root.append(label);
+
+  const iconKey = place.icon;
+  if (iconKey && iconKey !== "pin" && Object.hasOwn(GLYPHS, iconKey)) {
+    const glyph = GLYPHS[iconKey];
+    const badge = document.createElement("span");
+    badge.className = "nrk-marker__badge";
+    badge.style.background = glyph.colour;
+    badge.setAttribute("aria-hidden", "true");
+    badge.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">${glyph.svg}</svg>`;
+    root.append(badge);
+  } else {
+    const dot = document.createElement("span");
+    dot.className = "nrk-marker__dot";
+    dot.setAttribute("aria-hidden", "true");
+    root.append(dot);
+  }
+
+  return root;
+}

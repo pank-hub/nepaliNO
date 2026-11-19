@@ -338,6 +338,24 @@ export const mapPresentation = defineType({
     }),
     defineField({name: 'markerShowLabel', title: 'Always show marker label', type: 'boolean', initialValue: true}),
     defineField({
+      name: 'mapStyle',
+      title: 'Map Style',
+      type: 'string',
+      options: {
+        layout: 'radio',
+        list: [
+          {title: 'City (streets & transit)', value: 'city'},
+          {title: 'Editorial (calm, NRK-style)', value: 'editorial'},
+        ],
+      },
+      initialValue: 'city',
+    }),
+    defineField({
+      name: 'showNorwayLocator',
+      title: 'Show Norway mini-locator inset',
+      type: 'boolean',
+    }),
+    defineField({
       name: 'editorialPath',
       title: 'Optional highlighted editorial path',
       type: 'mapEditorialPath',
@@ -363,6 +381,7 @@ export const locationMap = defineType({
     },
   ],
   initialValue: {
+    mapStyle: 'editorial',
     loadingBehavior: 'click',
     showViewOnMapActions: false,
     showOpenStreetMapLinks: false,
@@ -377,6 +396,20 @@ export const locationMap = defineType({
       title: 'Optional Title',
       type: 'string',
       validation: (rule) => rule.max(120),
+    }),
+    defineField({
+      name: 'mapStyle',
+      title: 'Map Style',
+      type: 'string',
+      options: {
+        layout: 'radio',
+        list: [
+          {title: 'Editorial (calm, NRK-style)', value: 'editorial'},
+          {title: 'City (streets & transit)', value: 'city'},
+        ],
+      },
+      description: 'Use Editorial for clean story maps; City for street names, buildings, and transit.',
+      initialValue: 'editorial',
     }),
     defineField({
       name: 'locations',
@@ -519,6 +552,13 @@ export const locationMap = defineType({
       type: 'boolean',
       fieldset: 'display',
       description: 'Show the square fullscreen toggle inside the map.',
+    }),
+    defineField({
+      name: 'showNorwayLocator',
+      title: 'Show Norway mini-locator inset',
+      type: 'boolean',
+      fieldset: 'display',
+      description: 'Defaults to on for Editorial maps inside Norway and off for City maps.',
     }),
     defineField({
       name: 'showOpenStreetMapLinks',

@@ -1,4 +1,12 @@
-import type { Map as LeafletMap } from "leaflet";
+export interface ResizableMap {
+  getCenter(): { lat: number; lng: number };
+  getZoom(): number;
+  invalidateSize?: (options: { pan: boolean; animate: boolean }) => void;
+  setView?: (center: { lat: number; lng: number }, zoom: number, options: { animate: boolean }) => void;
+  resize?: () => void;
+  jumpTo?: (options: { center: [number, number]; zoom: number }) => void;
+  scrollZoom?: { enable: () => void; disable: () => void };
+}
 
 type FullscreenState = {
   root: HTMLElement;
@@ -6,11 +14,29 @@ type FullscreenState = {
   placeholder: Comment;
   dialog: HTMLDialogElement;
   opener: HTMLButtonElement;
-  map: LeafletMap;
+  map: ResizableMap;
   bodyOverflow: string;
   bodyPriority: string;
   htmlOverflow: string;
   htmlPriority: string;
+};
+
+const syncViewport = (
+  map: ResizableMap,
+  center: { lat: number; lng: number } | undefined,
+  zoom: number | undefined,
+) => {
+  if (typeof map.invalidateSize === "function") {
+    map.invalidateSize({ pan: false, animate: false });
+    if (center && zoom !== undefined && typeof map.setView === "function") {
+      map.setView(center, zoom, { animate: false });
+    }
+    return;
+  }
+  map.resize?.();
+  if (center && zoom !== undefined) {
+    map.jumpTo?.({ center: [center.lng, center.lat], zoom });
+  }
 };
 
 export function createMapFullscreen(doc: Document, win: Window) {
@@ -19,10 +45,7 @@ export function createMapFullscreen(doc: Document, win: Window) {
   const resize = () => {
     if (!active) return;
     const { map } = active;
-    const center = map.getCenter();
-    const zoom = map.getZoom();
-    map.invalidateSize({ pan: false, animate: false });
-    map.setView(center, zoom, { animate: false });
+    syncViewport(map, map.getCenter(), map.getZoom());
   };
 
   const restoreOverflow = (element: HTMLElement, value: string, priority: string) => {
@@ -33,7 +56,7 @@ export function createMapFullscreen(doc: Document, win: Window) {
   const close = (root?: HTMLElement, restoreFocus = true): boolean => {
     if (!active || (root && active.root !== root)) return false;
     const state = active;
-    let center: ReturnType<LeafletMap["getCenter"]> | undefined;
+    let center: { lat: number; lng: number } | undefined;
     let zoom: number | undefined;
     try {
       center = state.map.getCenter();
@@ -57,8 +80,8 @@ export function createMapFullscreen(doc: Document, win: Window) {
           restoreOverflow(doc.body, state.bodyOverflow, state.bodyPriority);
           restoreOverflow(doc.documentElement, state.htmlOverflow, state.htmlPriority);
           try {
-            state.map.invalidateSize({ pan: false, animate: false });
-            if (center && zoom !== undefined) state.map.setView(center, zoom, { animate: false });
+            state.map.scrollZoom?.disable();
+            syncViewport(state.map, center, zoom);
           } finally {
             if (restoreFocus && state.opener.isConnected) state.opener.focus();
           }
@@ -93,7 +116,7 @@ export function createMapFullscreen(doc: Document, win: Window) {
     }
   };
 
-  const open = (root: HTMLElement, map: LeafletMap) => {
+  const open = (root: HTMLElement, map: ResizableMap) => {
     const stage = root.querySelector<HTMLElement>("[data-map-stage]");
     const dialog = root.querySelector<HTMLDialogElement>("[data-map-fullscreen-dialog]");
     const opener = root.querySelector<HTMLButtonElement>("[data-map-fullscreen-open]");
@@ -126,8 +149,8 @@ export function createMapFullscreen(doc: Document, win: Window) {
       dialog.addEventListener("click", onDialogClick);
       win.addEventListener("resize", resize);
       win.visualViewport?.addEventListener("resize", resize);
-      map.invalidateSize({ pan: false, animate: false });
-      map.setView(center, zoom, { animate: false });
+      map.scrollZoom?.enable();
+      syncViewport(map, center, zoom);
       exit.focus();
     } catch (error) {
       if (active === state) {

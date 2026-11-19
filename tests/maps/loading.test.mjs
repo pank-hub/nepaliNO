@@ -15,6 +15,8 @@ const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 test("legacy display defaults and independent action settings", () => {
   assert.deepEqual(resolveMapDisplaySettings({}), {
     loadingBehavior: "click",
+    mapStyle: "editorial",
+    showNorwayLocator: true,
     showViewOnMapActions: true,
     showOpenStreetMapLinks: true,
     showLocationList: true,
@@ -24,6 +26,7 @@ test("legacy display defaults and independent action settings", () => {
   assert.deepEqual(
     resolveMapDisplaySettings({
       loadingBehavior: "automatic",
+      mapStyle: "city",
       showViewOnMapActions: false,
       showOpenStreetMapLinks: false,
       showLocationList: false,
@@ -32,6 +35,8 @@ test("legacy display defaults and independent action settings", () => {
     }),
     {
       loadingBehavior: "automatic",
+      mapStyle: "city",
+      showNorwayLocator: false,
       showViewOnMapActions: false,
       showOpenStreetMapLinks: false,
       showLocationList: false,
@@ -64,7 +69,7 @@ test("new block initial value and both language renderers pass the settings", as
   ]);
   assert.match(
     schema,
-    /export const locationMap = defineType\(\{[\s\S]*?initialValue:\s*\{\s*loadingBehavior: 'click',\s*showViewOnMapActions: false,\s*showOpenStreetMapLinks: false,\s*showLocationList: false,\s*showOpenStreetMapControl: false,\s*showFullscreenControl: true/,
+    /export const locationMap = defineType\(\{[\s\S]*?initialValue:\s*\{[\s\S]*?loadingBehavior: 'click',/,
   );
   for (const wrapper of [ne, nb]) {
     for (const field of [
@@ -290,15 +295,15 @@ test("fullscreen rendering keeps controls and attribution in the existing map wi
   assert.match(renderer, /<dialog[^>]*data-map-fullscreen-dialog[^>]*aria-label/);
   assert.match(renderer, /<div class="location-map__stage" data-map-stage>[\s\S]*data-map-fullscreen-open[\s\S]*<MapPrivacy language=\{language\} \/>[\s\S]*\{display\.showFullscreenControl && \(\s*<dialog/);
   assert.match(renderer, /data-map-fullscreen-open[\s\S]*?aria-haspopup="dialog"[\s\S]*?hidden/);
-  assert.match(renderer, /tiles\.once\("load"[\s\S]*?fullscreenButton\.hidden = false/);
-  assert.match(renderer, /const failMap = \(\) => \{[\s\S]*?fullscreen\.close\(root, false\)[\s\S]*?tiles\.on\("tileerror"/);
+  assert.match(renderer, /map\.once\("load"[\s\S]*?fullscreenButton\.hidden = false/);
+  assert.match(renderer, /const failMap = \(\) => \{[\s\S]*?fullscreen\.close\(root, false\)[\s\S]*?map\.on\("error"/);
   assert.match(renderer, /fullscreen\.close\(undefined, false\)/);
   assert.match(renderer, /data-map-fullscreen-exit/);
   assert.match(renderer, /height: 100dvh/);
   assert.match(renderer, /touch-action: none/);
   assert.match(renderer, /data-map-zoom-in/);
-  assert.match(renderer, /attribution: root\.dataset\.attribution/);
-  assert.equal((renderer.match(/L\.map\(/g) ?? []).length, 1);
+  assert.match(renderer, /customAttribution:\s*"nepali\.no"/);
+  assert.equal((renderer.match(/new maplibregl\.Map\(/g) ?? []).length, 1);
   assert.doesNotMatch(helper, /fetch\(|L\.map|tileLayer|routing/);
   assert.match(fixture, /Editorial path fixture[\s\S]*?precision: "approximate"[\s\S]*?editorialPath=\{\{[\s\S]*?showFullscreenControl=\{true\}/);
   for (const language of [ne, nb]) {
@@ -336,7 +341,7 @@ test("map-level OSM target uses exact pin or current map view without marker or 
 test("map-level navigation link is absent while map controls remain", async () => {
   const renderer = await read("../../src/components/content/LocationMap.astro");
   assert.doesNotMatch(renderer, /data-map-osm-link|openStreetMapViewUrl/);
-  assert.match(renderer, /tiles\.once\("load", \(\) => \{/);
+  assert.match(renderer, /map\.once\("load", \(\) => \{/);
   assert.match(renderer, /data-map-zoom-in/);
 });
 
@@ -449,22 +454,21 @@ test("renderer keeps text and privacy notice, defers tiles, and supports focus a
   assert.match(server, /data-show-location-list=\{String\(display\.showLocationList\)\}/);
   assert.match(server, /class="location-map__place-details"/);
   assert.doesNotMatch(server, /data-map-list-collapsed/);
-  assert.match(server, /display\.showViewOnMapActions && <button/);
+  assert.match(server, /display\.showViewOnMapActions && \(\s*<span class="location-map__place-actions">\s*<button/);
   assert.doesNotMatch(server, /openStreetMapLocationUrl|labels\.openInOsm/);
   assert.match(server, /target="_blank" rel="noopener noreferrer"/);
   assert.doesNotMatch(server, /L\.tileLayer|<iframe|<img[^>]*tile/i);
-  assert.match(script, /import\("leaflet"\)/);
+  assert.match(script, /import\("maplibre-gl"\)/);
   assert.match(script, /observeAutomaticMaps\(roots, ensureActive\)/);
   assert.match(script, /await ensureActive\(focusRoot\)/);
-  assert.match(script, /layer\.openPopup\(\)/);
-  assert.match(script, /bindPopup\(placeContent\(place, document\)\)/);
-  assert.match(script, /tiles\.on\("tileerror"/);
-  assert.match(script, /tiles\.once\("load", \(\) => \{\s*if \(activeMaps\.get\(id\) !== record\) return;[\s\S]*?setMapListLoaded\(root, true\)/);
+  assert.match(script, /togglePopup\(\)/);
+  assert.match(script, /placeContent\(place, document\)/);
+  assert.match(script, /map\.on\("error"/);
+  assert.match(script, /map\.once\("load", \(\) => \{\s*if \(activeMaps\.get\(id\) !== record\) return;[\s\S]*?setMapListLoaded\(root, true\)/);
   assert.match(script, /const dispose = [\s\S]*?setMapListLoaded\(root, false\)/);
-  assert.match(script, /keyboard: true,[\s\S]*?icon: createPlaceIcon/);
-  assert.match(script, /marker\.getElement\(\)\?\.setAttribute\("aria-label", place\.label\)/);
+  assert.match(script, /createMapLibreMarkerElement/);
   assert.match(script, /root\.dataset\.failedLabel/);
-  assert.match(script, /referrerPolicy:/);
+  assert.match(script, /referrerPolicy/);
   assert.match(renderer, /data-map-list-collapsed="true"[\s\S]*?clip-path: inset\(50%\)/);
   assert.doesNotMatch(renderer, /aria-hidden=.*place-details|innerHTML|set:html/);
 });

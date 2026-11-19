@@ -1,3 +1,6 @@
+import type { MapStyleMode } from "./mapStyle.ts";
+export { MAP_VECTOR_PROVIDER, type MapStyleMode } from "./mapStyle.ts";
+
 export const MAP_PROVIDER = {
   tiles: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   attribution:
@@ -59,6 +62,8 @@ export interface MapPresentation {
   caption?: string;
   markerIcon?: PlaceIcon;
   markerShowLabel?: boolean;
+  mapStyle?: MapStyleMode;
+  showNorwayLocator?: boolean;
   editorialPath?: MapEditorialPath;
 }
 
@@ -140,6 +145,8 @@ export interface LocationMapBlock {
   route?: MapRoute;
   editorialPath?: MapEditorialPath;
   loadingBehavior?: "automatic" | "click";
+  mapStyle?: MapStyleMode;
+  showNorwayLocator?: boolean;
   showViewOnMapActions?: boolean;
   showOpenStreetMapLinks?: boolean;
   showLocationList?: boolean;
@@ -154,10 +161,23 @@ export interface LocationMapBlock {
 // Missing fields belong to existing content and retain the original presentation.
 export function resolveMapDisplaySettings(settings: Pick<
   LocationMapBlock,
-  "loadingBehavior" | "showViewOnMapActions" | "showOpenStreetMapLinks" | "showLocationList" | "showOpenStreetMapControl" | "showFullscreenControl"
+  | "loadingBehavior"
+  | "mapStyle"
+  | "showNorwayLocator"
+  | "showViewOnMapActions"
+  | "showOpenStreetMapLinks"
+  | "showLocationList"
+  | "showOpenStreetMapControl"
+  | "showFullscreenControl"
 >) {
+  const mapStyle: MapStyleMode = settings.mapStyle === "city" ? "city" : "editorial";
   return {
     loadingBehavior: settings.loadingBehavior === "automatic" ? "automatic" : "click",
+    mapStyle,
+    showNorwayLocator:
+      typeof settings.showNorwayLocator === "boolean"
+        ? settings.showNorwayLocator
+        : mapStyle === "editorial",
     showViewOnMapActions: settings.showViewOnMapActions !== false,
     showOpenStreetMapLinks: settings.showOpenStreetMapLinks !== false,
     showLocationList: settings.showLocationList !== false,

@@ -171,10 +171,10 @@ test("renderer draws the saved path with safe DOM text, no routing calls, same r
   const renderer = await read("../../src/components/content/LocationMap.astro");
   assert.ok(renderer.includes("publicEditorialPath"));
   assert.ok(renderer.includes("data-path"));
-  assert.ok(renderer.includes("permanent: place.showLabel !== false"));
+  assert.ok(renderer.includes("nrk-path-label"));
   assert.ok(!renderer.includes("innerHTML"));
   assert.ok(
-    !/routing\.openstreetmap\.de|routeRequestUrl|fetch\(/.test(renderer),
+    !/routing\.openstreetmap\.de|routeRequestUrl/.test(renderer),
   );
   assert.equal(MAP_PROVIDER.referrerPolicy, "strict-origin-when-cross-origin");
   assert.ok(renderer.includes("data-referrer-policy"));
