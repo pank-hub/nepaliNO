@@ -1,7 +1,9 @@
 # Discourse on Gigahost Operations Runbook
 
-**Status:** Private pilot
-**Last reviewed:** 11 August 2026
+> **Consolidated (19 November 2026):** Operational procedures, SSH/UFW baselines, backups, HTTP 422 recovery checklists, and current Forum/Gigahost status from this runbook have been incorporated into [`DEVELOPER_HANDOVER.md`](./DEVELOPER_HANDOVER.md) (*Discourse Forum on Gigahost: Architecture, Governance & Operations Runbook*). Treat `DEVELOPER_HANDOVER.md` as the single canonical source of truth going forward.
+
+**Status:** Private pilot (canonical hostname `https://forum.nepali.no` live; see `DEVELOPER_HANDOVER.md`)
+**Last reviewed:** 11 August 2026 (incorporated 19 November 2026)
 **Audience:** Authorized infrastructure operators
 
 ## 1. Secret boundary
