@@ -13,6 +13,7 @@ import {
   type MapCoordinates,
   type MapLocation,
 } from '../../src/lib/maps/location'
+import {createPlaceIcon} from '../../src/lib/maps/markerIcons'
 
 import 'leaflet/dist/leaflet.css'
 
@@ -89,8 +90,10 @@ export function MapLocationInput(props: ObjectInputProps) {
           zoom: LOCATION_DEFAULTS.exactZoom,
           scrollWheelZoom: false,
           zoomControl: true,
+          attributionControl: false,
           keyboard: true,
         })
+        L.control.attribution({prefix: 'nepali.no'}).addTo(map)
         map.on('click', (event: LeafletMouseEvent) => {
           const current = latestRef.current
           if (current.readOnly) return
@@ -173,7 +176,10 @@ export function MapLocationInput(props: ObjectInputProps) {
           weight: 2,
         }).addTo(map)
       }
-      markerRef.current = L.marker([lat, lng], {draggable: !readOnly}).addTo(map)
+      markerRef.current = L.marker([lat, lng], {
+        draggable: !readOnly,
+        icon: createPlaceIcon(L, 'pin'),
+      }).addTo(map)
       markerRef.current.on('dragend', () => {
         const point = markerRef.current?.getLatLng()
         if (!point) return
@@ -262,9 +268,33 @@ export function MapLocationInput(props: ObjectInputProps) {
   }
 
   return (
-    <div style={{display: 'grid', gap: 16}}>
-      <Text size={1}>
-        Click the map or drag the pin to set a location. You may also enter coordinates manually.
+    <div style={{display: 'grid', gap: 14}}>
+      <Flex gap={2} align="center" wrap="wrap">
+        <div style={{flex: 1, minWidth: 200}}>
+          <TextInput
+            id={`${elementProps.id}-search`}
+            aria-label="Search OpenStreetMap (opens externally)"
+            value={searchQuery}
+            readOnly={readOnly}
+            onChange={(event) => setSearchQuery(event.currentTarget.value)}
+            placeholder="Search public place on OpenStreetMap…"
+          />
+        </div>
+        {searchQuery.trim() && !readOnly ? (
+          <Button
+            as="a"
+            href={queryUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            text="Search OSM"
+            mode="ghost"
+          />
+        ) : (
+          <Button text="Search OSM" mode="ghost" disabled />
+        )}
+      </Flex>
+      <Text size={1} muted>
+        Click the map or drag the pin to set a location. Only search public place information.
       </Text>
 
       <div
@@ -279,58 +309,26 @@ export function MapLocationInput(props: ObjectInputProps) {
       )}
       {!mapReady && !mapError && <Text size={1}>Loading map preview…</Text>}
       {mapError && !mapReady && (
-        <Text size={1}>Use the coordinate fields below without the preview.</Text>
+        <Text size={1}>Use the manual coordinate fields below without the preview.</Text>
       )}
 
-      <Flex gap={3} wrap="wrap">
-        <div style={{display: 'grid', gap: 8, flex: 1}}>
-          <label htmlFor={`${elementProps.id}-latitude`}>Latitude (-90 to 90)</label>
-          <TextInput
-            id={`${elementProps.id}-latitude`}
-            inputMode="decimal"
-            value={latitude}
-            readOnly={readOnly}
-            onChange={(event) => updateCoordinate('lat', event.currentTarget.value)}
-          />
+      <Flex gap={3} wrap="wrap" align="flex-end">
+        <div style={{display: 'grid', gap: 8, flex: 1, minWidth: 180}}>
+          <label htmlFor={`${elementProps.id}-precision`}>Location precision</label>
+          <Select
+            id={`${elementProps.id}-precision`}
+            value={precision}
+            disabled={readOnly}
+            onChange={(event) => updatePrecision(event.currentTarget.value as LocationPrecision)}
+          >
+            <option value="exact">Exact pin</option>
+            <option value="approximate">Approximate area</option>
+          </Select>
         </div>
-        <div style={{display: 'grid', gap: 8, flex: 1}}>
-          <label htmlFor={`${elementProps.id}-longitude`}>Longitude (-180 to 180)</label>
-          <TextInput
-            id={`${elementProps.id}-longitude`}
-            inputMode="decimal"
-            value={longitude}
-            readOnly={readOnly}
-            onChange={(event) => updateCoordinate('lng', event.currentTarget.value)}
-          />
-        </div>
-      </Flex>
-
-      <div style={{display: 'grid', gap: 8}}>
-        <label htmlFor={`${elementProps.id}-precision`}>Location precision</label>
-        <Select
-          id={`${elementProps.id}-precision`}
-          value={precision}
-          disabled={readOnly}
-          onChange={(event) => updatePrecision(event.currentTarget.value as LocationPrecision)}
-        >
-          <option value="exact">Exact pin</option>
-          <option value="approximate">Approximate area</option>
-        </Select>
         {precision === 'approximate' && (
-          <Card padding={3} tone="caution" radius={2}>
-            <Text size={1}>
-              The circle centre is still public coordinate data. Choose a safe approximate centre,
-              not a confidential address.
-            </Text>
-          </Card>
-        )}
-      </div>
-
-      <Flex gap={3} wrap="wrap">
-        {precision === 'approximate' && (
-          <div style={{display: 'grid', gap: 8, flex: 1}}>
+          <div style={{display: 'grid', gap: 8, flex: 1, minWidth: 180}}>
             <label htmlFor={`${elementProps.id}-radius`}>
-              Approximate radius (50–100000 metres)
+              Approximate radius (50–100000 m)
             </label>
             <TextInput
               id={`${elementProps.id}-radius`}
@@ -354,66 +352,73 @@ export function MapLocationInput(props: ObjectInputProps) {
             />
           </div>
         )}
-        <div style={{display: 'grid', gap: 8, flex: 1}}>
-          <label htmlFor={`${elementProps.id}-zoom`}>Initial zoom (1–{MAP_PROVIDER.maxZoom})</label>
-          <TextInput
-            id={`${elementProps.id}-zoom`}
-            type="number"
-            min={LOCATION_DEFAULTS.minimumZoom}
-            max={LOCATION_DEFAULTS.maximumZoom}
-            step="0.5"
-            value={initialZoom}
-            readOnly={readOnly}
-            onChange={(event) => {
-              const next = event.currentTarget.value
-              setInitialZoom(next)
-              if (coordinates) {
-                writeLocation(
-                  coordinates,
-                  precision,
-                  readNumber(radiusMeters) ?? LOCATION_DEFAULTS.radiusMeters,
-                  Number(next),
-                )
-              }
-            }}
-          />
-        </div>
       </Flex>
 
-      <div style={{display: 'grid', gap: 8}}>
-        <label htmlFor={`${elementProps.id}-search`}>Search OpenStreetMap (opens externally)</label>
-        <Flex gap={2} align="flex-end">
-          <TextInput
-            id={`${elementProps.id}-search`}
-            value={searchQuery}
-            readOnly={readOnly}
-            onChange={(event) => setSearchQuery(event.currentTarget.value)}
-            placeholder="Public place name or address"
-          />
-          {searchQuery.trim() && !readOnly ? (
-            <Button
-              as="a"
-              href={queryUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              text="Search"
-              mode="ghost"
+      {precision === 'approximate' && (
+        <Card padding={3} tone="caution" radius={2}>
+          <Text size={1}>
+            The circle centre is still public coordinate data. Choose a safe approximate centre,
+            not a confidential address.
+          </Text>
+        </Card>
+      )}
+
+      <details>
+        <summary style={{cursor: 'pointer', fontSize: 13, color: '#526273'}}>
+          Manual coordinates &amp; zoom
+        </summary>
+        <Flex gap={3} wrap="wrap" style={{marginTop: 12}}>
+          <div style={{display: 'grid', gap: 8, flex: 1, minWidth: 140}}>
+            <label htmlFor={`${elementProps.id}-latitude`}>Latitude (-90 to 90)</label>
+            <TextInput
+              id={`${elementProps.id}-latitude`}
+              inputMode="decimal"
+              value={latitude}
+              readOnly={readOnly}
+              onChange={(event) => updateCoordinate('lat', event.currentTarget.value)}
             />
-          ) : (
-            <Button text="Search" mode="ghost" disabled />
-          )}
+          </div>
+          <div style={{display: 'grid', gap: 8, flex: 1, minWidth: 140}}>
+            <label htmlFor={`${elementProps.id}-longitude`}>Longitude (-180 to 180)</label>
+            <TextInput
+              id={`${elementProps.id}-longitude`}
+              inputMode="decimal"
+              value={longitude}
+              readOnly={readOnly}
+              onChange={(event) => updateCoordinate('lng', event.currentTarget.value)}
+            />
+          </div>
+          <div style={{display: 'grid', gap: 8, flex: 1, minWidth: 120}}>
+            <label htmlFor={`${elementProps.id}-zoom`}>Initial zoom (1–{MAP_PROVIDER.maxZoom})</label>
+            <TextInput
+              id={`${elementProps.id}-zoom`}
+              type="number"
+              min={LOCATION_DEFAULTS.minimumZoom}
+              max={LOCATION_DEFAULTS.maximumZoom}
+              step="0.5"
+              value={initialZoom}
+              readOnly={readOnly}
+              onChange={(event) => {
+                const next = event.currentTarget.value
+                setInitialZoom(next)
+                if (coordinates) {
+                  writeLocation(
+                    coordinates,
+                    precision,
+                    readNumber(radiusMeters) ?? LOCATION_DEFAULTS.radiusMeters,
+                    Number(next),
+                  )
+                }
+              }}
+            />
+          </div>
         </Flex>
-        <Text size={1} muted>
-          This opens OpenStreetMap’s own search page. Only search public place information; do not
-          submit private or confidential addresses. Select a result there, then place the pin or
-          enter the coordinates here.
-        </Text>
-      </div>
+      </details>
 
       {coordinates ? (
         <Card padding={3} tone="positive" radius={2}>
           <Text size={1}>
-            Saved value preview: {coordinates.lat}, {coordinates.lng} ·{' '}
+            Saved: {coordinates.lat.toFixed(5)}, {coordinates.lng.toFixed(5)} ·{' '}
             {location.precision === 'approximate'
               ? `approximate area, ${location.radiusMeters} m radius`
               : 'exact pin'}
