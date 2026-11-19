@@ -113,6 +113,7 @@ export const nb = {
     events: "Arrangementer",
     forum: "Forum",
     businesses: "Katalog",
+    stats: "Statistikk",
     community: "Fellesskap",
     about: "Om oss",
   },

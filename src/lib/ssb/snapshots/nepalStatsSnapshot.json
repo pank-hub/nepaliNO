@@ -1,0 +1,66 @@
+{
+  "capturedAt": "2026-11-19",
+  "population": {
+    "updatedDate": "2026-03-05",
+    "years": ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"],
+    "immigrants": [1705, 1967, 2111, 2288, 2272, 2505, 2910, 3164, 3439, 3755],
+    "norwayBorn": [170, 216, 265, 317, 366, 406, 462, 535, 605, 699],
+    "latestYear": "2026",
+    "latestMales": 1973,
+    "latestFemales": 1782,
+    "latestCitizenship": 2310
+  },
+  "naturalisations": {
+    "updatedDate": "2026-05-07",
+    "years": ["2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"],
+    "counts": [18, 56, 18, 37, 47, 86, 71, 134, 134, 147]
+  },
+  "municipalities": {
+    "updatedDate": "2026-03-05",
+    "latestYear": "2026",
+    "top": [
+      {"code": "0301", "name": "Oslo", "neName": "ओस्लो", "count": 2502, "lat": 59.9139, "lng": 10.7522},
+      {"code": "5001", "name": "Trondheim", "neName": "ट्रोन्डहाइम", "count": 198, "lat": 63.4305, "lng": 10.3951},
+      {"code": "4601", "name": "Bergen", "neName": "बर्गेन", "count": 157, "lat": 60.3913, "lng": 5.3221},
+      {"code": "3205", "name": "Lillestrøm", "neName": "लिल्लेस्ट्रोम", "count": 107, "lat": 59.9557, "lng": 11.0492},
+      {"code": "1103", "name": "Stavanger", "neName": "स्टाभान्गर", "count": 92, "lat": 58.97, "lng": 5.7331},
+      {"code": "3222", "name": "Lørenskog", "neName": "लोरेन्सकोग", "count": 82, "lat": 59.9271, "lng": 10.9559},
+      {"code": "3201", "name": "Bærum", "neName": "बेरुम", "count": 78, "lat": 59.89, "lng": 10.525},
+      {"code": "5501", "name": "Tromsø", "neName": "ट्रोम्सो", "count": 77, "lat": 69.6492, "lng": 18.9553},
+      {"code": "3218", "name": "Ås", "neName": "आस", "count": 56, "lat": 59.6615, "lng": 10.7905},
+      {"code": "3203", "name": "Asker", "neName": "आस्कर", "count": 53, "lat": 59.8342, "lng": 10.4357}
+    ]
+  },
+  "occupations": {
+    "updatedDate": "2026-06-11",
+    "latestYear": "2025",
+    "totalEmployed": 2595,
+    "groups": {
+      "serviceSales": 996,
+      "elementary": 629,
+      "professionals": 525,
+      "technicians": 224,
+      "clerical": 64,
+      "managers": 58,
+      "tradesOperatorsAgri": 66
+    },
+    "highlights": {
+      "teaching": 194,
+      "health": 109,
+      "ict": 86,
+      "engineering": 69,
+      "cleaners": 326,
+      "kitchenAssistants": 278
+    }
+  },
+  "education": {
+    "updatedDate": "2026-06-15",
+    "latestYear": "2025",
+    "totalAge16Plus": 3441,
+    "higherLong": 1477,
+    "higherShort": 800,
+    "upperSecondary": 508,
+    "basicSchool": 622,
+    "noCompleted": 34
+  }
+}

@@ -28,11 +28,14 @@ export default defineConfig({
       filter: isSitemapPage,
       customSitemaps: ["https://nepali.no/news-sitemap.xml"],
       // On-demand (SSR) public pages are not discovered by the integration.
-      customPages: ["ne", "nb"].flatMap((lang) =>
-        ["about", "contact", "privacy", "transparency"].map(
-          (page) => `https://nepali.no/${lang}/${page}/`,
+      customPages: [
+        ...["ne", "nb"].flatMap((lang) =>
+          ["about", "contact", "privacy", "transparency"].map(
+            (page) => `https://nepali.no/${lang}/${page}/`,
+          ),
         ),
-      ),
+        "https://nepali.no/ne/stats/",
+      ],
     }),
   ],
 

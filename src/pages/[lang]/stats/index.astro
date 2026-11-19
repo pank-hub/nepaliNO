@@ -1,0 +1,430 @@
+---
+import EditorialChart from "../../../components/content/EditorialChart.astro";
+import LocationMap from "../../../components/content/LocationMap.astro";
+import SiteFooter from "../../../components/SiteFooter.astro";
+import SiteHeader from "../../../components/SiteHeader.astro";
+import { isSectionEnabled } from "../../../config/languageSections";
+import { getTranslations } from "../../../i18n";
+import type { SupportedLanguage } from "../../../i18n/config";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { loadNepaliStats, toNepaliYear } from "../../../lib/ssb/nepalStats";
+
+export const prerender = false;
+
+const { lang } = Astro.params;
+if (lang !== "ne" && lang !== "nb") {
+  return Astro.redirect("/ne/stats/", 302);
+}
+
+const language = lang as SupportedLanguage;
+if (!isSectionEnabled(language, "stats")) {
+  return Astro.redirect(`/${language}/`, 302);
+}
+
+// Refresh server-side SSB snapshot at most every 12 hours at the Vercel CDN edge.
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, s-maxage=43200, stale-while-revalidate=86400",
+);
+
+const translations = getTranslations(language);
+const model = await loadNepaliStats({ allowLive: true });
+const { snapshot, charts, municipalityPlaces, liveTablesLoaded } = model;
+
+const nf = new Intl.NumberFormat("ne-NP");
+const pctFormat = new Intl.NumberFormat("ne-NP", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+const latestImmigrants = snapshot.population.immigrants.at(-1) ?? 0;
+const latestNorwayBorn = snapshot.population.norwayBorn.at(-1) ?? 0;
+const totalBackground = latestImmigrants + latestNorwayBorn;
+const higherEdTotal = snapshot.education.higherLong + snapshot.education.higherShort;
+const higherEdShare =
+  snapshot.education.totalAge16Plus > 0
+    ? (higherEdTotal / snapshot.education.totalAge16Plus) * 100
+    : 0;
+const osloCount = snapshot.municipalities.top[0]?.count ?? 0;
+const osloShare =
+  totalBackground > 0 ? (osloCount / totalBackground) * 100 : 0;
+
+const pageTitle = "नर्वेमा नेपाली: आधिकारिक तथ्याङ्क | nepali.no";
+const pageDescription =
+  "नर्वेको केन्द्रीय तथ्याङ्क विभाग (SSB) को आधिकारिक खुला तथ्याङ्कमा आधारित नर्वेमा नेपालीको जनसंख्या, सहरअनुसार बसोबास, पेशा, शिक्षा र नागरिकताको अद्यावधिक विवरण।";
+
+const methodologyTitle = "तथ्याङ्क बुझ्ने तरिका (भाषा र युरोपेली राहदानीसम्बन्धी स्पष्टता)";
+---
+
+<BaseLayout
+  language={language}
+  title={pageTitle}
+  description={pageDescription}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={`/${language}/stats/`}
+  />
+
+  <article class="stats-page">
+    <header class="stats-masthead">
+      <div class="container">
+        <div class="stats-masthead__inner">
+          <nav class="stats-breadcrumb" aria-label={translations.navigation.home}>
+            <a href={`/${language}/`}>{translations.navigation.home}</a>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{translations.navigation.stats}</span>
+          </nav>
+
+          <div class="stats-masthead__eyebrow-row">
+            <span class="stats-pill">
+              आधिकारिक तथ्याङ्क · Statistisk sentralbyrå (SSB)
+            </span>
+            <span class="stats-freshness">
+              {liveTablesLoaded.length > 0
+                ? `SSB खुला API बाट अद्यावधिक (${toNepaliYear(snapshot.population.latestYear)})`
+                : `प्रमाणित SSB अभिलेख (${toNepaliYear(snapshot.population.latestYear)})`}
+            </span>
+          </div>
+
+          <h1>नर्वेमा नेपाली समुदायको आधिकारिक तथ्याङ्क</h1>
+          <p class="stats-masthead__lead">
+            नर्वेको केन्द्रीय तथ्याङ्क विभाग (SSB) को StatBank खुला API बाट लिइएको
+            जनसंख्या, नर्वेली नागरिकता, प्रमुख सहर, रोजगारी पेशा र शैक्षिक योग्यताको
+            विस्तृत विश्लेषण।
+          </p>
+
+          <dl class="stats-kpi-grid" aria-label="मुख्य आँकडा">
+            <div class="stats-kpi">
+              <dt>नेपाल पृष्ठभूमि कुल ({toNepaliYear(snapshot.population.latestYear)})</dt>
+              <dd class="stats-kpi__num">{nf.format(totalBackground)}</dd>
+              <dd class="stats-kpi__sub">
+                {nf.format(latestImmigrants)} नेपालमा जन्मिएका + {nf.format(latestNorwayBorn)} नर्वेमा जन्मिएका
+              </dd>
+            </div>
+
+            <div class="stats-kpi">
+              <dt>नेपाली राहदानी (नागरिकता)</dt>
+              <dd class="stats-kpi__num">
+                {nf.format(snapshot.population.latestCitizenship)}
+              </dd>
+              <dd class="stats-kpi__sub">
+                हाल नेपालको नागरिकता भएका व्यक्ति (पछिल्लो वर्ष {nf.format(snapshot.naturalisations.counts.at(-1) ?? 0)} ले नर्वेली नागरिकता लिए)
+              </dd>
+            </div>
+
+            <div class="stats-kpi">
+              <dt>उच्च शिक्षा हासिल गरेका वयस्क</dt>
+              <dd class="stats-kpi__num">{pctFormat.format(higherEdShare)}%</dd>
+              <dd class="stats-kpi__sub">
+                मास्टर्स/PhD ({nf.format(snapshot.education.higherLong)}) र ब्याचलर्स ({nf.format(snapshot.education.higherShort)})
+              </dd>
+            </div>
+
+            <div class="stats-kpi">
+              <dt>ओस्लो राजधानीमा बसोबास</dt>
+              <dd class="stats-kpi__num">{nf.format(osloCount)}</dd>
+              <dd class="stats-kpi__sub">
+                कुल नेपालीमध्ये करिब {pctFormat.format(osloShare)}% ओस्लो कोमुनेमा ({toNepaliYear(snapshot.municipalities.latestYear)})
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </header>
+
+    <section class="stats-section" aria-labelledby="stats-pop-heading">
+      <div class="container">
+        <div class="reading-width stats-section__intro">
+          <h2 id="stats-pop-heading">जनसंख्या वृद्धि र नर्वेली नागरिकताको क्रम</h2>
+          <p>
+            सन् {toNepaliYear(snapshot.population.years[0] ?? "2017")} यता नर्वेमा नेपाली
+            समुदायको आकार दोब्बरभन्दा बढीले विस्तार भएको छ। सन्{" "}
+            {toNepaliYear(snapshot.population.latestYear)} मा{" "}
+            {nf.format(snapshot.population.latestMales)} पुरुष र{" "}
+            {nf.format(snapshot.population.latestFemales)} महिला नेपालमा जन्मिएका
+            आप्रवासीका रूपमा दर्ता छन् भने नर्वेमै जन्मिएका दोस्रो पुस्ताका बालबालिका{" "}
+            {nf.format(latestNorwayBorn)} पुगेका छन्।
+          </p>
+        </div>
+
+        <div class="stats-grid-two">
+          <EditorialChart node={charts.population} language="ne" index={0} />
+          <EditorialChart node={charts.naturalisations} language="ne" index={1} />
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-section stats-section--tinted" aria-labelledby="stats-geo-heading">
+      <div class="container">
+        <div class="reading-width stats-section__intro">
+          <h2 id="stats-geo-heading">नर्वेका कुन सहरमा कति नेपाली बस्छन्?</h2>
+          <p>
+            ओस्लो र नजिकका आकेर्सहुस (Lillestrøm, Lørenskog, Bærum, Ås, Asker)
+            नगरपालिकामा सबैभन्दा ठूलो बसोबास छ। विश्वविद्यालय र रोजगार केन्द्रका कारण
+            ट्रोन्डहाइम, बर्गेन, स्टाभान्गर र उत्तरमा ट्रोम्सोसम्म समुदाय फैलिएको छ।
+          </p>
+        </div>
+
+        <div class="stats-grid-two stats-grid-two--geo">
+          <EditorialChart node={charts.municipalities} language="ne" index={2} />
+          <div class="stats-map-card">
+            <h3 class="stats-map-card__title">शीर्ष १० कोमुनेको नक्सा ({toNepaliYear(snapshot.municipalities.latestYear)})</h3>
+            <p class="stats-map-card__desc">
+              अन्तरक्रियात्मक नक्सामा सहरअनुसार नेपाली जनसंख्या वितरण हेर्नुहोस्।
+            </p>
+            <LocationMap
+              locations={municipalityPlaces}
+              mapStyle="editorial"
+              showNorwayLocator={true}
+              loadingBehavior="click"
+              showViewOnMapActions={true}
+              showOpenStreetMapLinks={false}
+              showLocationList={false}
+              showFullscreenControl={true}
+              language={language}
+              description="नर्वेमा नेपालीहरूको बसोबास रहेका शीर्ष १० कोमुनेहरू (SSB तालिका ०९८१७)"
+              sourceLabel="Statistisk sentralbyrå (SSB) — तालिका ०९८१७"
+              sourceUrl="https://www.ssb.no/statbank/table/09817"
+              labels={translations.common.maps}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-section" aria-labelledby="stats-work-heading">
+      <div class="container">
+        <div class="reading-width stats-section__intro">
+          <h2 id="stats-work-heading">रोजगारी पेशा र शैक्षिक स्तर</h2>
+          <p>
+            सन् {toNepaliYear(snapshot.occupations.latestYear)} को चौथो त्रैमासमा{" "}
+            {nf.format(snapshot.occupations.totalEmployed)} नेपाली मूलका व्यक्तिहरू नर्वेमा
+            रोजगारीमा संलग्न देखिन्छन्। सेवा र आतिथ्य क्षेत्र प्रमुख भए पनि{" "}
+            {nf.format(snapshot.occupations.highlights.teaching)} शिक्षक,{" "}
+            {nf.format(snapshot.occupations.highlights.health)} स्वास्थ्यकर्मी,{" "}
+            {nf.format(snapshot.occupations.highlights.ict)} आइटी विशेषज्ञ र{" "}
+            {nf.format(snapshot.occupations.highlights.engineering)} इन्जिनियर कार्यरत छन्।
+          </p>
+        </div>
+
+        <div class="stats-grid-two">
+          <EditorialChart node={charts.occupations} language="ne" index={3} />
+          <EditorialChart node={charts.education} language="ne" index={4} />
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-section stats-section--methodology" aria-labelledby="stats-method-heading">
+      <div class="container">
+        <div class="reading-width">
+          <aside class="stats-method-box">
+            <h2 id="stats-method-heading">{methodologyTitle}</h2>
+            <ul>
+              <li>
+                <strong>बोलीचालीको भाषा दर्ता हुँदैन:</strong> नर्वेको जनगणना वा राष्ट्रीय
+                पञ्जीकरण (Folkeregisteret) मा नागरिकको मातृभाषा वा नेपाली भाषा बोल्ने आधारमा
+                तथ्याङ्क राखिँदैन।
+              </li>
+              <li>
+                <strong>युरोपेली राहदानी भएका नेपाली (Landbakgrunn vs Statsborgerskap):</strong>{" "}
+                यहाँ देखाइएको <strong>{nf.format(totalBackground)}</strong> को संख्या जन्मदेश
+                (देश पृष्ठभूमि) मा आधारित छ — त्यसैले पोर्चुगल, स्पेन, जर्मनी वा नर्वेको
+                राहदानी लिएर आएका तर <strong>नेपालमा जन्मिएका</strong> नेपालीहरू यसमा{" "}
+                <strong>समेटिन्छन्</strong>। नागरिकता तालिकाको{" "}
+                <strong>{nf.format(snapshot.population.latestCitizenship)}</strong> ले हाल
+                नेपाली राहदानी बोक्नेलाई मात्र जनाउँछ।
+              </li>
+              <li>
+                <strong>नेपालबाहिर जन्मिएका नेपाली भाषी:</strong> भारत, भुटान वा युरोपमै
+                जन्मिएका नेपाली मूलका व्यक्तिलाई SSB ले उनीहरूको जन्मदेशअन्तर्गत गणना गर्छ।
+              </li>
+              <li>
+                <strong>डाटा स्रोत र इजाजतपत्र:</strong> सबै तथ्याङ्क{" "}
+                <a href="https://www.ssb.no/en/befolkning/innvandrere" target="_blank" rel="noopener noreferrer">
+                  Statistisk sentralbyrå (SSB)
+                </a>{" "}
+                को खुला PxWebApi v2 बाट <strong>CC BY 4.0</strong> इजाजतपत्रअन्तर्गत
+                संकलन गरिएको हो। ब्राउजरबाट सीधा SSB सर्भरमा अनुरोध नपठाई nepali.no को
+                सर्भरले १२ घण्टाको क्याससहित सुरक्षित रूपमा प्रस्तुत गर्छ।
+              </li>
+            </ul>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <SiteFooter slot="footer" language={language} flush />
+</BaseLayout>
+
+<style>
+  .stats-page {
+    background: var(--surface);
+  }
+  .stats-masthead {
+    padding-block: clamp(1.75rem, 4vw, 2.75rem);
+    border-top: 3px solid var(--civic-deep);
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-warm, #f8f7f3);
+  }
+  .stats-masthead__inner {
+    max-width: 72rem;
+  }
+  .stats-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .stats-breadcrumb a {
+    color: var(--brand);
+    text-decoration: none;
+  }
+  .stats-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+  .stats-masthead__eyebrow-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+  .stats-pill {
+    display: inline-block;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    background: var(--civic-deep);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .stats-freshness {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+  .stats-masthead h1 {
+    margin: 0;
+    font-size: clamp(1.65rem, 4vw, 2.5rem);
+    line-height: 1.24;
+    color: var(--text);
+  }
+  .stats-masthead__lead {
+    max-width: 58ch;
+    margin: 0.75rem 0 0;
+    color: var(--text-muted);
+    font-size: clamp(1rem, 1.8vw, 1.14rem);
+    line-height: 1.6;
+  }
+  .stats-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.85rem;
+    margin: 1.6rem 0 0;
+  }
+  .stats-kpi {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+  .stats-kpi dt {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    font-weight: 700;
+  }
+  .stats-kpi__num {
+    margin: 0.3rem 0 0.2rem;
+    color: var(--civic-deep);
+    font-size: clamp(1.55rem, 3vw, 2.05rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+  }
+  .stats-kpi__sub {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+  .stats-section {
+    padding-block: clamp(2rem, 4vw, 3rem);
+    border-bottom: 1px solid var(--line);
+  }
+  .stats-section--tinted {
+    background: var(--surface-muted);
+  }
+  .stats-section__intro h2 {
+    margin: 0 0 0.55rem;
+    font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+    color: var(--text);
+  }
+  .stats-section__intro p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+  .stats-grid-two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+    margin-top: 1.25rem;
+  }
+  .stats-grid-two :global(.editorial-chart) {
+    margin-block: 0;
+  }
+  .stats-map-card {
+    padding: clamp(1rem, 3vw, 1.5rem);
+    border: 1px solid color-mix(in srgb, var(--chart-border) 72%, transparent);
+    border-top: 3px solid var(--civic-deep);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+  .stats-map-card__title {
+    margin: 0 0 0.35rem;
+    font-size: 1.2rem;
+    color: var(--text);
+  }
+  .stats-map-card__desc {
+    margin: 0 0 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.94rem;
+  }
+  .stats-section--methodology {
+    border-bottom: 0;
+    background: var(--surface);
+  }
+  .stats-method-box {
+    padding: clamp(1.1rem, 3vw, 1.6rem);
+    border: 1px solid var(--line);
+    border-inline-start: 4px solid var(--brand);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+  }
+  .stats-method-box h2 {
+    margin: 0 0 0.85rem;
+    font-size: 1.22rem;
+  }
+  .stats-method-box ul {
+    margin: 0;
+    padding-inline-start: 1.2rem;
+    display: grid;
+    gap: 0.65rem;
+    line-height: 1.6;
+  }
+  .stats-method-box a {
+    color: var(--brand);
+    font-weight: 600;
+  }
+  @media (max-width: 56rem) {
+    .stats-grid-two {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

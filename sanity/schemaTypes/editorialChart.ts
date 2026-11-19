@@ -1,4 +1,5 @@
 import {defineArrayMember, defineField, defineType} from 'sanity'
+import {EditorialChartSsbInput} from '../components/EditorialChartSsbInput'
 
 const chartTypes = [
   {title: 'Vertical bar', value: 'verticalBar'},
@@ -33,6 +34,7 @@ export const editorialChart = defineType({
   name: 'editorialChart',
   title: 'Editorial Chart',
   type: 'object',
+  components: {input: EditorialChartSsbInput},
   groups: [
     {name: 'content', title: 'Chart content', default: true},
     {name: 'data', title: 'Categories and data'},
