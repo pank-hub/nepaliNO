@@ -6,12 +6,13 @@ export type SiteSection =
   | 'events'
   | 'directory'
   | 'forum'
+  | 'stats'
 
 // The Norwegian site currently publishes News only. Re-enable a section here
 // when Norwegian content for it exists.
 const enabledSections: Record<SupportedLanguage, Record<SiteSection, boolean>> = {
-  ne: {news: true, information: true, events: true, directory: true, forum: true},
-  nb: {news: true, information: false, events: false, directory: false, forum: false},
+  ne: {news: true, information: true, events: true, directory: true, forum: true, stats: true},
+  nb: {news: true, information: false, events: false, directory: false, forum: false, stats: false},
 }
 
 export const isSectionEnabled = (
@@ -28,6 +29,7 @@ const pathSections: Record<string, SiteSection> = {
   info: 'information',
   events: 'events',
   directory: 'directory',
+  stats: 'stats',
 }
 
 // Language-switcher targets must not point at a disabled section.

@@ -38,6 +38,9 @@ const showCommunity = isSectionEnabled(language, 'forum') || showEvents || showD
         {showInformation && (
           <li><a href={`/${language}/info/`}>{labels.navigation.information}</a></li>
         )}
+        {isSectionEnabled(language, 'stats') && (
+          <li><a href={`/${language}/stats/`}>{labels.navigation.stats}</a></li>
+        )}
       </ul>
     </nav>
 

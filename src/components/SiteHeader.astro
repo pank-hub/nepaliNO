@@ -34,6 +34,9 @@ const navigationItems = [
   ...(isSectionEnabled(language, 'directory')
     ? [{label: labels.navigation.businesses, href: `/${language}/directory/`}]
     : []),
+  ...(isSectionEnabled(language, 'stats')
+    ? [{label: labels.navigation.stats, href: `/${language}/stats/`}]
+    : []),
 ]
 
 const isActive = (href: string) => {

@@ -112,6 +112,7 @@ export const ne = {
     events: "कार्यक्रम",
     forum: "फोरम",
     businesses: "डाइरेक्टरी",
+    stats: "तथ्याङ्क",
     community: "समुदाय",
     about: "हाम्रो बारेमा",
   },
