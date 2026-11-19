@@ -1,9 +1,9 @@
 # nepali.no Developer Handover
 
-**Status date:** 15 November 2026
+**Status date:** 19 November 2026
 **Repository:** `pank-hub/nepaliNO`
 **Owner and final decision-maker:** Pankaj Kafley
-**Current `main` checkpoint:** `4c1c294`, News hub redesign, squash-merged as PR #126 on 10 November 2026 (followed by PR #127 handover update; active Guidance Hub redesign on `feat/redesign-guidance-hub`)
+**Current `main` checkpoint:** `87c2438`, interactive editorial charts, squash-merged as PR #132 on 19 November 2026 (following PR #128–#129 Guidance Hub redesign, PR #130 map Studio/badge UX cleanup, and PR #131 MapLibre GL / OpenFreeMap NRK-editorial & city map upgrade)
 **Production deployment status:** Verify the deployed Vercel revision independently; a merged commit is not proof of deployment.
 
 ## Purpose
@@ -180,7 +180,7 @@ Phase 1 is Pankaj-only with GitHub login, signed sessions, deterministic TypeScr
 
 ## Editorial charts
 
-One shared Sanity object, `editorialChart`, is used in News and Public Information Guides. It is rendered as static server-generated SVG and HTML. The schema and renderer are present in `main`; confirm the deployed frontend and any published chart content before rollback or rollout decisions. Editor guidance is in `docs/editorial-charts.md`.
+One shared Sanity object, `editorialChart`, is used in News and Public Information Guides. It renders accessible server-generated SVG and HTML enhanced progressively on the client with interactive tooltips, crosshair snapping, series filtering, scroll-reveal animation, a Chart/Table view toggle, and UTF-8 CSV export (merged in PR #132). Confirm the deployed frontend and any published chart content before rollback or rollout decisions. Editor guidance is in `docs/editorial-charts.md`.
 
 ### Architecture
 
@@ -189,8 +189,8 @@ One shared Sanity object, `editorialChart`, is used in News and Public Informati
 - Guides: `sanity/schemaTypes/publicInformationGuide.ts` and `src/pages/[lang]/info/[slug].astro`.
 - Shared renderer: `src/components/content/EditorialChart.astro`; shared data table: `src/components/content/EditorialChartTable.astro`.
 - Language wrappers: `EditorialChartNe.astro` and `EditorialChartNb.astro` (thin; they forward the node and index).
-- Shared logic in `src/lib/editorialChart/`: `types.ts`, `normalize.ts`, `format.ts`, `geometry.ts`, `palette.ts`.
-- Tests: `tests/editorialChart/editorialChart.test.mjs`.
+- Shared logic in `src/lib/editorialChart/`: `types.ts`, `normalize.ts`, `format.ts`, `geometry.ts`, `palette.ts`, `interactive.ts` (client payload, localized interactive UI copy, formula-safe UTF-8 BOM CSV export), and `client.ts` (progressive browser controller).
+- Tests: `tests/editorialChart/editorialChart.test.mjs` (44 tests covering geometry, formatting, CSV escaping, and `jsdom` interactivity).
 
 ### Data model
 
@@ -199,11 +199,14 @@ One shared Sanity object, `editorialChart`, is used in News and Public Informati
 - True zero values stay in the data table but draw no bar or slice, so they never look like small positive values.
 - Malformed values are never silently converted to zero.
 
-### Rendering and accessibility
+### Rendering, interactivity and accessibility
 
-- Static server-generated SVG and HTML. No runtime charting dependency and no client hydration.
+- Server-rendered SVG and HTML work without JavaScript; client hydration in `src/lib/editorialChart/client.ts` enhances charts progressively via a serialized `<script is:inline type="application/json" data-chart-payload>` block.
+- Hovering, tapping, or keyboard-focusing bars/points/slices (`tabindex="0"`, Left/Right/Up/Down arrows, `Escape`) displays a boundary-clamped dark-navy (`#172534`) tooltip and snaps a vertical hairline crosshair on vertical Cartesian charts. Donut selection locks the active slice and updates the center percentage/label readout.
+- Multi-series and polar legends turn into interactive filter/spotlight buttons (with a reset button and automatic safeguard against blanking the final visible series). A header segmented toggle switches between `Chart` and `Table` views cleanly alongside a `CSV` download button (UTF-8 BOM, spreadsheet formula-injection neutralized) and a subtle `nepali.no` footer badge.
+- Scroll-reveal bar growth and Web Animations API line-drawing respect `prefers-reduced-motion: reduce`.
 - Every visual is accompanied by a complete HTML data table. Information never depends on colour alone: series also use patterns, dashes or numbering, tied to series position rather than the chosen colour.
-- Print shows the full data table even when the on-screen disclosure is closed (`::details-content` where supported, otherwise a print-only copy), scoped to chart disclosures.
+- Print shows the full data table even when the on-screen disclosure is closed (`::details-content` where supported, otherwise a print-only copy), scoped to chart disclosures, while hiding the interactive toolbar and tooltips.
 - Malformed or unknown chart types fall back to readable text and table data without breaking the article or Guide page. If geometry generation throws, the SVG is omitted, the table remains, and the error is logged with `console.error` (chart title and message only; no routine noise because it happens only for invalid data). Data warnings use `console.warn`. A visible diagnostic is shown only in development.
 
 ### Responsive behaviour
@@ -233,43 +236,35 @@ Add a new chart type through: (1) the shared chart-type definition, (2) Sanity c
 
 ## Location maps
 
-The OpenStreetMap milestone was merged in PR #107 and subsequent map-presentation and draft-preview work was merged in PR #108. These implementations are in `main`; verify the deployed frontend and Studio independently before claiming hosted acceptance.
+The OpenStreetMap milestone was merged in PR #107, draft-preview and presentation follow-ups in PR #108, Studio simplification and map badge/fullscreen UX in PR #130, and the public MapLibre GL JS + OpenFreeMap vector upgrade in PR #131. These implementations are in `main`; verify the deployed frontend and Studio independently before claiming hosted acceptance.
 
 ### Architecture and editing
 
-- Shared provider configuration, types, URL helpers and coordinate/radius/zoom validation: `src/lib/maps/location.ts`.
-- Shared Sanity object/input: `sanity/schemaTypes/mapLocation.ts` and `sanity/components/MapLocationInput.tsx`. Coordinates use the Sanity `geopoint` type.
-- Shared News/Guide Portable Text block: `locationMap` in `sanity/schemaTypes/mapLocation.ts`, registered in `sanity/schemaTypes/index.ts` and both article/Guide body arrays. The localized wrappers and renderer are `src/components/content/LocationMapNe.astro`, `LocationMapNb.astro` and `LocationMap.astro`.
-- Optional Event and Directory coordinates are projected by their existing queries and rendered on detail pages only. Existing addresses, map URLs, submissions and private-address safeguards are preserved.
+- Shared provider configuration, types, URL helpers and coordinate/radius/zoom validation: `src/lib/maps/location.ts`, vector style customization (`MAP_VECTOR_PROVIDER`, `customizeMapStyle` for `"editorial"` and `"city"`) in `src/lib/maps/mapStyle.ts`, and Norway mini-locator geometry in `src/lib/maps/norwayLocator.ts`.
+- Shared Sanity object/input: `sanity/schemaTypes/mapLocation.ts` and `sanity/components/MapLocationInput.tsx` (Studio map pickers retain Leaflet + bundled SVG markers). Coordinates use the Sanity `geopoint` type.
+- Shared News/Guide Portable Text block: `locationMap` in `sanity/schemaTypes/mapLocation.ts`, registered in `sanity/schemaTypes/index.ts` and both article/Guide body arrays. Both `locationMap` and `mapPresentation` (on Events and Directory) expose `mapStyle` (`'editorial'` | `'city'`) and `showNorwayLocator` (`boolean`), plus `showFullscreenControl`, `loadingBehavior`, `showViewOnMapActions`, `showOpenStreetMapLinks`, `showLocationList`, and `showOpenStreetMapControl`. The localized wrappers and renderer are `src/components/content/LocationMapNe.astro`, `LocationMapNb.astro` and `LocationMap.astro`.
+- Optional Event and Directory coordinates are projected by their existing queries (`mapPresentation {..., editorialPath {...}}`) and rendered on detail pages only (`city` style by default unless overridden in `mapPresentation`). Existing addresses, map URLs, submissions and private-address safeguards are preserved.
 
 Editors can click the Studio map, drag the pin, or enter latitude/longitude. Exact mode uses a pin; approximate mode uses a configurable 50–100,000 m circle. Initial zoom is 1–19. No location is saved until a valid point is selected. Clearing removes the complete value. For approximate areas, the centre is still public coordinate data: select a safe approximate centre, never a confidential address. OSM search is a deliberate external link; use only public place information, then position the pin or enter coordinates. No existing content is parsed or backfilled.
 
 The optional News/Guide map block accepts an optional title, caption and HTTP(S) source label/URL. Its accessible location description is required on every block so map information remains available without the visual map.
 
-- New News/Guide blocks start with `loadingBehavior: 'click'`, `showViewOnMapActions: false`, `showOpenStreetMapLinks: false`, `showLocationList: false`, `showOpenStreetMapControl: false` and `showFullscreenControl: true`. Editors can independently configure the actions, list, map-level external link and fullscreen button. Automatic near-viewport loading is available only when selected. Missing values on existing blocks resolve compatibly to click-to-load and the earlier list/actions presentation; the new map-level control remains off unless enabled. Event and Directory explicitly enable fullscreen on their existing maps.
-- The optional map-level OpenStreetMap link appears in a separate bar above the map after tiles load, without covering controls or attribution. A single exact location without a path opens a map centred on that location; multiple locations, a path, or an approximate area use the currently displayed centre and zoom. URLs contain numeric map-view coordinates only, never editor text or a precise-marker query. They update after panning or zooming and disappear on failure or when no safe target exists.
-- The fullscreen button appears after normal successful map loading. The stage and viewport-sized modal dialog are siblings inside the map wrapper; fullscreen moves the existing Leaflet stage into the dialog and leaves a temporary placeholder at its original position. Exiting or a failed open restores the stage and removes the placeholder. Layers, centre and zoom are preserved; Escape closes it, focus and background scrolling are restored, and Leaflet is resized on enter, exit and viewport changes. In Presentation the viewport is the preview iframe. Expanding the visible area can request more OSM tiles, but does not call a routing service or reveal additional stored coordinates.
-- When `showLocationList` is false, location text is visually hidden only after tiles load successfully; it remains in the accessibility tree. Enabled location actions remain visible and keyboard accessible. Before loading, on tile or initialization failure, and without JavaScript, the textual list stays visible. Existing legacy single-location maps without the setting keep their existing presentation.
-- Automatic maps observe each block separately with a 300px viewport margin. Where IntersectionObserver is unavailable, the reader can use the load button. A visible location action also loads its map before focusing the location; exact markers open a plain-text popup. The local-only fixture `/dev/location-map-test/` includes two independent automatic maps and a click-to-load map with actions.
+- New News/Guide blocks start with `mapStyle: 'editorial'`, `showNorwayLocator: true`, `loadingBehavior: 'click'`, `showViewOnMapActions: false`, `showOpenStreetMapLinks: false`, `showLocationList: false`, `showOpenStreetMapControl: false` and `showFullscreenControl: true`. Missing values resolve compatibly to click-to-load, `'editorial'` mode for News/Guides (with locator inset inside Norway), and `'city'` default on Event/Directory detail pages.
+- **Calm editorial (`editorial`) mode:** Customizes OpenFreeMap `positron` into an uncluttered NRK-inspired base map (`#94c0eb` water, `#f6f5f0` land, `#dce8d5` parks, hidden buildings/shields), renders solid blue pins with dark-navy `#172534` pill labels (`createMapLibreMarkerElement` in `markerIcons.ts`), places a floating inline label at `editorialPathMidpoint` (`places.ts`) on custom paths, shows the top-left Norway locator inset when coordinates are inside Norway, renders a borderless frame, and keeps a single corner fullscreen button inline (showing `+`/`−` zoom buttons inside fullscreen).
+- **City streets & transit (`city`) mode:** Customizes OpenFreeMap `liberty` to keep street names, building footprints, and `poi_transit` stations crisp alongside inline `+`/`−` zoom controls.
+- Both modes display a subtle `nepali.no` badge and OpenFreeMap / OpenStreetMap attribution inside the map stage; fullscreen moves the existing `MapLibreMap` stage into a sibling modal dialog and triggers `resize()` / view preservation via `mapFullscreen.ts`.
+- The optional map-level OpenStreetMap link appears in a separate bar above the map after tiles load, without covering controls or attribution. A single exact location without a path opens a map centred on that location; multiple locations, a path, or an approximate area use the currently displayed centre and zoom. URLs contain numeric map-view coordinates only, never editor text or a precise-marker query.
+- When `showLocationList` is false, location text is visually hidden only after map resources load successfully; it remains in the accessibility tree. Before loading, on failure, and without JavaScript, the textual list stays visible.
+- Automatic maps observe each block separately with a 300px viewport margin. The local-only fixture `/dev/location-map-test/` renders interactive examples in DEV only.
 
 ### Public provider, privacy and limitations
 
-- Leaflet is dynamically loaded after a reader activates a map, or automatically when an opted-in map approaches the viewport. Server rendering makes no tile requests. Automatic mode sends OSM requests without a separate click, so the existing external-service notice remains visible in both modes. Exact locations may link to OpenStreetMap; approximate locations do not have a centre marker or precise link. Both modes retain textual information and visible OSM attribution.
-- Approximate circles are not a confidentiality mechanism: their centre coordinates are sent to the browser and can be inferred from the circle. As confirmed by the owner, existing circles are preserved; never use a confidential address as the centre.
-- The owner verified fullscreen in the draft preview with markers, labels, path and attribution, and Escape restoring the map to the article. Further checks remain for focus, scrolling, resize/orientation, tile failure and standalone use. The separately enabled external link opens OpenStreetMap in a new tab.
-- The centralized tile endpoint is `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. Respect normal browser caching and Referer. Do not bulk-download/prefetch tiles, add offline use, add an anonymous proxy, or silently fail over. The community tile service has no availability guarantee; map failure must not break content. Follow the [OSMF Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/).
-- There is no embedded public Nominatim integration or visitor geocoding. The Studio search action opens `https://www.openstreetmap.org/search?query=...` in a new tab; it does not implement autocomplete or call Nominatim from nepali.no. This avoids the public Nominatim application's strict one-request-per-second aggregate limit and autocomplete prohibition without adding a shared backend. Editors must not search confidential addresses. See the [Nominatim Usage Policy](https://operations.osmfoundation.org/policies/nominatim/).
-- The pre-activation notice states that the external service receives the visitor's IP address and a request for the map area. This is a transparency notice, not a complete legal/privacy review. Privacy-page wording is Sanity-owned; editors should review and update both localized Privacy documents before publishing map content.
-- `src/i18n/ne.ts`, `nb.ts` and `en.ts` contain map control, status, precision and external-request strings. English remains a fallback only; disabled Norwegian sections remain disabled.
-- Automated checks passed: `npm run test:maps` (7), `npm run test:language-sections` (5), `npm run test:event-labels` (9), `npm run test:event-occurrences` (3), `npx astro check` (0 errors, 0 warnings, 6 existing hints), `npm run build`, and `npm --prefix sanity run build`. The Studio build reports existing warnings for the unset Studio `appId` and local Sanity 6.6.0 versus hosted runtime 6.21.0. Formatting checks for new mapping files and `git diff --check` passed.
-- Acceptance status on 2026-11-02: no browser or interactive Studio tooling was available. Save/reopen, network, rendering, keyboard/mobile, fallback, legacy-content, and localized Privacy-page checks were not performed. No Studio content was changed and no browser or production result is claimed.
-- Manual acceptance checklist (use existing content slugs; do not publish test drafts):
-  1. Local URLs: frontend `http://localhost:4321/`; Studio `http://localhost:3333/content/` (base path configured in `sanity/sanity.config.ts`). Inspect `/ne/events/<slug>/`, `/ne/directory/<slug>/`, `/ne/news/<slug>/`, `/ne/info/<slug>/`, `/ne/privacy/`, and `/nb/privacy/`.
-  2. Studio: edit `Map Coordinates` on an Event/Directory record or add a `Location Map` block and set its `Map Location`. Save and reopen exact and approximate values; drag the pin; set latitude and longitude to `0`; clear the location. Accept radius 50–100000 m and zoom 1–19; reject out-of-range coordinates, radius 49/100001, and zoom outside 1–19.
-  3. Browser network panel: verify no map-provider requests before activation; after activation verify tiles and visible OSM attribution. Check an exact marker and OSM link; an approximate circle with no precise marker or centre link; and two independently usable maps on one page.
-  4. Keyboard/mobile: operate controls by keyboard and verify page scrolling is not trapped. Block/fail tile requests and confirm text remains with a useful failure message. Verify legacy Event/Directory records without coordinates and suppress maps for online Events and `online-only`/`no-public-location` listings.
-  5. Read both localized Privacy documents in Sanity without editing or publishing. Confirm disclosure of the external OSM request, including visitor IP address and requested map tiles/area; have the privacy editor/legal reviewer determine whether additional wording is needed. Their actual text was inaccessible during this acceptance attempt, so wording sufficiency and required edits remain undetermined.
-- Public-renderer test fixture (2026-11-02): public pages fetch with `perspective: "published"` (`astro.config.mjs`), so they do not display draft articles; the separate authenticated Preview routes were added later. Local-only page `src/pages/dev/location-map-test.astro` renders the real `LocationMap.astro` with one exact and one approximate fixture map. It is `prerender = false` and returns 404 unless `import.meta.env.DEV`; a production build emits no static copy. Open `http://localhost:4321/dev/location-map-test/` after `npm run dev` (Codespaces: forward port 4321). Studio local map confirmed working by the owner after the explicit `referrerPolicy: strict-origin-when-cross-origin` tile fix; public-renderer browser checks remain pending.
+- `maplibre-gl` is dynamically loaded only after reader activation (or near viewport when opted into automatic loading). Server rendering makes no map-provider requests. Exact places may link to OpenStreetMap; approximate locations use GeoJSON polygon circles (`circlePolygonRing`) with no centre marker or precise link.
+- Public vector tiles and styles use **OpenFreeMap** (`https://tiles.openfreemap.org`, OpenStreetMap-based `MAP_VECTOR_PROVIDER` in `src/lib/maps/mapStyle.ts`), with `strict-origin-when-cross-origin` referrer policy. Studio map pickers (`MapLocationInput`, `MapPlacesInput`, `MapPathInput`) still use Leaflet + `MAP_PROVIDER` (`https://tile.openstreetmap.org/{z}/{x}/{y}.png`).
+- `src/pages/[lang]/privacy.astro` and `src/i18n/{en,nb,ne}.ts` disclosures were updated in PR #131 to reference `tiles.openfreemap.org` / OpenFreeMap (OpenStreetMap-based). **Action pending:** update the live Sanity `trustPage` (`privacy`) documents to match `tiles.openfreemap.org` instead of `tile.openstreetmap.org`.
+- Approximate circles are not a confidentiality mechanism: their centre coordinates are sent to the browser and can be inferred from the circle; never use a confidential address as the centre.
+- There is no embedded public Nominatim integration or visitor geocoding. The Studio search action opens `https://www.openstreetmap.org/search?query=...` in a new tab.
+- Automated map checks (`npm run test:maps` 70/70, `npm run test:privacy` 6/6) verify configuration, normalization, markers, loading, privacy disclosures, Norway locator bounds, and style customization; run real-device mobile/keyboard and live hosted preview verification independently.
 ### Multiple locations, icons and saved routes
 
 - Block fields: `locations` (`mapPlace` array: `_key`, label, description, geopoint, precision, radius, icon), `initialZoom`, optional `route` (`mapRoute`), plus the legacy optional `location`. Pure logic (normalization, validation, bounds, stale detection, polyline decoding, OSRM parsing) is in `src/lib/maps/places.ts`; icons in `src/lib/maps/markerIcons.ts` (fixed internal SVG; icon values are an allowlist in `PLACE_ICONS`). Studio inputs: `MapPlacesInput.tsx`, `MapRouteInput.tsx`.
@@ -431,7 +426,7 @@ Keep Event and Directory form organization unchanged unless a separate audit ide
 - Add the registered organization name and number after exact wording is approved.
 - Complete the GDPR processing inventory, retention schedule, processor review, rights handling, and final privacy notice.
 - Create a branded 1200 x 630 social-sharing fallback image; verify Open Graph/X previews and request a fresh Facebook scrape if cached metadata is stale.
-- Verify current Trust Page publication and wording in the authorized editorial environment; complete editorial and legal-quality review.
+- Verify current Trust Page publication and wording in the authorized editorial environment (especially updating live Sanity `trustPage` `privacy` wording from `tile.openstreetmap.org` to `tiles.openfreemap.org` / OpenFreeMap to match `src/pages/[lang]/privacy.astro`); complete editorial and legal-quality review.
 - Create `EDITORIAL_USER_MANUAL.md` and `OPERATIONS_RUNBOOK.md`.
 - PR #64's useful Forum status is reconciled in the current documentation; consider closing it only after this replacement documentation is merged. PR #73 remains unchanged pending a separate assessment of current dependency/security state; its original claims are not verified here.
 
@@ -471,3 +466,11 @@ Do not use destructive Git commands such as `git reset --hard` or `git checkout 
 ## Handover maintenance rule
 
 At the end of a substantial session, ask whether the project can now be relied on differently than before. If yes, update `PROJECT_PROGRESS.md`. If the change affects architecture, security, operations, recovery, or the developer workflow, update this handover too. Keep both documents concise enough that a new developer will actually read them.
+
+### Recommended document consolidation (merging `DEVELOPER_HANDOVER.md` and `PROJECT_PROGRESS.md`)
+
+Right now `DEVELOPER_HANDOVER.md` and `PROJECT_PROGRESS.md` duplicate roughly 70% of the same architecture, security, deferred-work, and documentation-map sections, while sections 12+ of `PROJECT_PROGRESS.md` act as a PR changelog. To merge them cleanly without losing history:
+
+1. Move dated checkpoint logs from `PROJECT_PROGRESS.md` into a dated archive file (e.g. `PROJECT_PROGRESS_ARCHIVE_TO_2026-11-19.md`), keeping `PROJECT_PROGRESS_ARCHIVE_TO_2026-08-08.md` untouched.
+2. Keep `DEVELOPER_HANDOVER.md` as the **single canonical current-state & architecture document**, adding a short "Recent merged milestones" table (last ~5–10 PRs + checkpoint SHAs).
+3. Either retire `PROJECT_PROGRESS.md` after updating cross-references or leave it as a ~10-line pointer stub referencing `DEVELOPER_HANDOVER.md` and the dated archives.
