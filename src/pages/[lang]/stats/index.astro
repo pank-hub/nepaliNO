@@ -110,7 +110,7 @@ const methodologyTitle = "तथ्याङ्क बुझ्ने तरि�
                 {nf.format(snapshot.population.latestCitizenship)}
               </dd>
               <dd class="stats-kpi__sub">
-                हाल नेपालको नागरिकता भएका व्यक्ति (पछिल्लो वर्ष {nf.format(snapshot.naturalisations.counts.at(-1) ?? 0)} ले नर्वेली नागरिकता लिए)
+                कुल {nf.format(totalBackground)} मध्ये हाल नेपाली नागरिकता भएका (पछिल्लो वर्ष {nf.format(snapshot.naturalisations.counts.at(-1) ?? 0)} ले नर्वेली नागरिकता लिए)
               </dd>
             </div>
 
@@ -161,9 +161,9 @@ const methodologyTitle = "तथ्याङ्क बुझ्ने तरि�
         <div class="reading-width stats-section__intro">
           <h2 id="stats-geo-heading">नर्वेका कुन सहरमा कति नेपाली बस्छन्?</h2>
           <p>
-            ओस्लो र नजिकका आकेर्सहुस (Lillestrøm, Lørenskog, Bærum, Ås, Asker)
+            ओस्लो र नजिकका आकेशुस (Lillestrøm, Lørenskog, Bærum, Ås, Asker)
             नगरपालिकामा सबैभन्दा ठूलो बसोबास छ। विश्वविद्यालय र रोजगार केन्द्रका कारण
-            ट्रोन्डहाइम, बर्गेन, स्टाभान्गर र उत्तरमा ट्रोम्सोसम्म समुदाय फैलिएको छ।
+            त्रोन्हाइम, बेर्गेन, स्टाभाङ्गर र उत्तरमा ट्र्योम्सोसम्म समुदाय फैलिएको छ।
           </p>
         </div>
 
@@ -171,20 +171,17 @@ const methodologyTitle = "तथ्याङ्क बुझ्ने तरि�
           <EditorialChart node={charts.municipalities} language="ne" index={2} />
           <div class="stats-map-card">
             <h3 class="stats-map-card__title">शीर्ष १० कोमुनेको नक्सा ({toNepaliYear(snapshot.municipalities.latestYear)})</h3>
-            <p class="stats-map-card__desc">
-              अन्तरक्रियात्मक नक्सामा सहरअनुसार नेपाली जनसंख्या वितरण हेर्नुहोस्।
-            </p>
             <LocationMap
               locations={municipalityPlaces}
               mapStyle="editorial"
               showNorwayLocator={true}
-              loadingBehavior="click"
-              showViewOnMapActions={true}
+              loadingBehavior="automatic"
+              showViewOnMapActions={false}
               showOpenStreetMapLinks={false}
               showLocationList={false}
               showFullscreenControl={true}
               language={language}
-              description="नर्वेमा नेपालीहरूको बसोबास रहेका शीर्ष १० कोमुनेहरू (SSB तालिका ०९८१७)"
+              description="अन्तरक्रियात्मक नक्सामा सहरअनुसार नेपाली जनसंख्या वितरण हेर्नुहोस्।"
               sourceLabel="Statistisk sentralbyrå (SSB) — तालिका ०९८१७"
               sourceUrl="https://www.ssb.no/statbank/table/09817"
               labels={translations.common.maps}
@@ -391,10 +388,24 @@ const methodologyTitle = "तथ्याङ्क बुझ्ने तरि�
     font-size: 1.2rem;
     color: var(--text);
   }
-  .stats-map-card__desc {
-    margin: 0 0 0.9rem;
-    color: var(--text-muted);
-    font-size: 0.94rem;
+  .stats-map-card :global(.location-map) {
+    margin-block: 0;
+  }
+  .stats-map-card :global(.location-map:not(:has([data-map-status]:not(:empty))) .location-map__places) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  @media (min-width: 56rem) {
+    .stats-map-card :global(.location-map__canvas) {
+      height: 36.5rem;
+    }
   }
   .stats-section--methodology {
     border-bottom: 0;

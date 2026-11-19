@@ -486,7 +486,7 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
           {caption && <span>{caption}</span>}
           {safeSourceUrl && (
             <span>
-              {sourceLabel && <span>{sourceLabel}: </span>}
+              <span>{language === "nb" ? "Kilde" : language === "en" ? "Source" : "स्रोत"}: </span>
               <a
                 href={safeSourceUrl}
                 target="_blank"
@@ -603,9 +603,15 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
   const loadMapLibre = () => {
     mapLibrePromise ??= Promise.all([
       import("maplibre-gl"),
+      import("maplibre-gl/dist/maplibre-gl-worker.mjs?url"),
       import("maplibre-gl/dist/maplibre-gl.css"),
     ])
-      .then(([mod]) => mod)
+      .then(([mod, workerMod]) => {
+        if (typeof workerMod?.default === "string") {
+          mod.setWorkerUrl(workerMod.default);
+        }
+        return mod;
+      })
       .catch((error: unknown) => {
         mapLibrePromise = undefined;
         throw error;
@@ -776,8 +782,11 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
         if (wasFullscreen) button.focus();
       };
 
-      map.on("error", () => {
-        if (!hasLoaded) failMap();
+      map.on("error", (event) => {
+        if (!hasLoaded) {
+          console.error("[location-map] Map load error.", event?.error ?? event);
+          failMap();
+        }
       });
 
       map.once("load", () => {

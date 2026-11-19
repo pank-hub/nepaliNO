@@ -20,14 +20,14 @@
     "latestYear": "2026",
     "top": [
       {"code": "0301", "name": "Oslo", "neName": "ओस्लो", "count": 2502, "lat": 59.9139, "lng": 10.7522},
-      {"code": "5001", "name": "Trondheim", "neName": "ट्रोन्डहाइम", "count": 198, "lat": 63.4305, "lng": 10.3951},
-      {"code": "4601", "name": "Bergen", "neName": "बर्गेन", "count": 157, "lat": 60.3913, "lng": 5.3221},
+      {"code": "5001", "name": "Trondheim", "neName": "त्रोन्हाइम", "count": 198, "lat": 63.4305, "lng": 10.3951},
+      {"code": "4601", "name": "Bergen", "neName": "बेर्गेन", "count": 157, "lat": 60.3913, "lng": 5.3221},
       {"code": "3205", "name": "Lillestrøm", "neName": "लिल्लेस्ट्रोम", "count": 107, "lat": 59.9557, "lng": 11.0492},
-      {"code": "1103", "name": "Stavanger", "neName": "स्टाभान्गर", "count": 92, "lat": 58.97, "lng": 5.7331},
+      {"code": "1103", "name": "Stavanger", "neName": "स्टाभाङ्गर", "count": 92, "lat": 58.97, "lng": 5.7331},
       {"code": "3222", "name": "Lørenskog", "neName": "लोरेन्सकोग", "count": 82, "lat": 59.9271, "lng": 10.9559},
-      {"code": "3201", "name": "Bærum", "neName": "बेरुम", "count": 78, "lat": 59.89, "lng": 10.525},
-      {"code": "5501", "name": "Tromsø", "neName": "ट्रोम्सो", "count": 77, "lat": 69.6492, "lng": 18.9553},
-      {"code": "3218", "name": "Ås", "neName": "आस", "count": 56, "lat": 59.6615, "lng": 10.7905},
+      {"code": "3201", "name": "Bærum", "neName": "बारुम", "count": 78, "lat": 59.89, "lng": 10.525},
+      {"code": "5501", "name": "Tromsø", "neName": "ट्र्योम्सो", "count": 77, "lat": 69.6492, "lng": 18.9553},
+      {"code": "3218", "name": "Ås", "neName": "ओस", "count": 56, "lat": 59.6615, "lng": 10.7905},
       {"code": "3203", "name": "Asker", "neName": "आस्कर", "count": 53, "lat": 59.8342, "lng": 10.4357}
     ]
   },

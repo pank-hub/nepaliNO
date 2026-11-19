@@ -459,6 +459,8 @@ test("renderer keeps text and privacy notice, defers tiles, and supports focus a
   assert.match(server, /target="_blank" rel="noopener noreferrer"/);
   assert.doesNotMatch(server, /L\.tileLayer|<iframe|<img[^>]*tile/i);
   assert.match(script, /import\("maplibre-gl"\)/);
+  assert.match(script, /import\("maplibre-gl\/dist\/maplibre-gl-worker\.mjs\?url"\)/);
+  assert.match(script, /setWorkerUrl\(/);
   assert.match(script, /observeAutomaticMaps\(roots, ensureActive\)/);
   assert.match(script, /await ensureActive\(focusRoot\)/);
   assert.match(script, /togglePopup\(\)/);
