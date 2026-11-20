@@ -34,6 +34,8 @@ export default defineConfig({
             (page) => `https://nepali.no/${lang}/${page}/`,
           ),
         ),
+        "https://nepali.no/ne/events/",
+        "https://nepali.no/ne/events/past/",
         "https://nepali.no/ne/stats/",
       ],
     }),

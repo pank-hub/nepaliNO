@@ -2,196 +2,581 @@
 import {PortableText} from 'astro-portabletext'
 import {sanityClient} from 'sanity:client'
 import SanityPortableImage from '../../../components/SanityPortableImage.astro'
-import ContentContextRail from '../../../components/content/ContentContextRail.astro'
-import ContextRailPanel from '../../../components/content/ContextRailPanel.astro'
 import LocationMap from '../../../components/content/LocationMap.astro'
 import TravelHelp from '../../../components/content/TravelHelp.astro'
 import SiteFooter from '../../../components/SiteFooter.astro'
 import SiteHeader from '../../../components/SiteHeader.astro'
-import {getTranslations} from '../../../i18n'
 import {isSectionEnabled} from '../../../config/languageSections'
-import type {SupportedLanguage} from '../../../i18n/config'
+import {getTranslations} from '../../../i18n'
+import {isSupportedLanguage, type SupportedLanguage} from '../../../i18n/config'
 import BaseLayout from '../../../layouts/BaseLayout.astro'
-import {getEventAccessLabels} from '../../../lib/eventAccess'
-import {urlFor} from '../../../lib/sanity/image'
-import {getAllDates, nextOccurrence} from '../../../lib/eventOccurrences'
-import {EVENT_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
-import {isPublicEventLocation, type MapLocation, type MapPresentation} from '../../../lib/maps/location'
-import {isOpenStreetMapUrl} from '../../../lib/maps/publicMapUrl'
 import {eligibleDestinationCoordinates} from '../../../lib/entur/eligibility'
+import {isEnturApiEnabled} from '../../../lib/entur/server/config'
+import {getAllDates, nextOccurrence} from '../../../lib/eventOccurrences'
+import {
+  buildEventIcs,
+  formatEventDateRange,
+  formatEventTimeRange,
+  resolveEventRegistration,
+} from '../../../lib/eventPresentation'
+import {
+  isPublicEventLocation,
+  type MapLocation,
+  type MapPresentation,
+} from '../../../lib/maps/location'
+import {isOpenStreetMapUrl} from '../../../lib/maps/publicMapUrl'
+import {urlFor} from '../../../lib/sanity/image'
+import {EVENT_BY_SLUG_QUERY} from '../../../lib/sanity/queries'
 
-interface TranslationSummary { _id: string; title: string; slug: string; language: SupportedLanguage }
-interface EventImage { asset?: unknown; alt?: string; caption?: string; credit?: string; hotspot?: unknown; crop?: unknown }
+export const prerender = false
+
+interface TranslationSummary {
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+}
+interface EventImage {
+  asset?: unknown
+  alt?: string
+  caption?: string
+  credit?: string
+  hotspot?: unknown
+  crop?: unknown
+}
 interface EventDocument {
-  _id: string; title: string; slug: string; language: SupportedLanguage; translation?: TranslationSummary; summary: string
-  _type: 'communityEvent'; travelHelpEnabled?: boolean; travelLocation?: unknown
-  eventLanguages?: string[]; otherEventLanguage?: string; eventType: string; eventFormat: string; eventStatus: string; isAllDay?: boolean
-  startDateTime: string; endDateTime?: string; additionalDates?: {startDateTime: string; endDateTime?: string}[] | null; venueName?: string; address?: string; postalCode?: string; city?: string; mapUrl?: string; mapLocation?: MapLocation; mapPresentation?: MapPresentation
-  accessibilityInformation?: string; transportInformation?: string; onlinePlatform?: string; onlineUrl?: string
-  organizerName: string; organizerUrl?: string; organizerEmail?: string; organizerPhone?: string
-  registrationRequirement: string; registrationStatus: string; registrationUrl?: string; registrationDeadline?: string
-  isFree?: boolean; priceNok?: number; priceDescription?: string; intendedAudience?: string
-  featuredImage?: EventImage; description?: any[]; sourceUrl?: string; lastVerifiedAt: string
+  _id: string
+  title: string
+  slug: string
+  language: SupportedLanguage
+  translation?: TranslationSummary
+  summary: string
+  _type: 'communityEvent'
+  travelHelpEnabled?: boolean
+  travelLocation?: unknown
+  eventLanguages?: string[]
+  otherEventLanguage?: string
+  eventType: string
+  eventFormat: string
+  eventStatus: string
+  isAllDay?: boolean
+  startDateTime: string
+  endDateTime?: string
+  additionalDates?: {startDateTime: string; endDateTime?: string}[] | null
+  venueName?: string
+  address?: string
+  postalCode?: string
+  city?: string
+  mapUrl?: string
+  mapLocation?: MapLocation
+  mapPresentation?: MapPresentation
+  accessibilityInformation?: string
+  transportInformation?: string
+  onlinePlatform?: string
+  onlineUrl?: string
+  organizerName: string
+  organizerUrl?: string
+  organizerEmail?: string
+  organizerPhone?: string
+  registrationRequirement: string
+  registrationStatus: string
+  registrationUrl?: string
+  registrationDeadline?: string
+  isFree?: boolean
+  priceNok?: number
+  priceDescription?: string
+  intendedAudience?: string
+  featuredImage?: EventImage
+  description?: any[]
+  sourceUrl?: string
+  lastVerifiedAt: string
 }
-interface EventPath { slug: string; language: SupportedLanguage }
-export async function getStaticPaths() {
-  const paths = await sanityClient.fetch<EventPath[]>(`*[_type == "communityEvent" && defined(slug.current) && language in ["ne", "nb"]]{"slug": slug.current, language}`)
-  return paths
-    .filter(({language}) => isSectionEnabled(language, 'events'))
-    .map(({slug, language}) => ({params: {lang: language, slug}}))
-}
+
 const {lang, slug} = Astro.params
-if ((lang !== 'ne' && lang !== 'nb') || !slug) return Astro.redirect('/ne/events/')
+if (!isSupportedLanguage(lang) || !slug) {
+  return Astro.redirect('/ne/events/', 302)
+}
+
 const language: SupportedLanguage = lang
+if (!isSectionEnabled(language, 'events')) {
+  return Astro.redirect(`/${language}/`, 302)
+}
+
 const labels = getTranslations(language)
 const eventLabels = labels.events
-const fetchedEvent = await sanityClient.fetch<EventDocument | null>(EVENT_BY_SLUG_QUERY, {language, slug})
-if (!fetchedEvent) return Astro.redirect(`/${language}/events/`)
+const fetchedEvent = await sanityClient.fetch<EventDocument | null>(EVENT_BY_SLUG_QUERY, {
+  language,
+  slug,
+})
+if (!fetchedEvent) {
+  return Astro.redirect(`/${language}/events/`, 302)
+}
+
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, s-maxage=60, stale-while-revalidate=300',
+)
+
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
-const activeTranslation = fetchedEvent.translation?.slug && fetchedEvent.translation.language === alternateLanguage ? fetchedEvent.translation : undefined
-const alternatePath = activeTranslation ? `/${activeTranslation.language}/events/${activeTranslation.slug}/` : `/${alternateLanguage}/events/`
+const activeTranslation =
+  fetchedEvent.translation?.slug &&
+  fetchedEvent.translation.language === alternateLanguage &&
+  isSectionEnabled(alternateLanguage, 'events')
+    ? fetchedEvent.translation
+    : undefined
+const alternatePath = activeTranslation
+  ? `/${activeTranslation.language}/events/${activeTranslation.slug}/`
+  : `/${alternateLanguage}/events/`
+
 const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const eventTimeZone = 'Europe/Oslo'
 const now = Date.now()
 const event = nextOccurrence(fetchedEvent, now)
 const travelDestination = {type: 'communityEvent' as const, id: fetchedEvent._id}
-const offerTravelHelp = !!eligibleDestinationCoordinates(travelDestination, {...fetchedEvent, mapLocation: fetchedEvent.travelLocation}, now)
+const offerTravelHelp =
+  isEnturApiEnabled() &&
+  !!eligibleDestinationCoordinates(
+    travelDestination,
+    {...fetchedEvent, mapLocation: fetchedEvent.travelLocation},
+    now,
+  )
 const allDates = getAllDates(fetchedEvent)
-const start = new Date(event.startDateTime).getTime()
-const end = new Date(event.endDateTime || event.startDateTime).getTime()
-const isPast = end < now
-const isOngoing = start <= now && end >= now
-const registrationDeadlineOpen =
-  !event.registrationDeadline || new Date(event.registrationDeadline).getTime() >= now
-const canRegister =
-  !isPast &&
-  !['cancelled', 'postponed'].includes(event.eventStatus) &&
-  event.registrationStatus === 'open' &&
-  registrationDeadlineOpen &&
-  !!event.registrationUrl &&
-  event.registrationRequirement !== 'not-required'
-const formatDate = (value: string) => new Date(value).toLocaleDateString(locale, {timeZone: eventTimeZone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})
-const formatDateRange = (startValue: string, endValue?: string) => {
-  const end = endValue || startValue
-  const formatter = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, year: 'numeric', month: 'long', day: 'numeric'})
-  return formatter.formatRange(new Date(startValue), new Date(end))
+const reg = resolveEventRegistration(event, eventLabels, now)
+
+const formatDate = (value: string) =>
+  new Date(value).toLocaleDateString(locale, {
+    timeZone: eventTimeZone,
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+const formats: Record<string, string> = {
+  'in-person': eventLabels.inPerson,
+  online: eventLabels.online,
+  hybrid: eventLabels.hybrid,
 }
-const formatTime = (value: string) => new Date(value).toLocaleTimeString(locale, {timeZone: eventTimeZone, hour: '2-digit', minute: '2-digit'})
-const formats: Record<string, string> = {'in-person': eventLabels.inPerson, online: eventLabels.online, hybrid: eventLabels.hybrid}
 const categories = eventLabels.categories as Record<string, string>
 const statuses = eventLabels.statuses as Record<string, string>
 const languages = eventLabels.languages as Record<string, string>
-const access = getEventAccessLabels(event, eventLabels)
-const heroUrl = event.featuredImage?.asset ? urlFor(event.featuredImage as any).width(1600).height(960).fit('crop').auto('format').url() : null
-const socialImageUrl = event.featuredImage?.asset ? urlFor(event.featuredImage as any).width(1200).height(630).fit('crop').auto('format').url() : undefined
+
+const heroUrl = event.featuredImage?.asset
+  ? urlFor(event.featuredImage as any).width(1600).height(900).fit('crop').auto('format').url()
+  : null
+const socialImageUrl = event.featuredImage?.asset
+  ? urlFor(event.featuredImage as any).width(1200).height(630).fit('crop').auto('format').url()
+  : undefined
 const portableTextComponents = {type: {image: SanityPortableImage}}
-const spokenLanguages = [...(event.eventLanguages || []).map((value) => languages[value] ?? value), ...(event.otherEventLanguage ? [event.otherEventLanguage] : [])].join(', ')
+
+const spokenLanguages = [
+  ...(event.eventLanguages || []).map((value) => languages[value] ?? value),
+  ...(event.otherEventLanguage ? [event.otherEventLanguage] : []),
+].join(', ')
 const address = [event.address, event.postalCode, event.city].filter(Boolean).join(', ')
-const publicMapLocation =
-  isPublicEventLocation(event.eventFormat)
-    ? event.mapLocation
-    : undefined
-const mapDescription = [event.venueName, address || event.city].filter(Boolean).join(', ') || eventLabels.venue
+const publicMapLocation = isPublicEventLocation(event.eventFormat) ? event.mapLocation : undefined
+const mapDescription =
+  [event.venueName, address || event.city].filter(Boolean).join(', ') || eventLabels.venue
 const mapTitle = event.mapPresentation?.title?.trim()
 const additionalMapTitle = mapTitle && ![event.venueName?.trim(), address, mapDescription, eventLabels.venue].includes(mapTitle) ? mapTitle : undefined
 const mapUrl = isOpenStreetMapUrl(event.mapUrl) ? undefined : event.mapUrl
-const priceLabel = event.isFree ? eventLabels.freeEvent : event.priceDescription || (typeof event.priceNok === 'number' ? `${event.priceNok} NOK` : eventLabels.price)
-const startDate = new Date(event.startDateTime)
-const dateCardDay = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, day: '2-digit'}).format(startDate)
-const dateCardMonth = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, month: 'short'}).format(startDate)
-const dateCardYear = new Intl.DateTimeFormat(locale, {timeZone: eventTimeZone, year: 'numeric'}).format(startDate)
-const heroVenue = event.venueName || event.city || formats[event.eventFormat] || event.eventFormat
-const heroTime = event.isAllDay
-  ? eventLabels.allDay
-  : `${formatTime(event.startDateTime)}${event.endDateTime ? ` – ${formatTime(event.endDateTime)}` : ''}`
----
-<BaseLayout language={language} title={`${event.title} | nepali.no`} description={event.summary} socialImage={socialImageUrl} socialImageAlt={event.featuredImage?.alt || event.title}>
-  <SiteHeader slot="header" language={language} alternatePath={alternatePath} />
-  <article class="event-page">
-    <header class="event-header">
-      <div class="container event-header__inner">
-        <nav class="breadcrumbs" aria-label={eventLabels.pageTitle}><a href={`/${language}/`}>{labels.navigation.home}</a><span aria-hidden="true">/</span><a href={`/${language}/events/`}>{eventLabels.pageTitle}</a></nav>
+const priceLabel = event.isFree
+  ? eventLabels.freeEvent
+  : event.priceDescription ||
+    (typeof event.priceNok === 'number' ? `${event.priceNok} NOK` : eventLabels.paidEvent)
 
-        <div class="event-statuses">
-          {isOngoing && <strong class="status status-live">{eventLabels.ongoing}</strong>}
-          {isPast && <strong class="status">{eventLabels.completed}</strong>}
-          {event.eventStatus !== 'scheduled' && <strong class={`status status-${event.eventStatus}`}>{statuses[event.eventStatus] ?? event.eventStatus}</strong>}
-          <span>{categories[event.eventType] ?? event.eventType}</span>
-          <span>{formats[event.eventFormat] ?? event.eventFormat}</span>
+const startDate = new Date(event.startDateTime)
+const dateCardDay = new Intl.DateTimeFormat(locale, {
+  timeZone: eventTimeZone,
+  day: '2-digit',
+}).format(startDate)
+const dateCardMonth = new Intl.DateTimeFormat(locale, {
+  timeZone: eventTimeZone,
+  month: 'short',
+}).format(startDate)
+const dateCardYear = new Intl.DateTimeFormat(locale, {
+  timeZone: eventTimeZone,
+  year: 'numeric',
+}).format(startDate)
+
+const isMultiDay = allDates.length > 1
+const spanStart = isMultiDay ? allDates[0].startDateTime : event.startDateTime
+const spanEnd = isMultiDay
+  ? allDates[allDates.length - 1].endDateTime || allDates[allDates.length - 1].startDateTime
+  : event.endDateTime
+const dateRangeText = formatEventDateRange(
+  spanStart,
+  spanEnd,
+  locale,
+  eventTimeZone,
+)
+const timeRangeText = isMultiDay
+  ? eventLabels.multiDayCount.replace('{count}', String(allDates.length))
+  : formatEventTimeRange(
+      event.startDateTime,
+      event.endDateTime,
+      event.isAllDay,
+      locale,
+      eventTimeZone,
+      eventLabels.allDay,
+    )
+
+const canonicalEventUrl = new URL(`/${language}/events/${event.slug}/`, Astro.site ?? 'https://nepali.no').toString()
+const calendarHref =
+  !reg.isPast && event.eventStatus !== 'cancelled'
+    ? `data:text/calendar;charset=utf-8,${encodeURIComponent(buildEventIcs(fetchedEvent, canonicalEventUrl))}`
+    : undefined
+
+const hasPracticalInfo = Boolean(
+  event.accessibilityInformation || event.transportInformation || event.intendedAudience || spokenLanguages,
+)
+const hasOrganizerContact = Boolean(event.organizerUrl || event.organizerEmail || event.organizerPhone)
+---
+
+<BaseLayout
+  language={language}
+  title={`${event.title} | nepali.no`}
+  description={event.summary}
+  socialImage={socialImageUrl}
+  socialImageAlt={event.featuredImage?.alt || event.title}
+>
+  <SiteHeader slot="header" language={language} alternatePath={alternatePath} />
+
+  <article class="event-page">
+    <header class="event-stage">
+      <div class="container event-stage__inner">
+        <nav class="breadcrumbs" aria-label={eventLabels.pageTitle}>
+          <a href={`/${language}/`}>{labels.navigation.home}</a>
+          <span aria-hidden="true">/</span>
+          <a href={`/${language}/events/`}>{eventLabels.pageTitle}</a>
+        </nav>
+
+        <div class="event-pills">
+          {!reg.isPast && reg.isOngoing && (
+            <strong class="ev-pill ev-pill--live">{eventLabels.ongoing}</strong>
+          )}
+          {reg.isPast && <strong class="ev-pill ev-pill--past">{eventLabels.completed}</strong>}
+          {event.eventStatus !== 'scheduled' && (
+            <strong class:list={['ev-pill', `ev-pill--${event.eventStatus}`]}>
+              {statuses[event.eventStatus] ?? event.eventStatus}
+            </strong>
+          )}
+          <span class="ev-pill">{categories[event.eventType] ?? event.eventType}</span>
+          <span class="ev-pill">{formats[event.eventFormat] ?? event.eventFormat}</span>
+          {event.isFree === true && (
+            <span class="ev-pill ev-pill--free">{eventLabels.freeEvent}</span>
+          )}
         </div>
 
-        <div class="event-hero-grid">
-          <time class="event-date-card" datetime={event.startDateTime}>
-            <span class="event-date-card__month">{dateCardMonth}</span>
-            <strong>{dateCardDay}</strong>
-            <span class="event-date-card__year">{dateCardYear}</span>
-          </time>
-
-          <div class="event-hero-copy">
+        <div class="event-split">
+          <div class="event-split__primary">
             <h1>{event.title}</h1>
             <p class="lead">{event.summary}</p>
 
-            <dl class="event-hero-facts">
-              <div><dt>{eventLabels.dateAndTime}</dt><dd>{formatDateRange(event.startDateTime, event.endDateTime)} · {heroTime}</dd></div>
-              <div><dt>{eventLabels.venue}</dt><dd>{heroVenue}</dd></div>
-              <div><dt>{eventLabels.price}</dt><dd>{priceLabel}</dd></div>
-            </dl>
+            <p class="event-byline">
+              <span>{eventLabels.organizer}:</span>
+              {event.organizerUrl ? (
+                <a href={event.organizerUrl} target="_blank" rel="noopener noreferrer">
+                  {event.organizerName} <span aria-hidden="true">↗</span>
+                </a>
+              ) : (
+                <strong>{event.organizerName}</strong>
+              )}
+            </p>
 
-            <div class="event-hero-actions">
-              {canRegister && <a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{access.actionLabel} <span aria-hidden="true">↗</span></a>}
-              {mapUrl && <a class="button button-secondary" href={mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} <span aria-hidden="true">↗</span></a>}
+            {heroUrl && (
+              <figure class="event-poster">
+                <img
+                  src={heroUrl}
+                  alt={event.featuredImage?.alt ?? ''}
+                  width="1600"
+                  height="900"
+                  decoding="async"
+                />
+                {(event.featuredImage?.caption || event.featuredImage?.credit) && (
+                  <figcaption>
+                    {event.featuredImage?.caption && <span>{event.featuredImage.caption}</span>}
+                    {event.featuredImage?.credit && <span>{event.featuredImage.credit}</span>}
+                  </figcaption>
+                )}
+              </figure>
+            )}
+          </div>
+
+          <aside class="event-action-card surface" aria-label={eventLabels.eventDetails}>
+            <div class="event-action-card__head">
+              <time class="event-date-badge" datetime={event.startDateTime}>
+                <span class="event-date-badge__month">{dateCardMonth}</span>
+                <strong>{dateCardDay}</strong>
+                <span class="event-date-badge__year">{dateCardYear}</span>
+              </time>
+
+              <div>
+                <p class="event-action-card__date">{dateRangeText}</p>
+                <p class="event-action-card__time">{timeRangeText}</p>
+              </div>
             </div>
 
-            {!canRegister && event.registrationRequirement !== 'not-required' && <p class="event-hero-registration-state">{isPast || event.eventStatus === 'cancelled' ? eventLabels.registrationUnavailable : access.statusLabel}</p>}
-          </div>
+            <dl class="event-facts">
+              {allDates.length > 1 && (
+                <div>
+                  <dt>{eventLabels.dailySchedule}</dt>
+                  <dd>
+                    <ul class="event-all-dates">
+                      {allDates.map((d) => (
+                        <li>
+                          <time datetime={d.startDateTime}>
+                            {formatEventDateRange(d.startDateTime, d.endDateTime, locale, eventTimeZone)}
+                            {' · '}
+                            {formatEventTimeRange(
+                              d.startDateTime,
+                              d.endDateTime,
+                              event.isAllDay,
+                              locale,
+                              eventTimeZone,
+                              eventLabels.allDay,
+                            )}
+                          </time>
+                        </li>
+                      ))}
+                    </ul>
+                  </dd>
+                </div>
+              )}
+
+              <div>
+                <dt>{eventLabels.format}</dt>
+                <dd>{formats[event.eventFormat] ?? event.eventFormat}</dd>
+              </div>
+
+              {(event.venueName || address) && (
+                <div>
+                  <dt>{eventLabels.venue}</dt>
+                  <dd>
+                    {event.venueName && <strong>{event.venueName}</strong>}
+                    {event.venueName && address && <br />}
+                    {address}
+                  </dd>
+                </div>
+              )}
+
+              {(event.onlinePlatform || event.onlineUrl) && (
+                <div>
+                  <dt>{eventLabels.onlineAccess}</dt>
+                  <dd>
+                    {event.onlinePlatform && <span>{event.onlinePlatform}</span>}
+                    {event.onlinePlatform && event.onlineUrl && <br />}
+                    {event.onlineUrl && (
+                      <a href={event.onlineUrl} target="_blank" rel="noopener noreferrer">
+                        {eventLabels.joinOnline} <span aria-hidden="true">↗</span>
+                      </a>
+                    )}
+                  </dd>
+                </div>
+              )}
+
+              <div>
+                <dt>{eventLabels.price}</dt>
+                <dd>{priceLabel}</dd>
+              </div>
+
+              {reg.needsAction && (
+                <div>
+                  <dt>{reg.sectionLabel}</dt>
+                  <dd>
+                    {reg.requirementLabel}
+                    <span class="reg-status-line">{reg.statusLabel}</span>
+                    {event.registrationDeadline && (
+                      <span class="reg-deadline-line">
+                        {eventLabels.registrationDeadline}:{' '}
+                        <time datetime={event.registrationDeadline}>
+                          {formatDate(event.registrationDeadline)}
+                        </time>
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
+            </dl>
+
+            <div class="event-action-card__ctas">
+              {reg.canRegister && (
+                <a
+                  class="button button-primary"
+                  href={event.registrationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {reg.actionLabel} <span aria-hidden="true">↗</span>
+                </a>
+              )}
+
+              {event.onlineUrl && !reg.isPast && event.eventStatus !== 'cancelled' && (
+                <a
+                  class="button button-secondary"
+                  href={event.onlineUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {eventLabels.joinOnline} <span aria-hidden="true">↗</span>
+                </a>
+              )}
+
+              {calendarHref && (
+                <a
+                  class="button button-secondary"
+                  href={calendarHref}
+                  download={`${event.slug}.ics`}
+                >
+                  {eventLabels.addToCalendar}
+                </a>
+              )}
+
+              {mapUrl && (
+                <a
+                  class="button button-secondary"
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {eventLabels.openMap} <span aria-hidden="true">↗</span>
+                </a>
+              )}
+            </div>
+
+            {reg.canRegister && (
+              <p class="event-action-card__notice">{eventLabels.externalRegistrationNotice}</p>
+            )}
+          </aside>
         </div>
       </div>
     </header>
 
-    {heroUrl && <figure class="event-hero container"><img src={heroUrl} alt={event.featuredImage?.alt ?? ''} width="1600" height="900" decoding="async" />{(event.featuredImage?.caption || event.featuredImage?.credit) && <figcaption>{event.featuredImage?.caption && <span>{event.featuredImage.caption}</span>}{event.featuredImage?.credit && <span>{event.featuredImage.credit}</span>}</figcaption>}</figure>}
+    <div class="container event-sections">
+      <div class="event-details-grid">
+        <section class="event-description surface" aria-labelledby="event-about-heading">
+          <h2 id="event-about-heading">{eventLabels.aboutEvent}</h2>
+          {event.description && event.description.length > 0 && (
+            <div class="prose">
+              <PortableText value={event.description} components={portableTextComponents} />
+            </div>
+          )}
 
-    <div class="container event-layout">
-      <main class="event-content">
-        {event.description && event.description.length > 0 && <section class="prose"><PortableText value={event.description} components={portableTextComponents} /></section>}
-        {event.sourceUrl && <aside class="source-note"><div><strong>{eventLabels.originalSource}</strong><p>{eventLabels.lastVerified}: <time datetime={event.lastVerifiedAt}>{formatDate(event.lastVerifiedAt)}</time></p></div><a class="button button-secondary" href={event.sourceUrl} target="_blank" rel="noopener noreferrer">{eventLabels.originalSource} <span aria-hidden="true">↗</span></a></aside>}
-      </main>
+          {event.sourceUrl && (
+            <aside class="source-note">
+              <div>
+                <strong>{eventLabels.originalSource}</strong>
+                <p>
+                  {eventLabels.lastVerified}:{' '}
+                  <time datetime={event.lastVerifiedAt}>{formatDate(event.lastVerifiedAt)}</time>
+                </p>
+              </div>
+              <a
+                class="button button-secondary"
+                href={event.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {eventLabels.originalSource} <span aria-hidden="true">↗</span>
+              </a>
+            </aside>
+          )}
+        </section>
 
-      <ContentContextRail label={eventLabels.eventDetails}>
-        <ContextRailPanel title={eventLabels.eventDetails} accent="brand">
-          <dl>
-            {allDates.length > 1
-              ? <div><dt>{eventLabels.allDates}</dt><dd><ul class="event-all-dates">{allDates.map((d) => <li><time datetime={d.startDateTime}>{formatDateRange(d.startDateTime, d.endDateTime)}{event.isAllDay ? ` · ${eventLabels.allDay}` : ` · ${formatTime(d.startDateTime)}${d.endDateTime ? ` – ${formatTime(d.endDateTime)}` : ''}`}</time></li>)}</ul></dd></div>
-              : <div><dt>{eventLabels.dateAndTime}</dt><dd><span>{formatDateRange(event.startDateTime, event.endDateTime)}</span>{event.isAllDay ? <><br />{eventLabels.allDay}</> : <><br />{formatTime(event.startDateTime)}{event.endDateTime && ` – ${formatTime(event.endDateTime)}`}</>}</dd></div>}
-            <div><dt>{eventLabels.venue}</dt><dd>{formats[event.eventFormat] ?? event.eventFormat}</dd></div>
-            {spokenLanguages && <div><dt>{eventLabels.eventLanguages}</dt><dd>{spokenLanguages}</dd></div>}
-            {event.intendedAudience && <div><dt>{eventLabels.intendedAudience}</dt><dd>{event.intendedAudience}</dd></div>}
-            <div><dt>{eventLabels.price}</dt><dd>{priceLabel}</dd></div>
-          </dl>
-        </ContextRailPanel>
+        <div class="event-meta-column">
+          {hasPracticalInfo && (
+            <section class="info-card surface" aria-labelledby="practical-info-heading">
+              <h2 id="practical-info-heading">{eventLabels.practicalInfo}</h2>
+              <dl class="info-list">
+                {spokenLanguages && (
+                  <div>
+                    <dt>{eventLabels.eventLanguages}</dt>
+                    <dd>{spokenLanguages}</dd>
+                  </div>
+                )}
+                {event.intendedAudience && (
+                  <div>
+                    <dt>{eventLabels.intendedAudience}</dt>
+                    <dd>{event.intendedAudience}</dd>
+                  </div>
+                )}
+                {event.accessibilityInformation && (
+                  <div>
+                    <dt>{eventLabels.accessibility}</dt>
+                    <dd>{event.accessibilityInformation}</dd>
+                  </div>
+                )}
+                {event.transportInformation && (
+                  <div>
+                    <dt>{eventLabels.transport}</dt>
+                    <dd>{event.transportInformation}</dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+          )}
 
-        {event.registrationRequirement !== 'not-required' && (
-          <ContextRailPanel title={access.sectionLabel} accent="success">
-            <dl>
-              <div><dt>{access.sectionLabel}</dt><dd>{access.requirementLabel}<br />{access.statusLabel}</dd></div>
-              {event.registrationDeadline && <div><dt>{eventLabels.registrationDeadline}</dt><dd><time datetime={event.registrationDeadline}>{formatDate(event.registrationDeadline)}</time></dd></div>}
+          <section class="info-card surface" aria-labelledby="organizer-card-heading">
+            <h2 id="organizer-card-heading">{eventLabels.organizer}</h2>
+            <dl class="info-list">
+              <div>
+                <dt>{eventLabels.organizer}</dt>
+                <dd>
+                  {event.organizerUrl ? (
+                    <a href={event.organizerUrl} target="_blank" rel="noopener noreferrer">
+                      {event.organizerName} <span aria-hidden="true">↗</span>
+                    </a>
+                  ) : (
+                    event.organizerName
+                  )}
+                </dd>
+              </div>
+              {(event.organizerEmail || event.organizerPhone) && (
+                <div>
+                  <dt>{eventLabels.contact}</dt>
+                  <dd>
+                    {event.organizerEmail && (
+                      <a href={`mailto:${event.organizerEmail}`}>{event.organizerEmail}</a>
+                    )}
+                    {event.organizerEmail && event.organizerPhone && <br />}
+                    {event.organizerPhone && (
+                      <a href={`tel:${event.organizerPhone}`}>{event.organizerPhone}</a>
+                    )}
+                  </dd>
+                </div>
+              )}
+              {!hasOrganizerContact && !event.sourceUrl && (
+                <div>
+                  <dt>{eventLabels.lastVerified}</dt>
+                  <dd>
+                    <time datetime={event.lastVerifiedAt}>{formatDate(event.lastVerifiedAt)}</time>
+                  </dd>
+                </div>
+              )}
             </dl>
-            {canRegister && <a class="button button-primary" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">{access.actionLabel} <span aria-hidden="true">↗</span></a>}
-          </ContextRailPanel>
-        )}
+          </section>
 
-        {(event.venueName || address || mapUrl || event.onlinePlatform || event.accessibilityInformation || event.transportInformation) && (
-          <ContextRailPanel title={eventLabels.venue} accent="civic">
-            <dl>
-              <div><dt>{eventLabels.venue}</dt><dd>{event.venueName || formats[event.eventFormat] || event.eventFormat}{address && <><br />{address}</>}{event.onlinePlatform && <><br />{event.onlinePlatform}</>}</dd></div>
-              {mapUrl && <div><dt>{eventLabels.address}</dt><dd><a href={mapUrl} target="_blank" rel="noopener noreferrer">{eventLabels.openMap} ↗</a></dd></div>}
-              {event.accessibilityInformation && <div><dt>{eventLabels.accessibility}</dt><dd>{event.accessibilityInformation}</dd></div>}
-              {event.transportInformation && <div><dt>{eventLabels.transport}</dt><dd>{event.transportInformation}</dd></div>}
-            </dl>
-          </ContextRailPanel>
-        )}
+          {activeTranslation && (
+            <a class="translation-card surface" href={alternatePath} hreflang={activeTranslation.language}>
+              <span>{eventLabels.translation}</span>
+              <strong>{activeTranslation.title}</strong>
+            </a>
+          )}
+        </div>
+      </div>
 
-        {publicMapLocation && (
-          <div class="context-map">
+      {publicMapLocation && (
+        <section class="event-location-section surface" aria-labelledby="location-travel-heading">
+          <div class="event-location-section__head">
+            <h2 id="location-travel-heading">{eventLabels.locationAndTravel}</h2>
+            {(event.venueName || address) && (
+              <p class="event-location-section__address">
+                {[event.venueName, address].filter(Boolean).join(' · ')}
+              </p>
+            )}
+          </div>
+
+          <div class:list={['event-location-grid', {'event-location-grid--with-travel': offerTravelHelp}]}>
             <LocationMap
               location={publicMapLocation}
               description={mapDescription}
@@ -202,66 +587,440 @@ const heroTime = event.isAllDay
               markerShowLabel={event.mapPresentation?.markerShowLabel}
               caption={event.mapPresentation?.caption}
               editorialPath={event.mapPresentation?.editorialPath}
-              mapStyle={event.mapPresentation?.mapStyle ?? "city"}
+              mapStyle={event.mapPresentation?.mapStyle ?? 'city'}
               showNorwayLocator={event.mapPresentation?.showNorwayLocator}
               loadingBehavior="automatic"
-              contextSidebar={true}
+              contextSidebar={false}
               language={language}
               showFullscreenControl={true}
             />
-            {offerTravelHelp && <TravelHelp destination={travelDestination} language={language} defaultOpen={true} />}
+
+            {offerTravelHelp && (
+              <div class="event-travel-box">
+                <TravelHelp destination={travelDestination} language={language} defaultOpen={true} />
+              </div>
+            )}
           </div>
-        )}
-
-        <ContextRailPanel title={eventLabels.organizer} accent="brand">
-          <dl>
-            <div><dt>{eventLabels.organizer}</dt><dd>{event.organizerUrl ? <a href={event.organizerUrl} target="_blank" rel="noopener noreferrer">{event.organizerName} ↗</a> : event.organizerName}</dd></div>
-            {(event.organizerEmail || event.organizerPhone) && <div><dt>{eventLabels.contact}</dt><dd>{event.organizerEmail && <a href={`mailto:${event.organizerEmail}`}>{event.organizerEmail}</a>}{event.organizerEmail && event.organizerPhone && <br />}{event.organizerPhone && <a href={`tel:${event.organizerPhone}`}>{event.organizerPhone}</a>}</dd></div>}
-          </dl>
-        </ContextRailPanel>
-
-        {activeTranslation && <a class="translation-card" href={alternatePath} hreflang={activeTranslation.language}><span>{eventLabels.translation}</span><strong>{activeTranslation.title}</strong></a>}
-      </ContentContextRail>
+        </section>
+      )}
     </div>
   </article>
+
   <SiteFooter slot="footer" language={language} />
 </BaseLayout>
+
 <style>
-  .event-all-dates { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
-  .event-page { min-width: 0; background: #fff; }
-  .event-header { border-bottom: 1px solid var(--border); background: radial-gradient(circle at 88% 0%, rgb(198 42 31 / .08), transparent 20rem), linear-gradient(135deg, var(--surface-muted), var(--page-bg) 64%, #fff5f4); }
-  .event-header__inner { padding-block: clamp(2.25rem, 5vw, 4rem); }
-  .breadcrumbs { display: flex; flex-wrap: wrap; gap: .5rem; color: var(--text-soft); font-size: .85rem; }
-  .breadcrumbs a { color: var(--civic); font-weight: 650; }
-  .event-statuses { display: flex; flex-wrap: wrap; gap: .45rem; margin-block-start: 1.5rem; }
-  .event-statuses > * { padding: .3rem .55rem; border-radius: 999px; background: var(--surface); color: var(--civic-deep); font-size: .76rem; font-weight: 760; box-shadow: inset 0 0 0 1px var(--border); }
-  .event-statuses .status-live { background: #e3f5ea; color: #15603a; }
-  .event-statuses .status-cancelled { background: #fde8e6; color: #9e281f; }
-  .event-statuses .status-postponed, .event-statuses .status-rescheduled { background: #fff2cc; color: #6f5200; }
-  .event-hero-grid { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; margin-block-start: 1.5rem; }
-  .event-date-card { display: grid; place-items: center; align-content: center; min-height: 8.5rem; padding: 1rem .75rem; border: 1px solid var(--border); border-block-start: .35rem solid var(--brand); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-soft); color: var(--civic-deep); text-decoration: none; }
-  .event-date-card__month { color: var(--brand); font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-  html[lang='ne'] .event-date-card__month { letter-spacing: 0; text-transform: none; }
-  .event-date-card strong { margin-block: .15rem; font-size: 2.7rem; line-height: 1; }
-  .event-date-card__year { color: var(--text-muted); font-size: .85rem; font-weight: 700; }
-  .event-hero-copy { min-width: 0; }
-  .event-header h1 { max-width: 24ch; margin: 0; font-size: clamp(2.2rem, 4.8vw, 4.25rem); line-height: 1.06; text-wrap: balance; }
-  .event-header .lead { max-width: 54rem; margin-block-start: 1rem; }
-  .event-hero-facts { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-block-start: 1.4rem; }
-  .event-hero-facts div { min-width: min(100%, 11rem); }
-  .event-hero-facts dt { color: var(--text-soft); font-size: .72rem; font-weight: 760; letter-spacing: .05em; text-transform: uppercase; }
-  html[lang='ne'] .event-hero-facts dt { font-size: .82rem; letter-spacing: 0; text-transform: none; }
-  .event-hero-facts dd { margin: .2rem 0 0; color: var(--civic-deep); font-weight: 700; }
-  .event-hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: 1.5rem; }
-  .event-hero-registration-state { margin-block-start: 1.25rem; padding: .8rem 1rem; border-inline-start: .25rem solid var(--brand); background: var(--surface); color: var(--civic-deep); font-weight: 700; }
-  .event-hero { margin-block-start: clamp(1rem, 3vw, 2rem); }
-  .event-hero img { width: 100%; aspect-ratio: 16 / 9; max-height: 36rem; border-radius: var(--radius-lg); object-fit: cover; box-shadow: var(--shadow-soft); }
-  .event-hero figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding-block: .65rem; border-bottom: 1px solid var(--border); color: var(--text-soft); font-size: .8rem; }
-  .event-layout { display: grid; grid-template-columns: minmax(0, 46rem) minmax(17rem, 21rem); justify-content: space-between; gap: clamp(2.5rem, 8vw, 7rem); padding-block: clamp(2.5rem, 8vw, 6rem); }
-  .event-content { min-width: 0; }
-  .event-content .prose { font-size: 1.08rem; }
-  .source-note { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-block-start: 2.5rem; padding: 1.25rem; border-block: 1px solid var(--border-strong); }
-  .source-note p { margin-block-start: .35rem; color: var(--text-muted); font-size: .9rem; }
-  @media (max-width: 58rem) { .event-layout { grid-template-columns: 1fr; } }
-  @media (max-width: 38rem) { .event-header__inner { padding-block: 2rem 2.5rem; } .event-statuses { margin-block-start: 1.2rem; } .event-hero-grid { grid-template-columns: 4.75rem minmax(0, 1fr); gap: 1rem; margin-block-start: 1.25rem; } .event-date-card { min-height: 6.1rem; padding: .75rem .4rem; border-radius: var(--radius-md); } .event-date-card strong { font-size: 2rem; } .event-date-card__month, .event-date-card__year { font-size: .7rem; } .event-header h1 { font-size: clamp(1.85rem, 9vw, 3rem); } .event-header .lead { margin-block-start: .8rem; } .event-hero-facts { display: grid; grid-template-columns: 1fr; gap: .7rem; margin-block-start: 1.1rem; } .event-hero-actions { align-items: stretch; flex-direction: column; margin-block-start: 1.25rem; } .event-hero-actions .button { width: 100%; } .event-hero { width: 100%; margin-block-start: 0; } .event-hero img { aspect-ratio: 4 / 3; border-radius: 0; } .event-hero figcaption { padding-inline: var(--page-gutter); } .event-layout { padding-block: 2.25rem 4rem; } .source-note { align-items: stretch; flex-direction: column; } .source-note .button { width: 100%; } }
+  .event-page {
+    min-width: 0;
+    background: var(--page-bg);
+  }
+
+  .event-stage {
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 92% 4%, rgb(198 42 31 / 0.08), transparent 22rem),
+      linear-gradient(135deg, #f5f8fb, #ffffff 62%, #fff6f5);
+  }
+
+  .event-stage__inner {
+    padding-block: clamp(1.75rem, 4vw, 3rem) clamp(2.25rem, 5vw, 3.5rem);
+  }
+
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+  }
+
+  .breadcrumbs a {
+    color: var(--civic);
+    font-weight: 650;
+  }
+
+  .event-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-block-start: 1.2rem;
+  }
+
+  .ev-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--civic-deep);
+    font-size: 0.78rem;
+    font-weight: 720;
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+
+  .ev-pill--live {
+    background: #dcfce7;
+    color: #14532d;
+    box-shadow: none;
+  }
+
+  .ev-pill--free {
+    background: #ecfdf3;
+    color: #027a48;
+    box-shadow: none;
+  }
+
+  .ev-pill--past {
+    background: #eef2f6;
+    color: #475569;
+    box-shadow: none;
+  }
+
+  .ev-pill--cancelled {
+    background: #fde8e6;
+    color: #9e281f;
+    box-shadow: none;
+  }
+
+  .ev-pill--postponed,
+  .ev-pill--rescheduled {
+    background: #fff2cc;
+    color: #6f5200;
+    box-shadow: none;
+  }
+
+  .event-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(19rem, 0.85fr);
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: start;
+    margin-block-start: 1.15rem;
+  }
+
+  .event-split__primary {
+    min-width: 0;
+  }
+
+  .event-split__primary h1 {
+    font-size: clamp(2rem, 4.2vw, 3.35rem);
+    line-height: 1.12;
+  }
+
+  .event-split__primary .lead {
+    margin-block-start: 0.9rem;
+    max-width: 48rem;
+  }
+
+  .event-byline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-block-start: 1rem;
+    color: var(--text-muted);
+    font-size: 0.96rem;
+  }
+
+  .event-byline a,
+  .event-byline strong {
+    color: var(--civic-deep);
+    font-weight: 720;
+  }
+
+  .event-poster {
+    margin-block-start: 1.35rem;
+  }
+
+  .event-poster img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .event-poster figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-block-start: 0.55rem;
+    color: var(--text-soft);
+    font-size: 0.82rem;
+  }
+
+  .event-action-card {
+    padding: clamp(1.25rem, 3vw, 1.65rem);
+    border-block-start: 0.28rem solid var(--brand);
+  }
+
+  .event-action-card__head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-block-end: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .event-date-badge {
+    display: grid;
+    min-width: 4.5rem;
+    padding: 0.55rem 0.6rem;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-block-start: 0.25rem solid var(--brand);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    color: var(--civic-deep);
+    flex-shrink: 0;
+  }
+
+  .event-date-badge__month {
+    color: var(--brand);
+    font-size: 0.74rem;
+    font-weight: 780;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .event-date-badge__month {
+    font-size: 0.8rem;
+    text-transform: none;
+  }
+
+  .event-date-badge strong {
+    font-size: 1.85rem;
+    line-height: 1.05;
+  }
+
+  .event-date-badge__year {
+    color: var(--text-soft);
+    font-size: 0.74rem;
+    font-weight: 700;
+  }
+
+  .event-action-card__date {
+    color: var(--civic-deep);
+    font-size: 1.05rem;
+    font-weight: 760;
+    line-height: 1.35;
+  }
+
+  .event-action-card__time {
+    color: var(--text-muted);
+    font-size: 0.94rem;
+    font-weight: 650;
+  }
+
+  .event-facts {
+    display: grid;
+    gap: 0.85rem;
+    margin: 1rem 0 0;
+  }
+
+  .event-facts > div {
+    padding-block-start: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .event-facts > div:first-child {
+    padding-block-start: 0;
+    border-top: 0;
+  }
+
+  .event-facts dt {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 760;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .event-facts dt {
+    font-size: 0.82rem;
+    text-transform: none;
+  }
+
+  .event-facts dd {
+    margin: 0.2rem 0 0;
+    color: var(--civic-deep);
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+
+  .reg-status-line,
+  .reg-deadline-line {
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .event-all-dates {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .event-action-card__ctas {
+    display: grid;
+    gap: 0.65rem;
+    margin-block-start: 1.25rem;
+  }
+
+  .event-action-card__ctas .button {
+    width: 100%;
+  }
+
+  .event-action-card__notice {
+    margin-block-start: 0.75rem;
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .event-sections {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    padding-block: clamp(2rem, 5vw, 3.75rem);
+  }
+
+  .event-details-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.65fr);
+    gap: clamp(1.25rem, 3vw, 2rem);
+    align-items: start;
+  }
+
+  .event-description {
+    padding: clamp(1.25rem, 3.5vw, 2.25rem);
+    min-width: 0;
+  }
+
+  .event-description h2,
+  .info-card h2,
+  .event-location-section h2 {
+    font-size: clamp(1.3rem, 2.4vw, 1.65rem);
+  }
+
+  .event-description .prose {
+    margin-block-start: 1rem;
+  }
+
+  .source-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-start: 2rem;
+    padding-block-start: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .source-note p {
+    margin-block-start: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .event-meta-column {
+    display: grid;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+
+  .info-card {
+    padding: 1.35rem;
+  }
+
+  .info-list {
+    display: grid;
+    gap: 0.85rem;
+    margin: 1rem 0 0;
+  }
+
+  .info-list > div {
+    padding-block-start: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .info-list dt {
+    color: var(--text-soft);
+    font-size: 0.72rem;
+    font-weight: 760;
+    text-transform: uppercase;
+  }
+
+  html[lang='ne'] .info-list dt {
+    font-size: 0.82rem;
+    text-transform: none;
+  }
+
+  .info-list dd {
+    margin: 0.2rem 0 0;
+    color: var(--civic-deep);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .translation-card {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.25rem;
+    color: var(--civic-deep);
+    text-decoration: none;
+  }
+
+  .translation-card span {
+    color: var(--brand);
+    font-size: 0.8rem;
+    font-weight: 760;
+  }
+
+  .translation-card:hover {
+    border-color: var(--civic);
+    background: var(--surface-muted);
+  }
+
+  .event-location-section {
+    padding: clamp(1.25rem, 3.5vw, 2rem);
+  }
+
+  .event-location-section__head {
+    margin-block-end: 1.25rem;
+  }
+
+  .event-location-section__address {
+    margin-block-start: 0.35rem;
+    color: var(--text-muted);
+    font-weight: 650;
+  }
+
+  .event-location-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .event-location-grid--with-travel {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+
+  .event-location-grid--with-travel:has(.event-travel-box astro-island:empty) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-travel-box {
+    min-width: 0;
+  }
+
+  @media (max-width: 60rem) {
+    .event-split,
+    .event-details-grid,
+    .event-location-grid--with-travel {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

@@ -10,106 +10,72 @@ export type EventSubmissionCopy = {
   privateNotice: string
   publicContactNotice: string
   sections: {
-    language: string
+    basics: string
     organizer: string
-    publicContact: string
-    event: string
-    location: string
-    registration: string
-    image: string
+    optionalDetails: string
     declarations: string
   }
   fields: {
-    formInterfaceLanguage: string
-    submissionLanguage: string
-    otherSubmissionLanguage: string
-    requestedPublicLanguage: string
+    proposedTitle: string
+    startDateTime: string
+    endDateTime: string
+    additionalDates: string
+    dayLabel: string
+    isAllDay: string
+    eventFormat: string
+    city: string
+    venueName: string
+    onlinePlatform: string
+    onlineInformationUrl: string
+    eventType: string
+    descriptionPlainText: string
+    isFree: string
+    priceDescription: string
+    registrationRequirement: string
+    registrationUrl: string
     organizerName: string
     privateContactName: string
     privateContactEmail: string
     privateContactPhone: string
-    preferredContactLanguage: string
-    otherPreferredContactLanguage: string
-    publicOrganizerName: string
     publicOrganizerUrl: string
-    publicOrganizerEmail: string
-    publicOrganizerPhone: string
     publicContactPermission: string
-    proposedTitle: string
     summary: string
-    descriptionPlainText: string
-    eventLanguages: string
-    otherEventLanguage: string
-    eventType: string
-    eventFormat: string
-    isAllDay: string
-    startDateTime: string
-    endDateTime: string
-    venueName: string
     address: string
     postalCode: string
-    city: string
     mapUrl: string
-    onlinePlatform: string
-    onlineInformationUrl: string
+    eventLanguages: string
+    otherEventLanguage: string
+    requestedPublicLanguage: string
+    registrationStatus: string
+    registrationDeadline: string
     accessibilityInformation: string
     transportInformation: string
     intendedAudience: string
     sourceUrl: string
-    registrationRequirement: string
-    registrationStatus: string
-    registrationUrl: string
-    registrationDeadline: string
-    isFree: string
-    priceDescription: string
     proposedImageUrl: string
     imageAltSuggestion: string
     imageCredit: string
     imagePermissionConfirmed: string
-    authorityConfirmed: string
     accuracyConfirmed: string
-    editingTranslationAccepted: string
-    publicationNotGuaranteedAccepted: string
     privacyRetentionAccepted: string
   }
   help: {
-    submissionLanguage: string
-    requestedPublicLanguage: string
-    privateContact: string
-    publicContact: string
-    publicContactPermission: string
-    summary: string
     descriptionPlainText: string
-    eventLanguages: string
+    additionalDates: string
     onlineAccessRequirement: string
-    sourceUrl: string
+    privateContact: string
+    publicContactPermission: string
+    optionalDetails: string
     proposedImageUrl: string
     imagePermissionConfirmed: string
     privacyRetentionAccepted: string
   }
   options: {
-    interfaceLanguages: {
-      ne: string
-      nb: string
-      en: string
-    }
-    submissionLanguages: {
-      ne: string
-      nb: string
-      en: string
-      other: string
-    }
     publicLanguages: {
       ne: string
       nb: string
       both: string
       editorialDecision: string
-    }
-    contactLanguages: {
-      ne: string
-      nb: string
-      en: string
-      other: string
     }
     eventFormats: {
       inPerson: string
@@ -120,6 +86,8 @@ export type EventSubmissionCopy = {
   actions: {
     submit: string
     submitting: string
+    addAnotherDay: string
+    removeDay: string
     returnToEvents: string
     useNepali: string
     useNorwegian: string
@@ -128,6 +96,12 @@ export type EventSubmissionCopy = {
   messages: {
     validationSummaryTitle: string
     validationSummaryBody: string
+    requiredField: string
+    invalidEmail: string
+    invalidUrl: string
+    invalidOrder: string
+    descriptionTooShort: string
+    onlineAccessRequired: string
     successTitle: string
     successBody: string
     successReference: string

@@ -35,27 +35,33 @@ test("OpenStreetMap navigation URLs are recognized by host, not by substring", (
   }
 });
 
-test("Event and Directory reuse their rail and render one automatic sidebar map followed by travel", async () => {
-  for (const path of ["../../src/pages/[lang]/events/[slug].astro", "../../src/pages/[lang]/directory/[slug].astro"]) {
-    const page = await read(path);
-    const main = page.slice(page.indexOf("<main"), page.indexOf("</main>"));
-    const rail = page.slice(page.indexOf("<ContentContextRail"), page.indexOf("</ContentContextRail>"));
-    assert.doesNotMatch(main, /<LocationMap|<TravelHelp/);
-    assert.equal((rail.match(/<LocationMap/g) ?? []).length, 1);
-    assert.match(rail, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*mapStyle=\{[^\n]*\?\? "city"\}[\s\S]*loadingBehavior="automatic"[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
-    assert.match(page, /isOpenStreetMapUrl\(/);
-    assert.match(rail, /contextSidebar=\{true\}/);
-    assert.match(rail, /<TravelHelp[^>]*defaultOpen=\{true\}/);
-  }
+test("Event and Directory render one automatic map followed by travel help", async () => {
+  const directoryPage = await read("../../src/pages/[lang]/directory/[slug].astro");
+  const directoryMain = directoryPage.slice(directoryPage.indexOf("<main"), directoryPage.indexOf("</main>"));
+  const directoryRail = directoryPage.slice(directoryPage.indexOf("<ContentContextRail"), directoryPage.indexOf("</ContentContextRail>"));
+  assert.doesNotMatch(directoryMain, /<LocationMap|<TravelHelp/);
+  assert.equal((directoryRail.match(/<LocationMap/g) ?? []).length, 1);
+  assert.match(directoryRail, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*mapStyle=\{[^\n]*\?\? "city"\}[\s\S]*loadingBehavior="automatic"[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
+  assert.match(directoryPage, /isOpenStreetMapUrl\(/);
+  assert.match(directoryRail, /contextSidebar=\{true\}/);
+  assert.match(directoryRail, /<TravelHelp[^>]*defaultOpen=\{true\}/);
+
+  const eventPage = await read("../../src/pages/[lang]/events/[slug].astro");
+  const eventLocationSection = eventPage.slice(eventPage.indexOf('<section class="event-location-section'));
+  assert.equal((eventPage.match(/<LocationMap/g) ?? []).length, 1);
+  assert.match(eventLocationSection, /<LocationMap[\s\S]*location=\{publicMapLocation\}[\s\S]*mapStyle=\{[^\n]*\?\? 'city'\}[\s\S]*loadingBehavior="automatic"[\s\S]*showFullscreenControl=\{true\}[\s\S]*\/>[\s\S]*<TravelHelp/);
+  assert.match(eventPage, /isOpenStreetMapUrl\(/);
+  assert.match(eventLocationSection, /<TravelHelp[^>]*defaultOpen=\{true\}/);
+
   const rail = await read("../../src/components/content/ContentContextRail.astro");
   assert.match(rail, /max-width: 58rem[\s\S]*grid-column: 1 \/ -1/);
   assert.match(rail, /max-width: 38rem[\s\S]*grid-template-columns: 1fr/);
 });
 
-test("sidebar maps preserve original location panels and avoid generated duplicate content", async () => {
+test("Event and Directory maps preserve original location details and avoid generated duplicate content", async () => {
   const event = await read("../../src/pages/[lang]/events/[slug].astro");
   const directory = await read("../../src/pages/[lang]/directory/[slug].astro");
-  assert.match(event, /<ContextRailPanel title=\{eventLabels\.venue\} accent="civic">[\s\S]*event\.venueName[\s\S]*\{address\}[\s\S]*<\/ContextRailPanel>\s*\)\}\s*\{publicMapLocation/);
+  assert.match(event, /event\.venueName[\s\S]*\{address\}[\s\S]*\{publicMapLocation/);
   assert.match(directory, /<dt>\{directoryLabels\.location\}<\/dt>\s*<dd>\{locationLabel\}<\/dd>[\s\S]*<\/ContextRailPanel>\s*\{publicMapLocation/);
   for (const page of [event, directory]) {
     const map = page.slice(page.indexOf("<LocationMap"), page.indexOf("/>", page.indexOf("<LocationMap")));
@@ -377,11 +383,12 @@ test("Norway mini-locator and vector styles support editorial and city modes", a
   assert.equal(Object.hasOwn(editorial.layers[0], "paint"), false);
   assert.equal(Object.hasOwn(editorial.layers[1], "layout"), false);
   assert.equal(editorial.layers[1].paint["fill-color"], "#94c0eb");
-  const city = customizeMapStyle({ version: 8, layers: [{ id: "building", type: "fill" }, { id: "water", type: "fill" }] }, "city");
+  const city = customizeMapStyle({ version: 8, layers: [{ id: "building", type: "fill" }, { id: "water", type: "fill" }, { id: "waterway_line_label", type: "symbol" }] }, "city");
   assert.equal(city.layers[0].layout, undefined);
   assert.equal(Object.hasOwn(city.layers[0], "layout"), false);
   assert.equal(Object.hasOwn(city.layers[0], "paint"), false);
   assert.equal(city.layers[1].paint["fill-color"], "#9cc6f0");
+  assert.equal(Object.hasOwn(city.layers[2], "paint"), false);
 });
 
 test("local map fixture is dev-only and uses the real renderer", async () => {

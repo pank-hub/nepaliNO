@@ -89,7 +89,7 @@ export function customizeMapStyle(
       next.paint = { ...(next.paint ?? {}), "background-color": "#f7f5f0" };
     } else if (layer.id === "water") {
       next.paint = { ...(next.paint ?? {}), "fill-color": "#9cc6f0" };
-    } else if (layer.id.startsWith("waterway_")) {
+    } else if (layer.id.startsWith("waterway_") && layer.type === "line") {
       next.paint = { ...(next.paint ?? {}), "line-color": "#9cc6f0" };
     } else if (layer.id === "park") {
       next.paint = { ...(next.paint ?? {}), "fill-color": "#dce8d5" };

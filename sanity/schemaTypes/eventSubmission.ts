@@ -286,7 +286,7 @@ export const eventSubmission = defineType({
       type: 'text',
       rows: 4,
       group: 'event',
-      validation: (rule) => rule.required().min(30).max(600),
+      validation: (rule) => rule.min(10).max(600),
     }),
     defineField({
       name: 'descriptionPlainText',
@@ -295,7 +295,7 @@ export const eventSubmission = defineType({
       rows: 10,
       group: 'event',
       description: 'Plain source information for editorial review. Essential details must not exist only in a poster.',
-      validation: (rule) => rule.required().min(80).max(10000),
+      validation: (rule) => rule.required().min(30).max(10000),
     }),
     defineField({
       name: 'eventLanguages',
@@ -306,8 +306,6 @@ export const eventSubmission = defineType({
       options: {list: eventLanguages, layout: 'grid'},
       validation: (rule) =>
         rule
-          .required()
-          .min(1)
           .unique()
           .custom((values) =>
             Array.isArray(values) && values.includes('language-independent') && values.length > 1
@@ -382,6 +380,41 @@ export const eventSubmission = defineType({
             ? true
             : 'The end time must be later than the start time.'
         }),
+    }),
+    defineField({
+      name: 'additionalDates',
+      title: 'Additional Dates',
+      type: 'array',
+      group: 'event',
+      description: 'Extra days when the event runs across multiple days with different start/end times.',
+      of: [
+        {
+          type: 'object',
+          name: 'eventDate',
+          title: 'Date',
+          fields: [
+            defineField({
+              name: 'startDateTime',
+              title: 'Start Date and Time',
+              type: 'datetime',
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: 'endDateTime',
+              title: 'End Date and Time',
+              type: 'datetime',
+              validation: (rule) =>
+                rule.custom((end, context) => {
+                  const start = (context.parent as {startDateTime?: string} | undefined)?.startDateTime
+                  if (!end || !start) return true
+                  return new Date(end as string) > new Date(start)
+                    ? true
+                    : 'The end time must be later than the start time.'
+                }),
+            }),
+          ],
+        },
+      ],
     }),
     defineField({
       name: 'venueName',
