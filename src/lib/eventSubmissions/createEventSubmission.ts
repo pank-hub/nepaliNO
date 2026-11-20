@@ -32,8 +32,15 @@ export const createPrivateEventSubmission = async (input: EventSubmissionInput) 
   const draftId = `drafts.eventSubmission-${submissionId}`
   const submittedAt = new Date().toISOString()
 
+  const additionalDates = input.additionalDates?.map((entry, index) => ({
+    ...entry,
+    _type: 'eventDate',
+    _key: `${submissionId.slice(0, 8)}-${index}`,
+  }))
+
   await client.create({
     ...input,
+    ...(additionalDates?.length ? {additionalDates} : {}),
     _id: draftId,
     _type: 'eventSubmission',
     moderationStatus: 'new',

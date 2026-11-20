@@ -38,6 +38,7 @@ export type EventSubmissionInput = {
   isAllDay: boolean
   startDateTime: string
   endDateTime?: string
+  additionalDates?: Array<{startDateTime: string; endDateTime?: string}>
   venueName?: string
   address?: string
   postalCode?: string
@@ -103,6 +104,7 @@ const ALLOWED_FIELDS = new Set([
   'isAllDay',
   'startDateTime',
   'endDateTime',
+  'additionalDates',
   'venueName',
   'address',
   'postalCode',
@@ -304,8 +306,29 @@ export const validateEventSubmission = (payload: unknown): ValidationResult => {
     return value
   }
 
-  const requiredBoolean = (field: string) => {
+  const requiredTrue = (field: string) => {
     const value = payload[field]
+    if (value !== true) addError(field, 'confirmation_required', 'Confirmation is required.')
+    result[field] = value
+  }
+
+  const optionalEnum = (field: string, values: Set<string>, fallback?: string) => {
+    const value = cleanString(payload[field])
+    if (!value) {
+      if (fallback !== undefined) result[field] = fallback
+      return fallback
+    }
+    if (!values.has(value)) addError(field, 'invalid_choice', 'Select a supported value.')
+    result[field] = value
+    return value
+  }
+
+  const optionalBoolean = (field: string, fallback: boolean) => {
+    const value = payload[field]
+    if (value === undefined) {
+      result[field] = fallback
+      return fallback
+    }
     if (typeof value !== 'boolean') {
       addError(field, 'invalid_type', 'This field must be true or false.')
       return undefined
@@ -314,8 +337,12 @@ export const validateEventSubmission = (payload: unknown): ValidationResult => {
     return value
   }
 
-  const requiredTrue = (field: string) => {
+  const optionalTrueOrDefault = (field: string, fallback: boolean) => {
     const value = payload[field]
+    if (value === undefined) {
+      result[field] = fallback
+      return
+    }
     if (value !== true) addError(field, 'confirmation_required', 'Confirmation is required.')
     result[field] = value
   }
@@ -326,24 +353,47 @@ export const validateEventSubmission = (payload: unknown): ValidationResult => {
     return value
   }
 
-  requiredEnum('formInterfaceLanguage', INTERFACE_LANGUAGES)
-  const submissionLanguage = requiredEnum('submissionLanguage', SUBMISSION_LANGUAGES)
+  const deriveSummary = (text: string) => {
+    const normalized = text.replace(/\s+/g, ' ').trim()
+    if (normalized.length <= 240) return normalized
+    const slice = normalized.slice(0, 237)
+    const lastSpace = slice.lastIndexOf(' ')
+    return `${(lastSpace > 120 ? slice.slice(0, lastSpace) : slice).trim()}…`
+  }
+
+  const formInterfaceLanguage = requiredEnum('formInterfaceLanguage', INTERFACE_LANGUAGES)
+  const submissionLanguage = optionalEnum(
+    'submissionLanguage',
+    SUBMISSION_LANGUAGES,
+    formInterfaceLanguage,
+  )
   const otherSubmissionLanguage = optionalString('otherSubmissionLanguage')
-  requiredEnum('requestedPublicLanguage', PUBLIC_LANGUAGES)
+  optionalEnum('requestedPublicLanguage', PUBLIC_LANGUAGES, 'editorial-decision')
   requiredString('organizerName', 2)
   requiredString('privateContactName', 2)
   const privateEmail = requiredString('privateContactEmail')
   optionalString('privateContactPhone')
-  const preferredContactLanguage = requiredEnum('preferredContactLanguage', SUBMISSION_LANGUAGES)
+  const preferredContactLanguage = optionalEnum(
+    'preferredContactLanguage',
+    SUBMISSION_LANGUAGES,
+    formInterfaceLanguage,
+  )
   const otherPreferredContactLanguage = optionalString('otherPreferredContactLanguage')
   optionalString('publicOrganizerName')
   optionalUrl('publicOrganizerUrl')
   const publicEmail = optionalString('publicOrganizerEmail')
   const publicPhone = optionalString('publicOrganizerPhone')
-  const publicContactPermission = requiredBoolean('publicContactPermission')
+  const publicContactPermission = optionalBoolean('publicContactPermission', false)
   requiredString('proposedTitle', 5)
-  requiredString('summary', 30)
-  requiredString('descriptionPlainText', 80)
+  const explicitSummary = optionalString('summary')
+  const descriptionPlainText = requiredString('descriptionPlainText', 30)
+
+  if (explicitSummary && explicitSummary.length < 10) {
+    addError('summary', 'too_short', 'Use at least 10 characters.')
+  }
+  if (!explicitSummary && descriptionPlainText) {
+    result.summary = deriveSummary(descriptionPlainText)
+  }
 
   if (privateEmail && !isEmail(privateEmail)) {
     addError('privateContactEmail', 'invalid_email', 'Use a valid email address.')
@@ -370,28 +420,30 @@ export const validateEventSubmission = (payload: unknown): ValidationResult => {
 
   const rawEventLanguages = payload.eventLanguages
   const normalizedEventLanguages: string[] = []
-  if (!Array.isArray(rawEventLanguages) || rawEventLanguages.length === 0) {
-    addError('eventLanguages', 'required', 'Select at least one Event language.')
-  } else {
-    for (const value of rawEventLanguages) {
-      if (typeof value !== 'string' || !EVENT_LANGUAGES.has(value)) {
-        addError('eventLanguages', 'invalid_choice', 'Select supported Event languages only.')
-        continue
+  if (rawEventLanguages !== undefined) {
+    if (!Array.isArray(rawEventLanguages)) {
+      addError('eventLanguages', 'invalid_type', 'Event languages must be a list.')
+    } else {
+      for (const value of rawEventLanguages) {
+        if (typeof value !== 'string' || !EVENT_LANGUAGES.has(value)) {
+          addError('eventLanguages', 'invalid_choice', 'Select supported Event languages only.')
+          continue
+        }
+        if (!normalizedEventLanguages.includes(value)) normalizedEventLanguages.push(value)
       }
-      if (!normalizedEventLanguages.includes(value)) normalizedEventLanguages.push(value)
-    }
-    if (normalizedEventLanguages.length > 5) {
-      addError('eventLanguages', 'too_many', 'Too many Event languages were supplied.')
-    }
-    if (
-      normalizedEventLanguages.includes('language-independent') &&
-      normalizedEventLanguages.length > 1
-    ) {
-      addError(
-        'eventLanguages',
-        'invalid_combination',
-        'Language-independent cannot be combined with spoken languages.',
-      )
+      if (normalizedEventLanguages.length > 5) {
+        addError('eventLanguages', 'too_many', 'Too many Event languages were supplied.')
+      }
+      if (
+        normalizedEventLanguages.includes('language-independent') &&
+        normalizedEventLanguages.length > 1
+      ) {
+        addError(
+          'eventLanguages',
+          'invalid_combination',
+          'Language-independent cannot be combined with spoken languages.',
+        )
+      }
     }
   }
   result.eventLanguages = normalizedEventLanguages
@@ -406,7 +458,7 @@ export const validateEventSubmission = (payload: unknown): ValidationResult => {
 
   requiredEnum('eventType', EVENT_TYPES)
   const eventFormat = requiredEnum('eventFormat', EVENT_FORMATS)
-  requiredBoolean('isAllDay')
+  optionalBoolean('isAllDay', false)
   const start = requiredString('startDateTime')
   const end = optionalString('endDateTime')
 
@@ -418,6 +470,51 @@ export const validateEventSubmission = (payload: unknown): ValidationResult => {
   }
   if (start && end && isIsoDateTime(start) && isIsoDateTime(end) && Date.parse(end) <= Date.parse(start)) {
     addError('endDateTime', 'invalid_order', 'The end time must be later than the start time.')
+  }
+
+  if (payload.additionalDates !== undefined) {
+    if (!Array.isArray(payload.additionalDates)) {
+      addError('additionalDates', 'invalid_type', 'Additional dates must be a list.')
+    } else if (payload.additionalDates.length > 30) {
+      addError('additionalDates', 'too_many', 'Too many additional dates were supplied.')
+    } else {
+      const normalizedAdditionalDates: Array<{startDateTime: string; endDateTime?: string}> = []
+      payload.additionalDates.forEach((entry, index) => {
+        if (!isRecord(entry)) {
+          addError('additionalDates', 'invalid_type', `Additional date ${index + 1} must be an object.`)
+          return
+        }
+        for (const key of Object.keys(entry)) {
+          if (key !== 'startDateTime' && key !== 'endDateTime') {
+            addError('additionalDates', 'unknown_field', 'Additional date contains an unsupported field.')
+          }
+        }
+        const extraStart = cleanString(entry.startDateTime)
+        const extraEnd = cleanString(entry.endDateTime)
+        if (!extraStart) {
+          addError('additionalDates', 'required', `Additional date ${index + 1} requires a start date and time.`)
+          return
+        }
+        if (!isIsoDateTime(extraStart)) {
+          addError('additionalDates', 'invalid_datetime', `Additional date ${index + 1} start must be an ISO date and time with a timezone.`)
+          return
+        }
+        if (extraEnd && !isIsoDateTime(extraEnd)) {
+          addError('additionalDates', 'invalid_datetime', `Additional date ${index + 1} end must be an ISO date and time with a timezone.`)
+          return
+        }
+        if (extraEnd && Date.parse(extraEnd) <= Date.parse(extraStart)) {
+          addError('additionalDates', 'invalid_order', `Additional date ${index + 1} end time must be later than its start time.`)
+          return
+        }
+        normalizedAdditionalDates.push(
+          extraEnd ? {startDateTime: extraStart, endDateTime: extraEnd} : {startDateTime: extraStart},
+        )
+      })
+      if (normalizedAdditionalDates.length > 0) {
+        result.additionalDates = normalizedAdditionalDates
+      }
+    }
   }
 
   optionalString('venueName')
@@ -443,10 +540,16 @@ export const validateEventSubmission = (payload: unknown): ValidationResult => {
     'registrationRequirement',
     REGISTRATION_REQUIREMENTS,
   )
-  const registrationStatus = requiredEnum('registrationStatus', REGISTRATION_STATUSES)
+  const defaultRegistrationStatus =
+    registrationRequirement === 'not-required' ? 'not-applicable' : 'open'
+  const registrationStatus = optionalEnum(
+    'registrationStatus',
+    REGISTRATION_STATUSES,
+    defaultRegistrationStatus,
+  )
   const registrationUrl = optionalUrl('registrationUrl')
   const registrationDeadline = optionalString('registrationDeadline')
-  const isFree = requiredBoolean('isFree')
+  const isFree = optionalBoolean('isFree', true)
   const priceDescription = optionalString('priceDescription')
 
   if (registrationDeadline && !isIsoDateTime(registrationDeadline)) {
@@ -479,16 +582,18 @@ export const validateEventSubmission = (payload: unknown): ValidationResult => {
   const proposedImageUrl = optionalUrl('proposedImageUrl')
   optionalString('imageAltSuggestion')
   optionalString('imageCredit')
-  const imagePermissionConfirmed = requiredBoolean('imagePermissionConfirmed')
+  const imagePermissionConfirmed = optionalBoolean('imagePermissionConfirmed', false)
   if (proposedImageUrl && imagePermissionConfirmed !== true) {
     addError('imagePermissionConfirmed', 'permission_required', 'Image permission is required.')
   }
 
-  requiredTrue('authorityConfirmed')
   requiredTrue('accuracyConfirmed')
-  requiredTrue('editingTranslationAccepted')
-  requiredTrue('publicationNotGuaranteedAccepted')
   requiredTrue('privacyRetentionAccepted')
+  const baseConsentsOk =
+    result.accuracyConfirmed === true && result.privacyRetentionAccepted === true
+  optionalTrueOrDefault('authorityConfirmed', baseConsentsOk)
+  optionalTrueOrDefault('editingTranslationAccepted', baseConsentsOk)
+  optionalTrueOrDefault('publicationNotGuaranteedAccepted', baseConsentsOk)
 
   if (errors.length > 0) return {ok: false, errors}
 

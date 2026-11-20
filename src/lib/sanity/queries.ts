@@ -395,7 +395,7 @@ export const PAST_EVENTS_BY_LANGUAGE_QUERY = `
     language == $language &&
     defined(startDateTime) &&
     coalesce(endDateTime, startDateTime) < now() &&
-    count(additionalDates[coalesce(endDateTime, startDateTime) >= now()]) == 0
+    coalesce(count(additionalDates[coalesce(endDateTime, startDateTime) >= now()]), 0) == 0
   ] | order(coalesce(endDateTime, startDateTime) desc) {
     _id,
     title,
