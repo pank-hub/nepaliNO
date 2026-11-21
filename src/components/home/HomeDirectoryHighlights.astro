@@ -41,19 +41,19 @@ const listingThumbnail = (image: HomeSanityImage | null | undefined, containsLog
     ? croppedWidth
     : Math.floor(Math.min(
         croppedWidth,
-        Number(dimensions[2]) * (1 - (crop?.top ?? 0) - (crop?.bottom ?? 0)) * 4 / 3,
+        Number(dimensions[2]) * (1 - (crop?.top ?? 0) - (crop?.bottom ?? 0)) * 16 / 9,
       ))
   if (nativeWidth < 4) throw new Error('Homepage Directory image crop is too small.')
-  const widths = [...new Set([128, 192, 256, 320, 480].map((width) => Math.min(width, nativeWidth)))]
+  const widths = [...new Set([240, 360, 480, 640, 800].map((width) => Math.min(width, nativeWidth)))]
   const imageUrl = (width: number) => {
     const builder = urlFor(image).width(width)
     return (containsLogo
       ? builder.fit('max')
-      : builder.height(Math.round(width * 3 / 4)).fit('crop')
+      : builder.height(Math.round(width * 9 / 16)).fit('crop')
     ).auto('format').url()
   }
   return {
-    src: imageUrl(widths[0]),
+    src: imageUrl(widths[widths.length - 1]),
     srcset: widths.map((width) => `${imageUrl(width)} ${width}w`).join(', '),
     nativeWidth,
   }
@@ -72,29 +72,37 @@ const listingThumbnail = (image: HomeSanityImage | null | undefined, containsLog
       const hasCover = !!listing.coverImage?.asset
       const sourceImage = hasCover ? listing.coverImage : listing.logo
       const image = listingThumbnail(sourceImage, !hasCover)
+      const href = `/${language}/directory/${listing.slug}/`
       return (
         <li>
-          <article>
+          <article class="directory-highlights__card">
             {image && sourceImage && (
-              <div class:list={['directory-highlights__media', {'directory-highlights__media--logo': !hasCover}]}>
+              <a
+                class:list={['directory-highlights__media', {'directory-highlights__media--logo': !hasCover}]}
+                href={href}
+                tabindex="-1"
+                aria-hidden="true"
+              >
                 <img
                   src={image.src}
                   srcset={image.srcset}
                   sizes="(min-width: 72rem) 33vw, (min-width: 44rem) 50vw, 100vw"
-                  width="320"
-                  height="240"
+                  width="480"
+                  height="270"
                   style={`--media-native-width: ${image.nativeWidth}px`}
                   alt={sourceImage.alt ?? listing.name}
                   loading="lazy"
                   decoding="async"
                 />
-              </div>
+              </a>
             )}
-            <h3><a href={`/${language}/directory/${listing.slug}/`}>{listing.name}</a></h3>
-            <p class="directory-highlights__meta">
-              {categoryLabel(listing)}{' · '}{locationLabel(listing)}
-            </p>
-            {listing.isVerified && <p class="directory-highlights__verified">{labels.directory.verified}</p>}
+            <div class="directory-highlights__body">
+              <h3><a href={href}>{listing.name}</a></h3>
+              <p class="directory-highlights__meta">
+                {categoryLabel(listing)}{' · '}{locationLabel(listing)}
+              </p>
+              {listing.isVerified && <p class="directory-highlights__verified">{labels.directory.verified}</p>}
+            </div>
           </article>
         </li>
       )
@@ -114,28 +122,50 @@ const listingThumbnail = (image: HomeSanityImage | null | undefined, containsLog
   .directory-highlights {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 1rem;
+    margin: 0.25rem 0 0;
     padding: 0;
     list-style: none;
   }
 
   li {
+    display: flex;
     min-width: 0;
+  }
+
+  li:only-child {
     max-width: 36rem;
-    margin-inline: auto;
-    padding-block: 0.75rem;
-    border-block-start: 1px solid var(--border);
+  }
+
+  .directory-highlights__card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  @media (hover: hover) {
+    .directory-highlights__card:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-soft);
+    }
   }
 
   .directory-highlights__media {
     display: grid;
-    aspect-ratio: 4 / 3;
-    margin-block-end: 0.75rem;
+    place-items: center;
+    aspect-ratio: 16 / 9;
     overflow: hidden;
-    border-radius: var(--radius-sm);
+    border-block-end: 1px solid var(--border);
     background: var(--surface);
   }
 
   .directory-highlights__media img {
+    display: block;
     width: min(100%, var(--media-native-width));
     height: 100%;
     margin-inline: auto;
@@ -143,6 +173,7 @@ const listingThumbnail = (image: HomeSanityImage | null | undefined, containsLog
   }
 
   .directory-highlights__media--logo {
+    padding: 0.75rem;
     background: var(--surface);
   }
 
@@ -150,32 +181,46 @@ const listingThumbnail = (image: HomeSanityImage | null | undefined, containsLog
     object-fit: contain;
   }
 
+  .directory-highlights__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 0.95rem 1.05rem 1.05rem;
+  }
+
   h3 {
-    margin-block-end: 0.25rem;
+    margin: 0 0 0.3rem;
     font-size: var(--home-title-size);
     font-weight: var(--home-title-weight);
-    line-height: 1.5;
+    line-height: 1.45;
     overflow-wrap: anywhere;
   }
 
   h3 a {
     color: var(--text);
+    text-decoration: none;
   }
 
   h3 a:hover {
+    text-decoration: underline;
     text-decoration-color: var(--brand);
+    text-decoration-thickness: 0.06em;
   }
 
   .directory-highlights__meta,
   .directory-highlights__verified {
+    margin: 0;
     color: var(--text-muted);
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     line-height: 1.45;
     overflow-wrap: anywhere;
   }
 
   .directory-highlights__verified {
-    margin-block-start: 0.25rem;
+    margin-block-start: auto;
+    padding-block-start: 0.65rem;
+    color: var(--success);
+    font-weight: 600;
   }
 
   @media (min-width: 44rem) {
@@ -183,5 +228,8 @@ const listingThumbnail = (image: HomeSanityImage | null | undefined, containsLog
       padding: 1.25rem;
     }
 
+    .directory-highlights {
+      gap: 1.25rem;
+    }
   }
 </style>
