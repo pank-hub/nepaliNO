@@ -12,6 +12,7 @@ import {
 } from '../../src/lib/weather/met.ts'
 import {
   findWeatherPreset,
+  formatWeatherDateShort,
   getWeatherConditionLabel,
   getWeatherIconKind,
 } from '../../src/lib/weather/symbols.ts'
@@ -111,6 +112,8 @@ test('weather symbols and presets cover ne and nb cleanly', () => {
   assert.equal(getWeatherIconKind('rainandthunder'), 'thunder')
   assert.equal(findWeatherPreset('kathmandu')?.timezone, 'Asia/Kathmandu')
   assert.equal(findWeatherPreset('oslo')?.timezone, 'Europe/Oslo')
+  assert.equal(formatWeatherDateShort('2026-11-22', 'ne'), '२२ नोभेम्बर (आइत)')
+  assert.match(formatWeatherDateShort('2026-11-22', 'nb'), /22/)
 })
 
 test('normalizeYrWeatherBlock filters snapshot days by configured dates and drops invalid locations', () => {
