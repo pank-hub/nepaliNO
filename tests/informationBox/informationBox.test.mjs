@@ -152,3 +152,10 @@ test('both pages register the renderer', async () => {
     assert.match(source, /_type: 'informationBox'/, file)
   }
 })
+
+test('information box inherits article font family and font size', async () => {
+  const component = await read('../../src/components/content/InformationBox.astro')
+  assert.doesNotMatch(component, /font-size:\s*1rem/)
+  assert.match(component, /font-family:\s*inherit/)
+  assert.match(component, /font-size:\s*inherit/)
+})

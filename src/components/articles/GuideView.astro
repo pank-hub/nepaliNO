@@ -13,6 +13,8 @@ import InformationBoxNe from '../../components/content/InformationBoxNe.astro'
 import InformationBoxNb from '../../components/content/InformationBoxNb.astro'
 import LocationMapNe from '../../components/content/LocationMapNe.astro'
 import LocationMapNb from '../../components/content/LocationMapNb.astro'
+import YrWeatherNe from '../../components/content/YrWeatherNe.astro'
+import YrWeatherNb from '../../components/content/YrWeatherNb.astro'
 import AiInformationLink from '../../components/content/AiInformationLink.astro'
 import ArticleSummary from '../../components/content/ArticleSummary.astro'
 import ReadAlsoCardNe from '../../components/content/ReadAlsoCardNe.astro'
@@ -34,6 +36,7 @@ import type {ArticleSummaryInput} from '../../lib/articleSummary/normalize.ts'
 import type {ReadAlsoInput} from '../../lib/readAlso/normalize.ts'
 import type {ExpandableSectionInput} from '../../lib/expandableSection/normalize.ts'
 import type {LocationMapBlock} from '../../lib/maps/location'
+import type {YrWeatherBlockInput} from '../../lib/weather/types'
 import {withMapTravelDestination} from '../../lib/entur/mapRendering'
 
 interface TranslationSummary {
@@ -109,6 +112,7 @@ export interface GuideDocument {
     | (EditorialChartInput & {_type: 'editorialChart'; _key?: string})
     | (InformationBoxInput & {_type: 'informationBox'; _key?: string})
     | (LocationMapBlock & {_type: 'locationMap'; _key?: string})
+    | (YrWeatherBlockInput & {_type: 'yrWeather'; _key?: string})
     | (ExpandableSectionInput & {_type: 'expandableSection'; _key?: string})
     | (ReadAlsoInput & {_type: 'readAlsoCard'; _key?: string})
   )[]
@@ -171,6 +175,7 @@ const portableTextComponents = {
     editorialChart: language === 'ne' ? EditorialChartNe : EditorialChartNb,
     informationBox: language === 'ne' ? InformationBoxNe : InformationBoxNb,
     locationMap: language === 'ne' ? LocationMapNe : LocationMapNb,
+    yrWeather: language === 'ne' ? YrWeatherNe : YrWeatherNb,
     expandableSection: language === 'ne' ? ExpandableSectionNe : ExpandableSectionNb,
     readAlsoCard: language === 'ne' ? ReadAlsoCardNe : ReadAlsoCardNb,
   },

@@ -49,8 +49,9 @@ const titleId = box?.title ? `information-box-title-${box.idSuffix}` : undefined
     border-radius: var(--radius-md);
     background: var(--box-tint);
     color: var(--text);
-    font-size: 1rem;
-    line-height: 1.7;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
     overflow-wrap: anywhere;
     break-inside: avoid;
   }
@@ -84,14 +85,36 @@ const titleId = box?.title ? `information-box-title-${box.idSuffix}` : undefined
   .information-box__title {
     margin: 0;
     color: var(--civic-deep);
-    font-size: 1.125rem;
+    font-family: inherit;
+    font-size: 1.15em;
     font-weight: 700;
     line-height: 1.4;
     text-wrap: balance;
   }
 
+  :global(html[lang="ne"]) .information-box__title {
+    font-weight: 600;
+    line-height: 1.5;
+    text-wrap: wrap;
+  }
+
+  .information-box__body {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
   .information-box__body > :global(* + *) {
     margin-block-start: 0.75em;
+  }
+
+  .information-box__body :global(p),
+  .information-box__body :global(ul),
+  .information-box__body :global(ol),
+  .information-box__body :global(li) {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
   }
 
   .information-box__body :global(p),
