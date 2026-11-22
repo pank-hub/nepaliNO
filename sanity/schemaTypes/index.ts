@@ -14,6 +14,13 @@ import {publicInformationGuide} from './publicInformationGuide'
 import {publicInformationTopic} from './publicInformationTopic'
 import {readAlso} from './readAlso'
 import {trustPage} from './trustPage'
+import {
+  yrWeather,
+  yrWeatherLocation,
+  yrWeatherSnapshotCurrent,
+  yrWeatherSnapshotDay,
+  yrWeatherSnapshotLocation,
+} from './yrWeather'
 
 export const schemaTypes = [
   forumCompanionAutomation,
@@ -30,6 +37,11 @@ export const schemaTypes = [
   mapRoute,
   mapEditorialPath,
   locationMap,
+  yrWeatherLocation,
+  yrWeatherSnapshotCurrent,
+  yrWeatherSnapshotDay,
+  yrWeatherSnapshotLocation,
+  yrWeather,
   articleSummary,
   readAlso,
   publicInformationGuide,

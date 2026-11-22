@@ -91,6 +91,9 @@ jobs:
       - name: Test maps and travel privacy fallback
         run: npm run test:privacy
 
+      - name: Test Yr weather block and forecast aggregation
+        run: npm run test:weather
+
       - name: Run Astro Check
         run: npx astro check
 

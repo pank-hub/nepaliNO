@@ -335,6 +335,7 @@ export const publicInformationGuide = defineType({
         defineArrayMember({type: 'editorialChart'}),
         informationBoxBlockMember,
         defineArrayMember({type: 'locationMap'}),
+        defineArrayMember({type: 'yrWeather'}),
         expandableSectionBlockMember,
         readAlsoBlockMember,
       ],

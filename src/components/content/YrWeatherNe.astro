@@ -1,0 +1,14 @@
+---
+import YrWeather from './YrWeather.astro'
+import type {YrWeatherBlockInput} from '../../lib/weather/types.ts'
+
+interface Props {
+  node: YrWeatherBlockInput
+  index?: number
+  isInline?: boolean
+}
+
+const {node, index} = Astro.props
+---
+
+<YrWeather node={node} index={index} language="ne" />

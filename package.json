@@ -42,7 +42,8 @@
     "test:topic-slug": "node --experimental-strip-types --test tests/sanity/topicSlug.test.mjs",
     "test:seo-redirects": "node --experimental-strip-types --test tests/content/seoRedirects.test.mjs",
     "test:privacy": "node --experimental-strip-types --test tests/privacy/mapsTravelPrivacy.test.mjs",
-    "test:ssb": "node --experimental-strip-types --test tests/ssb/nepalStats.test.mjs"
+    "test:ssb": "node --experimental-strip-types --test tests/ssb/nepalStats.test.mjs",
+    "test:weather": "node --experimental-strip-types --test tests/weather/weather.test.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.6",
