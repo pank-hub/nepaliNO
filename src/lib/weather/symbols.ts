@@ -205,21 +205,60 @@ export function getWeatherIconKind(symbolCode: string | null | undefined): Weath
 }
 
 export const WEATHER_ICON_PATHS: Record<WeatherIconKind, string> = {
-  sun: '<circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2.5v2.2M12 19.3v2.2M4.7 4.7l1.6 1.6M17.7 17.7l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.7 19.3l1.6-1.6M17.7 6.3l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
-  moon: '<path d="M16.5 14.5A6.5 6.5 0 0 1 9.5 7.5c0-.9.2-1.8.5-2.6A7 7 0 1 0 19.1 14c-.8.3-1.7.5-2.6.5Z" fill="currentColor"/>',
+  sun: '<circle cx="12" cy="12" r="4.5" fill="#d97706"/><path d="M12 2.5v2.2M12 19.3v2.2M4.7 4.7l1.6 1.6M17.7 17.7l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.7 19.3l1.6-1.6M17.7 6.3l1.6-1.6" stroke="#d97706" stroke-width="1.8" stroke-linecap="round"/>',
+  moon: '<path d="M16.5 14.5A6.5 6.5 0 0 1 9.5 7.5c0-.9.2-1.8.5-2.6A7 7 0 1 0 19.1 14c-.8.3-1.7.5-2.6.5Z" fill="#475569"/>',
   'partly-sun':
-    '<circle cx="9.2" cy="8.5" r="3.2" fill="#d97706"/><path d="M9.2 3v1.3M4 8.5h1.3M5.5 4.8l.9.9M12.9 4.8l-.9.9" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/><path d="M8 18h8.5a3.5 3.5 0 0 0 .4-7 4.8 4.8 0 0 0-9.2-1A3.6 3.6 0 0 0 8 18Z" fill="currentColor"/>',
+    '<circle cx="9.2" cy="8.5" r="3.2" fill="#d97706"/><path d="M9.2 3v1.3M4 8.5h1.3M5.5 4.8l.9.9M12.9 4.8l-.9.9" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/><path d="M8 18h8.5a3.5 3.5 0 0 0 .4-7 4.8 4.8 0 0 0-9.2-1A3.6 3.6 0 0 0 8 18Z" fill="#64748b"/>',
   'partly-moon':
-    '<path d="M10.4 5.2a3.8 3.8 0 0 0 3.7 4.7 3.8 3.8 0 0 1-5-1.1 3.8 3.8 0 0 1 1.3-3.6Z" fill="#d97706"/><path d="M8 18h8.5a3.5 3.5 0 0 0 .4-7 4.8 4.8 0 0 0-9.2-1A3.6 3.6 0 0 0 8 18Z" fill="currentColor"/>',
+    '<path d="M10.4 5.2a3.8 3.8 0 0 0 3.7 4.7 3.8 3.8 0 0 1-5-1.1 3.8 3.8 0 0 1 1.3-3.6Z" fill="#d97706"/><path d="M8 18h8.5a3.5 3.5 0 0 0 .4-7 4.8 4.8 0 0 0-9.2-1A3.6 3.6 0 0 0 8 18Z" fill="#64748b"/>',
   cloud:
-    '<path d="M7.5 18h9.2a3.8 3.8 0 0 0 .4-7.6 5.2 5.2 0 0 0-9.9-1.1A4 4 0 0 0 7.5 18Z" fill="currentColor"/>',
-  fog: '<path d="M6.5 12h11a3 3 0 0 0 .3-6 4.5 4.5 0 0 0-8.6-.9A3.3 3.3 0 0 0 6.5 12Z" fill="currentColor"/><path d="M4 15.2h16M5.5 18.5h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
-  rain: '<path d="M7.2 14.5h9.5a3.4 3.4 0 0 0 .4-6.8 4.8 4.8 0 0 0-9.2-1 3.6 3.6 0 0 0-.7 7.8Z" fill="currentColor"/><path d="M8.5 17.2l-1.2 3M12.5 17.2l-1.2 3M16.5 17.2l-1.2 3" stroke="#0284c7" stroke-width="1.8" stroke-linecap="round"/>',
+    '<path d="M7.5 18h9.2a3.8 3.8 0 0 0 .4-7.6 5.2 5.2 0 0 0-9.9-1.1A4 4 0 0 0 7.5 18Z" fill="#64748b"/>',
+  fog: '<path d="M6.5 12h11a3 3 0 0 0 .3-6 4.5 4.5 0 0 0-8.6-.9A3.3 3.3 0 0 0 6.5 12Z" fill="#94a3b8"/><path d="M4 15.2h16M5.5 18.5h13" stroke="#64748b" stroke-width="1.8" stroke-linecap="round"/>',
+  rain: '<path d="M7.2 14.5h9.5a3.4 3.4 0 0 0 .4-6.8 4.8 4.8 0 0 0-9.2-1 3.6 3.6 0 0 0-.7 7.8Z" fill="#64748b"/><path d="M8.5 17.2l-1.2 3M12.5 17.2l-1.2 3M16.5 17.2l-1.2 3" stroke="#0284c7" stroke-width="1.8" stroke-linecap="round"/>',
   sleet:
-    '<path d="M7.2 14.2h9.5a3.4 3.4 0 0 0 .4-6.8 4.8 4.8 0 0 0-9.2-1 3.6 3.6 0 0 0-.7 7.8Z" fill="currentColor"/><path d="M8.5 17l-1 2.8" stroke="#0284c7" stroke-width="1.8" stroke-linecap="round"/><circle cx="13" cy="18.6" r="1.3" fill="#0284c7"/><path d="M16.8 17l-1 2.8" stroke="#0284c7" stroke-width="1.8" stroke-linecap="round"/>',
-  snow: '<path d="M7.2 14.2h9.5a3.4 3.4 0 0 0 .4-6.8 4.8 4.8 0 0 0-9.2-1 3.6 3.6 0 0 0-.7 7.8Z" fill="currentColor"/><circle cx="8.5" cy="18.2" r="1.3" fill="#0284c7"/><circle cx="12.5" cy="19.5" r="1.3" fill="#0284c7"/><circle cx="16.5" cy="18.2" r="1.3" fill="#0284c7"/>',
+    '<path d="M7.2 14.2h9.5a3.4 3.4 0 0 0 .4-6.8 4.8 4.8 0 0 0-9.2-1 3.6 3.6 0 0 0-.7 7.8Z" fill="#64748b"/><path d="M8.5 17l-1 2.8" stroke="#0284c7" stroke-width="1.8" stroke-linecap="round"/><circle cx="13" cy="18.6" r="1.3" fill="#0284c7"/><path d="M16.8 17l-1 2.8" stroke="#0284c7" stroke-width="1.8" stroke-linecap="round"/>',
+  snow: '<path d="M7.2 14.2h9.5a3.4 3.4 0 0 0 .4-6.8 4.8 4.8 0 0 0-9.2-1 3.6 3.6 0 0 0-.7 7.8Z" fill="#64748b"/><circle cx="8.5" cy="18.2" r="1.3" fill="#0284c7"/><circle cx="12.5" cy="19.5" r="1.3" fill="#0284c7"/><circle cx="16.5" cy="18.2" r="1.3" fill="#0284c7"/>',
   thunder:
-    '<path d="M7.2 13.8h9.5a3.4 3.4 0 0 0 .4-6.8 4.8 4.8 0 0 0-9.2-1 3.6 3.6 0 0 0-.7 7.8Z" fill="currentColor"/><path d="M12.8 14.5l-2 3.5h2.2l-1.4 3.5" stroke="#d97706" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>',
+    '<path d="M7.2 13.8h9.5a3.4 3.4 0 0 0 .4-6.8 4.8 4.8 0 0 0-9.2-1 3.6 3.6 0 0 0-.7 7.8Z" fill="#64748b"/><path d="M12.8 14.5l-2 3.5h2.2l-1.4 3.5" stroke="#d97706" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>',
+}
+
+const NE_SHORT_MONTHS = [
+  'जनवरी',
+  'फेब्रुअरी',
+  'मार्च',
+  'अप्रिल',
+  'मे',
+  'जुन',
+  'जुलाई',
+  'अगस्ट',
+  'सेप्टेम्बर',
+  'अक्टोबर',
+  'नोभेम्बर',
+  'डिसेम्बर',
+]
+
+const NE_WEEKDAYS = ['आइत', 'सोम', 'मंगल', 'बुध', 'बिही', 'शुक्र', 'शनि']
+
+export function formatWeatherDateShort(isoDate: string, language: WeatherLanguage): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim())
+  if (!match) return isoDate
+  const year = Number(match[1])
+  const monthIdx = Number(match[2]) - 1
+  const day = Number(match[3])
+  const parsed = new Date(Date.UTC(year, monthIdx, day, 12, 0, 0))
+  if (Number.isNaN(parsed.getTime())) return isoDate
+  if (language === 'ne') {
+    const dayStr = new Intl.NumberFormat('ne-NP', {useGrouping: false}).format(day)
+    const monthStr = NE_SHORT_MONTHS[monthIdx] ?? ''
+    const weekday = NE_WEEKDAYS[parsed.getUTCDay()] ?? ''
+    return `${dayStr} ${monthStr} (${weekday})`
+  }
+  return parsed.toLocaleDateString('nb-NO', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  })
 }
 
 export function getWeatherCopy(language: WeatherLanguage) {

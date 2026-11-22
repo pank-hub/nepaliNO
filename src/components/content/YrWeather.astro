@@ -1,6 +1,8 @@
 ---
+import {stegaClean} from '@sanity/client/stega'
 import {normalizeYrWeatherBlock} from '../../lib/weather/met.ts'
 import {
+  formatWeatherDateShort,
   getWeatherConditionLabel,
   getWeatherCopy,
   getWeatherIconKind,
@@ -20,7 +22,7 @@ interface Props {
 }
 
 const {node, language, index = 0} = Astro.props
-const block = normalizeYrWeatherBlock(node)
+const block = normalizeYrWeatherBlock(stegaClean(node))
 const copy = getWeatherCopy(language)
 const locale = language === 'ne' ? 'ne-NP' : 'nb-NO'
 const numFmt = new Intl.NumberFormat(locale, {maximumFractionDigits: 1})
@@ -29,21 +31,15 @@ const intFmt = new Intl.NumberFormat(locale, {maximumFractionDigits: 0})
 const formatTemp = (v: number | null | undefined) =>
   typeof v === 'number' && Number.isFinite(v) ? `${intFmt.format(Math.round(v))}°` : '–'
 
-const formatDateShort = (isoDate: string) => {
-  const parsed = new Date(`${isoDate}T12:00:00Z`)
-  if (Number.isNaN(parsed.getTime())) return isoDate
-  return parsed.toLocaleDateString(locale, {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  })
-}
-
 const formatFetchedAt = (iso?: string) => {
   if (!iso) return ''
   const parsed = new Date(iso)
   if (Number.isNaN(parsed.getTime())) return ''
-  return parsed.toLocaleDateString(locale, {
+  if (language === 'ne') {
+    const localIso = parsed.toLocaleDateString('en-CA', {timeZone: 'Europe/Oslo'})
+    return formatWeatherDateShort(localIso, 'ne')
+  }
+  return parsed.toLocaleDateString('nb-NO', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -80,6 +76,14 @@ const livePayload = shouldHydrateLive
       showPrecipitation: block.showPrecipitation,
       showWind: block.showWind,
       iconPaths: WEATHER_ICON_PATHS,
+      dateLabels: Object.fromEntries(
+        Array.from({length: 12}, (_, i) => {
+          const d = new Date()
+          d.setDate(d.getDate() + i - 1)
+          const iso = d.toISOString().slice(0, 10)
+          return [iso, formatWeatherDateShort(iso, language)]
+        }),
+      ),
       copy: {
         minMax: copy.minMax,
         precip: copy.precipitation,
@@ -87,6 +91,7 @@ const livePayload = shouldHydrateLive
         mmUnit: copy.mmUnit,
         msUnit: copy.msUnit,
         date: copy.date,
+        unavailable: copy.unavailable,
       },
     }).replace(/</g, '\\u003c')
   : ''
@@ -131,30 +136,49 @@ const fetchedLabel = formatFetchedAt(block.fetchedAt)
           <tbody>
             {allDates.map((date) => (
               <tr>
-                <th scope="row">{formatDateShort(date)}</th>
+                <th scope="row">{formatWeatherDateShort(date, language)}</th>
                 {displayLocations.map((loc) => {
                   const day = loc.days.find((d) => d.date === date)
-                  if (!day) return <td>–</td>
+                  if (!day) {
+                    return (
+                      <td>
+                        <span class="yr-weather__dash" aria-label={copy.unavailable}>
+                          —
+                        </span>
+                      </td>
+                    )
+                  }
                   const iconKind = getWeatherIconKind(day.symbolCode)
                   const cond = getWeatherConditionLabel(day.symbolCode, language)
                   return (
                     <td>
                       <div class="yr-weather__table-cell">
-                        <span class="yr-weather__icon" aria-hidden="true">
-                          <svg
-                            viewBox="0 0 24 24"
-                            width="18"
-                            height="18"
-                            set:html={WEATHER_ICON_PATHS[iconKind]}
-                          />
-                        </span>
-                        <span class="yr-weather__temps">
-                          {formatTemp(day.minTemp)} / {formatTemp(day.maxTemp)}
-                        </span>
+                        <div class="yr-weather__table-cell-top">
+                          <span class="yr-weather__icon" aria-hidden="true">
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="22"
+                              height="22"
+                              set:html={WEATHER_ICON_PATHS[iconKind]}
+                            />
+                          </span>
+                          <span class="yr-weather__temps">
+                            {formatTemp(day.minTemp)} / {formatTemp(day.maxTemp)}
+                          </span>
+                        </div>
                         {cond && <span class="yr-weather__cell-cond">{cond}</span>}
-                        {block.showPrecipitation && typeof day.precipitationMm === 'number' && (
+                        {(block.showPrecipitation || block.showWind) && (
                           <span class="yr-weather__meta">
-                            {numFmt.format(day.precipitationMm)} {copy.mmUnit}
+                            {[
+                              block.showPrecipitation && typeof day.precipitationMm === 'number'
+                                ? `${numFmt.format(day.precipitationMm)} ${copy.mmUnit}`
+                                : null,
+                              block.showWind && typeof day.windMaxMs === 'number'
+                                ? `${numFmt.format(day.windMaxMs)} ${copy.msUnit}`
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
                           </span>
                         )}
                       </div>
@@ -178,13 +202,15 @@ const fetchedLabel = formatFetchedAt(block.fetchedAt)
                   const cond = getWeatherConditionLabel(day.symbolCode, language)
                   return (
                     <li class="yr-weather__day">
-                      <span class="yr-weather__day-date">{formatDateShort(day.date)}</span>
+                      <span class="yr-weather__day-date">
+                        {formatWeatherDateShort(day.date, language)}
+                      </span>
                       <span class="yr-weather__day-cond">
                         <span class="yr-weather__icon" aria-hidden="true">
                           <svg
                             viewBox="0 0 24 24"
-                            width="18"
-                            height="18"
+                            width="20"
+                            height="20"
                             set:html={WEATHER_ICON_PATHS[iconKind]}
                           />
                         </span>
@@ -263,11 +289,50 @@ const fetchedLabel = formatFetchedAt(block.fetchedAt)
     showPrecipitation: boolean
     showWind: boolean
     iconPaths: Record<string, string>
+    dateLabels?: Record<string, string>
     copy: {
       mmUnit: string
       msUnit: string
       date: string
+      unavailable: string
     }
+  }
+
+  const NE_MONTHS = [
+    'जनवरी',
+    'फेब्रुअरी',
+    'मार्च',
+    'अप्रिल',
+    'मे',
+    'जुन',
+    'जुलाई',
+    'अगस्ट',
+    'सेप्टेम्बर',
+    'अक्टोबर',
+    'नोभेम्बर',
+    'डिसेम्बर',
+  ]
+  const NE_DAYS = ['आइत', 'सोम', 'मंगल', 'बुध', 'बिही', 'शुक्र', 'शनि']
+
+  function formatClientDate(iso: string, lang: 'ne' | 'nb', presetLabels?: Record<string, string>) {
+    if (presetLabels?.[iso]) return presetLabels[iso]
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+    if (!match) return iso
+    const y = Number(match[1])
+    const m = Number(match[2]) - 1
+    const d = Number(match[3])
+    const parsed = new Date(Date.UTC(y, m, d, 12, 0, 0))
+    if (Number.isNaN(parsed.getTime())) return iso
+    if (lang === 'ne') {
+      const dayStr = new Intl.NumberFormat('ne-NP', {useGrouping: false}).format(d)
+      return `${dayStr} ${NE_MONTHS[m] ?? ''} (${NE_DAYS[parsed.getUTCDay()] ?? ''})`
+    }
+    return parsed.toLocaleDateString('nb-NO', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    })
   }
 
   document.querySelectorAll<HTMLElement>('[data-yr-weather][data-live="true"]').forEach(async (root) => {
@@ -301,23 +366,18 @@ const fetchedLabel = formatFetchedAt(block.fetchedAt)
       const locale = cfg.language === 'ne' ? 'ne-NP' : 'nb-NO'
       const intFmt = new Intl.NumberFormat(locale, {maximumFractionDigits: 0})
       const numFmt = new Intl.NumberFormat(locale, {maximumFractionDigits: 1})
-      const fmtDate = (iso: string) => {
-        const d = new Date(`${iso}T12:00:00Z`)
-        return Number.isNaN(d.getTime())
-          ? iso
-          : d.toLocaleDateString(locale, {month: 'short', day: 'numeric', timeZone: 'UTC'})
-      }
+      const fmtDate = (iso: string) => formatClientDate(iso, cfg.language, cfg.dateLabels)
       const fmtTemp = (v: number | null) =>
         typeof v === 'number' && Number.isFinite(v) ? `${intFmt.format(Math.round(v))}°` : '–'
 
-      const makeIcon = (kind?: string) => {
+      const makeIcon = (kind?: string, size = '22') => {
         const wrap = document.createElement('span')
         wrap.className = 'yr-weather__icon'
         wrap.setAttribute('aria-hidden', 'true')
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         svg.setAttribute('viewBox', '0 0 24 24')
-        svg.setAttribute('width', '18')
-        svg.setAttribute('height', '18')
+        svg.setAttribute('width', size)
+        svg.setAttribute('height', size)
         svg.innerHTML = cfg.iconPaths[kind || 'cloud'] || cfg.iconPaths.cloud || ''
         wrap.appendChild(svg)
         return wrap
@@ -361,25 +421,42 @@ const fetchedLabel = formatFetchedAt(block.fetchedAt)
             const td = document.createElement('td')
             const day = loc.days.find((d) => d.date === date)
             if (!day) {
-              td.textContent = '–'
+              const dash = document.createElement('span')
+              dash.className = 'yr-weather__dash'
+              dash.setAttribute('aria-label', cfg.copy.unavailable)
+              dash.textContent = '—'
+              td.appendChild(dash)
             } else {
               const cell = document.createElement('div')
               cell.className = 'yr-weather__table-cell'
-              cell.appendChild(makeIcon(day.iconKind))
+
+              const top = document.createElement('div')
+              top.className = 'yr-weather__table-cell-top'
+              top.appendChild(makeIcon(day.iconKind, '22'))
               const temps = document.createElement('span')
               temps.className = 'yr-weather__temps'
               temps.textContent = `${fmtTemp(day.minTemp)} / ${fmtTemp(day.maxTemp)}`
-              cell.appendChild(temps)
+              top.appendChild(temps)
+              cell.appendChild(top)
+
               if (day.conditionLabel) {
                 const cond = document.createElement('span')
                 cond.className = 'yr-weather__cell-cond'
                 cond.textContent = day.conditionLabel
                 cell.appendChild(cond)
               }
+
+              const metaParts: string[] = []
               if (cfg.showPrecipitation && typeof day.precipitationMm === 'number') {
+                metaParts.push(`${numFmt.format(day.precipitationMm)} ${cfg.copy.mmUnit}`)
+              }
+              if (cfg.showWind && typeof day.windMaxMs === 'number') {
+                metaParts.push(`${numFmt.format(day.windMaxMs)} ${cfg.copy.msUnit}`)
+              }
+              if (metaParts.length) {
                 const meta = document.createElement('span')
                 meta.className = 'yr-weather__meta'
-                meta.textContent = `${numFmt.format(day.precipitationMm)} ${cfg.copy.mmUnit}`
+                meta.textContent = metaParts.join(' · ')
                 cell.appendChild(meta)
               }
               td.appendChild(cell)
@@ -419,7 +496,7 @@ const fetchedLabel = formatFetchedAt(block.fetchedAt)
 
           const condWrap = document.createElement('span')
           condWrap.className = 'yr-weather__day-cond'
-          condWrap.appendChild(makeIcon(day.iconKind))
+          condWrap.appendChild(makeIcon(day.iconKind, '20'))
           const condText = document.createElement('span')
           condText.textContent = day.conditionLabel || '–'
           condWrap.appendChild(condText)
@@ -465,6 +542,7 @@ const fetchedLabel = formatFetchedAt(block.fetchedAt)
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface);
+    font-family: inherit;
   }
 
   .yr-weather__header {
@@ -478,142 +556,195 @@ const fetchedLabel = formatFetchedAt(block.fetchedAt)
 
   .yr-weather__title {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
+    line-height: 1.4;
     color: var(--civic-deep);
   }
 
   .yr-weather__subtitle {
     margin: 0.25rem 0 0;
     font-size: 0.92rem;
+    line-height: 1.55;
     color: var(--text-muted);
   }
 
   .yr-weather__badge {
     font-size: 0.78rem;
     font-weight: 600;
-    padding: 0.2rem 0.55rem;
+    line-height: 1.2;
+    padding: 0.25rem 0.65rem;
     border-radius: 999px;
     background: var(--surface-muted);
     color: var(--civic);
     border: 1px solid var(--border);
+    white-space: nowrap;
   }
 
-  .yr-weather__grid {
+  /* Use :global() inside .yr-weather so both SSR and client-hydrated DOM match identically */
+  .yr-weather :global(.yr-weather__grid) {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(16.5rem, 1fr));
     gap: 0.9rem;
   }
 
-  .yr-weather__card {
-    padding: 0.85rem 0.95rem;
+  .yr-weather :global(.yr-weather__card) {
+    padding: 0.95rem 1.05rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--surface-muted);
   }
 
-  .yr-weather__card-title {
-    margin: 0 0 0.6rem;
-    font-size: 0.98rem;
+  .yr-weather :global(.yr-weather__card-title) {
+    margin: 0 0 0.65rem;
+    padding-block-end: 0.45rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 1rem;
     font-weight: 700;
     color: var(--civic-deep);
   }
 
-  .yr-weather__days {
+  .yr-weather :global(.yr-weather__days) {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 0.45rem;
+    gap: 0.2rem;
   }
 
-  .yr-weather__day {
+  .yr-weather :global(.yr-weather__day) {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: minmax(7.2rem, auto) 1fr auto;
     align-items: center;
-    gap: 0.25rem 0.65rem;
-    padding-block: 0.35rem;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+    padding-inline-start: 0;
+    padding-block: 0.5rem;
     border-top: 1px solid var(--border);
-    font-size: 0.88rem;
+    font-size: 0.92rem;
+    line-height: 1.45;
   }
 
-  .yr-weather__day:first-child {
+  .yr-weather :global(.yr-weather__day:first-child) {
     border-top: 0;
-    padding-top: 0;
+    padding-top: 0.15rem;
   }
 
-  .yr-weather__day-date {
+  .yr-weather :global(.yr-weather__day-date) {
     font-weight: 600;
     color: var(--text);
     white-space: nowrap;
   }
 
-  .yr-weather__day-cond {
+  .yr-weather :global(.yr-weather__day-cond) {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.45rem;
     color: var(--text-muted);
     min-width: 0;
   }
 
-  .yr-weather__icon {
+  .yr-weather :global(.yr-weather__icon) {
     display: inline-flex;
     align-items: center;
-    color: var(--civic);
     flex-shrink: 0;
   }
 
-  .yr-weather__temps {
+  .yr-weather :global(.yr-weather__temps) {
     font-weight: 700;
+    font-size: 0.98rem;
     font-variant-numeric: tabular-nums;
     color: var(--civic-deep);
     white-space: nowrap;
   }
 
-  .yr-weather__day-extra {
+  .yr-weather :global(.yr-weather__day-extra) {
     grid-column: 1 / -1;
     display: flex;
     gap: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-soft);
+  }
+
+  .yr-weather :global(.yr-weather__table-wrap) {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+  }
+
+  .yr-weather :global(.yr-weather__table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .yr-weather :global(.yr-weather__table th),
+  .yr-weather :global(.yr-weather__table td) {
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    border-inline-end: 1px solid var(--border);
+    text-align: start;
+    vertical-align: top;
+  }
+
+  .yr-weather :global(.yr-weather__table th:last-child),
+  .yr-weather :global(.yr-weather__table td:last-child) {
+    border-inline-end: 0;
+  }
+
+  .yr-weather :global(.yr-weather__table tbody tr:last-child th),
+  .yr-weather :global(.yr-weather__table tbody tr:last-child td) {
+    border-bottom: 0;
+  }
+
+  .yr-weather :global(.yr-weather__table thead th) {
+    background: var(--surface-muted);
+    font-weight: 700;
+    color: var(--civic-deep);
+    white-space: nowrap;
+  }
+
+  .yr-weather :global(.yr-weather__table tbody th) {
+    font-weight: 600;
+    color: var(--civic-deep);
+    background: color-mix(in srgb, var(--surface-muted) 55%, var(--surface));
+    white-space: nowrap;
+    width: 1%;
+  }
+
+  .yr-weather :global(.yr-weather__table tbody tr:nth-child(even) td) {
+    background: color-mix(in srgb, var(--surface-muted) 30%, var(--surface));
+  }
+
+  .yr-weather :global(.yr-weather__table-cell) {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 8.5rem;
+  }
+
+  .yr-weather :global(.yr-weather__table-cell-top) {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .yr-weather :global(.yr-weather__cell-cond) {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .yr-weather :global(.yr-weather__meta) {
     font-size: 0.78rem;
     color: var(--text-soft);
   }
 
-  .yr-weather__table-wrap {
-    overflow-x: auto;
+  .yr-weather :global(.yr-weather__dash) {
+    color: var(--text-soft);
   }
 
-  .yr-weather__table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88rem;
-  }
-
-  .yr-weather__table th,
-  .yr-weather__table td {
-    padding: 0.55rem 0.65rem;
-    border-bottom: 1px solid var(--border);
-    text-align: left;
-    vertical-align: top;
-  }
-
-  .yr-weather__table thead th {
-    background: var(--surface-muted);
-    font-weight: 700;
-    color: var(--civic-deep);
-  }
-
-  .yr-weather__table-cell {
-    display: grid;
-    gap: 0.15rem;
-  }
-
-  .yr-weather__cell-cond,
-  .yr-weather__meta {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-  }
-
-  .yr-weather__empty {
+  .yr-weather :global(.yr-weather__empty) {
     margin: 0;
     font-size: 0.88rem;
     color: var(--text-soft);
