@@ -472,6 +472,7 @@ test("renderer keeps text and privacy notice, defers tiles, and supports focus a
   assert.match(script, /root\.dataset\.failedLabel/);
   assert.match(script, /referrerPolicy/);
   assert.match(renderer, /data-map-list-collapsed="true"[\s\S]*?clip-path: inset\(50%\)/);
+  assert.match(renderer, /data-map-list-collapsed="true"\s*\]\s*\.location-map__places li/);
   assert.doesNotMatch(renderer, /aria-hidden=.*place-details|innerHTML|set:html/);
 });
 
