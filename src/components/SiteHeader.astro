@@ -29,7 +29,10 @@ const navigationItems = [
     ? [{label: labels.navigation.events, href: `/${language}/events/`}]
     : []),
   ...(forumPilot.enabled && isSectionEnabled(language, 'forum')
-    ? [{label: labels.navigation.forum, href: forumPilot.url}]
+    ? [
+        {label: labels.navigation.forum, href: forumPilot.url},
+        {label: labels.navigation.classifieds, href: `/${language}/classifieds/`},
+      ]
     : []),
   ...(isSectionEnabled(language, 'directory')
     ? [{label: labels.navigation.businesses, href: `/${language}/directory/`}]

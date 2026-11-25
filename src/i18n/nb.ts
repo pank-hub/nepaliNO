@@ -112,6 +112,7 @@ export const nb = {
     information: "Livet i Norge",
     events: "Arrangementer",
     forum: "Forum",
+    classifieds: "Torget",
     businesses: "Katalog",
     stats: "Statistikk",
     community: "Fellesskap",

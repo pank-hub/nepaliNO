@@ -30,6 +30,7 @@ const pathSections: Record<string, SiteSection> = {
   events: 'events',
   directory: 'directory',
   stats: 'stats',
+  classifieds: 'forum',
 }
 
 // Language-switcher targets must not point at a disabled section.

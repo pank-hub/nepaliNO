@@ -1,0 +1,1153 @@
+---
+import SiteFooter from "../../../components/SiteFooter.astro";
+import SiteHeader from "../../../components/SiteHeader.astro";
+import { forumPilot } from "../../../config/forum";
+import { isSectionEnabled } from "../../../config/languageSections";
+import { getTranslations } from "../../../i18n";
+import type { SupportedLanguage } from "../../../i18n/config";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import {
+  CLASSIFIEDS_CATEGORIES,
+  CLASSIFIEDS_CATEGORY_MAP,
+  NORWAY_FYLKER,
+  loadDiscourseClassifieds,
+} from "../../../lib/forum/discourseClassifieds";
+
+export const prerender = false;
+
+const { lang } = Astro.params;
+if (lang !== "ne" && lang !== "nb") {
+  return Astro.redirect("/ne/classifieds/", 302);
+}
+
+const language = lang as SupportedLanguage;
+if (!forumPilot.enabled || !isSectionEnabled(language, "forum")) {
+  return Astro.redirect(`/${language}/`, 302);
+}
+
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, s-maxage=60, stale-while-revalidate=300",
+);
+
+const translations = getTranslations(language);
+const feed = await loadDiscourseClassifieds();
+
+const pageTitle = "बसोबास, रोजगारी र किनबेच (वर्गीकृत) | nepali.no";
+const pageDescription =
+  "नर्वेमा रहेका नेपालीहरूका लागि प्रमाणित बसोबास (कोठा/फ्ल्याट), रोजगारी र किनबेच कम्युनिटी बोर्ड — FINN.no, Hybel.no र NAV खोजी सहयोगी सहित।";
+
+const forumBase = forumPilot.url.replace(/\/$/, "");
+const housingUrl = `${forumBase}/c/housing/13`;
+const jobsUrl = `${forumBase}/c/jobs/14`;
+const buySellUrl = `${forumBase}/c/buy-and-sell/15`;
+
+const formatDateNe = (iso?: string) => {
+  if (!iso) return "";
+  const parsed = Date.parse(iso);
+  if (Number.isNaN(parsed)) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Europe/Oslo",
+  }).format(new Date(parsed));
+};
+
+const fylkeNameByTag = new Map(NORWAY_FYLKER.map((f) => [f.tag, f.name]));
+
+const searchCities = [
+  { name: "Oslo", finnLocation: "0.20061", hybelSlug: "oslo", navQuery: "Oslo" },
+  { name: "Bergen", finnLocation: "1.22046.20220", hybelSlug: "bergen", navQuery: "Bergen" },
+  { name: "Trondheim", finnLocation: "1.20016.20317", hybelSlug: "trondheim", navQuery: "Trondheim" },
+  { name: "Stavanger", finnLocation: "1.20012.20196", hybelSlug: "stavanger", navQuery: "Stavanger" },
+  { name: "Tromsø", finnLocation: "1.22054.20396", hybelSlug: "tromso", navQuery: "Tromsø" },
+  { name: "Drammen", finnLocation: "1.22030.20111", hybelSlug: "drammen", navQuery: "Drammen" },
+  { name: "Kristiansand", finnLocation: "1.22042.20169", hybelSlug: "kristiansand", navQuery: "Kristiansand" },
+  { name: "Bodø", finnLocation: "1.20018.20359", hybelSlug: "bodo", navQuery: "Bodø" },
+  { name: "Ålesund", finnLocation: "1.20015.20278", hybelSlug: "alesund", navQuery: "Ålesund" },
+  { name: "Lillehammer", finnLocation: "1.22034.20073", hybelSlug: "lillehammer", navQuery: "Lillehammer" },
+] as const;
+
+const studentPortals = [
+  { name: "SiO", city: "Oslo / Akershus", url: "https://www.sio.no/en/housing" },
+  { name: "Sammen", city: "Bergen / Vestland", url: "https://sammen.no/en/housing" },
+  { name: "Sit", city: "Trondheim / Gjøvik / Ålesund", url: "https://www.sit.no/en/housing" },
+  { name: "SiS", city: "Stavanger", url: "https://www.minsis.no/en/housing" },
+  { name: "Samskipnaden", city: "Tromsø / Alta / Narvik", url: "https://samskipnaden.no/en/housing" },
+  { name: "SSN", city: "Drammen / Kongsberg / Vestfold", url: "https://www.ssn.no/en/housing" },
+  { name: "SiA", city: "Kristiansand / Grimstad", url: "https://www.sia.no/en/housing" },
+  { name: "SINN", city: "Innlandet (Lillehammer / Hamar)", url: "https://www.sinn.no/en/housing" },
+] as const;
+---
+
+<BaseLayout
+  language={language}
+  title={pageTitle}
+  description={pageDescription}
+>
+  <SiteHeader
+    slot="header"
+    language={language}
+    alternatePath={`/${language}/classifieds/`}
+  />
+
+  <article class="classifieds-page">
+    <header class="classifieds-hero">
+      <div class="container">
+        <nav class="classifieds-breadcrumb" aria-label={translations.navigation.home}>
+          <a href={`/${language}/`}>{translations.navigation.home}</a>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">{translations.navigation.classifieds}</span>
+        </nav>
+
+        <div class="classifieds-hero__badges">
+          <span class="classifieds-pill">
+            कम्युनिटी बोर्ड · forum.nepali.no
+          </span>
+          <span class="classifieds-pill classifieds-pill--trust">
+            प्रमाणित सदस्य र व्यवसायहरूद्वारा पोस्ट
+          </span>
+        </div>
+
+        <h1>नर्वेमा बसोबास, रोजगारी र किनबेच</h1>
+        <p class="classifieds-hero__lead">
+          प्रमाणित सदस्य (Verified Members) र नर्वेली व्यवसायहरूले पोस्ट गरेका कोठा/फ्ल्याट,
+          रोजगारी र किनबेचका विज्ञापनहरू एकै ठाउँमा हेर्नुहोस्। सबै विज्ञापन ३० दिनपछि
+          स्वतः बन्द हुन्छन्, र सबैले निःशुल्क हेर्न तथा फोरममा सम्पर्क गर्न सक्छन्।
+        </p>
+
+        <div class="classifieds-hero__actions">
+          <a class="cf-btn cf-btn--housing" href={housingUrl} target="_blank" rel="noopener noreferrer">
+            + बसोबास पोस्ट गर्नुहोस्
+          </a>
+          <a class="cf-btn cf-btn--jobs" href={jobsUrl} target="_blank" rel="noopener noreferrer">
+            + रोजगारी पोस्ट गर्नुहोस्
+          </a>
+          <a class="cf-btn cf-btn--buysell" href={buySellUrl} target="_blank" rel="noopener noreferrer">
+            + किनबेच पोस्ट गर्नुहोस्
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <section class="classifieds-section container" aria-labelledby="live-listings-heading">
+      <div class="classifieds-section__header">
+        <div>
+          <h2 id="live-listings-heading">पछिल्ला कम्युनिटी विज्ञापनहरू</h2>
+          <p class="classifieds-section__sub">
+            सीधै <strong>forum.nepali.no</strong> बाट अद्यावधिक — कुनै व्यक्तिगत विवरण यहाँ भण्डारण गरिँदैन।
+          </p>
+        </div>
+
+        <div class="classifieds-filters" role="region" aria-label="विज्ञापन फिल्टर">
+          <label class="cf-select-wrap">
+            <span class="cf-label">Fylke छान्नुहोस्</span>
+            <select id="cf-fylke-filter" class="cf-select">
+              <option value="">सबै १५ Fylke</option>
+              {NORWAY_FYLKER.map((f) => (
+                <option value={f.tag}>{f.name}</option>
+              ))}
+            </select>
+          </label>
+
+          <label class="cf-checkbox-wrap">
+            <input type="checkbox" id="cf-open-only" checked />
+            <span>खुला मात्र</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="cf-tabs" role="tablist" aria-label="विज्ञापन वर्ग">
+        <button type="button" class="cf-tab is-active" role="tab" aria-selected="true" data-category="all">
+          सबै <span class="cf-tab__count">{feed.items.length}</span>
+        </button>
+        {CLASSIFIEDS_CATEGORIES.map((cat) => (
+          <button
+            type="button"
+            class="cf-tab"
+            role="tab"
+            aria-selected="false"
+            data-category={cat.key}
+            style={`--cat-accent: ${cat.color}`}
+          >
+            <span class="cf-tab__dot" aria-hidden="true"></span>
+            {cat.labelNe}
+            <span class="cf-tab__count">{feed.counts[cat.key]}</span>
+          </button>
+        ))}
+      </div>
+
+      {feed.status === "private_pilot" ? (
+        <div class="cf-notice cf-notice--pilot">
+          <h3>कम्युनिटी फोरम छिट्टै सार्वजनिक हुँदैछ</h3>
+          <p>
+            <code>forum.nepali.no</code> हाल निजी परीक्षण (Private Pilot) र Vipps प्रमाणीकरण
+            तयारी चरणमा छ। फोरम खुला हुनेबित्तिकै बसोबास, रोजगारी र किनबेचका सबै विज्ञापनहरू
+            यहाँ स्वतः देखिनेछन्। त्यतिन्जेल तलको <strong>FINN.no / Hybel.no / NAV खोजी सहयोगी</strong>
+            र <strong>नर्वेली सन्देश जेनेरेटर</strong> प्रयोग गर्न सक्नुहुन्छ।
+          </p>
+          <a class="cf-link-btn" href={housingUrl} target="_blank" rel="noopener noreferrer">
+            forum.nepali.no खोल्नुहोस् →
+          </a>
+        </div>
+      ) : feed.items.length === 0 ? (
+        <div class="cf-notice">
+          <h3>अहिलेसम्म कुनै खुला विज्ञापन छैन</h3>
+          <p>
+            नर्वेमा कोठा, फ्ल्याट, रोजगारी वा सामानको पहिलो विज्ञापन पोस्ट गर्न
+            <strong>forum.nepali.no</strong> मा जानुहोस्।
+          </p>
+          <a class="cf-link-btn" href={housingUrl} target="_blank" rel="noopener noreferrer">
+            पहिलो विज्ञापन पोस्ट गर्नुहोस् →
+          </a>
+        </div>
+      ) : (
+        <>
+          <div id="cf-listings-grid" class="cf-grid">
+            {feed.items.map((item) => {
+              const cat = CLASSIFIEDS_CATEGORY_MAP[item.categoryKey];
+              const dateLabel = formatDateNe(item.createdAt ?? item.lastPostedAt);
+              return (
+                <article
+                  class="cf-card"
+                  data-category={item.categoryKey}
+                  data-fylker={item.fylkeTags.join(",")}
+                  data-closed={item.closed ? "true" : "false"}
+                >
+                  <div class="cf-card__top">
+                    <span class="cf-badge" style={`--badge-color: ${cat.color}`}>
+                      {cat.labelNe}
+                    </span>
+                    <span class={`cf-status ${item.closed ? "is-closed" : "is-open"}`}>
+                      {item.closed ? "बन्द" : "खुला"}
+                    </span>
+                  </div>
+
+                  <h3 class="cf-card__title">
+                    <a href={item.url} target="_blank" rel="noopener noreferrer">
+                      {item.title}
+                    </a>
+                  </h3>
+
+                  {item.tags.length > 0 && (
+                    <div class="cf-card__tags" aria-label="ट्यागहरू">
+                      {item.tags.slice(0, 4).map((tag) => (
+                        <span class="cf-tag">{fylkeNameByTag.get(tag) ?? tag}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div class="cf-card__footer">
+                    <span class="cf-card__meta">
+                      {dateLabel && <span>{dateLabel}</span>}
+                      {dateLabel && <span aria-hidden="true">·</span>}
+                      <span>{item.replyCount} जवाफ</span>
+                    </span>
+                    <a class="cf-card__cta" href={item.url} target="_blank" rel="noopener noreferrer">
+                      फोरममा हेर्नुहोस् →
+                    </a>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <div id="cf-empty-filter" class="cf-notice" hidden>
+            <h3>यो फिल्टरमा मिल्ने विज्ञापन भेटिएन</h3>
+            <p>
+              अर्को Fylke वा वर्ग छान्नुहोस्, वा तलको FINN.no / Hybel.no / NAV खोजी सहयोगी प्रयोग गर्नुहोस्।
+            </p>
+          </div>
+        </>
+      )}
+    </section>
+
+    <section class="classifieds-tools-band" aria-labelledby="external-tools-heading">
+      <div class="container">
+        <div class="classifieds-section__header">
+          <div>
+            <h2 id="external-tools-heading">बसोबास र रोजगारी खोजी सहयोगी (तुरुन्त प्रयोग गर्नुहोस्)</h2>
+            <p class="classifieds-section__sub">
+              कुनै लगइन वा व्यक्तिगत विवरण नचाहिने — सीधै नर्वेका आधिकारिक र भरपर्दा साइटहरूमा फिल्टर गरिएको खोजी खोल्नुहोस्।
+            </p>
+          </div>
+        </div>
+
+        <div class="cf-tools-grid">
+          <div class="cf-tool-card">
+            <span class="cf-tool-card__eyebrow">बसोबास खोजी · FINN.no र Hybel.no</span>
+            <h3>सहर र बजेटअनुसार कोठा / फ्ल्याट खोज्नुहोस्</h3>
+
+            <div class="cf-form-stack">
+              <label class="cf-field">
+                <span>सहर (City)</span>
+                <select id="helper-city" class="cf-select">
+                  {searchCities.map((c) => (
+                    <option
+                      value={c.name}
+                      data-finn={c.finnLocation}
+                      data-hybel={c.hybelSlug}
+                      data-nav={c.navQuery}
+                    >
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label class="cf-field">
+                <span>अधिकतम भाडा (Max Rent — NOK/महिना)</span>
+                <select id="helper-max-rent" class="cf-select">
+                  <option value="7000">७,००० NOK सम्म</option>
+                  <option value="9000" selected>९,००० NOK सम्म</option>
+                  <option value="12000">१२,००० NOK सम्म</option>
+                  <option value="15000">१५,००० NOK सम्म</option>
+                  <option value="20000">२०,००० NOK सम्म</option>
+                  <option value="">कुनै सीमा छैन</option>
+                </select>
+              </label>
+
+              <label class="cf-field">
+                <span>प्रकार (Property Type)</span>
+                <select id="helper-housing-type" class="cf-select">
+                  <option value="all">सबै प्रकार</option>
+                  <option value="room">Rom i bofellesskap / Hybel</option>
+                  <option value="apartment">Leilighet (फ्ल्याट)</option>
+                </select>
+              </label>
+
+              <div class="cf-tool-actions">
+                <a id="helper-finn-link" class="cf-btn cf-btn--housing" href="https://www.finn.no/realestate/lettings/search.html?location=0.20061&price_to=9000" target="_blank" rel="noopener noreferrer">
+                  FINN.no मा खोज्नुहोस् ↗
+                </a>
+                <a id="helper-hybel-link" class="cf-btn cf-btn--outline" href="https://hybel.no/bolig-til-leie/oslo/" target="_blank" rel="noopener noreferrer">
+                  Hybel.no मा खोज्नुहोस् ↗
+                </a>
+              </div>
+
+              <div class="cf-tool-divider"></div>
+              <div class="cf-tool-jobs-row">
+                <span class="cf-mini-label">यही सहरमा रोजगारी खोज्नुहोस्:</span>
+                <div class="cf-tool-actions">
+                  <a id="helper-nav-link" class="cf-link-pill" href="https://arbeidsplassen.nav.no/stillinger?q=Oslo" target="_blank" rel="noopener noreferrer">
+                    NAV Arbeidsplassen ↗
+                  </a>
+                  <a id="helper-finn-jobs-link" class="cf-link-pill" href="https://www.finn.no/job/fulltime/search.html?q=Oslo" target="_blank" rel="noopener noreferrer">
+                    FINN Jobb ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cf-tool-card">
+            <span class="cf-tool-card__eyebrow">ब्राउजरमै चल्ने · Zero Data Stored</span>
+            <h3>घरधनीलाई पठाउने नर्वेली परिचय सन्देश (Presentasjon til utleier)</h3>
+            <p class="cf-tool-card__desc">
+              FINN.no, Hybel.no वा फोरममा घरधनीलाई पठाउन मिल्ने शिष्ट नर्वेली सन्देश तुरुन्त तयार पार्नुहोस्।
+              तपाईंले लेखेको विवरण सर्भरमा कहीं पठाइँदैन।
+            </p>
+
+            <div class="cf-form-stack">
+              <div class="cf-two-col">
+                <label class="cf-field">
+                  <span>तपाईंको अवस्था</span>
+                  <select id="msg-role" class="cf-select">
+                    <option value="student">विद्यार्थी (Student)</option>
+                    <option value="worker">पूर्णकालीन कर्मचारी (Fast jobb)</option>
+                    <option value="couple">दम्पती / परिवार (Par / Familie)</option>
+                  </select>
+                </label>
+
+                <label class="cf-field">
+                  <span>सर्ने समय</span>
+                  <input id="msg-movein" class="cf-input" type="text" value="snarest mulig" placeholder="जस्तै: 1. august / snarest" />
+                </label>
+              </div>
+
+              <div class="cf-checks-row">
+                <label class="cf-checkbox-wrap">
+                  <input type="checkbox" id="msg-nonsmoker" checked />
+                  <span>धूम्रपान नगर्ने (Ikke-røyker)</span>
+                </label>
+                <label class="cf-checkbox-wrap">
+                  <input type="checkbox" id="msg-nopets" checked />
+                  <span>घरपालुवा जनावर छैन (Ingen dyr)</span>
+                </label>
+                <label class="cf-checkbox-wrap">
+                  <input type="checkbox" id="msg-refs" checked />
+                  <span>रेफरेन्स उपलब्ध (Referanser)</span>
+                </label>
+              </div>
+
+              <label class="cf-field">
+                <span>तयार नर्वेली सन्देश</span>
+                <textarea id="msg-output" class="cf-textarea" rows="6" readonly></textarea>
+              </label>
+
+              <div class="cf-tool-actions">
+                <button type="button" id="msg-copy-btn" class="cf-btn cf-btn--jobs">
+                  सन्देश कपी गर्नुहोस् (Copy)
+                </button>
+                <span id="msg-copy-status" class="cf-copy-status" aria-live="polite"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cf-student-box">
+          <h3>आधिकारिक विद्यार्थी आवास (Studentsamskipnader)</h3>
+          <p class="cf-section-note">
+            नर्वेका विश्वविद्यालय/कलेजमा पढ्न आउने विद्यार्थीका लागि सबैभन्दा सुरक्षित र सस्तो विकल्प:
+          </p>
+          <div class="cf-student-grid">
+            {studentPortals.map((portal) => (
+              <a class="cf-student-card" href={portal.url} target="_blank" rel="noopener noreferrer">
+                <strong>{portal.name} ↗</strong>
+                <span>{portal.city}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="classifieds-section container" aria-labelledby="safety-heading">
+      <div class="cf-safety-box">
+        <h2 id="safety-heading">सुरक्षा र गोपनीयता सूचना</h2>
+        <ul>
+          <li>
+            <strong>लिखित सम्झौता अनिवार्य:</strong> कोठा भाडामा लिँदा सधैं लिखित <code>husleiekontrakt</code>
+            र काम गर्दा लिखित <code>arbeidsavtale</code> लिनुहोस्।
+          </li>
+          <li>
+            <strong>डिपोजिट (Depositum):</strong> कहिल्यै पनि घरधनीको निजी बैंक खातामा डिपोजिट नपठाउनुहोस् —
+            भाडावालको नाममा खोलिएको सुरक्षित <code>depositumskonto</code> मात्र प्रयोग गर्नुहोस्।
+          </li>
+          <li>
+            <strong>शून्य व्यक्तिगत डाटा भण्डारण (Zero PII):</strong> <code>nepali.no</code> ले यस पृष्ठमा
+            कुनै प्रयोगकर्ताको इमेल, फोन नम्बर वा व्यक्तिगत विवरण भण्डारण गर्दैन। खाता र प्रमाणीकरण
+            नर्वेमा होस्ट गरिएको <code>forum.nepali.no</code> भित्र मात्र सीमित रहन्छ।
+          </li>
+        </ul>
+      </div>
+    </section>
+  </article>
+
+  <SiteFooter slot="footer" language={language} />
+</BaseLayout>
+
+<script>
+  (() => {
+    // 1. Live Discourse card filtering (category tab + fylke + open-only)
+    const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>(".cf-tab"));
+    const fylkeSelect = document.getElementById("cf-fylke-filter") as HTMLSelectElement | null;
+    const openOnlyCheckbox = document.getElementById("cf-open-only") as HTMLInputElement | null;
+    const cards = Array.from(document.querySelectorAll<HTMLElement>("#cf-listings-grid .cf-card"));
+    const emptyFilterNotice = document.getElementById("cf-empty-filter");
+
+    let activeCategory = "all";
+
+    const applyFilters = () => {
+      if (cards.length === 0) return;
+      const selectedFylke = fylkeSelect?.value ?? "";
+      const openOnly = openOnlyCheckbox?.checked ?? false;
+      let visibleCount = 0;
+
+      for (const card of cards) {
+        const cat = card.dataset.category ?? "";
+        const fylker = (card.dataset.fylker ?? "").split(",").filter(Boolean);
+        const isClosed = card.dataset.closed === "true";
+
+        const matchCat = activeCategory === "all" || cat === activeCategory;
+        const matchFylke = !selectedFylke || fylker.includes(selectedFylke);
+        const matchOpen = !openOnly || !isClosed;
+
+        const visible = matchCat && matchFylke && matchOpen;
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      }
+
+      if (emptyFilterNotice) {
+        emptyFilterNotice.hidden = visibleCount > 0;
+      }
+    };
+
+    for (const tab of tabs) {
+      tab.addEventListener("click", () => {
+        activeCategory = tab.dataset.category ?? "all";
+        for (const t of tabs) {
+          const selected = t === tab;
+          t.classList.toggle("is-active", selected);
+          t.setAttribute("aria-selected", selected ? "true" : "false");
+        }
+        applyFilters();
+      });
+    }
+
+    fylkeSelect?.addEventListener("change", applyFilters);
+    openOnlyCheckbox?.addEventListener("change", applyFilters);
+    applyFilters();
+
+    // 2. External search helper (FINN.no, Hybel.no, NAV Arbeidsplassen)
+    const helperCity = document.getElementById("helper-city") as HTMLSelectElement | null;
+    const helperMaxRent = document.getElementById("helper-max-rent") as HTMLSelectElement | null;
+    const helperType = document.getElementById("helper-housing-type") as HTMLSelectElement | null;
+    const finnLink = document.getElementById("helper-finn-link") as HTMLAnchorElement | null;
+    const hybelLink = document.getElementById("helper-hybel-link") as HTMLAnchorElement | null;
+    const navLink = document.getElementById("helper-nav-link") as HTMLAnchorElement | null;
+    const finnJobsLink = document.getElementById("helper-finn-jobs-link") as HTMLAnchorElement | null;
+
+    const updateSearchLinks = () => {
+      if (!helperCity) return;
+      const opt = helperCity.selectedOptions[0];
+      if (!opt) return;
+
+      const finnLocation = opt.dataset.finn ?? "0.20061";
+      const hybelSlug = opt.dataset.hybel ?? "oslo";
+      const navQuery = opt.dataset.nav ?? "Oslo";
+      const maxRent = helperMaxRent?.value ?? "";
+      const housingType = helperType?.value ?? "all";
+
+      if (finnLink) {
+        const finnParams = new URLSearchParams();
+        finnParams.set("location", finnLocation);
+        if (maxRent) finnParams.set("price_to", maxRent);
+        if (housingType === "room") {
+          finnParams.append("property_type", "17");
+          finnParams.append("property_type", "16");
+        } else if (housingType === "apartment") {
+          finnParams.append("property_type", "3");
+        }
+        finnLink.href = `https://www.finn.no/realestate/lettings/search.html?${finnParams.toString()}`;
+      }
+
+      if (hybelLink) {
+        const hybelParams = new URLSearchParams();
+        if (maxRent) hybelParams.set("max_price", maxRent);
+        const query = hybelParams.toString();
+        hybelLink.href = `https://hybel.no/bolig-til-leie/${encodeURIComponent(hybelSlug)}/${query ? `?${query}` : ""}`;
+      }
+
+      if (navLink) {
+        navLink.href = `https://arbeidsplassen.nav.no/stillinger?q=${encodeURIComponent(navQuery)}`;
+      }
+
+      if (finnJobsLink) {
+        finnJobsLink.href = `https://www.finn.no/job/fulltime/search.html?q=${encodeURIComponent(navQuery)}`;
+      }
+    };
+
+    helperCity?.addEventListener("change", updateSearchLinks);
+    helperMaxRent?.addEventListener("change", updateSearchLinks);
+    helperType?.addEventListener("change", updateSearchLinks);
+    updateSearchLinks();
+
+    // 3. Client-side Norwegian landlord intro generator (zero data leaves browser)
+    const msgRole = document.getElementById("msg-role") as HTMLSelectElement | null;
+    const msgMoveIn = document.getElementById("msg-movein") as HTMLInputElement | null;
+    const msgNonSmoker = document.getElementById("msg-nonsmoker") as HTMLInputElement | null;
+    const msgNoPets = document.getElementById("msg-nopets") as HTMLInputElement | null;
+    const msgRefs = document.getElementById("msg-refs") as HTMLInputElement | null;
+    const msgOutput = document.getElementById("msg-output") as HTMLTextAreaElement | null;
+    const msgCopyBtn = document.getElementById("msg-copy-btn") as HTMLButtonElement | null;
+    const msgCopyStatus = document.getElementById("msg-copy-status");
+
+    const buildIntroMessage = () => {
+      if (!msgOutput) return;
+      const role = msgRole?.value ?? "student";
+      const moveIn = (msgMoveIn?.value ?? "").trim() || "snarest mulig";
+
+      const roleLine =
+        role === "student"
+          ? "Jeg er en rolig og ryddig student som ser etter et hyggelig sted å bo."
+          : role === "worker"
+            ? "Jeg har fast jobb, sikker betalingsevne og er en rolig og ryddig leietaker."
+            : "Vi er et rolig og ryddig par/familie med stabil økonomi som ser etter et langsiktig hjem.";
+
+      const traits: string[] = [];
+      if (msgNonSmoker?.checked) traits.push("røyker ikke");
+      if (msgNoPets?.checked) traits.push("har ingen husdyr");
+      if (msgRefs?.checked) traits.push("kan gjerne oppgi referanser ved behov");
+
+      const traitsLine =
+        traits.length > 0
+          ? `${role === "couple" ? "Vi" : "Jeg"} ${traits.join(", ")}.`
+          : "";
+
+      const lines = [
+        "Hei!",
+        "",
+        `Jeg så annonsen din og er veldig interessert i boligen. ${roleLine}`,
+        traitsLine,
+        `Ønsket innflytting er ${moveIn}, og jeg kommer gjerne på visning (eller digital visning) når det passer for deg.`,
+        "",
+        "Hører gjerne fra deg!",
+        "Vennlig hilsen,",
+        "[Ditt navn]",
+      ].filter((line, idx, arr) => !(line === "" && arr[idx - 1] === ""));
+
+      msgOutput.value = lines.join("\n");
+    };
+
+    msgRole?.addEventListener("change", buildIntroMessage);
+    msgMoveIn?.addEventListener("input", buildIntroMessage);
+    msgNonSmoker?.addEventListener("change", buildIntroMessage);
+    msgNoPets?.addEventListener("change", buildIntroMessage);
+    msgRefs?.addEventListener("change", buildIntroMessage);
+    buildIntroMessage();
+
+    msgCopyBtn?.addEventListener("click", async () => {
+      if (!msgOutput) return;
+      try {
+        await navigator.clipboard.writeText(msgOutput.value);
+        if (msgCopyStatus) {
+          msgCopyStatus.textContent = "कपी भयो!";
+          setTimeout(() => {
+            if (msgCopyStatus) msgCopyStatus.textContent = "";
+          }, 2500);
+        }
+      } catch {
+        msgOutput.select();
+      }
+    });
+  })();
+</script>
+
+<style>
+  .classifieds-page {
+    padding-bottom: 4rem;
+  }
+
+  .classifieds-hero {
+    background: linear-gradient(180deg, rgba(14, 118, 189, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    padding: 2rem 0 2.5rem;
+  }
+
+  .classifieds-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-muted, #64748b);
+    margin-bottom: 1rem;
+  }
+
+  .classifieds-breadcrumb a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .classifieds-breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .classifieds-hero__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .classifieds-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: rgba(14, 118, 189, 0.1);
+    color: #0e5a8a;
+  }
+
+  .classifieds-pill--trust {
+    background: rgba(27, 127, 92, 0.1);
+    color: #156247;
+  }
+
+  .classifieds-hero h1 {
+    font-size: clamp(1.75rem, 3vw, 2.4rem);
+    line-height: 1.25;
+    margin: 0 0 0.75rem;
+  }
+
+  .classifieds-hero__lead {
+    max-width: 68ch;
+    color: var(--color-muted, #475569);
+    line-height: 1.7;
+    margin: 0 0 1.5rem;
+  }
+
+  .classifieds-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .cf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.15rem;
+    border-radius: 0.6rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .cf-btn:hover {
+    opacity: 0.92;
+  }
+
+  .cf-btn--housing {
+    background: #0e76bd;
+    color: #fff;
+  }
+
+  .cf-btn--jobs {
+    background: #1b7f5c;
+    color: #fff;
+  }
+
+  .cf-btn--buysell {
+    background: #d96b27;
+    color: #fff;
+  }
+
+  .cf-btn--outline {
+    background: #fff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+  }
+
+  .classifieds-section {
+    padding-top: 2.5rem;
+  }
+
+  .classifieds-section__header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .classifieds-section__header h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.45rem;
+  }
+
+  .classifieds-section__sub {
+    margin: 0;
+    color: var(--color-muted, #64748b);
+    font-size: 0.95rem;
+  }
+
+  .classifieds-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+  }
+
+  .cf-select-wrap,
+  .cf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .cf-label {
+    color: var(--color-muted, #475569);
+    font-size: 0.8rem;
+  }
+
+  .cf-select,
+  .cf-input,
+  .cf-textarea {
+    font: inherit;
+    font-weight: 400;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #0f172a;
+  }
+
+  .cf-textarea {
+    resize: vertical;
+    line-height: 1.55;
+    font-size: 0.9rem;
+  }
+
+  .cf-checkbox-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding-bottom: 0.45rem;
+  }
+
+  .cf-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cf-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .cf-tab.is-active {
+    background: #0f172a;
+    color: #fff;
+    border-color: #0f172a;
+  }
+
+  .cf-tab__dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 999px;
+    background: var(--cat-accent, #0e76bd);
+  }
+
+  .cf-tab__count {
+    font-size: 0.78rem;
+    opacity: 0.8;
+  }
+
+  .cf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1rem;
+  }
+
+  .cf-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.15rem;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 0.85rem;
+    background: #fff;
+  }
+
+  .cf-card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cf-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--badge-color, #0e76bd);
+  }
+
+  .cf-status {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .cf-status.is-open {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .cf-status.is-closed {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .cf-card__title {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+
+  .cf-card__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .cf-card__title a:hover {
+    text-decoration: underline;
+  }
+
+  .cf-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .cf-tag {
+    font-size: 0.78rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.35rem;
+    background: #f1f5f9;
+    color: #334155;
+  }
+
+  .cf-card__footer {
+    margin-top: auto;
+    padding-top: 0.6rem;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .cf-card__meta {
+    display: inline-flex;
+    gap: 0.4rem;
+    color: #64748b;
+  }
+
+  .cf-card__cta {
+    font-weight: 600;
+    color: #0e76bd;
+    text-decoration: none;
+  }
+
+  .cf-card__cta:hover {
+    text-decoration: underline;
+  }
+
+  .cf-notice {
+    padding: 1.5rem;
+    border-radius: 0.85rem;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+  }
+
+  .cf-notice--pilot {
+    border-color: #bae6fd;
+    background: #f0f9ff;
+  }
+
+  .cf-notice h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  .cf-notice p {
+    margin: 0 0 1rem;
+    color: #334155;
+    line-height: 1.65;
+  }
+
+  .cf-link-btn {
+    display: inline-flex;
+    font-weight: 600;
+    color: #0e76bd;
+    text-decoration: none;
+  }
+
+  .cf-link-btn:hover {
+    text-decoration: underline;
+  }
+
+  .classifieds-tools-band {
+    margin-top: 3rem;
+    padding: 2.75rem 0;
+    background: #f8fafc;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+  }
+
+  .cf-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .cf-tool-card {
+    background: #fff;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 0.9rem;
+    padding: 1.4rem;
+  }
+
+  .cf-tool-card__eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #0e76bd;
+    margin-bottom: 0.35rem;
+  }
+
+  .cf-tool-card h3 {
+    margin: 0 0 0.6rem;
+    font-size: 1.15rem;
+  }
+
+  .cf-tool-card__desc {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: #475569;
+    line-height: 1.55;
+  }
+
+  .cf-form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .cf-two-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .cf-checks-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .cf-tool-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .cf-tool-divider {
+    border-top: 1px solid #e2e8f0;
+    margin: 0.25rem 0;
+  }
+
+  .cf-tool-jobs-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cf-mini-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+  }
+
+  .cf-link-pill {
+    display: inline-flex;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .cf-link-pill:hover {
+    background: #e2e8f0;
+  }
+
+  .cf-copy-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #15803d;
+  }
+
+  .cf-student-box {
+    background: #fff;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 0.9rem;
+    padding: 1.4rem;
+  }
+
+  .cf-student-box h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+  }
+
+  .cf-section-note {
+    margin: 0 0 1rem;
+    color: #475569;
+    font-size: 0.9rem;
+  }
+
+  .cf-student-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .cf-student-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.65rem;
+    text-decoration: none;
+    color: #0f172a;
+    background: #f8fafc;
+  }
+
+  .cf-student-card:hover {
+    border-color: #0e76bd;
+    background: #f0f9ff;
+  }
+
+  .cf-student-card span {
+    font-size: 0.82rem;
+    color: #475569;
+  }
+
+  .cf-safety-box {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 0.9rem;
+    padding: 1.4rem;
+  }
+
+  .cf-safety-box h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.15rem;
+  }
+
+  .cf-safety-box ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    line-height: 1.65;
+    color: #334155;
+  }
+</style>
