@@ -1,6 +1,6 @@
 # nepali.no Owner & Developer Handover
 
-**Status date:** 19 November 2026
+**Status date:** 25 November 2026
 **Repository:** `pank-hub/nepaliNO`
 **Current owner & final decision-maker:** Pankaj Kafley
 **Current `main` checkpoint:** `f2f2235` (`PR #134` Nepalis in Norway SSB stats hub & Sanity chart importer, squash-merged 19 November 2026)
@@ -182,6 +182,13 @@ nepali.no runs across separate managed services. **For an ownership handover, tr
   - *Excluded / Admin:* Site Feedback (`2`), Staff (`3`), Forum Information & Announcements (`4`).
   - *General Discussion (TL1 to create topics; future curated related-topic sources):* Questions & Mutual Help (`5`), Living in Norway (`6`), Work & Education (`7`), Family & Everyday Life (`8`), Community & Culture (`9`).
   - *Editorial Companion Categories (`forum-publishers` create; `everyone` see/reply):* News Discussions (`10`), Questions about Guides (`11`).
+  - *Verified Classifieds Categories (`verified-members` [`41`], `verified-business` [`42`], and `staff` create; `everyone` see/reply; 30-day / `720h` auto-close from topic creation; pinned to default left sidebar):* Housing / Bolig (`13`, `#0E76BD`, Form Template `1`), Jobs / Jobb (`14`, `#1B7F5C`, Form Template `2`), Buy & Sell / Kjøp og salg (`15`, `#D96B27`, Form Template `3`). *(Parent wrapper ID `12` was removed.)*
+- **Classifieds verification, tagging & read-only storefront (`PR #144`):**
+  - *Groups (member lists private to group owners/moderators/admins):* `verified-members` (`41`, identity verified via Vipps/BankID or moderator) and `verified-business` (`42`, verified Norwegian businesses/employers/landlords).
+  - *Tag Groups (visible to everyone):* `Norway Fylker` (`1`, all 15 current Norwegian fylker — required min `1` tag on Categories `13–15`), `Major Cities` (`2`, 31 Norwegian cities), `Classifieds Types` (`3`, 12 type tags).
+  - *Form Templates (`enable_form_templates: true`):* Structured bilingual templates (`1` Housing Listing, `2` Job Listing, `3` Buy & Sell Listing) with 15-fylke dropdown, 35+ city dropdown, optional street/area field, native HTML5 `<input type="date">` pickers (`validations.type: date`), and rental/labor-law confirmation checkboxes.
+  - *OIDC / Vipps Login:* `discourse-openid-connect` is preinstalled (`v2026.8.0`); awaiting Vipps Bedriftsportalen approval for `Logg inn med Vipps`. Request only `openid name email` — never `nin` (`fødselsnummer`).
+  - *Read-only `nepali.no` storefront:* `src/lib/forum/discourseClassifieds.ts`, `/api/forum-classifieds`, `/ne/classifieds/`, `/nb/classifieds/` (`302` → `/nb/`), and `tests/forum/discourseClassifieds.test.mjs`. Fetches only sanitized public metadata from Categories `13–15`, degrades cleanly on HTTP `401`/`403` during private pilot, and stores zero PII on Vercel or Sanity (paired with client-side FINN/Hybel/NAV/student-housing search links and a browser-only Norwegian landlord intro generator).
 - **Rule for new categories:** Never automatically eligible in `nepali.no`. Record numeric ID/name/purpose, assess moderation & safeguarding, update server allowlists + unit tests via PR, verify in production, and document the change here.
 
 ### Companion-topic publishing (`forum-publisher`) & HTTP 422 recovery checklist
@@ -208,7 +215,7 @@ nepali.no runs across separate managed services. **For an ownership handover, tr
 ## 8. Remaining work & launch gates
 
 1. **Privacy & Legal (High priority):** Update live Sanity `trustPage` (`privacy`) documents from `tile.openstreetmap.org` to `tiles.openfreemap.org` / OpenFreeMap; complete organization identity wording, GDPR processing inventory, retention schedule, processor review, and legal review of all 8 `trustPage` docs.
-2. **Forum Launch Readiness:** Execute a clean disposable Discourse backup restoration test; recruit & train at least 2 trusted moderators; polish Discourse templates & mobile theme harmonization (`Norsk | English` selector, subtle `nepali.no` return link, no tracking scripts).
+2. **Forum Launch Readiness:** Execute a clean disposable Discourse backup restoration test; recruit & train at least 2 trusted moderators; configure **Logg inn med Vipps** OIDC in `/admin/plugins/discourse-openid-connect` (`openid name email`, never `nin`) once Vipps approves the order; polish Discourse templates & mobile theme harmonization (`Norsk | English` selector, subtle `nepali.no` return link, no tracking scripts).
 3. **Auth / External Service Gates:** Fix & verify Translation Editor GitHub OAuth callback on production domain; complete Entur provider-terms & acceptance testing before flipping `ENTUR_TRAVEL_API_ENABLED`; resolve FOSSGIS routing display permission before enabling `ROUTING_CALCULATION_ENABLED`.
 4. **Content & UX Polish:** Finish manual migration of legacy `employment-economy` News articles + Search Keywords (`docs/news-category-migration.md`); create branded `1200 x 630` social-sharing fallback image; add `npm run test:guidance-hub` to `.github/workflows/validate-pull-request.yml`; evaluate cloud portability & human summary-approval alignment for the external `/home/pankaj/Projects/Nepali` news draft pipeline.
 
