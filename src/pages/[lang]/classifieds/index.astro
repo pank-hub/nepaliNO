@@ -267,21 +267,21 @@ const studentPortals = [
       <div class="container">
         <div class="classifieds-section__header">
           <div>
-            <h2 id="external-tools-heading">बसोबास र रोजगारी खोजी सहयोगी (तुरुन्त प्रयोग गर्नुहोस्)</h2>
+            <h2 id="external-tools-heading">कोठा र रोजगारी खोज्ने सहयोगी</h2>
             <p class="classifieds-section__sub">
-              कुनै लगइन वा व्यक्तिगत विवरण नचाहिने — सीधै नर्वेका आधिकारिक र भरपर्दा साइटहरूमा फिल्टर गरिएको खोजी खोल्नुहोस्।
+              लगइन वा व्यक्तिगत विवरण नचाहिने — नर्वेका भरपर्दा साइटहरूमा सीधै फिल्टर गरेर खोज्नुहोस्।
             </p>
           </div>
         </div>
 
         <div class="cf-tools-grid">
           <div class="cf-tool-card">
-            <span class="cf-tool-card__eyebrow">बसोबास खोजी · FINN.no र Hybel.no</span>
+            <span class="cf-tool-card__eyebrow">कोठा/फ्ल्याट खोजी · FINN.no र Hybel.no</span>
             <h3>सहर र बजेटअनुसार कोठा / फ्ल्याट खोज्नुहोस्</h3>
 
             <div class="cf-form-stack">
               <label class="cf-field">
-                <span>सहर (City)</span>
+                <span>सहर</span>
                 <select id="helper-city" class="cf-select">
                   {searchCities.map((c) => (
                     <option
@@ -297,7 +297,7 @@ const studentPortals = [
               </label>
 
               <label class="cf-field">
-                <span>अधिकतम भाडा (Max Rent — NOK/महिना)</span>
+                <span>अधिकतम मासिक भाडा (NOK)</span>
                 <select id="helper-max-rent" class="cf-select">
                   <option value="7000">७,००० NOK सम्म</option>
                   <option value="9000" selected>९,००० NOK सम्म</option>
@@ -309,7 +309,7 @@ const studentPortals = [
               </label>
 
               <label class="cf-field">
-                <span>प्रकार (Property Type)</span>
+                <span>कोठा / फ्ल्याटको प्रकार</span>
                 <select id="helper-housing-type" class="cf-select">
                   <option value="all">सबै प्रकार</option>
                   <option value="room">Rom i bofellesskap / Hybel</option>
@@ -342,17 +342,17 @@ const studentPortals = [
           </div>
 
           <div class="cf-tool-card">
-            <span class="cf-tool-card__eyebrow">ब्राउजरमै चल्ने · Zero Data Stored</span>
-            <h3>घरधनीलाई पठाउने नर्वेली परिचय सन्देश (Presentasjon til utleier)</h3>
+            <span class="cf-tool-card__eyebrow">ब्राउजरमै चल्ने · कुनै डेटा सेभ हुँदैन</span>
+            <h3>घरधनीलाई पठाउने परिचय सन्देश (Presentasjon til utleier)</h3>
             <p class="cf-tool-card__desc">
               FINN.no, Hybel.no वा फोरममा घरधनीलाई पठाउन मिल्ने शिष्ट नर्वेली सन्देश तुरुन्त तयार पार्नुहोस्।
-              तपाईंले लेखेको विवरण सर्भरमा कहीं पठाइँदैन।
+              तपाईंको विवरण सर्भरमा कतै पठाइँदैन।
             </p>
 
             <div class="cf-form-stack">
               <div class="cf-two-col">
                 <label class="cf-field">
-                  <span>तपाईंको अवस्था</span>
+                  <span>तपाईंको पेसा / स्थिति</span>
                   <select id="msg-role" class="cf-select">
                     <option value="student">विद्यार्थी (Student)</option>
                     <option value="worker">पूर्णकालीन कर्मचारी (Fast jobb)</option>
@@ -377,18 +377,18 @@ const studentPortals = [
                 </label>
                 <label class="cf-checkbox-wrap">
                   <input type="checkbox" id="msg-refs" checked />
-                  <span>रेफरेन्स उपलब्ध (Referanser)</span>
+                  <span>रेफरेन्स दिन सकिने (Referanser)</span>
                 </label>
               </div>
 
               <label class="cf-field">
-                <span>तयार नर्वेली सन्देश</span>
+                <span>तयार भएको सन्देश</span>
                 <textarea id="msg-output" class="cf-textarea" rows="6" readonly></textarea>
               </label>
 
               <div class="cf-tool-actions">
                 <button type="button" id="msg-copy-btn" class="cf-btn cf-btn--jobs">
-                  सन्देश कपी गर्नुहोस् (Copy)
+                  सन्देश कपी गर्नुहोस्
                 </button>
                 <span id="msg-copy-status" class="cf-copy-status" aria-live="polite"></span>
               </div>
