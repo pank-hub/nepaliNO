@@ -111,7 +111,7 @@ export const ne = {
     information: "मार्गदर्शन",
     events: "कार्यक्रम",
     forum: "फोरम",
-    classifieds: "वर्गीकृत",
+    classifieds: "विज्ञापन",
     businesses: "डाइरेक्टरी",
     stats: "तथ्याङ्क",
     community: "समुदाय",

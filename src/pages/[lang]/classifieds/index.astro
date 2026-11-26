@@ -33,9 +33,9 @@ Astro.response.headers.set(
 const translations = getTranslations(language);
 const feed = await loadDiscourseClassifieds();
 
-const pageTitle = "बसोबास, रोजगारी र किनबेच (वर्गीकृत) | nepali.no";
+const pageTitle = "नर्वेमा कोठा, काम र किनबेच (विज्ञापन) | nepali.no";
 const pageDescription =
-  "नर्वेमा रहेका नेपालीहरूका लागि प्रमाणित बसोबास (कोठा/फ्ल्याट), रोजगारी र किनबेच कम्युनिटी बोर्ड — FINN.no, Hybel.no र NAV खोजी सहयोगी सहित।";
+  "प्रमाणित सदस्य र नर्वेस्थित व्यवसायहरूले राखेका कोठा/फ्ल्याट, रोजगारी र किनबेचका विज्ञापनहरू — FINN.no, Hybel.no र NAV खोजी सहयोगी सहित।";
 
 const forumBase = forumPilot.url.replace(/\/$/, "");
 const housingUrl = `${forumBase}/c/housing/13`;
@@ -106,26 +106,26 @@ const studentPortals = [
             कम्युनिटी बोर्ड · forum.nepali.no
           </span>
           <span class="classifieds-pill classifieds-pill--trust">
-            प्रमाणित सदस्य र व्यवसायहरूद्वारा पोस्ट
+            प्रमाणित सदस्य र व्यवसायका पोस्टहरू
           </span>
         </div>
 
-        <h1>नर्वेमा बसोबास, रोजगारी र किनबेच</h1>
+        <h1>नर्वेमा कोठा, काम र किनबेच</h1>
         <p class="classifieds-hero__lead">
-          प्रमाणित सदस्य (Verified Members) र नर्वेली व्यवसायहरूले पोस्ट गरेका कोठा/फ्ल्याट,
-          रोजगारी र किनबेचका विज्ञापनहरू एकै ठाउँमा हेर्नुहोस्। सबै विज्ञापन ३० दिनपछि
-          स्वतः बन्द हुन्छन्, र सबैले निःशुल्क हेर्न तथा फोरममा सम्पर्क गर्न सक्छन्।
+          प्रमाणित सदस्य र नर्वेस्थित व्यवसायहरूले राखेका कोठा/फ्ल्याट, रोजगारी र किनबेचका
+          विज्ञापनहरू एकै ठाउँमा हेर्नुहोस्। सबै विज्ञापन ३० दिनपछि स्वतः हट्छन्। विज्ञापन
+          हेर्न र फोरममार्फत सम्पर्क गर्न सबैका लागि निःशुल्क छ।
         </p>
 
         <div class="classifieds-hero__actions">
           <a class="cf-btn cf-btn--housing" href={housingUrl} target="_blank" rel="noopener noreferrer">
-            + बसोबास पोस्ट गर्नुहोस्
+            + कोठा/फ्ल्याट राख्नुहोस्
           </a>
           <a class="cf-btn cf-btn--jobs" href={jobsUrl} target="_blank" rel="noopener noreferrer">
-            + रोजगारी पोस्ट गर्नुहोस्
+            + रोजगारी राख्नुहोस्
           </a>
           <a class="cf-btn cf-btn--buysell" href={buySellUrl} target="_blank" rel="noopener noreferrer">
-            + किनबेच पोस्ट गर्नुहोस्
+            + किनबेच राख्नुहोस्
           </a>
         </div>
       </div>
@@ -134,15 +134,15 @@ const studentPortals = [
     <section class="classifieds-section container" aria-labelledby="live-listings-heading">
       <div class="classifieds-section__header">
         <div>
-          <h2 id="live-listings-heading">पछिल्ला कम्युनिटी विज्ञापनहरू</h2>
+          <h2 id="live-listings-heading">ताजा विज्ञापनहरू</h2>
           <p class="classifieds-section__sub">
-            सीधै <strong>forum.nepali.no</strong> बाट अद्यावधिक — कुनै व्यक्तिगत विवरण यहाँ भण्डारण गरिँदैन।
+            <strong>forum.nepali.no</strong> बाट सीधै देखाइएका — यहाँ कुनै व्यक्तिगत विवरण राखिँदैन।
           </p>
         </div>
 
         <div class="classifieds-filters" role="region" aria-label="विज्ञापन फिल्टर">
           <label class="cf-select-wrap">
-            <span class="cf-label">Fylke छान्नुहोस्</span>
+            <span class="cf-label">क्षेत्र (Fylke) छान्नुहोस्</span>
             <select id="cf-fylke-filter" class="cf-select">
               <option value="">सबै १५ Fylke</option>
               {NORWAY_FYLKER.map((f) => (
@@ -153,7 +153,7 @@ const studentPortals = [
 
           <label class="cf-checkbox-wrap">
             <input type="checkbox" id="cf-open-only" checked />
-            <span>खुला मात्र</span>
+            <span>सक्रिय मात्र</span>
           </label>
         </div>
       </div>
@@ -183,7 +183,7 @@ const studentPortals = [
           <h3>कम्युनिटी फोरम छिट्टै सार्वजनिक हुँदैछ</h3>
           <p>
             <code>forum.nepali.no</code> हाल निजी परीक्षण (Private Pilot) र Vipps प्रमाणीकरण
-            तयारी चरणमा छ। फोरम खुला हुनेबित्तिकै बसोबास, रोजगारी र किनबेचका सबै विज्ञापनहरू
+            तयारी चरणमा छ। फोरम खुला हुनेबित्तिकै कोठा/फ्ल्याट, रोजगारी र किनबेचका सबै विज्ञापनहरू
             यहाँ स्वतः देखिनेछन्। त्यतिन्जेल तलको <strong>FINN.no / Hybel.no / NAV खोजी सहयोगी</strong>
             र <strong>नर्वेली सन्देश जेनेरेटर</strong> प्रयोग गर्न सक्नुहुन्छ।
           </p>
@@ -193,13 +193,13 @@ const studentPortals = [
         </div>
       ) : feed.items.length === 0 ? (
         <div class="cf-notice">
-          <h3>अहिलेसम्म कुनै खुला विज्ञापन छैन</h3>
+          <h3>अहिले कुनै सक्रिय विज्ञापन छैन</h3>
           <p>
-            नर्वेमा कोठा, फ्ल्याट, रोजगारी वा सामानको पहिलो विज्ञापन पोस्ट गर्न
+            नर्वेमा कोठा, फ्ल्याट, रोजगारी वा सामानको पहिलो विज्ञापन राख्न
             <strong>forum.nepali.no</strong> मा जानुहोस्।
           </p>
           <a class="cf-link-btn" href={housingUrl} target="_blank" rel="noopener noreferrer">
-            पहिलो विज्ञापन पोस्ट गर्नुहोस् →
+            पहिलो विज्ञापन राख्नुहोस् →
           </a>
         </div>
       ) : (
@@ -220,7 +220,7 @@ const studentPortals = [
                       {cat.labelNe}
                     </span>
                     <span class={`cf-status ${item.closed ? "is-closed" : "is-open"}`}>
-                      {item.closed ? "बन्द" : "खुला"}
+                      {item.closed ? "बन्द" : "सक्रिय"}
                     </span>
                   </div>
 

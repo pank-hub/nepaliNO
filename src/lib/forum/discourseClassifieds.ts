@@ -21,7 +21,7 @@ export const CLASSIFIEDS_CATEGORIES: readonly ClassifiedsCategoryConfig[] = [
     categoryId: 13,
     slug: 'housing',
     color: '#0E76BD',
-    labelNe: 'बसोबास / कोठा',
+    labelNe: 'कोठा / फ्ल्याट',
     labelEn: 'Housing / Bolig',
     forumPath: '/c/housing/13',
   },
