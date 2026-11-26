@@ -198,7 +198,17 @@ const studentPortals = [
             नर्वेमा कोठा, फ्ल्याट, रोजगारी वा सामानको पहिलो विज्ञापन राख्न
             <strong>forum.nepali.no</strong> मा जानुहोस्।
           </p>
-          <a class="cf-link-btn" href={housingUrl} target="_blank" rel="noopener noreferrer">
+          <a
+            id="cf-empty-post-link"
+            class="cf-link-btn"
+            href={`${forumBase}/categories`}
+            data-url-all={`${forumBase}/categories`}
+            data-url-housing={housingUrl}
+            data-url-jobs={jobsUrl}
+            data-url-buy-and-sell={buySellUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             पहिलो विज्ञापन राख्नुहोस् →
           </a>
         </div>
@@ -258,6 +268,19 @@ const studentPortals = [
             <p>
               अर्को Fylke वा वर्ग छान्नुहोस्, वा तलको FINN.no / Hybel.no / NAV खोजी सहयोगी प्रयोग गर्नुहोस्।
             </p>
+            <a
+              id="cf-filter-post-link"
+              class="cf-link-btn"
+              href={`${forumBase}/categories`}
+              data-url-all={`${forumBase}/categories`}
+              data-url-housing={housingUrl}
+              data-url-jobs={jobsUrl}
+              data-url-buy-and-sell={buySellUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              यस वर्गमा विज्ञापन राख्नुहोस् →
+            </a>
           </div>
         </>
       )}
@@ -446,10 +469,30 @@ const studentPortals = [
     const openOnlyCheckbox = document.getElementById("cf-open-only") as HTMLInputElement | null;
     const cards = Array.from(document.querySelectorAll<HTMLElement>("#cf-listings-grid .cf-card"));
     const emptyFilterNotice = document.getElementById("cf-empty-filter");
+    const emptyPostLinks = [
+      document.getElementById("cf-empty-post-link") as HTMLAnchorElement | null,
+      document.getElementById("cf-filter-post-link") as HTMLAnchorElement | null,
+    ].filter((el): el is HTMLAnchorElement => el !== null);
 
     let activeCategory = "all";
 
+    const updateEmptyPostLinks = () => {
+      const labelMap: Record<string, string> = {
+        all: "पहिलो विज्ञापन राख्नुहोस् →",
+        housing: "कोठा/फ्ल्याट विज्ञापन राख्नुहोस् →",
+        jobs: "रोजगारी विज्ञापन राख्नुहोस् →",
+        "buy-and-sell": "किनबेच विज्ञापन राख्नुहोस् →",
+      };
+      const attrName = `data-url-${activeCategory}`;
+      for (const link of emptyPostLinks) {
+        const targetUrl = link.getAttribute(attrName) ?? link.getAttribute("data-url-all");
+        if (targetUrl) link.href = targetUrl;
+        link.textContent = labelMap[activeCategory] ?? labelMap.all;
+      }
+    };
+
     const applyFilters = () => {
+      updateEmptyPostLinks();
       if (cards.length === 0) return;
       const selectedFylke = fylkeSelect?.value ?? "";
       const openOnly = openOnlyCheckbox?.checked ?? false;
