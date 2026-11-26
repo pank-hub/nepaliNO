@@ -7,9 +7,10 @@ import type {SupportedLanguage} from '../i18n/config'
 interface Props {
   language: SupportedLanguage
   alternatePath?: string
+  showLanguageSwitcher?: boolean
 }
 
-const {language, alternatePath} = Astro.props
+const {language, alternatePath, showLanguageSwitcher = true} = Astro.props
 const labels = getTranslations(language)
 const alternateLanguage: SupportedLanguage = language === 'ne' ? 'nb' : 'ne'
 const alternateLabels = getTranslations(alternateLanguage)
@@ -75,15 +76,17 @@ const isActive = (href: string) => {
       </nav>
 
       <div class="site-header__actions">
-        <a
-          class="language-link"
-          href={resolvedAlternatePath}
-          hreflang={alternateLanguage}
-          lang={alternateLanguage}
-          aria-label={labels.common.languageSelector}
-        >
-          {alternateLabels.languageName}
-        </a>
+        {showLanguageSwitcher && (
+          <a
+            class="language-link"
+            href={resolvedAlternatePath}
+            hreflang={alternateLanguage}
+            lang={alternateLanguage}
+            aria-label={labels.common.languageSelector}
+          >
+            {alternateLabels.languageName}
+          </a>
+        )}
 
         <details class="mobile-navigation">
           <summary aria-label={labels.common.mainNavigation}>
