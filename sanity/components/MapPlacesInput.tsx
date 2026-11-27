@@ -6,11 +6,13 @@ import type {LayerGroup, LeafletMouseEvent, Map as LeafletMap} from 'leaflet'
 import {
   LOCATION_DEFAULTS,
   MAP_PROVIDER,
+  MARKER_COLORS,
   PLACE_ICONS,
   searchOpenStreetMap,
   validateCoordinates,
   type LocationPrecision,
   type MapPlace,
+  type MarkerColor,
   type PlaceIcon,
 } from '../../src/lib/maps/location'
 import {createPlaceIcon, labelContent} from '../../src/lib/maps/markerIcons'
@@ -32,6 +34,16 @@ const ICON_TITLES: Record<PlaceIcon, string> = {
   hospital: 'Hospital',
   airport: 'Airport',
   warning: 'Warning',
+}
+
+const COLOR_TITLES: Record<MarkerColor, string> = {
+  blue: 'Blue (default)',
+  teal: 'Teal',
+  green: 'Dark green',
+  yellow: 'Yellow',
+  red: 'Red',
+  orange: 'Orange',
+  purple: 'Purple',
 }
 
 const readNumber = (raw: string): number | undefined =>
@@ -428,6 +440,28 @@ export function MapPlacesInput(props: ArrayOfObjectsInputProps) {
                 </label>
               )}
             </Flex>
+            {selected.precision !== 'approximate' && iconForPlace(selected) === 'pin' && (
+              <label>
+                <Text size={1}>Dot colour</Text>
+                <Select
+                  value={selected.color ?? ''}
+                  disabled={readOnly}
+                  onChange={(event) =>
+                    selected._key &&
+                    updatePlace(selected._key, {
+                      color: (event.currentTarget.value || undefined) as MarkerColor | undefined,
+                    })
+                  }
+                >
+                  <option value="">Default</option>
+                  {(Object.keys(MARKER_COLORS) as MarkerColor[]).map((color) => (
+                    <option key={color} value={color}>
+                      {COLOR_TITLES[color]}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            )}
             {selected.precision === 'approximate' && (
               <Card padding={2} radius={2} tone="caution" border>
                 <Text size={1}>
