@@ -78,6 +78,24 @@ export const PLACE_ICONS = [
 ] as const;
 export type PlaceIcon = (typeof PLACE_ICONS)[number];
 
+export const MARKER_COLORS = {
+  blue: "#1d4ed8",
+  teal: "#00997a",
+  green: "#0f523a",
+  yellow: "#f4d06f",
+  red: "#c62a1f",
+  orange: "#c2410c",
+  purple: "#7e22ce",
+} as const;
+export type MarkerColor = keyof typeof MARKER_COLORS;
+
+export interface MapLegendItem {
+  _key?: string;
+  _type?: "mapLegendItem";
+  label?: string;
+  color?: MarkerColor;
+}
+
 export interface MapPlace {
   _key?: string;
   _type?: "mapPlace";
@@ -87,6 +105,7 @@ export interface MapPlace {
   precision?: LocationPrecision;
   radiusMeters?: number;
   icon?: PlaceIcon;
+  color?: MarkerColor;
   /** Exact places only. `undefined` keeps the earlier behaviour (label always shown). */
   showLabel?: boolean;
 }
@@ -141,6 +160,7 @@ export interface LocationMapBlock {
   /** Legacy single location. Still rendered when `locations` is empty. */
   location?: MapLocation;
   locations?: MapPlace[];
+  legend?: MapLegendItem[];
   initialZoom?: number;
   route?: MapRoute;
   editorialPath?: MapEditorialPath;

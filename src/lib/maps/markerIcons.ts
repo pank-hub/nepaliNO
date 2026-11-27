@@ -1,6 +1,11 @@
 import type { DivIcon, Icon, IconOptions } from "leaflet";
 
-import type { MapPlace, PlaceIcon } from "./location.ts";
+import {
+  MARKER_COLORS,
+  type MapPlace,
+  type MarkerColor,
+  type PlaceIcon,
+} from "./location.ts";
 
 type LeafletModule = typeof import("leaflet");
 
@@ -89,7 +94,7 @@ export function labelContent(label: string, document: Document): HTMLElement {
  * Standard pins render the clean NRK-style dot + dark navy pill label; typed icons show their badge.
  */
 export function createMapLibreMarkerElement(
-  place: { label: string; icon?: PlaceIcon; showLabel?: boolean },
+  place: { label: string; icon?: PlaceIcon; color?: MarkerColor; showLabel?: boolean },
   document: Document,
 ): HTMLElement {
   const root = document.createElement("div");
@@ -118,6 +123,10 @@ export function createMapLibreMarkerElement(
   } else {
     const dot = document.createElement("span");
     dot.className = "nrk-marker__dot";
+    if (place.color && Object.hasOwn(MARKER_COLORS, place.color)) {
+      dot.classList.add("nrk-marker__dot--categorized");
+      dot.style.background = MARKER_COLORS[place.color];
+    }
     dot.setAttribute("aria-hidden", "true");
     root.append(dot);
   }

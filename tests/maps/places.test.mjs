@@ -5,12 +5,14 @@ import {JSDOM} from "jsdom";
 
 import {
   MAP_PROVIDER,
+  MARKER_COLORS,
   PLACE_ICONS,
   ROUTING_PROVIDER,
 } from "../../src/lib/maps/location.ts";
 import { placeContent } from "../../src/lib/maps/markerIcons.ts";
 import {
   LEGACY_PLACE_KEY,
+  colorForPlace,
   decodePolyline6,
   isLegacyBlock,
   isRouteEligible,
@@ -21,7 +23,9 @@ import {
   publicRoute,
   routeRequestUrl,
   routeStopsSignature,
+  validLegend,
   validPlaces,
+  validateLegend,
   validatePlace,
   validatePlaces,
   validateRoute,
@@ -498,5 +502,44 @@ test("route calculation is disabled by default and guarded before any fetch", as
       readFileSync(file, "utf8"),
       /routeRequestUrl|routing\.openstreetmap\.de\/routed/,
     );
+  }
+});
+
+test("categorized marker dot colours and legend items validate and render safely", async () => {
+  assert.equal(validatePlace(exact("a", 61.3, 12.2, { color: "teal" })), undefined);
+  assert.match(validatePlace(exact("a", 61.3, 12.2, { color: "neon" })), /colour/);
+  assert.equal(colorForPlace(exact("a", 61.3, 12.2, { color: "yellow" })), "yellow");
+  assert.equal(colorForPlace(exact("a", 61.3, 12.2, { color: "bad" })), undefined);
+
+  assert.equal(
+    validateLegend([
+      { _key: "l1", label: "Already open", color: "teal" },
+      { _key: "l2", label: "Opens Friday", color: "green" },
+    ]),
+    undefined,
+  );
+  assert.match(validateLegend([{ _key: "l1", label: "  ", color: "teal" }]), /label/);
+  assert.match(validateLegend([{ _key: "l1", label: "Open", color: "pink" }]), /colour/);
+  assert.equal(
+    validLegend([
+      { label: "Open", color: "teal" },
+      { label: "Invalid", color: "pink" },
+    ]).length,
+    1,
+  );
+
+  const dom = new JSDOM('<!doctype html><div id="root"></div>', { url: "https://nepali.no" });
+  const { createMapLibreMarkerElement } = await import("../../src/lib/maps/markerIcons.ts");
+  try {
+    const el = createMapLibreMarkerElement(
+      { label: "Bjorli", icon: "pin", color: "teal", showLabel: false },
+      dom.window.document,
+    );
+    const dot = el.querySelector(".nrk-marker__dot");
+    assert.ok(dot.classList.contains("nrk-marker__dot--categorized"));
+    assert.ok(dot.style.background);
+    assert.equal(MARKER_COLORS.teal, "#00997a");
+  } finally {
+    dom.window.close();
   }
 });

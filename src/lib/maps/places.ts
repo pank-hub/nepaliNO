@@ -1,6 +1,7 @@
 import {
   EDITORIAL_PATH_LIMITS,
   LOCATION_DEFAULTS,
+  MARKER_COLORS,
   PATH_COLORS,
   PATH_STYLES,
   PLACE_ICONS,
@@ -10,8 +11,10 @@ import {
   type LocationMapBlock,
   type MapCoordinates,
   type MapEditorialPath,
+  type MapLegendItem,
   type MapPlace,
   type MapRoute,
+  type MarkerColor,
   type PathColor,
   type PathStyle,
   type PlaceIcon,
@@ -31,6 +34,10 @@ export function isPlaceIcon(value: unknown): value is PlaceIcon {
     typeof value === "string" &&
     (PLACE_ICONS as readonly string[]).includes(value)
   );
+}
+
+export function isMarkerColor(value: unknown): value is MarkerColor {
+  return typeof value === "string" && Object.hasOwn(MARKER_COLORS, value);
 }
 
 export function validatePlace(
@@ -60,8 +67,13 @@ export function validatePlace(
     ) {
       return `Approximate radius must be between ${LOCATION_DEFAULTS.minimumRadiusMeters} and ${LOCATION_DEFAULTS.maximumRadiusMeters} metres.`;
     }
-  } else if (place.icon !== undefined && !isPlaceIcon(place.icon)) {
-    return `Icon must be one of: ${PLACE_ICONS.join(", ")}.`;
+  } else {
+    if (place.icon !== undefined && !isPlaceIcon(place.icon)) {
+      return `Icon must be one of: ${PLACE_ICONS.join(", ")}.`;
+    }
+    if (place.color !== undefined && !isMarkerColor(place.color)) {
+      return `Marker colour must be one of: ${Object.keys(MARKER_COLORS).join(", ")}.`;
+    }
   }
   if (place.showLabel !== undefined && typeof place.showLabel !== "boolean") {
     return "The label option must be true or false.";
@@ -87,6 +99,42 @@ export function validatePlaces(
 
 export function iconForPlace(place: MapPlace): PlaceIcon {
   return isPlaceIcon(place.icon) ? place.icon : "pin";
+}
+
+export function colorForPlace(place: MapPlace): MarkerColor | undefined {
+  return isMarkerColor(place.color) ? place.color : undefined;
+}
+
+export function validateLegend(
+  legend: MapLegendItem[] | null | undefined,
+): string | undefined {
+  if (!legend || legend.length === 0) return undefined;
+  if (legend.length > 12) return "Legend can have at most 12 items.";
+  for (const [index, item] of legend.entries()) {
+    if (!item?.label || !item.label.trim()) {
+      return `Legend item ${index + 1}: label is required.`;
+    }
+    if (item.label.length > 80) {
+      return `Legend item ${index + 1}: label must be 80 characters or fewer.`;
+    }
+    if (!isMarkerColor(item.color)) {
+      return `Legend item ${index + 1}: colour must be one of: ${Object.keys(MARKER_COLORS).join(", ")}.`;
+    }
+  }
+  return undefined;
+}
+
+export function validLegend(
+  legend: MapLegendItem[] | null | undefined,
+): { label: string; color: MarkerColor; hex: string }[] {
+  if (!Array.isArray(legend)) return [];
+  const items: { label: string; color: MarkerColor; hex: string }[] = [];
+  for (const item of legend) {
+    const label = item?.label?.trim();
+    if (!label || label.length > 80 || !isMarkerColor(item?.color)) continue;
+    items.push({ label, color: item.color, hex: MARKER_COLORS[item.color] });
+  }
+  return items.slice(0, 12);
 }
 
 /**

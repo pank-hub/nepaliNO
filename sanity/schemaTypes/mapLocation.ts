@@ -9,6 +9,7 @@ import {eligibleMapPlaces, mapTravelValidation} from '../../src/lib/entur/mapDes
 import {
   EDITORIAL_PATH_LIMITS,
   LOCATION_DEFAULTS,
+  MARKER_COLORS,
   PATH_COLORS,
   PATH_STYLES,
   PLACE_ICONS,
@@ -20,6 +21,7 @@ import {
 import {
   editorialPathNeedsReview,
   validateEditorialPath,
+  validateLegend,
   validatePlace,
   validatePlaces,
   validateRoute,
@@ -117,6 +119,49 @@ const ICON_TITLES: Record<string, string> = {
   warning: 'Warning',
 }
 
+const MARKER_COLOR_TITLES: Record<string, string> = {
+  blue: 'Blue (default)',
+  teal: 'Teal',
+  green: 'Dark green',
+  yellow: 'Yellow',
+  red: 'Red',
+  orange: 'Orange',
+  purple: 'Purple',
+}
+
+export const mapLegendItem = defineType({
+  name: 'mapLegendItem',
+  title: 'Map Legend Item',
+  type: 'object',
+  fields: [
+    defineField({
+      name: 'label',
+      title: 'Label',
+      type: 'string',
+      validation: (rule) => rule.required().max(80),
+    }),
+    defineField({
+      name: 'color',
+      title: 'Colour',
+      type: 'string',
+      options: {
+        list: Object.keys(MARKER_COLORS).map((value) => ({
+          title: MARKER_COLOR_TITLES[value] ?? value,
+          value,
+        })),
+      },
+      validation: (rule) => rule.required(),
+    }),
+  ],
+  preview: {
+    select: {title: 'label', color: 'color'},
+    prepare: ({title, color}) => ({
+      title: title || 'Legend item',
+      subtitle: MARKER_COLOR_TITLES[color as string] ?? (color as string),
+    }),
+  },
+})
+
 export const mapPlace = defineType({
   name: 'mapPlace',
   title: 'Map Place',
@@ -173,6 +218,19 @@ export const mapPlace = defineType({
         list: PLACE_ICONS.map((value) => ({title: ICON_TITLES[value], value})),
       },
       initialValue: 'pin',
+    }),
+    defineField({
+      name: 'color',
+      title: 'Dot colour (standard pin only)',
+      type: 'string',
+      hidden: ({parent}) =>
+        parent?.precision === 'approximate' || (Boolean(parent?.icon) && parent?.icon !== 'pin'),
+      options: {
+        list: Object.keys(MARKER_COLORS).map((value) => ({
+          title: MARKER_COLOR_TITLES[value] ?? value,
+          value,
+        })),
+      },
     }),
     defineField({
       name: 'showLabel',
@@ -461,6 +519,16 @@ export const locationMap = defineType({
       type: 'string',
       fieldset: 'details',
       validation: (rule) => rule.max(300),
+    }),
+    defineField({
+      name: 'legend',
+      title: 'Optional Colour Legend',
+      type: 'array',
+      of: [{type: 'mapLegendItem'}],
+      fieldset: 'details',
+      description: 'Shown above the map when dots are grouped by colour.',
+      validation: (rule) =>
+        rule.custom((items) => validateLegend(items as never) ?? true),
     }),
     defineField({
       name: 'sourceLabel',

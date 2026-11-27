@@ -6,6 +6,7 @@ import {
   resolveMapDisplaySettings,
   validateMapLocation,
   type MapEditorialPath,
+  type MapLegendItem,
   type MapLocation,
   type MapPlace,
   type MapRoute,
@@ -19,11 +20,13 @@ import {
   projectNorwayPoint,
 } from "../../lib/maps/norwayLocator";
 import {
+  colorForPlace,
   iconForPlace,
   isLegacyBlock,
   normalizePlaces,
   publicEditorialPath,
   publicRoute,
+  validLegend,
   validPlaces,
   validatePlaces,
 } from "../../lib/maps/places";
@@ -31,6 +34,7 @@ import {
 interface Props {
   location?: MapLocation;
   locations?: MapPlace[];
+  legend?: MapLegendItem[];
   initialZoom?: number;
   route?: MapRoute;
   editorialPath?: MapEditorialPath;
@@ -84,6 +88,7 @@ interface Props {
 const {
   location,
   locations,
+  legend,
   initialZoom,
   route: routeInput,
   editorialPath: pathInput,
@@ -195,8 +200,10 @@ const clientPlaces = places.map((place) => ({
   precision: place.precision,
   radius: place.precision === "approximate" ? place.radiusMeters : undefined,
   icon: place.precision === "exact" ? iconForPlace(place) : undefined,
+  color: place.precision === "exact" ? colorForPlace(place) : undefined,
   showLabel: place.showLabel !== false,
 }));
+const legendItems = validLegend(legend);
 
 const centerLat =
   places.length > 0
@@ -246,7 +253,7 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
     </aside>
   ) : (
     <figure
-      class={`location-map ${contextSidebar ? "location-map--context" : ""} ${isEditorialFrame ? "location-map--editorial" : ""} ${className}`}
+      class={`location-map ${contextSidebar ? "location-map--context" : ""} ${isEditorialFrame ? "location-map--editorial" : ""} ${legendItems.length > 0 ? "location-map--has-legend" : ""} ${className}`}
       data-location-map
       data-map-id={mapId}
       data-map-style={display.mapStyle}
@@ -274,6 +281,20 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
       {!contextSidebar && title && <h2 class="location-map__title">{title}</h2>}
       {!contextSidebar && description && (
         <p class="location-map__description">{description}</p>
+      )}
+      {!contextSidebar && legendItems.length > 0 && (
+        <ul class="location-map__legend">
+          {legendItems.map((item) => (
+            <li class="location-map__legend-item">
+              <span
+                class="location-map__legend-swatch"
+                style={`background:${item.hex}`}
+                aria-hidden="true"
+              ></span>
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ul>
       )}
       <div class="location-map__stage" data-map-stage>
         <div
@@ -514,7 +535,7 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
     createMapLibreMarkerElement,
     placeContent,
   } from "../../lib/maps/markerIcons";
-  import type { PlaceIcon } from "../../lib/maps/location";
+  import type { MarkerColor, PlaceIcon } from "../../lib/maps/location";
   import {
     customizeMapStyle,
     type MapStyleMode,
@@ -542,6 +563,7 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
     precision: "exact" | "approximate";
     radius?: number;
     icon?: PlaceIcon;
+    color?: MarkerColor;
     showLabel?: boolean;
   };
 
@@ -1197,6 +1219,32 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
     color: var(--text-muted, #526273);
   }
 
+  .location-map__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    list-style: none;
+    margin: 0 0 0.75rem;
+    padding: 0;
+  }
+
+  .location-map__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text, #172534);
+  }
+
+  .location-map__legend-swatch {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 2px;
+    border: 1px solid rgb(23 37 52 / 0.28);
+    flex: none;
+  }
+
   .location-map__external-notice {
     max-width: 36ch;
     margin: 0;
@@ -1397,6 +1445,10 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
     display: none;
   }
 
+  .location-map--editorial.location-map--has-legend .location-map__zoom-group {
+    display: grid;
+  }
+
   .location-map__controls button,
   .location-map__load {
     min-width: 2.75rem;
@@ -1481,6 +1533,13 @@ const isEditorialFrame = !contextSidebar && display.mapStyle === "editorial";
     border-radius: 50%;
     background: #1d4ed8;
     box-shadow: 0 1px 4px rgb(23 37 52 / 0.35);
+  }
+
+  .location-map__stage :global(.nrk-marker__dot--categorized) {
+    width: 0.9375rem;
+    height: 0.9375rem;
+    border: 1.5px solid #172534;
+    box-shadow: 0 1px 3px rgb(23 37 52 / 0.25);
   }
 
   .location-map__stage :global(.nrk-marker__badge) {

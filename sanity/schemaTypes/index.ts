@@ -6,7 +6,15 @@ import {expandableSection} from './expandableSection'
 import {forumCompanionAutomation} from './forumCompanionAutomation'
 import {forumTopicReference} from './forumTopicReference'
 import {informationBox} from './informationBox'
-import {locationMap, mapEditorialPath, mapLocation, mapPlace, mapPresentation, mapRoute} from './mapLocation'
+import {
+  locationMap,
+  mapEditorialPath,
+  mapLegendItem,
+  mapLocation,
+  mapPlace,
+  mapPresentation,
+  mapRoute,
+} from './mapLocation'
 import {communityEvent} from './communityEvent'
 import {newsArticle} from './newsArticle'
 import {norwegianTerm} from './norwegianTerm'
@@ -34,6 +42,7 @@ export const schemaTypes = [
   mapLocation,
   mapPresentation,
   mapPlace,
+  mapLegendItem,
   mapRoute,
   mapEditorialPath,
   locationMap,
